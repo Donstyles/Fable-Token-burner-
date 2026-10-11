@@ -109,7 +109,7 @@ end on the primary target device from the home screen.
 ## 9. Open questions
 
 - Animal / monster animation: proposal in 10.2 awaiting sign-off.
-- Asset pipelines (section 10) awaiting sign-off; music source open.
+- Jump (11.5). Number of body types for the slice (12.1).
 - Save system details (IndexedDB in the PWA).
 
 ## 10. Asset pipelines (proposed 2026-10-11, pending sign-off)
@@ -128,9 +128,24 @@ scriptable.
 | Meshy text-to-image | Same as above when the owner is unavailable | 3–9 credits per image | API (`MESHY_API_KEY`) |
 | Meshy image-to-3D (Smart Topology) | All 3D models | Credits, see 10.1 | API |
 | Meshy rigging + animation library | Humanoid rigs and clips | Credits, see 10.1 | API |
-| Poly Haven, ambientCG | Photo-based tileable materials (stone, wood, dirt, marble…) | Free, CC0 | Public API, no key |
+| Poly Haven, ambientCG | Photo-based tileable materials (stone, wood, dirt, marble…) | Free, CC0 | Public HTTPS API, no key; verified reachable from the build environment 2026-10-11 |
 | Freesound (CC0 filter) | Sound effects | Free | API key, free account |
 | Google Fonts (OFL) | Blackletter / serif UI fonts | Free | Download script |
+
+CC0 library access (verified 2026-10-11 from this environment, no key needed):
+
+- **Poly Haven**: `GET https://api.polyhaven.com/assets?t=textures` lists
+  all textures (867 today) with categories and tags.
+  `GET https://api.polyhaven.com/files/<id>` returns, per map (Diffuse,
+  Rough, AO, nor_gl, Displacement…) and per resolution (1k–8k), a direct PNG
+  or JPG link on `dl.polyhaven.org`. The pipeline fetches the 1k diffuse
+  (and a normal map only when needed), then runs the texture processor.
+- **ambientCG**: `GET https://ambientcg.com/api/v2/full_json?type=Material&include=downloadData,tagData`
+  (filterable by `q`, `limit`, `offset`) lists materials with zip download
+  links per resolution (`1K-JPG` ≈ 10 MB). The pipeline downloads the 1K zip,
+  extracts the colour map, and runs the processor. ambientCG asks for a
+  descriptive User-Agent, which the script sets.
+- Both are CC0; the manifest still records asset id, source URL and licence.
 
 Meshy API facts verified 2026-10-11:
 
@@ -155,8 +170,8 @@ Meshy API facts verified 2026-10-11:
 1. **Concept image.** Claude writes a prompt card (exact prompt + required
    framing: full body, A-pose, front three-quarter view, neutral grey
    background, flat even lighting, single subject). Owner generates it in
-   ChatGPT and returns it. Optional: a three-view turnaround sheet for
-   Meshy multi-image-to-3D when a character matters (party members).
+   ChatGPT and returns it. **One concept image per model** (decided
+   2026-10-11); no turnaround sheets.
 2. **Image-to-3D.** `model_type: smart-topology`, `ai_model: meshy-t2`,
    `target_polycount: 4000`, `pose_mode: a-pose`, `should_texture: true`,
    `texture_resolution: 2k`, `enable_pbr: false`, `auto_size: true`,
@@ -193,12 +208,9 @@ interiors are separate scenes, as in MM6. `auto_size` keeps real-world scale.
 
 ### 10.4 Dungeons and world geometry
 
-Dungeons are built the way MM6 built them: from a tile map. A JSON grid
-(wall, floor, ceiling, door, stairs, pillar, trigger) is turned into geometry
-at load time and textured with pipeline 10.5 tiles. Meshy props decorate it.
-Outdoor areas are heightmap terrain with tiled ground textures and placed
-Meshy buildings and props. This is the real construction method, not a
-placeholder; it is also what makes levels editable as data.
+Dungeon geometry is **generated**, never modelled; the full system is in
+section 11. Outdoor areas are heightmap terrain with tiled ground textures
+and placed Meshy buildings and props.
 
 ### 10.5 Tileable textures
 
@@ -219,12 +231,7 @@ texture carries its source and licence in the manifest.
 - **HUD materials** (marble, stone panels, parchment, wood, gold trim): ChatGPT
   images through the texture processor, used as CSS backgrounds. Ornaments and
   frames as SVG or background-removed PNGs.
-- **Portraits**: ChatGPT with a fixed style template so all portraits match,
-  256×256, run through the same posterize filter as the 3D view. The party
-  member's Meshy model is built from the same concept image so face and body
-  agree.
-- **Item icons**: rendered from the item's GLB with a fixed camera at build
-  time, so icons never drift from models.
+- **Portraits, paper dolls, equipment overlays and item icons**: section 12.
 - **Spell and skill icons**: ChatGPT with a style template and transparent
   background.
 - **Sky**: ChatGPT panoramic sky processed into an equirectangular map, or a
@@ -234,8 +241,9 @@ texture carries its source and licence in the manifest.
 
 - SFX: Freesound CC0 via API, processed (trim, normalise, encode to AAC/MP3 for
   iOS Safari).
-- Music: **open**. Candidates: owner's generative music access if any, or
-  CC0/CC-BY tracks with attribution.
+- Music: the owner generates some tracks; the rest comes from CC0 sources.
+  Owner-generated tracks are delivered as files and recorded in the manifest
+  like any other asset.
 
 ### 10.8 Fonts
 
@@ -256,7 +264,140 @@ stats, a readable sans for tooltips. Downloaded and subset by script.
 - A `validate` script enforces polycount, texture size, bounds, clip names and
   manifest completeness before commit.
 
-## 11. Decision log
+## 11. Dungeon generation (geometry is generated, never modelled)
+
+Requirements (2026-10-11): elaborate dungeons with walkways, multiple levels,
+verticality, over-and-under, ledges, stairs, caverns and water.
+
+### 11.1 Representation: a 3D cell grid
+
+- A dungeon is a 3D grid of 1 m cubic cells, stored in 16×16×16 chunks.
+  Levels up to roughly 256×256×64 cells.
+- Each cell holds: `material` (air, brick, stone, wood, rock, water, …),
+  `shape` (full, ramp N/E/S/W, stairs N/E/S/W, half-slab, pillar, plank),
+  `style` (built or cave), `light` (baked), `zone` id and flags (trigger,
+  secret, no-fall-damage).
+- Over-and-under, multi-level, ledges and bridges are inherent: a floor cell
+  with air below it is a ledge; a plank cell over a void is a walkway.
+
+### 11.2 Two meshers, one grid
+
+- **Built areas**: greedy meshing produces large quads per face material,
+  UVs in world units so pipeline textures tile across merged faces. Trims are
+  added automatically along wall/floor and wall/ceiling edges for the MM6
+  built look. Pillar cells become pillars.
+- **Cave areas**: cells become a density field, smoothed and perturbed with
+  noise, then surfaced with marching cubes and textured triplanar. Vertex
+  jitter adds roughness. Stalactites and rubble are props.
+- The two styles meet cleanly: cave cells mesh against built cells as flat
+  faces.
+- **Stairs and ramps**: visual steps, collider is a ramp, so movement is
+  smooth.
+- **Water**: contiguous water volumes get a surface mesh with a scrolling,
+  distorted texture and an underwater tint. One-cell-deep water slows the
+  party; deeper water damages it unless Water Walk is active, as in MM6.
+
+### 11.3 Authoring: a level script compiled by generators
+
+- Source of truth per dungeon: `levels/<id>/level.ts`, a script of ordered
+  carve-and-fill operations on the grid: rooms (boxes, cylinders, with floor
+  height), corridors (paths that may slope), stairs, bridges, shafts, pits,
+  lakes (fill to a height), cave regions (noise parameters and seed), plus
+  props, lights, doors, triggers, spawns, entrance and exits.
+- Procedural helpers with seeds: room-and-corridor layouts, cellular-automata
+  cave carving, lake filling, ledge and walkway generation. Quest-critical
+  structure is hand-authored in the script; procedural passes add bulk and
+  detail. Everything is deterministic from source plus seed.
+- **Compile step** (`npm run level:build`, offline): script → grid → chunk
+  meshes → colliders → Recast navmesh → baked light → automap data →
+  validation. Validation flood-fills walkability from the entrance (stairs and
+  ramps included) and fails the build if any quest cell, spawn, door or loot
+  is unreachable.
+- Generated artifacts are build outputs, not committed; the level script is.
+
+### 11.4 Lighting
+
+Baked per-vertex light: flood propagation from light sources through the
+grid, attenuated and occluded by solid cells. On top: a dynamic torch light
+around the party and particle fire on sconces. Beyond torch radius it is
+dark, as in MM6.
+
+### 11.5 Movement and navigation
+
+- Party: capsule collision with gravity against the generated colliders.
+  Falls from ledges cause fall damage, MM6-style.
+- NPCs and enemies: Recast navmesh baked from the generated mesh; it handles
+  multi-level and over-and-under natively.
+- Jump: **open**. MM6 has it; the touch scheme has no jump gesture yet.
+
+### 11.6 Automap and tooling
+
+Top-down slices of the grid per height band give the in-game automap for
+free (MM6 had one) and double as a dev tool: slices rendered to PNG for
+review in the repo. Editor v1 is the level script plus these slices plus an
+in-browser fly-through debug mode. A visual voxel editor comes only if
+authoring pain justifies it.
+
+### 11.7 Performance targets (iPhone 14 Pro Max)
+
+Chunk frustum culling; under 150 draw calls and 300k visible triangles;
+textures atlased per material family; internal resolution is low by design.
+
+## 12. Characters: portrait, paper doll and equipment
+
+Key observation: the game is first-person, so the **party is never seen in
+3D**. Like MM6, party members exist as portraits and paper dolls. 3D
+humanoids (pipeline 10.1) are for NPCs and enemies only. The party pipeline
+is therefore 2D, which is what makes coherence and modularity tractable.
+
+### 12.1 Body template
+
+- One canonical doll canvas (for example 768×1536): front view, A-pose, feet
+  on a fixed baseline, head top at a fixed height, with named anchors (head,
+  neck, shoulders, chest, hands, waist, knees, feet).
+- One **base doll** per body type (race × sex), in underclothes, generated by
+  ChatGPT from the template prompt, then normalised by code (silhouette
+  detection, scale and translate onto the anchors). Number of body types for
+  the slice: **open** (MM6 has human, elf, dwarf, goblin × two sexes).
+
+### 12.2 Portraits
+
+- For each playable appearance, one ChatGPT **character sheet**: portrait
+  bust and full-body base doll of the same person in one image, same style
+  tokens. Portrait is cropped to 256×256 and run through the posterize
+  filter; the doll is normalised onto the template. Because both come from
+  one image, face and body always match.
+- Character creation offers several appearances per body type.
+- Optional later: expression variants (hurt, casting, dead) by re-prompting
+  ChatGPT with the sheet as reference.
+
+### 12.3 Equipment overlays by diff-extraction
+
+- Every wearable item gets one overlay per body type. The owner pastes the
+  base doll into ChatGPT with the prompt "draw this exact figure wearing X,
+  change nothing else". Code aligns the result to the base (anchor
+  normalisation, cross-correlation check), computes an alpha mask by
+  thresholded difference with morphological clean-up, and saves the overlay
+  PNG. If alignment error is too high the image is rejected and regenerated.
+- Slots with fixed layer order per body type: boots, legs, chest, belt,
+  gloves, cloak, helmet, amulet, rings, left hand, right hand.
+- An item is `{ icon, overlay per body type, stats }`. Cost control for the
+  slice: a small set of body types and roughly 30 items.
+
+### 12.4 Item icons
+
+ChatGPT with a fixed icon template (item alone, transparent background, same
+angle and lighting), processed to the inventory grid: items occupy w×h cells
+as in MM6. Shop shelves show the same icons.
+
+### 12.5 Style coherence across 2D and 3D
+
+A **style bible** (`pipeline/style.md`) holds the prompt prefix every prompt
+card starts with: palette, painterly late-90s fantasy look, lighting,
+forbidden elements. NPC and enemy concept images, portraits, dolls, overlays
+and icons all share it, so world and UI agree.
+
+## 13. Decision log
 
 - 2026-10-11 – Platform, delivery (PWA), art direction, Meshy pipeline, key
   handling, real-time combat, party of four with full creation, enemies plan,
@@ -269,3 +410,8 @@ stats, a readable sans for tooltips. Downloaded and subset by script.
 - 2026-10-11 – Asset pipelines proposed (section 10). Owner can supply ChatGPT
   images free of charge from prompts Claude writes. Meshy API verified:
   Smart Topology is `meshy-t2`, rigging is humanoid-only.
+- 2026-10-11 – Dungeon geometry is generated from a 3D cell grid (section
+  11), with multi-level, over-and-under, ledges, stairs, caverns and water.
+  Characters are 2D portraits and paper dolls with diff-extracted equipment
+  overlays (section 12). Music: owner-generated plus CC0. One concept image
+  per Meshy model. CC0 texture libraries verified reachable.
