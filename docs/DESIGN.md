@@ -25,7 +25,7 @@ Reference screenshots live in `artwork/reference/` (third-party, never shipped).
 
 | Decision | Value |
 | --- | --- |
-| Engine | **Pending** – Babylon.js recommended; comparison in conversation 2026-10-11 |
+| Engine | **Babylon.js** (confirmed 2026-10-11 after comparison with Three.js) |
 | Language | TypeScript |
 | Bundler / dev server | Vite |
 | HUD | HTML/CSS overlay on top of the canvas (touch-friendly, crisp text) |
@@ -82,7 +82,26 @@ owner approving a specific batch first: asset list plus expected credit cost.
 | Party size | Exactly four. | 2026-10-11 |
 | Party creation | Full character creation (no pre-made party). | 2026-10-11 |
 | Enemies | Humanoids first; animals and monsters planned, may be absent from the first slice. | 2026-10-11 |
-| Controls | **Open.** Candidates: floating virtual stick + drag-to-look (recommended) vs tap-to-move. | 2026-10-11 |
+| Controls | Invisible tank-style stick plus look area; full spec in 7.1. | 2026-10-11 |
+
+### 7.1 Controls (touch, landscape)
+
+- **Left half of the screen – invisible move stick.** Touch anywhere on the
+  left, hold and drag forward to walk. Nothing is drawn on screen. The stick
+  is tank-style: it drives forward motion, not strafing.
+- **Right half of the screen – invisible look area.** Free look (yaw and
+  pitch) works **only while stationary**.
+- **Turning while walking.** While the left thumb is held and the party is
+  walking, dragging the right thumb left or right turns the party. Vertical
+  drag does nothing in this state.
+- **Tap to interact.** A tap (no drag) on a door, NPC, item or sign
+  interacts with it.
+- **Tap a monster to attack** with the currently selected party member. After
+  the attack the selection automatically advances to the next *ready* party
+  member (one not in recovery), MM6-style.
+
+To confirm: whether dragging the left thumb backward walks backward, and
+whether there is any strafing at all (the tank-style reading says no).
 
 ## 8. First playable (vertical slice)
 
@@ -91,8 +110,7 @@ end on the primary target device from the home screen.
 
 ## 9. Open questions
 
-- Engine confirmation (Babylon.js vs Three.js).
-- Control scheme (section 7).
+- Controls: backward walking and strafing (section 7.1).
 - Animal / monster rigging and animation route outside Meshy's humanoid rig.
 - Save system details (IndexedDB in the PWA).
 
@@ -101,3 +119,7 @@ end on the primary target device from the home screen.
 - 2026-10-11 – Platform, delivery (PWA), art direction, Meshy pipeline, key
   handling, real-time combat, party of four with full creation, enemies plan,
   HUD direction, design doc kept in repo.
+- 2026-10-11 – Engine: Babylon.js. Controls: invisible tank-style move stick
+  on the left, stationary-only free look on the right, turn-while-walking via
+  right thumb, tap to interact, tap monster to attack with auto-advance to the
+  next ready party member.
