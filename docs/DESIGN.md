@@ -83,6 +83,8 @@ owner approving a specific batch first: asset list plus expected credit cost.
 | Party creation | Full character creation (no pre-made party). | 2026-10-11 |
 | Enemies | Humanoids first; animals and monsters planned, may be absent from the first slice. | 2026-10-11 |
 | Controls | Invisible tank-style stick plus look area; full spec in 7.1. | 2026-10-11 |
+| Jump | A spell, not a button. | 2026-10-11 |
+| Races | Humans only, two sexes. | 2026-10-11 |
 
 ### 7.1 Controls (touch, landscape)
 
@@ -109,7 +111,6 @@ end on the primary target device from the home screen.
 ## 9. Open questions
 
 - Animal / monster animation: proposal in 10.2 awaiting sign-off.
-- Jump (11.5). Number of body types for the slice (12.1).
 - Save system details (IndexedDB in the PWA).
 
 ## 10. Asset pipelines (proposed 2026-10-11, pending sign-off)
@@ -264,84 +265,126 @@ stats, a readable sans for tooltips. Downloaded and subset by script.
 - A `validate` script enforces polycount, texture size, bounds, clip names and
   manifest completeness before commit.
 
-## 11. Dungeon generation (geometry is generated, never modelled)
+## 11. Dungeon environments (generated, real 3D architecture)
 
-Requirements (2026-10-11): elaborate dungeons with walkways, multiple levels,
-verticality, over-and-under, ledges, stairs, caverns and water.
+Requirements (2026-10-11): real 3D environments, not a cell maze. Walkways,
+balconies, staircases (straight, winding, spiral), bridges over chasms,
+galleries overlooking lower halls, flooded undercrofts, caverns, waterfalls
+and real water. Geometry is still **generated**: nothing is hand-modelled,
+but the generator works in metres and curves, not in cells.
 
-### 11.1 Representation: a 3D cell grid
+### 11.1 Geometry kernel
 
-- A dungeon is a 3D grid of 1 m cubic cells, stored in 16×16×16 chunks.
-  Levels up to roughly 256×256×64 cells.
-- Each cell holds: `material` (air, brick, stone, wood, rock, water, …),
-  `shape` (full, ramp N/E/S/W, stairs N/E/S/W, half-slab, pillar, plank),
-  `style` (built or cave), `light` (baked), `zone` id and flags (trigger,
-  secret, no-fall-damage).
-- Over-and-under, multi-level, ledges and bridges are inherent: a floor cell
-  with air below it is a ledge; a plank cell over a void is a walkway.
+A TypeScript procedural-modelling kernel, run offline at compile time:
 
-### 11.2 Two meshers, one grid
+- **Mesh operations**: extrude a profile along a path (sweeps), loft, revolve,
+  arrays and radial repeats, mirror, bevel. Profiles are 2D polylines with
+  arcs, so mouldings, cornices, rails and arches are real curved geometry.
+- **Booleans**: Manifold (the same library behind Babylon's `CSG2`), run in
+  Node through its WASM build. Output is watertight, which the navmesh and
+  colliders need.
+- **Signed distance fields** for organic shapes: caves are sculpted as SDFs
+  (tunnels as capsules along paths, chambers as blended spheres and
+  ellipsoids, noise displacement for rock), then surfaced with marching cubes
+  at 0.25–0.5 m resolution and smoothed. Built structures are booleaned into
+  or placed inside the cave mass.
+- **Element library** built on the above, each element parametric and
+  textured per material role (wall block, flagstone, plank, iron, plaster):
+  wall segments with plinth and cornice; round and pointed arches; barrel,
+  groin and ribbed vaults; columns with base, shaft and capital; buttresses;
+  doorways and windows; floor and ceiling slabs; balustrades (repeated
+  balusters plus rail); straight, L, U, switchback and **spiral staircases**
+  with stringers and rails; **balconies** on corbels; **bridges and
+  walkways** with deck, supports and rails; shafts and pits; canals, drains
+  and basins; rubble and stalactites as props.
 
-- **Built areas**: greedy meshing produces large quads per face material,
-  UVs in world units so pipeline textures tile across merged faces. Trims are
-  added automatically along wall/floor and wall/ceiling edges for the MM6
-  built look. Pillar cells become pillars.
-- **Cave areas**: cells become a density field, smoothed and perturbed with
-  noise, then surfaced with marching cubes and textured triplanar. Vertex
-  jitter adds roughness. Stalactites and rubble are props.
-- The two styles meet cleanly: cave cells mesh against built cells as flat
-  faces.
-- **Stairs and ramps**: visual steps, collider is a ramp, so movement is
-  smooth.
-- **Water**: contiguous water volumes get a surface mesh with a scrolling,
-  distorted texture and an underwater tint. One-cell-deep water slows the
-  party; deeper water damages it unless Water Walk is active, as in MM6.
+### 11.2 Spaces and connectors
 
-### 11.3 Authoring: a level script compiled by generators
+A dungeon is a graph of **spaces** placed in 3D with real dimensions and
+rotations, joined by **connectors**:
 
-- Source of truth per dungeon: `levels/<id>/level.ts`, a script of ordered
-  carve-and-fill operations on the grid: rooms (boxes, cylinders, with floor
-  height), corridors (paths that may slope), stairs, bridges, shafts, pits,
-  lakes (fill to a height), cave regions (noise parameters and seed), plus
-  props, lights, doors, triggers, spawns, entrance and exits.
-- Procedural helpers with seeds: room-and-corridor layouts, cellular-automata
-  cave carving, lake filling, ledge and walkway generation. Quest-critical
-  structure is hand-authored in the script; procedural passes add bulk and
-  detail. Everything is deterministic from source plus seed.
-- **Compile step** (`npm run level:build`, offline): script → grid → chunk
-  meshes → colliders → Recast navmesh → baked light → automap data →
-  validation. Validation flood-fills walkability from the entrance (stairs and
-  ramps included) and fails the build if any quest cell, spawn, door or loot
-  is unreachable.
-- Generated artifacts are build outputs, not committed; the level script is.
+- Spaces: hall, gallery, corridor, undercroft, shaft, cistern, cavern,
+  crypt, throne room, each with its own vault style, ceiling height and
+  material set.
+- Connectors: staircase (any type), ramp, bridge, balcony opening, doorway,
+  tunnel, ledge drop, water channel.
+- Verticality is designed, not emergent: a gallery is a space whose floor
+  is a balcony around a lower hall; a shaft is a space whose connectors are a
+  spiral stair; a bridge crosses a chasm between two caverns with the river
+  visible below.
 
-### 11.4 Lighting
+### 11.3 Water and waterfalls
 
-Baked per-vertex light: flood propagation from light sources through the
-grid, attenuated and occluded by solid cells. On top: a dynamic torch light
-around the party and particle fire on sconces. Beyond torch radius it is
-dark, as in MM6.
+- **Real water**: Babylon's `WaterMaterial` (reflection, refraction, animated
+  waves, flow direction), tuned under the MM6 filter so it reads as a crisp
+  late-90s surface. Pools and lakes are planar surfaces in basins; rivers and
+  canals are swept surfaces along paths with a flow vector.
+- **Waterfalls**: a ribbon mesh swept from lip to plunge pool with scrolling
+  foam texture and vertex ripple, plus particle spray and mist at the base,
+  a looping sound with distance attenuation, and a disturbed water patch in
+  the pool.
+- Rules as in MM6: wading slows, deep water damages without Water Walk.
 
-### 11.5 Movement and navigation
+### 11.4 Authoring: level scripts
 
-- Party: capsule collision with gravity against the generated colliders.
-  Falls from ledges cause fall damage, MM6-style.
-- NPCs and enemies: Recast navmesh baked from the generated mesh; it handles
-  multi-level and over-and-under natively.
-- Jump: **open**. MM6 has it; the touch scheme has no jump gesture yet.
+Source of truth per dungeon is `levels/<id>/level.ts`, written against the
+kernel's API. Quest-critical layout is authored explicitly; seeded helpers
+fill in rubble, stalactite fields, cave wall noise and ornament repeats.
+The script reads like a plan: place a hall, wrap a gallery around it, drop a
+spiral stair in the north shaft, bridge the chasm, flood the undercroft,
+hang a waterfall off the east ledge.
 
-### 11.6 Automap and tooling
+Design rule, "no rat maze": every space has an identity and a sightline to
+another level; corridors are short and purposeful; the player should be able
+to see where they are going before they get there.
 
-Top-down slices of the grid per height band give the in-game automap for
-free (MM6 had one) and double as a dev tool: slices rendered to PNG for
-review in the repo. Editor v1 is the level script plus these slices plus an
-in-browser fly-through debug mode. A visual voxel editor comes only if
-authoring pain justifies it.
+### 11.5 Compile step
 
-### 11.7 Performance targets (iPhone 14 Pro Max)
+`npm run level:build`, offline: script → kernel → merged meshes per material
+and region → static mesh colliders → Recast navmesh → baked per-vertex
+lighting (ray-tested against the geometry, dense tessellation where light
+changes fast) → automap data (floor-plan slices per height band) → GLB
+plus sidecar data. Validation runs navmesh reachability from the entrance
+to every door, spawn, trigger and loot point, and fails the build on any
+miss. Generated artifacts are build outputs; only scripts are committed.
 
-Chunk frustum culling; under 150 draw calls and 300k visible triangles;
-textures atlased per material family; internal resolution is low by design.
+### 11.6 Lighting
+
+Baked per-vertex lighting from the level's light list, with occlusion, gives
+the moody MM6 falloff cheaply. On top: a dynamic torch light around the
+party, point lights on braziers and under waterfalls, emissive glow for
+magical features, particle fire. Dark beyond torch range.
+
+### 11.7 Movement and navigation
+
+- Party: Havok character controller (capsule) against the static mesh
+  colliders; stairs climb smoothly because the steps are real geometry with a
+  ramp collider. Falls from ledges cause fall damage. **Jump is a spell**,
+  not a button (decided 2026-10-11).
+- NPCs and enemies: Recast navmesh from the generated mesh; multi-level and
+  over-and-under are native.
+
+### 11.8 Tooling
+
+- In-browser **fly-through viewer** for any level script, hot-reloading on
+  save, with the MM6 filter togglable.
+- Floor-plan slices rendered to PNG at compile time for review, doubling as
+  the in-game automap source.
+- A visual editor only if script authoring proves too slow.
+
+### 11.9 Performance targets (iPhone 14 Pro Max)
+
+Meshes merged per material and region, frustum culled by region; under 150
+draw calls and about 300k visible triangles; one water material per level
+(reflection and refraction render passes are the costly part); textures
+atlased per material family.
+
+### 11.10 Honest sizing
+
+The kernel and element library are the largest single system in the
+project. They are also the thing that makes "real 3D environments that are
+generated" true, and they are reused by the town (building shells, walls,
+bridges, fountains) and later dungeons.
 
 ## 12. Characters: portrait, paper doll and equipment
 
@@ -355,10 +398,10 @@ is therefore 2D, which is what makes coherence and modularity tractable.
 - One canonical doll canvas (for example 768×1536): front view, A-pose, feet
   on a fixed baseline, head top at a fixed height, with named anchors (head,
   neck, shoulders, chest, hands, waist, knees, feet).
-- One **base doll** per body type (race × sex), in underclothes, generated by
-  ChatGPT from the template prompt, then normalised by code (silhouette
-  detection, scale and translate onto the anchors). Number of body types for
-  the slice: **open** (MM6 has human, elf, dwarf, goblin × two sexes).
+- Body types: **humans only, two sexes** (decided 2026-10-11). So two base
+  dolls, each in underclothes, generated by ChatGPT from the template prompt
+  and normalised by code (silhouette detection, scale and translate onto the
+  anchors). Every wearable item therefore needs exactly two overlays.
 
 ### 12.2 Portraits
 
@@ -381,8 +424,8 @@ is therefore 2D, which is what makes coherence and modularity tractable.
   PNG. If alignment error is too high the image is rejected and regenerated.
 - Slots with fixed layer order per body type: boots, legs, chest, belt,
   gloves, cloak, helmet, amulet, rings, left hand, right hand.
-- An item is `{ icon, overlay per body type, stats }`. Cost control for the
-  slice: a small set of body types and roughly 30 items.
+- An item is `{ icon, overlay × 2, stats }`. Roughly 30 items in the slice
+  means about 60 overlay images.
 
 ### 12.4 Item icons
 
@@ -415,3 +458,7 @@ and icons all share it, so world and UI agree.
   Characters are 2D portraits and paper dolls with diff-extracted equipment
   overlays (section 12). Music: owner-generated plus CC0. One concept image
   per Meshy model. CC0 texture libraries verified reachable.
+- 2026-10-11 – Cell-grid dungeon approach rejected. Dungeons are real 3D
+  architecture generated by a parametric geometry kernel with CSG and SDF
+  caves, real water and waterfalls (section 11 rewritten). Jump is a spell.
+  Humans only, two sexes.
