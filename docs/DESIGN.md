@@ -87,8 +87,9 @@ owner approving a specific batch first: asset list plus expected credit cost.
 ### 7.1 Controls (touch, landscape)
 
 - **Left half of the screen – invisible move stick.** Touch anywhere on the
-  left, hold and drag forward to walk. Nothing is drawn on screen. The stick
-  is tank-style: it drives forward motion, not strafing.
+  left, hold and drag forward to walk. Drag backward to walk backward at
+  **one third** of forward speed. Nothing is drawn on screen. The stick is
+  tank-style: forward and backward only, **no strafing**.
 - **Right half of the screen – invisible look area.** Free look (yaw and
   pitch) works **only while stationary**.
 - **Turning while walking.** While the left thumb is held and the party is
@@ -100,9 +101,6 @@ owner approving a specific batch first: asset list plus expected credit cost.
   the attack the selection automatically advances to the next *ready* party
   member (one not in recovery), MM6-style.
 
-To confirm: whether dragging the left thumb backward walks backward, and
-whether there is any strafing at all (the tank-style reading says no).
-
 ## 8. First playable (vertical slice)
 
 A full vertical: the first town, one dungeon and one quest, playable end to
@@ -110,7 +108,6 @@ end on the primary target device from the home screen.
 
 ## 9. Open questions
 
-- Controls: backward walking and strafing (section 7.1).
 - Animal / monster rigging and animation route outside Meshy's humanoid rig.
 - Save system details (IndexedDB in the PWA).
 
@@ -123,3 +120,4 @@ end on the primary target device from the home screen.
   on the left, stationary-only free look on the right, turn-while-walking via
   right thumb, tap to interact, tap monster to attack with auto-advance to the
   next ready party member.
+- 2026-10-11 – Backward walking at one third of forward speed. No strafing.
