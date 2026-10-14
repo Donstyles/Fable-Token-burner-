@@ -34,15 +34,15 @@ describe('move stick (left half)', () => {
     expect(z.consume().move).toBeCloseTo(-1 / 3);
   });
 
-  it('strafes sideways at the slow speed, right positive', () => {
+  it('strafes sideways at two thirds speed, right positive', () => {
     z.pointerDown(1, 200, 200, 0);
     z.pointerMove(1, 400, 200, 10);
     let f = z.consume();
     expect(f.move).toBe(0);
-    expect(f.strafe).toBeCloseTo(1 / 3);
+    expect(f.strafe).toBeCloseTo(2 / 3);
     z.pointerMove(1, 100, 200, 20);
     f = z.consume();
-    expect(f.strafe).toBeCloseTo(-1 / 3);
+    expect(f.strafe).toBeCloseTo(-2 / 3);
     expect(z.isWalking).toBe(true);
   });
 
@@ -57,7 +57,7 @@ describe('move stick (left half)', () => {
     z.pointerMove(1, 300, 300, 40); // now horizontal wins
     f = z.consume();
     expect(f.move).toBe(0);
-    expect(f.strafe).toBeCloseTo(1 / 3);
+    expect(f.strafe).toBeCloseTo(2 / 3);
   });
 
   it('cannot start strafing while the right thumb is looking around', () => {
@@ -192,9 +192,9 @@ describe('keyboard fallback', () => {
     expect(f.keyTurn).toBe(1);
   });
 
-  it('Q/E strafe slowly and yield to forward/backward', () => {
+  it('Q/E strafe at two thirds and yield to forward/backward', () => {
     z.setKeyboard(0, 0, 1);
-    expect(z.consume().strafe).toBeCloseTo(1 / 3);
+    expect(z.consume().strafe).toBeCloseTo(2 / 3);
     z.setKeyboard(1, 0, 1);
     const f = z.consume();
     expect(f.move).toBe(1);

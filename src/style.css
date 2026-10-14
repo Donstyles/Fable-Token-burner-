@@ -27,6 +27,32 @@ body {
   font-family: Georgia, 'Times New Roman', serif;
 }
 
+/* A game, not a document: no text selection, no press-and-hold callout or magnifier,
+   no double-tap zoom. Only the diagnostic text boxes stay selectable. */
+*,
+*::before,
+*::after {
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+button,
+select,
+input,
+label {
+  touch-action: manipulation;
+}
+textarea.log-box,
+textarea.dev-fallback {
+  -webkit-user-select: text;
+  user-select: text;
+  touch-action: auto;
+}
+img {
+  pointer-events: none;
+}
+
 /* The world: rendered below native resolution and upscaled with nearest-neighbour. */
 #world {
   position: fixed;

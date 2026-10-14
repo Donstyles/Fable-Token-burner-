@@ -2,7 +2,7 @@
  * Touch control scheme from DESIGN.md 7.1, as a pure state machine so it can be unit tested.
  *
  * - Left half: invisible move stick. Hold and drag up to walk forward, down to walk
- *   backward at one third speed, or sideways to strafe at that same slow speed. Each
+ *   backward at one third speed, or sideways to strafe at two thirds speed. Each
  *   stick gesture is one axis: whichever direction leaves the dead zone first wins until
  *   the stick returns to centre. Strafing cannot start while the right thumb is looking.
  * - Right half: free look (yaw and pitch) only while stationary; while moving, horizontal
@@ -18,6 +18,8 @@ export interface ZoneConfig {
   fullPx: number;
   /** Backward speed as a fraction of forward. */
   backwardFactor: number;
+  /** Strafe speed as a fraction of forward. */
+  strafeFactor: number;
   tapMaxMs: number;
   tapMaxPx: number;
 }
@@ -26,6 +28,7 @@ export const DEFAULT_ZONES: Omit<ZoneConfig, 'width' | 'height'> = {
   deadZonePx: 12,
   fullPx: 70,
   backwardFactor: 1 / 3,
+  strafeFactor: 2 / 3,
   tapMaxMs: 250,
   tapMaxPx: 12,
 };
@@ -39,7 +42,7 @@ export interface Tap {
 export interface FrameInput {
   /** Forward speed fraction: 0..1 forward, negative (down to -backwardFactor) backward. */
   move: number;
-  /** Sideways speed fraction, positive right, magnitude up to backwardFactor. */
+  /** Sideways speed fraction, positive right, magnitude up to strafeFactor. */
   strafe: number;
   /** True in the frame the look drag ended. */
   lookReleased: boolean;
@@ -232,7 +235,7 @@ export class InputZones {
   private effectiveStrafe(): number {
     if (this.strafe !== 0) return this.strafe;
     if (this.move !== 0 || this.keyMove !== 0) return 0;
-    return this.keyStrafe * this.config.backwardFactor;
+    return this.keyStrafe * this.config.strafeFactor;
   }
 
   private hasRole(role: Pointer['role']): boolean {
@@ -249,12 +252,12 @@ export class InputZones {
     return travelUp > 0 ? t : -t * backwardFactor;
   }
 
-  /** Map sideways stick travel (px, right positive) to a slow strafe fraction. */
+  /** Map sideways stick travel (px, right positive) to a strafe fraction. */
   private sideAmount(travelRight: number): number {
-    const { deadZonePx, fullPx, backwardFactor } = this.config;
+    const { deadZonePx, fullPx, strafeFactor } = this.config;
     const mag = Math.abs(travelRight);
     if (mag <= deadZonePx) return 0;
     const t = Math.min(1, (mag - deadZonePx) / Math.max(1, fullPx - deadZonePx));
-    return Math.sign(travelRight) * t * backwardFactor;
+    return Math.sign(travelRight) * t * strafeFactor;
   }
 }

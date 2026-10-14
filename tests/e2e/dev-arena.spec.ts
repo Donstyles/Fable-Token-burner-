@@ -84,8 +84,8 @@ test.describe('dev build', () => {
     await touch('touchEnd', []);
     const after = await position(page);
     const moved = after.x - before.x;
-    expect(moved).toBeGreaterThan(0.4);
-    expect(moved).toBeLessThan(1.6);
+    expect(moved).toBeGreaterThan(1.0);
+    expect(moved).toBeLessThan(3.0);
     expect(Math.abs(after.z - before.z)).toBeLessThan(0.2);
   });
 
@@ -94,17 +94,29 @@ test.describe('dev build', () => {
     browserName,
   }) => {
     test.skip(browserName !== 'chromium', 'touch injection needs CDP');
-    // Small: ~5° down at 0.18°/px, then release.
+    type Tunable = {
+      ftb: {
+        dev: { party: { setTuning(t: object): void; tuning: { levelSnapEnabled: boolean } } };
+      };
+    };
+    // The snap is off by default; enable it for this test.
+    const enabled = await page.evaluate(() => {
+      const party = (window as unknown as Tunable).ftb.dev.party;
+      party.setTuning({ levelSnapEnabled: true });
+      return party.tuning.levelSnapEnabled;
+    });
+    expect(enabled).toBe(true);
+    // Small: ~5° down at 0.18°/px, then release. Headless frames are slow, so allow time.
     await touch('touchStart', [{ x: 700, y: 200 }]);
     await touch('touchMove', [{ x: 700, y: 228 }]);
     await touch('touchEnd', []);
-    await page.waitForTimeout(600);
+    await page.waitForTimeout(1500);
     expect(Math.abs(await pitch(page))).toBeLessThan(0.5);
     // Large: ~20° down, stays.
     await touch('touchStart', [{ x: 700, y: 200 }]);
     await touch('touchMove', [{ x: 700, y: 311 }]);
     await touch('touchEnd', []);
-    await page.waitForTimeout(600);
+    await page.waitForTimeout(1500);
     expect(await pitch(page)).toBeGreaterThan(15);
   });
 

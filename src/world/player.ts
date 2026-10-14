@@ -33,6 +33,8 @@ export interface PartyTuning {
   fallDamageMinM: number;
   /** Fraction of the velocity difference applied per step: 1 is instant start and stop. */
   accelGain: number;
+  /** Magnetic level view on/off (off by default, 2026-10-14). */
+  levelSnapEnabled: boolean;
   /** Magnetic level view: when a look drag ends within this many degrees of level, snap to level. */
   levelSnapDeg: number;
   /** Speed of the snap, degrees per second. */
@@ -54,6 +56,7 @@ export const DEFAULT_TUNING: PartyTuning = {
   maxSlopeDeg: 50,
   fallDamageMinM: 3,
   accelGain: 1,
+  levelSnapEnabled: false,
   levelSnapDeg: 8,
   levelSnapDegPerSec: 45,
 };
@@ -163,7 +166,9 @@ export class PartyController {
     this.pitch = Math.max(t.pitchMinDeg * DEG, Math.min(t.pitchMaxDeg * DEG, this.pitch));
 
     // Magnetic level view: a look drag that ends close to level eases back to level.
-    if (input.lookReleased && Math.abs(this.pitch) <= t.levelSnapDeg * DEG) this.levelling = true;
+    if (t.levelSnapEnabled && input.lookReleased && Math.abs(this.pitch) <= t.levelSnapDeg * DEG) {
+      this.levelling = true;
+    }
     if (this.levelling) {
       this.pitch = towardZero(this.pitch, t.levelSnapDegPerSec * DEG * dt);
       if (this.pitch === 0) this.levelling = false;

@@ -15,6 +15,19 @@ const ui = document.getElementById('ui');
 if (!canvas || !ui) throw new Error('index.html is missing #world or #ui');
 
 installDiagnostics(canvas);
+// iOS: no pinch-zoom gestures, no long-press menus, anywhere on the page.
+for (const type of ['gesturestart', 'gesturechange', 'gestureend']) {
+  document.addEventListener(type, (e) => e.preventDefault(), { passive: false });
+}
+document.addEventListener('contextmenu', (e) => e.preventDefault());
+document.addEventListener(
+  'touchmove',
+  (e) => {
+    // Multi-touch outside the canvas (the UI layer) would otherwise pinch-zoom the page.
+    if (e.touches.length > 1 && !(e.target instanceof HTMLCanvasElement)) e.preventDefault();
+  },
+  { passive: false },
+);
 if (
   import.meta.env.DEV ||
   import.meta.env.MODE === 'devbuild' ||
