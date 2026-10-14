@@ -1,0 +1,63 @@
+import { registerSW } from 'virtual:pwa-register';
+import { diag } from './diag';
+
+/**
+ * Service worker registration without automatic reloads: when a new version is ready a
+ * small bar offers to reload. Installed web apps only check at launch, so also check when
+ * the app returns to the foreground and hourly. `?nosw` disables the worker for debugging.
+ */
+export function installServiceWorker(uiLayer: HTMLElement): void {
+  if (new URLSearchParams(location.search).has('nosw')) {
+    diag('sw disabled by ?nosw');
+    navigator.serviceWorker
+      ?.getRegistrations()
+      .then((regs) => Promise.all(regs.map((r) => r.unregister())))
+      .then(() => diag('sw unregistered'))
+      .catch(() => {});
+    return;
+  }
+  try {
+    const update = registerSW({
+      immediate: true,
+      onRegisteredSW(url, registration) {
+        diag(`sw registered ${url}`);
+        if (!registration) return;
+        const check = (): void => {
+          registration.update().catch((e: unknown) => diag(`sw update failed: ${String(e)}`));
+        };
+        document.addEventListener('visibilitychange', () => {
+          if (document.visibilityState === 'visible') check();
+        });
+        setInterval(check, 60 * 60 * 1000);
+      },
+      onNeedRefresh() {
+        diag('sw update ready');
+        showBar(uiLayer, () => {
+          diag('reloading for update');
+          void update(true);
+        });
+      },
+      onOfflineReady() {
+        diag('sw offline ready');
+      },
+      onRegisterError(e) {
+        diag(`sw register error: ${String(e)}`);
+      },
+    });
+    navigator.serviceWorker?.addEventListener('controllerchange', () =>
+      diag('sw controllerchange'),
+    );
+  } catch (e) {
+    diag(`sw unavailable: ${String(e)}`);
+  }
+}
+
+function showBar(parent: HTMLElement, onReload: () => void): void {
+  if (parent.querySelector('.update-bar')) return;
+  const bar = document.createElement('button');
+  bar.type = 'button';
+  bar.className = 'update-bar';
+  bar.textContent = 'Update ready. Tap to reload.';
+  bar.addEventListener('click', onReload);
+  parent.appendChild(bar);
+}

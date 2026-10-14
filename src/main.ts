@@ -1,46 +1,30 @@
 import './style.css';
-import { registerSW } from 'virtual:pwa-register';
 import { boot, type App } from './app/boot';
 import { installAudioUnlock } from './app/audio-unlock';
 import { tryLockLandscape } from './app/orientation';
+import { installDiagnostics, diag, diagText } from './app/diag';
+import { installServiceWorker } from './app/update-prompt';
 import type { DevHandle } from './dev/index';
 
 const canvas = document.getElementById('world') as HTMLCanvasElement | null;
 const ui = document.getElementById('ui');
 if (!canvas || !ui) throw new Error('index.html is missing #world or #ui');
 
+installDiagnostics(canvas);
 installAudioUnlock();
 tryLockLandscape();
-
-// Service worker: offline shell and auto-update. Installed web apps only check for a new
-// version at launch, so also check whenever the app returns to the foreground and hourly.
-try {
-  registerSW({
-    immediate: true,
-    onRegisteredSW(_url, registration) {
-      if (!registration) return;
-      const check = (): void => {
-        registration.update().catch(() => {});
-      };
-      document.addEventListener('visibilitychange', () => {
-        if (document.visibilityState === 'visible') check();
-      });
-      setInterval(check, 60 * 60 * 1000);
-    },
-  });
-} catch {
-  // Not available in this context.
-}
+installServiceWorker(ui);
 
 const app = boot(canvas, ui);
 
 declare global {
   interface Window {
     /** Dev hook for tuning from the console and tests. */
-    ftb?: App & { dev?: DevHandle };
+    ftb?: App & { dev?: DevHandle; diag(): string };
   }
 }
-window.ftb = app;
+window.ftb = Object.assign(app, { diag: diagText });
+diag('engine ready');
 
 // Development builds (`vite` dev server or `vite build --mode devbuild`) load the dev arena.
 // In production the condition is constant-false and the import is removed from the bundle.

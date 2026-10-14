@@ -46,7 +46,16 @@ export interface DevPanel {
   dispose(): void;
 }
 
-export function createDevPanel(parent: HTMLElement, fields: Field[]): DevPanel {
+export interface DevPanelOptions {
+  /** Returns the diagnostics text for the copy-log button and the live view. */
+  log?: () => string;
+}
+
+export function createDevPanel(
+  parent: HTMLElement,
+  fields: Field[],
+  options: DevPanelOptions = {},
+): DevPanel {
   const stored = loadStored();
   const values: Record<string, unknown> = { ...stored };
 
@@ -121,6 +130,52 @@ export function createDevPanel(parent: HTMLElement, fields: Field[]): DevPanel {
   copyRow.append(copyBtn, fallback);
   body.appendChild(copyRow);
 
+  // "copy log": the on-device diagnostics, plus a live tail at the bottom of the panel.
+  let logTimer = 0;
+  if (options.log) {
+    const getLog = options.log;
+    const logRow = document.createElement('div');
+    logRow.className = 'dev-row dev-copy';
+    const logBtn = document.createElement('button');
+    logBtn.type = 'button';
+    logBtn.textContent = 'copy log';
+    const logFallback = document.createElement('textarea');
+    logFallback.className = 'dev-fallback';
+    logFallback.readOnly = true;
+    logFallback.hidden = true;
+    logBtn.addEventListener('click', async () => {
+      const text = getLog();
+      try {
+        await navigator.clipboard.writeText(text);
+        api.toast('log copied, paste it in chat');
+        return;
+      } catch {
+        // fall through
+      }
+      try {
+        if (navigator.share) {
+          await navigator.share({ title: 'Token Burner log', text });
+          return;
+        }
+      } catch {
+        // fall through
+      }
+      logFallback.value = text;
+      logFallback.hidden = false;
+      logFallback.focus();
+      logFallback.select();
+    });
+    logRow.append(logBtn, logFallback);
+    body.appendChild(logRow);
+    const tail = document.createElement('pre');
+    tail.className = 'dev-log';
+    body.appendChild(tail);
+    logTimer = window.setInterval(() => {
+      if (body.hidden) return;
+      tail.textContent = getLog().split('\n').slice(-12).join('\n');
+    }, 1000);
+  }
+
   for (const f of fields) {
     const row = document.createElement('label');
     row.className = 'dev-row';
@@ -192,6 +247,7 @@ export function createDevPanel(parent: HTMLElement, fields: Field[]): DevPanel {
       }, 1800);
     },
     dispose() {
+      clearInterval(logTimer);
       root.remove();
       toastEl.remove();
     },

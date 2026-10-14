@@ -8,6 +8,7 @@ import { RetroFilter, type FilterSettings } from '../render/filter';
 import { RetroMaterials } from '../render/materials';
 import { loadSettings, saveSettings, type Settings } from './settings';
 import { createDevOverlay, isDevMode, type DevOverlay } from './dev-overlay';
+import { diag } from './diag';
 
 export interface App {
   engine: Engine;
@@ -70,7 +71,12 @@ export function boot(canvas: HTMLCanvasElement, uiLayer: HTMLElement): App {
     engine.setHardwareScalingLevel(target.hardwareScalingLevel);
     engine.resize();
     overlay?.update(preset, target);
+    diag(
+      `render ${target.width}x${target.height} from ${w}x${h} level=${target.hardwareScalingLevel.toFixed(3)}`,
+    );
   };
+  engine.onContextLostObservable.add(() => diag('engine: context lost'));
+  engine.onContextRestoredObservable.add(() => diag('engine: context restored'));
 
   // Size changes arrive through several channels on mobile; respond to all of them and
   // re-check a few times after an orientation change until the layout settles.

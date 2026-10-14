@@ -51,7 +51,7 @@ export default defineConfig(({ mode }) => {
     plugins: [
       iconLinks(),
       VitePWA({
-        registerType: 'autoUpdate',
+        registerType: 'prompt',
         includeAssets: ['icons/*.png'],
         manifest: {
           name: devBuild ? 'Fable Token Burner (dev)' : 'Fable Token Burner',

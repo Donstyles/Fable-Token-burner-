@@ -108,3 +108,19 @@ body {
   border-radius: 4px;
   white-space: pre;
 }
+
+/* New-version bar from the service worker. */
+.update-bar {
+  position: absolute;
+  left: 50%;
+  top: calc(var(--sat) + 8px);
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.8);
+  color: var(--gold);
+  border: 1px solid var(--gold);
+  border-radius: 6px;
+  padding: 8px 14px;
+  font:
+    15px Georgia,
+    serif;
+}
