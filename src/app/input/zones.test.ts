@@ -1,0 +1,163 @@
+import { beforeEach, describe, expect, it } from 'vitest';
+import { InputZones } from './zones';
+
+// iPhone 14 Pro Max landscape in CSS px.
+const W = 932;
+const H = 430;
+let z: InputZones;
+
+beforeEach(() => {
+  z = new InputZones({
+    width: W,
+    height: H,
+    deadZonePx: 10,
+    fullPx: 60,
+    tapMaxMs: 250,
+    tapMaxPx: 10,
+  });
+});
+
+describe('move stick (left half)', () => {
+  it('walks forward when dragged up, proportionally, capped at 1', () => {
+    z.pointerDown(1, 200, 300, 0);
+    z.pointerMove(1, 200, 295, 10);
+    expect(z.consume().move).toBe(0); // inside the dead zone
+    z.pointerMove(1, 200, 265, 20); // 35 px up: (35-10)/(60-10) = 0.5
+    expect(z.consume().move).toBeCloseTo(0.5);
+    z.pointerMove(1, 200, 100, 30);
+    expect(z.consume().move).toBe(1);
+  });
+
+  it('walks backward at one third speed', () => {
+    z.pointerDown(1, 200, 200, 0);
+    z.pointerMove(1, 200, 300, 10); // 100 px down: full
+    expect(z.consume().move).toBeCloseTo(-1 / 3);
+  });
+
+  it('ignores sideways travel: no strafing', () => {
+    z.pointerDown(1, 200, 200, 0);
+    z.pointerMove(1, 400, 200, 10);
+    expect(z.consume().move).toBe(0);
+  });
+
+  it('stops when released', () => {
+    z.pointerDown(1, 200, 300, 0);
+    z.pointerMove(1, 200, 100, 10);
+    z.pointerUp(1, 200, 100, 500);
+    expect(z.consume().move).toBe(0);
+    expect(z.isWalking).toBe(false);
+  });
+
+  it('move is a level, not a per-frame delta', () => {
+    z.pointerDown(1, 200, 300, 0);
+    z.pointerMove(1, 200, 100, 10);
+    z.consume();
+    expect(z.consume().move).toBe(1);
+  });
+});
+
+describe('look area (right half)', () => {
+  it('free-looks only while stationary', () => {
+    z.pointerDown(2, 700, 200, 0);
+    z.pointerMove(2, 720, 210, 10);
+    const f = z.consume();
+    expect(f.lookX).toBe(20);
+    expect(f.lookY).toBe(10);
+    expect(f.turnPx).toBe(0);
+  });
+
+  it('turns instead of looking while walking, ignoring vertical drag', () => {
+    z.pointerDown(1, 200, 300, 0);
+    z.pointerMove(1, 200, 100, 5); // walking
+    z.pointerDown(2, 700, 200, 10);
+    z.pointerMove(2, 730, 260, 20);
+    const f = z.consume();
+    expect(f.move).toBe(1);
+    expect(f.turnPx).toBe(30);
+    expect(f.lookX).toBe(0);
+    expect(f.lookY).toBe(0);
+  });
+
+  it('switches from turning to looking the moment the stick is released', () => {
+    z.pointerDown(1, 200, 300, 0);
+    z.pointerMove(1, 200, 100, 5);
+    z.pointerDown(2, 700, 200, 10);
+    z.pointerMove(2, 710, 200, 20);
+    z.pointerUp(1, 200, 100, 30);
+    z.pointerMove(2, 720, 230, 40);
+    const f = z.consume();
+    expect(f.turnPx).toBe(10);
+    expect(f.lookX).toBe(10);
+    expect(f.lookY).toBe(30);
+  });
+
+  it('accumulates and resets per frame', () => {
+    z.pointerDown(2, 700, 200, 0);
+    z.pointerMove(2, 705, 200, 10);
+    z.pointerMove(2, 712, 200, 20);
+    expect(z.consume().lookX).toBe(12);
+    expect(z.consume().lookX).toBe(0);
+  });
+});
+
+describe('taps', () => {
+  it('reports a short still touch on either half at its start point', () => {
+    z.pointerDown(1, 150, 200, 0);
+    z.pointerUp(1, 152, 201, 120);
+    z.pointerDown(2, 800, 100, 200);
+    z.pointerUp(2, 800, 100, 300);
+    const f = z.consume();
+    expect(f.taps).toEqual([
+      { x: 150, y: 200, time: 120 },
+      { x: 800, y: 100, time: 300 },
+    ]);
+    expect(z.consume().taps).toEqual([]);
+  });
+
+  it('is not a tap if held too long or moved too far', () => {
+    z.pointerDown(1, 150, 200, 0);
+    z.pointerUp(1, 150, 200, 400);
+    z.pointerDown(2, 800, 100, 500);
+    z.pointerMove(2, 830, 100, 520);
+    z.pointerUp(2, 800, 100, 560); // returned to start, but travelled
+    expect(z.consume().taps).toEqual([]);
+  });
+});
+
+describe('multi-touch', () => {
+  it('ignores a second finger in an occupied zone', () => {
+    z.pointerDown(1, 200, 300, 0);
+    z.pointerDown(3, 100, 300, 1);
+    z.pointerMove(3, 100, 100, 10);
+    expect(z.consume().move).toBe(0);
+    z.pointerUp(3, 100, 100, 50);
+    expect(z.consume().taps).toEqual([]);
+    z.pointerMove(1, 200, 100, 60);
+    expect(z.consume().move).toBe(1);
+  });
+
+  it('cancelling the move pointer stops walking', () => {
+    z.pointerDown(1, 200, 300, 0);
+    z.pointerMove(1, 200, 100, 10);
+    z.pointerCancel(1);
+    expect(z.consume().move).toBe(0);
+  });
+});
+
+describe('keyboard fallback', () => {
+  it('maps keys to the same semantics, including one-third backward', () => {
+    z.setKeyboard(1, 0);
+    expect(z.consume().move).toBe(1);
+    z.setKeyboard(-1, 1);
+    const f = z.consume();
+    expect(f.move).toBeCloseTo(-1 / 3);
+    expect(f.keyTurn).toBe(1);
+  });
+
+  it('touch takes precedence over keys', () => {
+    z.setKeyboard(-1, 0);
+    z.pointerDown(1, 200, 300, 0);
+    z.pointerMove(1, 200, 100, 10);
+    expect(z.consume().move).toBe(1);
+  });
+});
