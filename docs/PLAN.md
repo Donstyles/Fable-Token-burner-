@@ -23,8 +23,9 @@ week-plus. These are effort sizes, not calendar promises.
 
 | Phase | Status                                                    |
 | ----- | --------------------------------------------------------- |
-| 0     | Delivered 2026-10-14, awaiting owner acceptance on device |
-| 1–7   | Not started                                               |
+| 0     | Accepted 2026-10-14                                       |
+| 1     | Delivered 2026-10-14, awaiting owner acceptance on device |
+| 2–7   | Not started                                               |
 
 ## Phase overview
 
@@ -140,7 +141,9 @@ device, before any real content exists.
 4. Dev test arena: a room with stairs, a ledge and a ramp built from Babylon
    primitives. **Development-only**, never shipped, deleted once the Phase 2
    showcase level exists. This is the one exception to "no placeholders" and
-   it never leaves the dev build.
+   it never leaves the dev build. The dev build is a separate Vite build
+   (`npm run build:dev`) deployed under `/dev/` on Pages, so the production
+   URL never contains it; the owner tests at `…/dev/`.
 5. Capture pipeline: Playwright screenshots at device resolution for every
    review, so look changes are compared side by side.
 
