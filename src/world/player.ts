@@ -5,6 +5,8 @@ import {
 import type { CharacterSurfaceInfo } from '@babylonjs/core/Physics/v2/characterController';
 import { Vector3 } from '@babylonjs/core/Maths/math.vector';
 import { Observable } from '@babylonjs/core/Misc/observable';
+import { PhysicsRaycastResult } from '@babylonjs/core/Physics/physicsRaycastResult';
+import type { PhysicsEngine } from '@babylonjs/core/Physics/v2/physicsEngine';
 import type { Scene } from '@babylonjs/core/scene';
 import type { TargetCamera } from '@babylonjs/core/Cameras/targetCamera';
 import type { FrameInput } from '../app/input/zones';
@@ -88,6 +90,10 @@ export class PartyController {
   pitch = 0;
 
   private readonly controller: PhysicsCharacterController;
+  private readonly physics: PhysicsEngine;
+  private readonly ray = new PhysicsRaycastResult();
+  /** True when the last step produced almost no movement despite a movement request. */
+  private blocked = false;
   private readonly gravityVec = new Vector3();
   private readonly forward = new Vector3();
   private readonly right = new Vector3();
@@ -107,6 +113,9 @@ export class PartyController {
     tuning: PartyTuning = DEFAULT_TUNING,
     yawDeg = 0,
   ) {
+    const physics = scene.getPhysicsEngine();
+    if (!physics) throw new Error('PartyController needs physics enabled on the scene');
+    this.physics = physics as PhysicsEngine;
     this.tuning = { ...tuning };
     this.yaw = yawDeg * DEG;
     const start = feetPosition.add(new Vector3(0, this.tuning.capsuleHeight / 2 + 0.05, 0));
@@ -191,10 +200,15 @@ export class PartyController {
 
     let next: Vector3;
     if (support.supportedState === CharacterSupportedState.SUPPORTED) {
+      // The averaged contact normal tilts toward any wall we touch; treat anything steeper
+      // than a walkable slope as flat ground so pressing against a wall never zeroes movement.
+      const n = support.averageSurfaceNormal;
+      const surfaceNormal = Vector3.Dot(n, UP) >= Math.cos(t.maxSlopeDeg * DEG) ? n : UP;
+      if (this.blocked && this.desired.lengthSquared() > 0.01) this.stepUp(this.desired);
       next = cc.calculateMovement(
         dt,
         this.forward,
-        support.averageSurfaceNormal,
+        surfaceNormal,
         current,
         support.averageSurfaceVelocity,
         this.desired,
@@ -227,7 +241,48 @@ export class PartyController {
 
     cc.setVelocity(next);
     cc.integrate(dt, support, this.gravityVec);
+    // Blocked: asked to move, barely moved. Checked next frame for a step-up.
+    const wanted = Math.hypot(this.desired.x, this.desired.z);
+    const got = cc.getVelocity();
+    this.blocked = wanted > 0.1 && Math.hypot(got.x, got.z) < 0.25 * wanted;
     this.syncCamera();
+  }
+
+  /**
+   * Ray-based step-up, used when the capsule is blocked: probe the ground just ahead at
+   * step height, and if it is a walkable surface within maxStepHeight with head room,
+   * lift the capsule onto it. Havok's own step-up rejects box edges, this one reads faces.
+   */
+  private stepUp(desired: Vector3): void {
+    const t = this.tuning;
+    const dir = new Vector3(desired.x, 0, desired.z).normalize();
+    const centre = this.controller.getPosition();
+    const footY = centre.y - t.capsuleHeight / 2;
+    const ahead = t.capsuleRadius + 0.2;
+    const probeTop = t.maxStepHeight + 0.25;
+    const from = new Vector3(centre.x + dir.x * ahead, footY + probeTop, centre.z + dir.z * ahead);
+    const to = new Vector3(from.x, footY - 0.05, from.z);
+    this.physics.raycastToRef(from, to, this.ray);
+    if (!this.ray.hasHit) return;
+    const rise = this.ray.hitPointWorld.y - footY;
+    if (rise < 0.03 || rise > t.maxStepHeight) return;
+    if (this.ray.hitNormalWorld.y < Math.cos(t.maxSlopeDeg * DEG)) return;
+    // Head room above the capsule for the lift.
+    const headFrom = new Vector3(centre.x, centre.y + t.capsuleHeight / 2, centre.z);
+    const headTo = new Vector3(headFrom.x, headFrom.y + rise + 0.05, headFrom.z);
+    this.physics.raycastToRef(headFrom, headTo, this.ray);
+    if (this.ray.hasHit) return;
+    // Distance to the obstacle's face at half the step height, so the capsule's lowest
+    // point lands past the edge rather than hanging over the drop behind it.
+    const faceFrom = new Vector3(centre.x, footY + rise * 0.5, centre.z);
+    const faceTo = new Vector3(faceFrom.x + dir.x * ahead, faceFrom.y, faceFrom.z + dir.z * ahead);
+    this.physics.raycastToRef(faceFrom, faceTo, this.ray);
+    const faceDist = this.ray.hasHit ? this.ray.hitDistance : ahead - 0.1;
+    const forward = faceDist + 0.1;
+    this.controller.setPosition(
+      new Vector3(centre.x + dir.x * forward, centre.y + rise + 0.02, centre.z + dir.z * forward),
+    );
+    this.blocked = false;
   }
 
   dispose(): void {

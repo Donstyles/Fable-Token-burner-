@@ -27,6 +27,21 @@ async function touch(type: 'touchStart' | 'touchMove' | 'touchEnd', points: Poin
 
 const position = (page: Page) =>
   page.evaluate(() => (window as unknown as W).ftb!.dev!.positionOf());
+
+/** Poll the party position until `done` holds or the deadline passes (headless pacing varies). */
+async function untilPosition(
+  page: Page,
+  done: (p: { x: number; y: number; z: number }) => boolean,
+  maxMs = 15_000,
+) {
+  const start = Date.now();
+  let p = await position(page);
+  while (!done(p) && Date.now() - start < maxMs) {
+    await page.waitForTimeout(200);
+    p = await position(page);
+  }
+  return p;
+}
 const yaw = (page: Page) => page.evaluate(() => (window as unknown as W).ftb!.dev!.yawDeg());
 const pitch = (page: Page) => page.evaluate(() => (window as unknown as W).ftb!.dev!.pitchDeg());
 
@@ -151,6 +166,27 @@ test.describe('dev build', () => {
     await touch('touchEnd', []);
     expect(yaw2).toBeLessThan(yaw1 - 5);
     expect(pitch2).toBeCloseTo(pitch1, 1);
+  });
+
+  test('steps up the 0.4 m curb and climbs the staircase', async ({ page, browserName }) => {
+    test.skip(browserName !== 'chromium', 'touch injection needs CDP');
+    type Tele = { ftb: { dev: { teleport(x: number, y: number, z: number, yaw: number): void } } };
+    // Curb: 0.4 m tall at z = -4, straight ahead of the spawn.
+    await touch('touchStart', [{ x: 200, y: 320 }]);
+    await touch('touchMove', [{ x: 200, y: 180 }]);
+    let p = await untilPosition(page, (q) => q.z > -3.9 && q.y > 0.35);
+    await touch('touchEnd', []);
+    expect(p.z).toBeGreaterThan(-3.9);
+    expect(p.y).toBeGreaterThan(0.35);
+
+    // Staircase: 12 steps of 0.25 m from z = 4 at x = 8, up to a 3 m ledge.
+    await page.evaluate(() => (window as unknown as Tele).ftb.dev.teleport(8, 0, 1, 0));
+    await page.waitForTimeout(300);
+    await touch('touchStart', [{ x: 200, y: 320 }]);
+    await touch('touchMove', [{ x: 200, y: 180 }]);
+    p = await untilPosition(page, (q) => q.y > 2.5);
+    await touch('touchEnd', []);
+    expect(p.y).toBeGreaterThan(2.5);
   });
 
   test('tap on a target registers through picking', async ({ page, browserName }) => {

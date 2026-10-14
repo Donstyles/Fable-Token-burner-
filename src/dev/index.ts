@@ -27,6 +27,8 @@ export interface DevHandle {
   yawDeg(): number;
   pitchDeg(): number;
   debug(): { support: number; move: number; velocity: [number, number, number]; airborne: boolean };
+  /** Move the party to a feet position and heading, for tests. */
+  teleport(x: number, y: number, z: number, yawDeg: number): void;
   pickAt(x: number, y: number): string | null;
   /** Pointer event counters and consumed taps, for diagnosing input on real devices. */
   events: { down: number; move: number; up: number; cancel: number; taps: number; types: string[] };
@@ -87,6 +89,9 @@ export async function startDev(app: App): Promise<DevHandle> {
     pickAt(x, y) {
       const pick = scene.pick(x, y);
       return pick?.pickedMesh?.name ?? null;
+    },
+    teleport(x, y, z, yawDeg) {
+      party.teleport(new Vector3(x, y, z), yawDeg);
     },
   };
 
