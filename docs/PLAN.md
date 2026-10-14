@@ -21,11 +21,12 @@ week-plus. These are effort sizes, not calendar promises.
 
 ## Progress
 
-| Phase | Status                                                    |
-| ----- | --------------------------------------------------------- |
-| 0     | Accepted 2026-10-14                                       |
-| 1     | Delivered 2026-10-14, awaiting owner acceptance on device |
-| 2–7   | Not started                                               |
+| Phase | Status                                                                      |
+| ----- | --------------------------------------------------------------------------- |
+| 0     | Accepted 2026-10-14                                                         |
+| 1     | Accepted 2026-10-14 (stair feel to be settled by ramp colliders in Phase 2) |
+| 2     | In progress since 2026-10-14                                                |
+| 3–7   | Not started                                                                 |
 
 ## Phase overview
 
