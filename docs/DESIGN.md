@@ -14,21 +14,21 @@ Reference screenshots live in `artwork/reference/` (third-party, never shipped).
 
 ## 2. Platform
 
-| Decision | Value |
-| --- | --- |
-| Primary target | iPhone 14 Pro Max, landscape, launched from the home screen |
-| Secondary target | Android phones, landscape |
-| Delivery | Installable web app (PWA). No app-store build for now. |
-| Graphics API | WebGL2 (works on iOS Safari and Android Chrome today). WebGPU later if useful. |
+| Decision         | Value                                                                          |
+| ---------------- | ------------------------------------------------------------------------------ |
+| Primary target   | iPhone 14 Pro Max, landscape, launched from the home screen                    |
+| Secondary target | Android phones, landscape                                                      |
+| Delivery         | Installable web app (PWA). No app-store build for now.                         |
+| Graphics API     | WebGL2 (works on iOS Safari and Android Chrome today). WebGPU later if useful. |
 
 ## 3. Stack
 
-| Decision | Value |
-| --- | --- |
-| Engine | **Babylon.js** (confirmed 2026-10-11 after comparison with Three.js) |
-| Language | TypeScript |
-| Bundler / dev server | Vite |
-| HUD | HTML/CSS overlay on top of the canvas (touch-friendly, crisp text) |
+| Decision             | Value                                                                |
+| -------------------- | -------------------------------------------------------------------- |
+| Engine               | **Babylon.js** (confirmed 2026-10-11 after comparison with Three.js) |
+| Language             | TypeScript                                                           |
+| Bundler / dev server | Vite                                                                 |
+| HUD                  | HTML/CSS overlay on top of the canvas (touch-friendly, crisp text)   |
 
 ## 4. Art direction
 
@@ -79,15 +79,15 @@ owner approving a specific batch first: asset list plus expected credit cost.
 
 ## 7. Gameplay decisions
 
-| Topic | Decision | Date |
-| --- | --- | --- |
-| Combat | Real-time only. No turn-based mode. | 2026-10-11 |
-| Party size | Exactly four. | 2026-10-11 |
-| Party creation | Full character creation (no pre-made party). | 2026-10-11 |
-| Enemies | Humanoids first; animals and monsters planned, may be absent from the first slice. | 2026-10-11 |
-| Controls | Invisible tank-style stick plus look area; full spec in 7.1. | 2026-10-11 |
-| Jump | A spell, not a button. | 2026-10-11 |
-| Races | Humans only, two sexes. | 2026-10-11 |
+| Topic          | Decision                                                                           | Date       |
+| -------------- | ---------------------------------------------------------------------------------- | ---------- |
+| Combat         | Real-time only. No turn-based mode.                                                | 2026-10-11 |
+| Party size     | Exactly four.                                                                      | 2026-10-11 |
+| Party creation | Full character creation (no pre-made party).                                       | 2026-10-11 |
+| Enemies        | Humanoids first; animals and monsters planned, may be absent from the first slice. | 2026-10-11 |
+| Controls       | Invisible tank-style stick plus look area; full spec in 7.1.                       | 2026-10-11 |
+| Jump           | A spell, not a button.                                                             | 2026-10-11 |
+| Races          | Humans only, two sexes.                                                            | 2026-10-11 |
 
 ### 7.1 Controls (touch, landscape)
 
@@ -103,7 +103,7 @@ owner approving a specific batch first: asset list plus expected credit cost.
 - **Tap to interact.** A tap (no drag) on a door, NPC, item or sign
   interacts with it.
 - **Tap a monster to attack** with the currently selected party member. After
-  the attack the selection automatically advances to the next *ready* party
+  the attack the selection automatically advances to the next _ready_ party
   member (one not in recovery), MM6-style.
 
 ## 8. First playable (vertical slice)
@@ -126,15 +126,15 @@ scriptable.
 
 ### 10.0 Sources
 
-| Source | Used for | Cost | Access |
-| --- | --- | --- | --- |
-| ChatGPT image generation (owner's account) | Concept images for Meshy, tileable textures, UI art, portraits, icons, sky | Free | Claude writes the exact prompt, owner returns the image |
-| Meshy text-to-image | Same as above when the owner is unavailable | 3–9 credits per image | API (`MESHY_API_KEY`) |
-| Meshy image-to-3D (Smart Topology) | All 3D models | Credits, see 10.1 | API |
-| Meshy rigging + animation library | Humanoid rigs and clips | Credits, see 10.1 | API |
-| Poly Haven, ambientCG | Photo-based tileable materials (stone, wood, dirt, marble…) | Free, CC0 | Public HTTPS API, no key; verified reachable from the build environment 2026-10-11 |
-| Freesound (CC0 filter) | Sound effects | Free | API key, free account |
-| Google Fonts (OFL) | Blackletter / serif UI fonts | Free | Download script |
+| Source                                     | Used for                                                                   | Cost                  | Access                                                                             |
+| ------------------------------------------ | -------------------------------------------------------------------------- | --------------------- | ---------------------------------------------------------------------------------- |
+| ChatGPT image generation (owner's account) | Concept images for Meshy, tileable textures, UI art, portraits, icons, sky | Free                  | Claude writes the exact prompt, owner returns the image                            |
+| Meshy text-to-image                        | Same as above when the owner is unavailable                                | 3–9 credits per image | API (`MESHY_API_KEY`)                                                              |
+| Meshy image-to-3D (Smart Topology)         | All 3D models                                                              | Credits, see 10.1     | API                                                                                |
+| Meshy rigging + animation library          | Humanoid rigs and clips                                                    | Credits, see 10.1     | API                                                                                |
+| Poly Haven, ambientCG                      | Photo-based tileable materials (stone, wood, dirt, marble…)                | Free, CC0             | Public HTTPS API, no key; verified reachable from the build environment 2026-10-11 |
+| Freesound (CC0 filter)                     | Sound effects                                                              | Free                  | API key, free account                                                              |
+| Google Fonts (OFL)                         | Blackletter / serif UI fonts                                               | Free                  | Download script                                                                    |
 
 CC0 library access (verified 2026-10-11 from this environment, no key needed):
 

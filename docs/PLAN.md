@@ -21,16 +21,16 @@ week-plus. These are effort sizes, not calendar promises.
 
 ## Phase overview
 
-| # | Phase | Goal | Size | Needs from owner |
-| --- | --- | --- | --- | --- |
-| 0 | Foundation | Repo, toolchain, safety rails, PWA shell on the phone | M | App icon image, enable GitHub Pages and push protection |
-| 1 | Look and feel | MM6 render filter, touch controls, character controller, tuned on device | M | On-device feel test, look sign-off |
-| 2 | Geometry kernel | Parametric architecture + caves, compile step, viewer, showcase level | XL | Sign-off on showcase, authoring API review |
-| 3 | Water, light, atmosphere | Real water, waterfalls, torch light, particles, fog | L | On-device perf and look sign-off |
-| 4 | Asset pipelines | Tooling for textures, Meshy, dolls, icons, audio, fonts; first real assets | L | `MESHY_API_KEY` in environment, Freesound key, ChatGPT images, batch approvals |
-| 5 | Game systems | Party, stats, combat, inventory, spells, dialog, shops, quests, save, HUD | XL | Rules decisions where MM6 is ambiguous, UI sign-offs |
-| 6 | Slice content | Town, dungeon, quest, NPCs, monsters, music | XL | Content approvals, asset batches, music tracks |
-| 7 | Polish and release | Performance, offline, iOS and Android quirks, full playthrough | L | Device testing, final sign-off |
+| #   | Phase                    | Goal                                                                       | Size | Needs from owner                                                               |
+| --- | ------------------------ | -------------------------------------------------------------------------- | ---- | ------------------------------------------------------------------------------ |
+| 0   | Foundation               | Repo, toolchain, safety rails, PWA shell on the phone                      | M    | App icon image, enable GitHub Pages and push protection                        |
+| 1   | Look and feel            | MM6 render filter, touch controls, character controller, tuned on device   | M    | On-device feel test, look sign-off                                             |
+| 2   | Geometry kernel          | Parametric architecture + caves, compile step, viewer, showcase level      | XL   | Sign-off on showcase, authoring API review                                     |
+| 3   | Water, light, atmosphere | Real water, waterfalls, torch light, particles, fog                        | L    | On-device perf and look sign-off                                               |
+| 4   | Asset pipelines          | Tooling for textures, Meshy, dolls, icons, audio, fonts; first real assets | L    | `MESHY_API_KEY` in environment, Freesound key, ChatGPT images, batch approvals |
+| 5   | Game systems             | Party, stats, combat, inventory, spells, dialog, shops, quests, save, HUD  | XL   | Rules decisions where MM6 is ambiguous, UI sign-offs                           |
+| 6   | Slice content            | Town, dungeon, quest, NPCs, monsters, music                                | XL   | Content approvals, asset batches, music tracks                                 |
+| 7   | Polish and release       | Performance, offline, iOS and Android quirks, full playthrough             | L    | Device testing, final sign-off                                                 |
 
 Phases 2 and 4 can interleave: pipeline tooling needs nothing from the
 kernel, and the kernel showcase is the first consumer of real textures.
@@ -192,7 +192,15 @@ const shaft = plan.shaft({ at: hall.edge('north', 6), radius: 3, from: -12, to: 
 plan.spiralStair({ in: shaft, from: -12, to: 4.5, turns: 2.5, rail: 'iron' });
 const cavern = plan.cavern({ at: [40, -12, 0], seed: 7, roughness: 0.6 });
 plan.bridge({ from: hall.edge('east'), to: cavern.edge('west'), width: 2.5, rail: 'stone' });
-water.river({ through: cavern, path: [[30, -14, -20], [50, -15, 25]], width: 4, flow: 1.2 });
+water.river({
+  through: cavern,
+  path: [
+    [30, -14, -20],
+    [50, -15, 25],
+  ],
+  width: 4,
+  flow: 1.2,
+});
 water.fall({ from: cavern.ledge('north', 8), into: 'river' });
 ```
 
@@ -385,15 +393,15 @@ by designing at device resolution from the start.
 
 ## Owner actions, by when they are needed
 
-| When | Action |
-| --- | --- |
-| Phase 0 | Enable GitHub Pages (source: GitHub Actions) and secret-scanning push protection; supply the app icon image from a prompt card |
-| Phase 1 | Test controls and look on the iPhone, give feedback |
-| Phase 2 | Review the authoring API and the showcase |
+| When    | Action                                                                                                                                |
+| ------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| Phase 0 | Enable GitHub Pages (source: GitHub Actions) and secret-scanning push protection; supply the app icon image from a prompt card        |
+| Phase 1 | Test controls and look on the iPhone, give feedback                                                                                   |
+| Phase 2 | Review the authoring API and the showcase                                                                                             |
 | Phase 4 | Add `MESHY_API_KEY` and `FREESOUND_API_KEY` to the cloud environment secrets; return ChatGPT images for prompt cards; approve batches |
-| Phase 5 | Decide rule questions as they come up; approve screens |
-| Phase 6 | Approve content docs; supply music; approve batches |
-| Phase 7 | Final device testing |
+| Phase 5 | Decide rule questions as they come up; approve screens                                                                                |
+| Phase 6 | Approve content docs; supply music; approve batches                                                                                   |
+| Phase 7 | Final device testing                                                                                                                  |
 
 ## Decisions approved with this plan (2026-10-14)
 
