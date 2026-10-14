@@ -19,6 +19,13 @@ separately at its kickoff.
 Size key: S = hours, M = a day or two of work, L = several days, XL = a
 week-plus. These are effort sizes, not calendar promises.
 
+## Progress
+
+| Phase | Status                                                    |
+| ----- | --------------------------------------------------------- |
+| 0     | Delivered 2026-10-14, awaiting owner acceptance on device |
+| 1–7   | Not started                                               |
+
 ## Phase overview
 
 | #   | Phase                    | Goal                                                                       | Size | Needs from owner                                                               |
