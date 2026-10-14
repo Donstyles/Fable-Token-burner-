@@ -1,4 +1,7 @@
-/** Development entry: dev arena, controls, physics and the tuning panel. Never in production. */
+/**
+ * Development entry: loads the compiled showcase level with the party controller, a free
+ * fly camera, wireframe and navmesh overlays and the tuning panel. Never in production.
+ */
 import './dev.css';
 // Side-effect import: enables scene.pick (tree-shaken away otherwise).
 import '@babylonjs/core/Culling/ray';
@@ -10,11 +13,12 @@ import { enableHavok } from '../app/physics';
 import { InputZones } from '../app/input/zones';
 import { bindInput } from '../app/input/dom';
 import { PartyController, DEFAULT_TUNING } from '../world/player';
+import { loadLevel, type LoadedLevel } from '../world/level';
+import { loadRoleTextures, setRoleMipmaps } from '../world/textures';
 import { FILTER_MODES, type FilterMode } from '../render/filter';
 import { RENDER_PRESETS, type RenderPreset } from '../render/resolution';
 import { ENVIRONMENT_PRESETS, type EnvironmentPreset } from '../render/environment';
 import { UPSCALE_MODES, type UpscaleMode } from '../app/settings';
-import { buildDevArena, FLASH_TINT } from './arena';
 import { createDevPanel, type Field } from './panel';
 import { diag, diagText } from '../app/diag';
 
@@ -22,6 +26,7 @@ export interface DevHandle {
   ready: boolean;
   party: PartyController;
   zones: InputZones;
+  level: LoadedLevel;
   lastTap: string | null;
   /** CSS-pixel screen position of a mesh centre, for tests. */
   screenPointOf(name: string): { x: number; y: number } | null;
@@ -31,6 +36,8 @@ export interface DevHandle {
   debug(): { support: number; move: number; velocity: [number, number, number]; airborne: boolean };
   /** Move the party to a feet position and heading, for tests. */
   teleport(x: number, y: number, z: number, yawDeg: number): void;
+  /** Named level points in scene space, for tests. */
+  pointOf(name: string): { x: number; y: number; z: number } | null;
   /** Accumulated simulated seconds, so tests can measure speeds independent of frame rate. */
   simTime(): number;
   pickAt(x: number, y: number): string | null;
@@ -38,10 +45,29 @@ export interface DevHandle {
   events: { down: number; move: number; up: number; cancel: number; taps: number; types: string[] };
 }
 
+const DEG = Math.PI / 180;
+const LEVEL = new URLSearchParams(location.search).get('level') ?? 'showcase';
+
 export async function startDev(app: App): Promise<DevHandle> {
   const { scene, engine, camera, canvas, uiLayer } = app;
   await enableHavok(scene, new Vector3(0, -DEFAULT_TUNING.gravity, 0));
-  const arena = buildDevArena(scene, app.materials);
+  const textures = loadRoleTextures(scene, true);
+  // Levels live next to the page: <base>levels/<id>.glb and .json.
+  const base = new URL(import.meta.env.BASE_URL, location.href).href;
+  diag(`loading level ${LEVEL}`);
+  const level = await loadLevel(scene, app.materials, `${base}levels/${LEVEL}`, textures);
+  diag(
+    `level ${level.sidecar.name}: ${level.sidecar.stats['triangles']} tris, ` +
+      `${level.meshes.length} meshes`,
+  );
+  // Dungeon look: no sky light, dark fog close in.
+  app.materials.setEnvironment({
+    ambientColor: new Color3(0.05, 0.05, 0.07),
+    lightColor: new Color3(0, 0, 0),
+    fogColor: new Color3(0.01, 0.01, 0.015),
+    fogDensity: 0.028,
+  });
+  app.sky.mesh.setEnabled(false);
 
   const zones = new InputZones({ width: canvas.clientWidth, height: canvas.clientHeight });
   bindInput(canvas, zones);
@@ -54,18 +80,18 @@ export async function startDev(app: App): Promise<DevHandle> {
   canvas.addEventListener('pointermove', note('move'));
   canvas.addEventListener('pointerup', note('up'));
   canvas.addEventListener('pointercancel', note('cancel'));
-  const party = new PartyController(scene, camera, arena.spawn, DEFAULT_TUNING, arena.spawnYawDeg);
+  const party = new PartyController(scene, camera, level.spawn, DEFAULT_TUNING, level.spawnYawDeg);
 
   const handle: DevHandle = {
     ready: false,
     party,
     zones,
+    level,
     lastTap: null,
     events,
     screenPointOf(name) {
       const mesh = scene.getMeshByName(name);
       if (!mesh) return null;
-      // Clip space with perspective divide, then to CSS pixels (y down).
       const ndc = Vector3.TransformCoordinates(
         mesh.getAbsolutePosition(),
         scene.getTransformMatrix(),
@@ -97,26 +123,67 @@ export async function startDev(app: App): Promise<DevHandle> {
     teleport(x, y, z, yawDeg) {
       party.teleport(new Vector3(x, y, z), yawDeg);
     },
+    pointOf(name) {
+      const p = level.points.get(name);
+      return p ? { x: p.x, y: p.y, z: p.z } : null;
+    },
     simTime: () => simTime,
   };
 
-  // Tap feedback: flash the tapped mesh.
+  // Tap feedback: outline the tapped mesh briefly.
   const flashing = new Map<Mesh, number>();
   const handleTap = (x: number, y: number): void => {
-    const pick = scene.pick(x, y, (m) => arena.tappable.includes(m as Mesh));
+    const pick = scene.pick(x, y, (m) => m.isPickable && m.isVisible);
     const mesh = pick?.pickedMesh as Mesh | null;
     if (!mesh) return;
     handle.lastTap = mesh.name;
-    const mat = arena.materialOf(mesh);
-    if (mat) {
-      mat.setColor3('tint', FLASH_TINT);
-      clearTimeout(flashing.get(mesh));
-      flashing.set(
-        mesh,
-        window.setTimeout(() => mat.setColor3('tint', Color3.White()), 250),
-      );
+    mesh.renderOverlay = true;
+    mesh.overlayColor = new Color3(1, 0.85, 0.5);
+    mesh.overlayAlpha = 0.35;
+    clearTimeout(flashing.get(mesh));
+    flashing.set(
+      mesh,
+      window.setTimeout(() => {
+        mesh.renderOverlay = false;
+      }, 250),
+    );
+    const d = pick?.distance ?? 0;
+    panel.toast(`tapped ${mesh.name} at ${d.toFixed(1)} m`);
+  };
+
+  // Free fly camera: the stick moves along the view direction, the party stays put.
+  let fly = false;
+  let flyYaw = 0;
+  let flyPitch = 0;
+  let flySpeed = 8;
+  const setFly = (on: boolean): void => {
+    if (on === fly) return;
+    fly = on;
+    if (on) {
+      flyYaw = party.yaw;
+      flyPitch = party.pitch;
+    } else {
+      // Land the party where the camera is.
+      const feet = camera.position.subtract(new Vector3(0, party.tuning.eyeHeight, 0));
+      party.teleport(feet, flyYaw / DEG);
     }
-    panel.toast(`tapped ${mesh.name}`);
+  };
+  const flyUpdate = (dt: number, input: ReturnType<InputZones['consume']>): void => {
+    flyYaw += (input.turnPx + input.lookX) * party.tuning.lookDegPerPx * DEG;
+    flyYaw += input.keyTurn * party.tuning.keyTurnDegPerSec * DEG * dt;
+    flyPitch += input.lookY * party.tuning.lookDegPerPx * DEG;
+    flyPitch = Math.max(-85 * DEG, Math.min(85 * DEG, flyPitch));
+    const forward = new Vector3(
+      Math.sin(flyYaw) * Math.cos(flyPitch),
+      -Math.sin(flyPitch),
+      Math.cos(flyYaw) * Math.cos(flyPitch),
+    );
+    const right = new Vector3(Math.cos(flyYaw), 0, -Math.sin(flyYaw));
+    const move = forward
+      .scale(input.move * flySpeed * dt)
+      .add(right.scale(input.strafe * flySpeed * dt));
+    camera.position.addInPlace(move);
+    camera.rotation.set(flyPitch, flyYaw, 0);
   };
 
   let simTime = 0;
@@ -124,7 +191,8 @@ export async function startDev(app: App): Promise<DevHandle> {
     const dt = Math.min(engine.getDeltaTime() / 1000, 0.05);
     simTime += dt;
     const input = zones.consume();
-    party.update(dt, input);
+    if (fly) flyUpdate(dt, input);
+    else party.update(dt, input);
     events.taps += input.taps.length;
     for (const t of input.taps) handleTap(t.x, t.y);
   });
@@ -140,10 +208,73 @@ export async function startDev(app: App): Promise<DevHandle> {
     set: (v: number) => void,
   ): Field => ({ kind: 'range', key, label, min, max, step, get, set });
   const env = (): typeof app.materials.env => app.materials.env;
+  let liveLights = false;
+  let liveScale = 1;
 
   const panel = createDevPanel(
     uiLayer,
     [
+      {
+        kind: 'toggle',
+        key: 'fly',
+        label: 'fly camera',
+        get: () => fly,
+        set: (v) => setFly(v),
+      },
+      range(
+        'flySpeed',
+        'fly m/s',
+        2,
+        30,
+        1,
+        () => flySpeed,
+        (v) => (flySpeed = v),
+      ),
+      {
+        kind: 'toggle',
+        key: 'wire',
+        label: 'wireframe',
+        get: () => false,
+        set: (v) => level.setWireframe(v),
+      },
+      {
+        kind: 'toggle',
+        key: 'navmesh',
+        label: 'navmesh overlay',
+        get: () => false,
+        set: (v) => level.setNavMeshVisible(v),
+      },
+      range(
+        'bakedMix',
+        'baked light',
+        0,
+        1,
+        0.05,
+        () => 1,
+        (v) => level.setBakedMix(v),
+      ),
+      {
+        kind: 'toggle',
+        key: 'liveLights',
+        label: 'live lights',
+        get: () => liveLights,
+        set: (v) => {
+          liveLights = v;
+          level.setLiveLights(v, liveScale);
+        },
+      },
+      range(
+        'lamps',
+        'live light scale',
+        0,
+        5,
+        0.1,
+        () => liveScale,
+        (v) => {
+          liveScale = v;
+          if (liveLights) level.setLiveLights(true, v);
+        },
+      ),
       {
         kind: 'select',
         key: 'renderPreset',
@@ -231,15 +362,6 @@ export async function startDev(app: App): Promise<DevHandle> {
         () => app.grade.settings.saturation,
         (v) => app.setGrade({ saturation: v }),
       ),
-      range(
-        'lamps',
-        'lamp intensity',
-        0,
-        5,
-        0.1,
-        () => 2.2,
-        (v) => arena.setLightIntensity(v),
-      ),
       {
         kind: 'select',
         key: 'filterMode',
@@ -298,7 +420,7 @@ export async function startDev(app: App): Promise<DevHandle> {
         key: 'mipmaps',
         label: 'mipmaps',
         get: () => true,
-        set: (v) => arena.setMipmaps(v),
+        set: (v) => setRoleMipmaps(textures, v),
       },
       range(
         'walkSpeed',
@@ -410,12 +532,15 @@ export async function startDev(app: App): Promise<DevHandle> {
         kind: 'button',
         key: 'reset',
         label: 'reset position',
-        run: () => party.teleport(arena.spawn, arena.spawnYawDeg),
+        run: () => {
+          setFly(false);
+          party.teleport(level.spawn, level.spawnYawDeg);
+        },
       },
     ],
     { log: diagText },
   );
-  diag('dev arena ready');
+  diag(`dev level ready: ${LEVEL}`);
 
   handle.ready = true;
   return handle;

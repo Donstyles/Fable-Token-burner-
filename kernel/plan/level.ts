@@ -154,6 +154,51 @@ export class LevelBuilder {
     }
   }
 
+  /**
+   * A wall lantern: iron bracket, glowing pane (role glass, emissive at runtime) and a warm
+   * light. `facing` is the direction the bracket projects from the wall.
+   */
+  lantern(o: {
+    at: Vec3;
+    facing: Vec3;
+    color?: [number, number, number];
+    range?: number;
+    intensity?: number;
+  }): void {
+    const f = v3.normalize([o.facing[0], 0, o.facing[2]]);
+    const yaw = Math.atan2(f[0], f[2]) - Math.PI / 2; // local +X along the bracket
+    const place = mat4.compose(o.at, yaw);
+    const m = new MeshBuilder();
+    m.append(box(0.5, 0.06, 0.06, { material: ROLE.iron }).translate(0.25, 0.2, 0));
+    m.append(box(0.06, 0.4, 0.06, { material: ROLE.iron }).translate(0.03, 0, 0));
+    m.append(box(0.26, 0.34, 0.26, { material: ROLE.glass }).translate(0.42, 0, 0));
+    m.append(box(0.3, 0.05, 0.3, { material: ROLE.iron }).translate(0.42, 0.2, 0));
+    this.dressing.append(m, place);
+    const lamp = mat4.transformPoint(place, [0.42, 0, 0]);
+    this.light(lamp, o.color ?? [1, 0.62, 0.3], o.range ?? 10, o.intensity ?? 2.5);
+  }
+
+  /** A floor brazier: iron bowl on a stand with glowing coals and a warm light. */
+  brazier(o: {
+    at: Vec3;
+    color?: [number, number, number];
+    range?: number;
+    intensity?: number;
+  }): void {
+    const m = new MeshBuilder();
+    m.append(cylinder(0.35, 0.08, 12, { material: ROLE.iron }));
+    m.append(cylinder(0.08, 0.8, 8, { material: ROLE.iron }).translate(0, 0.08, 0));
+    m.append(cylinder(0.55, 0.35, 12, { material: ROLE.iron }).translate(0, 0.85, 0));
+    m.append(cylinder(0.45, 0.12, 12, { material: ROLE.glass }).translate(0, 1.15, 0));
+    this.solid.append(m, mat4.translation(o.at[0], o.at[1], o.at[2]));
+    this.light(
+      [o.at[0], o.at[1] + 1.5, o.at[2]],
+      o.color ?? [1, 0.55, 0.22],
+      o.range ?? 14,
+      o.intensity ?? 2.5,
+    );
+  }
+
   /** A flat slab with its top at `at`, centred on x/z. */
   slab(o: { at: Vec3; size: [number, number]; thickness?: number; material?: number }): void {
     const t = o.thickness ?? 0.4;
@@ -322,6 +367,8 @@ export class LevelBuilder {
     from: number;
     to: number;
     stairRise?: number;
+    /** Treads per full turn; 20 treads of 0.225 m put a portal every 4.5 m at the same angle. */
+    stepsPerTurn?: number;
     wallMaterial?: number;
     align?: { y: number; angleDeg: number };
     openings?: { y: number; width?: number; height?: number }[];
@@ -333,7 +380,8 @@ export class LevelBuilder {
     const rise0 = o.stairRise ?? 0.22;
     const steps = Math.max(1, Math.round(height / rise0));
     const rise = height / steps;
-    const stepAngle = 360 / 16; // degrees per tread
+    const perTurn = o.stepsPerTurn ?? 16;
+    const stepAngle = 360 / perTurn; // degrees per tread
     const wallMat = o.wallMaterial ?? ROLE.ashlar;
     // Tread k (0-based) is centred at local angle (k + 0.5)·stepAngle with its top at (k + 1)·rise.
     const treadFor = (y: number): { k: number; angle: number; top: number } => {
@@ -395,7 +443,7 @@ export class LevelBuilder {
       innerRadius: Math.max(0.3, r * 0.18),
       rise,
       steps,
-      turns: steps / 16,
+      turns: steps / perTurn,
     });
     this.add(stair, place);
     this.solid.append(
@@ -552,7 +600,9 @@ export class LevelBuilder {
     const { min, max } = o.bounds;
     const centre = v3.scale(v3.add(min, max), 0.5);
     const half = v3.scale(v3.sub(max, min), 0.5);
-    const rock = sdf.box(centre, [half[0] - 0.5, half[1] - 0.5, half[2] - 0.5]);
+    // Rock extends past the bounds, so the grid never surfaces the outside of the mass:
+    // only carved surfaces (and tunnel mouths leaving the bounds) produce triangles.
+    const rock = sdf.box(centre, [half[0] + 1, half[1] + 1, half[2] + 1]);
     let voids = o.carve(sdf);
     if ((o.roughness ?? 0) > 0) voids = sdf.displace(voids, o.roughness ?? 0.3, 0.7, o.seed ?? 1);
     const field = sdf.subtract(rock, voids);
@@ -564,6 +614,9 @@ export class LevelBuilder {
       material: o.material ?? ROLE.rock,
       uvScale: 2,
     });
+    // Rock is smooth-shaded: it reads as stone rather than crystal, and shared normals
+    // let the exporter weld the dense marching-cubes vertices.
+    mesh.smoothNormals();
     this.solid.append(mesh);
   }
 

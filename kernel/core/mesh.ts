@@ -111,9 +111,10 @@ export class MeshBuilder {
       this.positions.push(p[0], p[1], p[2]);
       this.normals.push(n[0], n[1], n[2]);
     }
-    this.uvs.push(...other.uvs);
-    const otherScales = other.uvScales ?? new Array<number>(other.positions.length / 3).fill(0);
-    this.uvScales.push(...otherScales);
+    // Loops, not spreads: a cave mesh has more entries than the call stack allows.
+    for (let i = 0; i < other.uvs.length; i++) this.uvs.push(other.uvs[i] ?? 0);
+    const count = other.positions.length / 3;
+    for (let i = 0; i < count; i++) this.uvScales.push(other.uvScales?.[i] ?? 0);
     for (let i = 0; i < other.indices.length; i += 3) {
       const a = (other.indices[i] ?? 0) + base;
       const b = (other.indices[i + 1] ?? 0) + base;
@@ -121,7 +122,7 @@ export class MeshBuilder {
       if (mirrored) this.indices.push(a, c, b);
       else this.indices.push(a, b, c);
     }
-    this.materials.push(...other.materials);
+    for (let i = 0; i < other.materials.length; i++) this.materials.push(other.materials[i] ?? 0);
     if (transform) this.refreshAutoUVs(base);
     return this;
   }
@@ -224,6 +225,34 @@ export class MeshBuilder {
       }
     }
     return this;
+  }
+
+  /**
+   * Average the normals of all vertices sharing a position (within `precision`), for
+   * organic surfaces such as cave rock. Planar UVs follow the new normals.
+   */
+  smoothNormals(precision = 1e-5): this {
+    const sums = new Map<string, Vec3>();
+    const keys: string[] = [];
+    for (let v = 0; v < this.vertexCount; v++) {
+      const i = v * 3;
+      const key = [this.positions[i], this.positions[i + 1], this.positions[i + 2]]
+        .map((x) => Math.round((x ?? 0) / precision))
+        .join(',');
+      keys.push(key);
+      const sum = sums.get(key) ?? [0, 0, 0];
+      sum[0] += this.normals[i] ?? 0;
+      sum[1] += this.normals[i + 1] ?? 0;
+      sum[2] += this.normals[i + 2] ?? 0;
+      sums.set(key, sum);
+    }
+    for (let v = 0; v < this.vertexCount; v++) {
+      const n = v3.normalize(sums.get(keys[v] ?? '') ?? [0, 1, 0]);
+      this.normals[v * 3] = n[0];
+      this.normals[v * 3 + 1] = n[1];
+      this.normals[v * 3 + 2] = n[2];
+    }
+    return this.refreshAutoUVs();
   }
 
   bounds(): { min: Vec3; max: Vec3 } {

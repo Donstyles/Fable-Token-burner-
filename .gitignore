@@ -8,6 +8,8 @@
 # dependencies and build output
 node_modules/
 dist/
+# compiled levels (npm run level:build)
+public/levels/
 dev-dist/
 .vite/
 *.tsbuildinfo

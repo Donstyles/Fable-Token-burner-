@@ -27,6 +27,8 @@ jobs:
           node-version-file: .nvmrc
           cache: npm
       - run: npm ci
+      - name: Compile levels
+        run: npm run level:build
       - name: Build for project pages
         run: npm run build
         env:

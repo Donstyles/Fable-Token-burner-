@@ -39,7 +39,7 @@ precision highp float;
 attribute vec3 position;
 attribute vec3 normal;
 attribute vec2 uv;
-#ifdef VERTEXCOLOR
+#if defined(VERTEXCOLOR) || defined(BAKED)
 attribute vec4 color;
 #endif
 uniform mat4 world;
@@ -50,6 +50,7 @@ uniform vec3 lightColor;
 uniform vec3 ambientColor;
 uniform float fogDensity;
 uniform vec2 uvScale;
+uniform float bakedMix;
 varying vec2 vUV;
 varying vec3 vLight;
 varying vec3 vWorldPos;
@@ -60,7 +61,10 @@ void main(void) {
   vec3 n = normalize(mat3(world) * normal);
   float ndl = max(dot(n, -lightDirection), 0.0);
   vec3 light = ambientColor + lightColor * ndl;
-#ifdef VERTEXCOLOR
+#ifdef BAKED
+  // Baked per-vertex light replaces the environment's key and ambient light.
+  light = mix(light, color.rgb, bakedMix);
+#elif defined(VERTEXCOLOR)
   light *= color.rgb;
 #endif
   vLight = light;
@@ -108,7 +112,10 @@ void main(void) {
 export interface VertexLitOptions {
   name: string;
   texture: BaseTexture;
+  /** Multiply the environment light by the vertex colour. */
   vertexColors?: boolean;
+  /** Vertex colour is baked light (compiled levels); see setBakedMix. */
+  baked?: boolean;
   uvScale?: [number, number];
   tint?: Color3;
   emissive?: Color3;
@@ -125,6 +132,7 @@ export class RetroMaterials {
   private readonly observer: Observer<Scene>;
   readonly lights: PointLightDesc[] = [];
   env: LightingEnvironment;
+  private bakedMix = 1;
 
   constructor(
     private readonly scene: Scene,
@@ -135,8 +143,13 @@ export class RetroMaterials {
   }
 
   create(opts: VertexLitOptions): ShaderMaterial {
-    const defines = opts.vertexColors ? ['#define VERTEXCOLOR'] : [];
-    const attributes = ['position', 'normal', 'uv', ...(opts.vertexColors ? ['color'] : [])];
+    const useColor = opts.vertexColors || opts.baked;
+    const defines = opts.baked
+      ? ['#define BAKED']
+      : opts.vertexColors
+        ? ['#define VERTEXCOLOR']
+        : [];
+    const attributes = ['position', 'normal', 'uv', ...(useColor ? ['color'] : [])];
     const mat = new ShaderMaterial(opts.name, this.scene, SHADER, {
       attributes,
       uniforms: [
@@ -149,6 +162,7 @@ export class RetroMaterials {
         'fogDensity',
         'fogColor',
         'uvScale',
+        'bakedMix',
         'tint',
         'emissive',
         'pointPos',
@@ -160,6 +174,7 @@ export class RetroMaterials {
     });
     mat.setTexture('diffuseSampler', opts.texture);
     mat.setVector2('uvScale', new Vector2(...(opts.uvScale ?? [1, 1])));
+    mat.setFloat('bakedMix', this.bakedMix);
     mat.setColor3('tint', opts.tint ?? Color3.White());
     mat.setColor3('emissive', opts.emissive ?? Color3.Black());
     mat.setArray3('pointPos', new Array<number>(MAX_POINT_LIGHTS * 3).fill(0));
@@ -180,6 +195,12 @@ export class RetroMaterials {
   removeLight(light: PointLightDesc): void {
     const i = this.lights.indexOf(light);
     if (i >= 0) this.lights.splice(i, 1);
+  }
+
+  /** Blend between environment light (0) and baked vertex light (1) on baked materials. */
+  setBakedMix(v: number): void {
+    this.bakedMix = v;
+    for (const m of this.materials) m.setFloat('bakedMix', v);
   }
 
   setEnvironment(next: Partial<LightingEnvironment>): void {

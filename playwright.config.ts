@@ -43,7 +43,7 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: `npm run build && npm run build:dev && npm run preview -- --port ${port} --strictPort`,
+    command: `npm run level:build && npm run build && npm run build:dev && npm run preview -- --port ${port} --strictPort`,
     url: `http://localhost:${port}/`,
     reuseExistingServer: !process.env.CI,
     timeout: 180_000,

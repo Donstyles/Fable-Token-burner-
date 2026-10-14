@@ -1,0 +1,14 @@
+{
+  "$comment": "Material roles (kernel/elements/roles.ts) mapped to Poly Haven CC0 textures. `npm run textures` fetches the 1k diffuse map and writes a 256 px PNG per role to assets/textures/. Edit, re-run, commit the outputs.",
+  "size": 256,
+  "roles": {
+    "ashlar": { "source": "polyhaven", "id": "large_sandstone_blocks_01", "metresPerTile": 2 },
+    "flagstone": { "source": "polyhaven", "id": "monastery_stone_floor", "metresPerTile": 2 },
+    "plank": { "source": "polyhaven", "id": "brown_planks_09", "metresPerTile": 2 },
+    "iron": { "source": "polyhaven", "id": "metal_plate_02", "metresPerTile": 1 },
+    "plaster": { "source": "polyhaven", "id": "beige_wall_001", "metresPerTile": 2 },
+    "rock": { "source": "polyhaven", "id": "cliff_side", "metresPerTile": 4 },
+    "marble": { "source": "polyhaven", "id": "marble_01", "metresPerTile": 2 },
+    "trim": { "source": "polyhaven", "id": "stone_brick_wall_001", "metresPerTile": 1 }
+  }
+}

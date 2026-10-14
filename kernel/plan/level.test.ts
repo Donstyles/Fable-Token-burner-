@@ -217,10 +217,12 @@ describe('level planner', () => {
     });
     const out = await plan.build();
     expect(new Set(out.visual.materials)).toEqual(new Set([ROLE.rock]));
-    expect(isClosed(out.visual)).toBe(true);
-    const v = signedVolume(out.visual);
-    expect(v).toBeGreaterThan(0);
-    expect(v).toBeLessThan(15 * 15 * 15);
+    // Only the carved surfaces are meshed; the rock mass has no outer skin.
+    const b = out.bounds;
+    expect(b.max[0]).toBeLessThan(6);
+    expect(b.min[1]).toBeGreaterThan(-6);
+    expect(b.max[2]).toBeGreaterThanOrEqual(7.5);
+    expect(out.visual.indices.length / 3).toBeLessThan(6000);
     // Inside the chamber is void: a ray across the centre hits nothing.
     expect(segmentHits(out.visual, [-2, 0, 0], [2, 0, 0])).toBe(false);
     // The tunnel breaks the rock's face.

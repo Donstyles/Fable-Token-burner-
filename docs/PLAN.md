@@ -25,7 +25,7 @@ week-plus. These are effort sizes, not calendar promises.
 | ----- | --------------------------------------------------------------------------- |
 | 0     | Accepted 2026-10-14                                                         |
 | 1     | Accepted 2026-10-14 (stair feel to be settled by ramp colliders in Phase 2) |
-| 2     | In progress since 2026-10-14                                                |
+| 2     | Built 2026-10-14, awaiting owner sign-off on device                         |
 | 3–7   | Not started                                                                 |
 
 ## Phase overview
@@ -56,11 +56,11 @@ src/
   ui/            HTML/CSS HUD and screens
   data/          tables: classes, skills, spells, items, monsters, NPCs
 kernel/          geometry kernel (pure TypeScript, runs in Node and browser)
-levels/          level scripts: town, dungeon-01
+levels/          level scripts: showcase (town, dungeon-01 later)
 tools/           pipeline CLIs, manifest, validation
-assets/          committed generated assets + manifest.json
+assets/          committed generated assets (textures/ with manifest.json)
 pipeline/        inbox/ (owner images), batches/, style.md
-public/          PWA manifest, icons, splash
+public/          PWA manifest, icons, splash; levels/ is generated (git-ignored)
 ```
 
 ---
@@ -217,6 +217,16 @@ water.river({
 });
 water.fall({ from: cavern.ledge('north', 8), into: 'river' });
 ```
+
+**Status 2026-10-14:** steps 1–8 and 10 built (see DESIGN.md decision log).
+Step 9 is the dev build itself: it loads `levels/showcase` with a fly-camera
+toggle, wireframe and navmesh overlays and a baked-light slider in the tune
+panel; rebuild on save is `npm run level:build` plus a reload. Left for
+later phases: automap floor-plan slices (Phase 5 needs them), ribbed and
+groin vaults, buttresses, basins and canals (Phase 3 water), rubble and
+stalactite props (Phase 6 content). Real textures (Phase 4 interleave) are
+in: `npm run textures` fetches CC0 Poly Haven sets listed in
+`pipeline/textures.json`.
 
 **Deliverables:** kernel with tests, compile CLI, viewer, showcase level on
 the phone.

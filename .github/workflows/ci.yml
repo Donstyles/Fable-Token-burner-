@@ -25,6 +25,7 @@ jobs:
       - run: npm run typecheck
       - run: npm run format:check
       - run: npm run test
+      - run: npm run level:build
       - run: npm run build
       - run: npm run build:dev
       - name: Secrets guard (tree and build output)

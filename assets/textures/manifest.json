@@ -1,0 +1,110 @@
+{
+  "ashlar": {
+    "role": "ashlar",
+    "source": "polyhaven",
+    "id": "large_sandstone_blocks_01",
+    "name": "Large Sandstone Blocks 01",
+    "authors": [
+      "Rob Tuytel"
+    ],
+    "licence": "CC0 1.0",
+    "url": "https://polyhaven.com/a/large_sandstone_blocks_01",
+    "metresPerTile": 2,
+    "size": 256
+  },
+  "flagstone": {
+    "role": "flagstone",
+    "source": "polyhaven",
+    "id": "monastery_stone_floor",
+    "name": "Monastery Stone Floor",
+    "authors": [
+      "Amal Kumar"
+    ],
+    "licence": "CC0 1.0",
+    "url": "https://polyhaven.com/a/monastery_stone_floor",
+    "metresPerTile": 2,
+    "size": 256
+  },
+  "plank": {
+    "role": "plank",
+    "source": "polyhaven",
+    "id": "brown_planks_09",
+    "name": "Brown Planks 09",
+    "authors": [
+      "Rob Tuytel"
+    ],
+    "licence": "CC0 1.0",
+    "url": "https://polyhaven.com/a/brown_planks_09",
+    "metresPerTile": 2,
+    "size": 256
+  },
+  "iron": {
+    "role": "iron",
+    "source": "polyhaven",
+    "id": "metal_plate_02",
+    "name": "Metal Plate 02",
+    "authors": [
+      "Rob Tuytel"
+    ],
+    "licence": "CC0 1.0",
+    "url": "https://polyhaven.com/a/metal_plate_02",
+    "metresPerTile": 1,
+    "size": 256
+  },
+  "plaster": {
+    "role": "plaster",
+    "source": "polyhaven",
+    "id": "beige_wall_001",
+    "name": "Beige Wall 001",
+    "authors": [
+      "Dimitrios Savva",
+      "Rico Cilliers"
+    ],
+    "licence": "CC0 1.0",
+    "url": "https://polyhaven.com/a/beige_wall_001",
+    "metresPerTile": 2,
+    "size": 256
+  },
+  "rock": {
+    "role": "rock",
+    "source": "polyhaven",
+    "id": "cliff_side",
+    "name": "Cliff Side",
+    "authors": [
+      "James Ray Cock",
+      "Jenelle van Heerden",
+      "Dario Barresi"
+    ],
+    "licence": "CC0 1.0",
+    "url": "https://polyhaven.com/a/cliff_side",
+    "metresPerTile": 4,
+    "size": 256
+  },
+  "marble": {
+    "role": "marble",
+    "source": "polyhaven",
+    "id": "marble_01",
+    "name": "Marble 01",
+    "authors": [
+      "Rob Tuytel"
+    ],
+    "licence": "CC0 1.0",
+    "url": "https://polyhaven.com/a/marble_01",
+    "metresPerTile": 2,
+    "size": 256
+  },
+  "trim": {
+    "role": "trim",
+    "source": "polyhaven",
+    "id": "stone_brick_wall_001",
+    "name": "Stone Brick Wall 001",
+    "authors": [
+      "Dimitrios Savva",
+      "Rico Cilliers"
+    ],
+    "licence": "CC0 1.0",
+    "url": "https://polyhaven.com/a/stone_brick_wall_001",
+    "metresPerTile": 1,
+    "size": 256
+  }
+}

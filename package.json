@@ -22,7 +22,9 @@
     "icons": "tsx tools/icons.ts",
     "check": "npm run lint && npm run typecheck && npm run test && npm run secrets:guard",
     "build:dev": "vite build --mode devbuild",
-    "palette": "tsx tools/palette.ts"
+    "palette": "tsx tools/palette.ts",
+    "level:build": "tsx tools/level-build.ts",
+    "textures": "tsx tools/textures.ts"
   },
   "dependencies": {
     "@babylonjs/core": "^9.30.0",

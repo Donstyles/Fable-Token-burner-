@@ -213,18 +213,25 @@ export function spiralStair(o: SpiralStairOptions): Element {
   if (o.innerRadius > 0) {
     m.append(cylinder(o.innerRadius, (o.steps + 1) * o.rise, 12, { material: mat }));
   }
-  // Helical ramp collider: rings of 2 points (inner, outer) climbing continuously.
+  // Helical ramp collider climbing continuously. Each ring is a radial cross-section split
+  // into strips, so only the strip next to the newel is steep; one quad across the whole
+  // width would inherit that slope and the navmesh would reject the entire ramp.
   const slices = o.colliderSlices ?? 6;
+  const strips = 4;
   const rings: Vec3[][] = [];
   const n = o.steps * slices;
   for (let k = 0; k <= n; k++) {
     const a = (dir * k * stepAngle) / slices;
     const y = (k / slices) * o.rise;
-    const inner: Vec3 = [r0 * Math.cos(a), y, -r0 * Math.sin(a)];
-    const outer: Vec3 = [o.radius * Math.cos(a), y, -o.radius * Math.sin(a)];
-    const innerLow: Vec3 = [inner[0], y - 0.3, inner[2]];
-    const outerLow: Vec3 = [outer[0], y - 0.3, outer[2]];
-    rings.push([innerLow, outerLow, outer, inner]);
+    const top: Vec3[] = [];
+    const low: Vec3[] = [];
+    for (let s = 0; s <= strips; s++) {
+      const r = r0 + ((o.radius - r0) * s) / strips;
+      top.push([r * Math.cos(a), y, -r * Math.sin(a)]);
+      low.push([r * Math.cos(a), y - 0.3, -r * Math.sin(a)]);
+    }
+    // Bottom inner→outer, then top outer→inner: a closed cross-section.
+    rings.push([...low, ...top.reverse()]);
   }
   const ramp = loft(rings, { material: ROLE.collider });
   return { visual: m, collider: ramp };
