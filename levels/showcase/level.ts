@@ -57,7 +57,7 @@ export default function showcase(plan: LevelBuilder): void {
       range: 12,
     });
   }
-  plan.spawn([0, 0, -3], 0);
+  plan.spawn([-3, 0, -3], 0);
   plan.point('gallery', [0, GALLERY, 4.75], 'poi');
 
   // ── Shaft: spiral stair serving undercroft, hall and gallery ──────────────────────────
