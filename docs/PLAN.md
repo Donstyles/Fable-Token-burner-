@@ -1,8 +1,9 @@
 # Implementation Plan (for approval)
 
 Companion to `DESIGN.md`. This is the step-by-step plan for everything
-between now and the first playable. Nothing here starts until the owner says
-START, and each phase is approved separately.
+between now and the first playable. **Approved by the owner on 2026-10-14.**
+Work starts on the owner's START, and each phase is still approved
+separately at its kickoff.
 
 ## How approval works
 
@@ -394,7 +395,7 @@ by designing at device resolution from the start.
 | Phase 6 | Approve content docs; supply music; approve batches |
 | Phase 7 | Final device testing |
 
-## Open decisions for approval with this plan
+## Decisions approved with this plan (2026-10-14)
 
 1. The phase order above, with 2 and 4 interleaved.
 2. GitHub Pages as the hosting for on-device testing.
