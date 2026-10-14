@@ -25,20 +25,22 @@ export interface WallOptions {
   cornice?: { height: number; depth: number; material?: number };
 }
 
-/** A straight wall along +X, centred on z = 0, from y = 0 to height. */
-export function wall(o: WallOptions): Element {
+/**
+ * The separate solids of a wall (body, plinth, cornice). They overlap, so anything that
+ * runs booleans on a wall unions these first instead of trusting the merged mesh.
+ */
+export function wallParts(o: WallOptions): MeshBuilder[] {
   const t = o.thickness ?? 0.5;
-  const m = new MeshBuilder();
-  m.append(
+  const parts: MeshBuilder[] = [
     box(o.length, o.height, t, { material: o.material ?? ROLE.ashlar }).translate(
       o.length / 2,
       o.height / 2,
       0,
     ),
-  );
+  ];
   if (o.plinth) {
     const p = o.plinth;
-    m.append(
+    parts.push(
       box(o.length, p.height, t + 2 * p.depth, { material: p.material ?? ROLE.trim }).translate(
         o.length / 2,
         p.height / 2,
@@ -48,7 +50,7 @@ export function wall(o: WallOptions): Element {
   }
   if (o.cornice) {
     const c = o.cornice;
-    m.append(
+    parts.push(
       box(o.length, c.height, t + 2 * c.depth, { material: c.material ?? ROLE.trim }).translate(
         o.length / 2,
         o.height - c.height / 2,
@@ -56,6 +58,13 @@ export function wall(o: WallOptions): Element {
       ),
     );
   }
+  return parts;
+}
+
+/** A straight wall along +X, centred on z = 0, from y = 0 to height. */
+export function wall(o: WallOptions): Element {
+  const m = new MeshBuilder();
+  for (const part of wallParts(o)) m.append(part);
   return { visual: m };
 }
 
@@ -168,11 +177,15 @@ export interface SpiralStairOptions {
   material?: number;
   /** Subdivisions per step for the smooth helical collider. */
   colliderSlices?: number;
+  /** Tread slab thickness; defaults to 1.5 risers so the soffit reads as stepped stone. */
+  treadThickness?: number;
 }
 
 /**
- * A spiral stair around the Y axis starting at angle 0 (the +X direction) and climbing.
- * Treads are wedge prisms; the collider is a smooth helical ramp of thin sector slices.
+ * A spiral stair around the Y axis climbing from angle 0 (the +X direction). Tread k spans
+ * angles [k, k + 1] × step angle (measured as atan2(z, x) for the default clockwise stair)
+ * with its top at (k + 1) × rise. Treads are wedge slabs cantilevered from the newel; the
+ * collider is a smooth helical ramp of thin sector slices.
  */
 export function spiralStair(o: SpiralStairOptions): Element {
   const m = new MeshBuilder();
@@ -186,14 +199,15 @@ export function spiralStair(o: SpiralStairOptions): Element {
     [o.radius * Math.cos(a1), o.radius * Math.sin(a1)],
     [r0 * Math.cos(a1), r0 * Math.sin(a1)],
   ];
+  const thick = o.treadThickness ?? o.rise * 1.5;
   for (let i = 0; i < o.steps; i++) {
     const a0 = dir * i * stepAngle;
     const a1 = dir * (i + 1) * stepAngle;
-    const h = (i + 1) * o.rise;
-    // Sector in the XZ plane: profile (x, z) extruded along Y by the riser height.
-    const tread = extrude(sector(a0, a1), h, { material: mat });
+    const top = (i + 1) * o.rise;
+    // Sector in the XZ plane: profile (x, z) extruded along Y by the slab thickness.
+    const tread = extrude(sector(a0, a1), thick, { material: mat });
     // extrude builds in XY then +Z; rotate so the profile lies flat and the height goes up.
-    tread.transform(mat4.rotationX(-90 * DEG));
+    tread.transform(mat4.rotationX(-90 * DEG)).translate(0, top - thick, 0);
     m.append(tread);
   }
   if (o.innerRadius > 0) {

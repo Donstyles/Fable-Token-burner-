@@ -110,7 +110,11 @@ export function fromManifold(solid: Manifold, uvScale = 1): MeshBuilder {
   for (let r = 0; r < runs.length - 1; r++) {
     const material = idToMaterial.get(ids[r] ?? -1) ?? 0;
     for (let t = runs[r] ?? 0; t < (runs[r + 1] ?? 0); t += 3) {
-      b.addFace([pos(tv[t] ?? 0), pos(tv[t + 1] ?? 0), pos(tv[t + 2] ?? 0)], { material, uvScale });
+      b.addFace([pos(tv[t] ?? 0), pos(tv[t + 1] ?? 0), pos(tv[t + 2] ?? 0)], {
+        material,
+        uvScale,
+        keepDegenerate: true,
+      });
     }
   }
   return b;

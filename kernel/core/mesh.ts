@@ -23,6 +23,11 @@ export interface FaceOptions {
   uvScale?: number;
   /** Explicit UVs, one per point, overriding the planar projection. */
   uvs?: Vec2[];
+  /**
+   * Keep a zero-area triangle instead of dropping it. Boolean output uses them to resolve
+   * T-junctions, and dropping them would open the mesh.
+   */
+  keepDegenerate?: boolean;
 }
 
 export class MeshBuilder {
@@ -59,8 +64,11 @@ export class MeshBuilder {
    */
   addFace(points: Vec3[], opts: FaceOptions = {}): this {
     if (points.length < 3) return this;
-    const n = polygonNormal(points);
-    if (v3.length(n) < 1e-12) return this;
+    let n = polygonNormal(points);
+    if (v3.length(n) < 1e-12) {
+      if (!opts.keepDegenerate || points.length !== 3) return this;
+      n = [0, 1, 0];
+    }
     const tris = points.length === 3 ? [[0, 1, 2]] : earClip(points, n);
     const base = this.vertexCount;
     const material = opts.material ?? 0;

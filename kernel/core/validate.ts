@@ -44,6 +44,32 @@ export function isWatertight(m: MeshData, precision = 1e-6): boolean {
   return true;
 }
 
+/**
+ * Closed check for assembled meshes: several shells may touch along coincident faces, so
+ * instead of demanding each edge once, every directed edge must be balanced by its reverse.
+ */
+export function isClosed(m: MeshData, precision = 1e-6): boolean {
+  const key = (i: number): string => {
+    const p = vertex(m, i);
+    return p.map((x) => Math.round(x / precision)).join(',');
+  };
+  const edges = new Map<string, number>();
+  for (let i = 0; i < m.indices.length; i += 3) {
+    const k = [key(m.indices[i] ?? 0), key(m.indices[i + 1] ?? 0), key(m.indices[i + 2] ?? 0)];
+    for (let e = 0; e < 3; e++) {
+      const a = k[e] ?? '';
+      const b = k[(e + 1) % 3] ?? '';
+      if (a === b) continue;
+      edges.set(`${a}|${b}`, (edges.get(`${a}|${b}`) ?? 0) + 1);
+    }
+  }
+  for (const [e, count] of edges) {
+    const [a, b] = e.split('|');
+    if ((edges.get(`${b}|${a}`) ?? 0) !== count) return false;
+  }
+  return true;
+}
+
 export function vertex(m: MeshData, i: number): Vec3 {
   return [m.positions[i * 3] ?? 0, m.positions[i * 3 + 1] ?? 0, m.positions[i * 3 + 2] ?? 0];
 }
