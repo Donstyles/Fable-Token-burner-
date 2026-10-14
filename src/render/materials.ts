@@ -7,11 +7,12 @@ import type { BaseTexture } from '@babylonjs/core/Materials/Textures/baseTexture
 import type { Texture } from '@babylonjs/core/Materials/Textures/texture';
 import type { Scene } from '@babylonjs/core/scene';
 import type { Observer } from '@babylonjs/core/Misc/observable';
+import { DEFAULT_ENVIRONMENT, type LightingEnvironment } from './environment';
 
 /**
- * Texture sampling for the MM6 look: nearest-neighbour magnification so texels stay
- * square, optionally with mipmaps (nearest within a level, linear between levels) to tame
- * distant shimmer.
+ * Texture sampling for the look: nearest-neighbour magnification so texels stay square
+ * up close, with mipmaps (nearest within a level, linear between levels) to keep distance
+ * calm. Reference: `artwork/reference/look/`.
  */
 export function applyRetroSampling(texture: Texture, mipmaps: boolean): void {
   texture.updateSamplingMode(
@@ -20,24 +21,16 @@ export function applyRetroSampling(texture: Texture, mipmaps: boolean): void {
   texture.anisotropicFilteringLevel = 1;
 }
 
-/** Scene-wide lighting and fog, applied to every vertex-lit material each frame. */
-export interface LightingEnvironment {
-  /** Direction the light travels (normalised). */
-  lightDirection: Vector3;
-  lightColor: Color3;
-  ambientColor: Color3;
-  fogColor: Color3;
-  /** Exponential-squared fog density, 0 disables. */
-  fogDensity: number;
+/** A warm lantern, window or fire: evaluated per pixel, up to four nearest per object. */
+export interface PointLightDesc {
+  position: Vector3;
+  color: Color3;
+  /** Distance at which the light reaches zero. */
+  range: number;
+  intensity: number;
 }
 
-export const DEFAULT_ENVIRONMENT: LightingEnvironment = {
-  lightDirection: new Vector3(-0.4, -1, 0.3).normalize(),
-  lightColor: new Color3(0.95, 0.88, 0.75),
-  ambientColor: new Color3(0.32, 0.32, 0.38),
-  fogColor: new Color3(0.043, 0.039, 0.031),
-  fogDensity: 0.025,
-};
+export const MAX_POINT_LIGHTS = 4;
 
 const SHADER = 'ftbVertexLit';
 
@@ -59,6 +52,8 @@ uniform float fogDensity;
 uniform vec2 uvScale;
 varying vec2 vUV;
 varying vec3 vLight;
+varying vec3 vWorldPos;
+varying vec3 vNormal;
 varying float vFog;
 void main(void) {
   vec4 wp = world * vec4(position, 1.0);
@@ -70,6 +65,8 @@ void main(void) {
 #endif
   vLight = light;
   vUV = uv * uvScale;
+  vWorldPos = wp.xyz;
+  vNormal = n;
   float d = distance(wp.xyz, cameraPosition) * fogDensity;
   vFog = clamp(exp(-d * d), 0.0, 1.0);
   gl_Position = viewProjection * wp;
@@ -80,12 +77,30 @@ ShaderStore.ShadersStore[`${SHADER}FragmentShader`] = /* glsl */ `
 precision highp float;
 varying vec2 vUV;
 varying vec3 vLight;
+varying vec3 vWorldPos;
+varying vec3 vNormal;
 varying float vFog;
 uniform sampler2D diffuseSampler;
 uniform vec3 fogColor;
 uniform vec3 tint;
+uniform vec3 emissive;
+uniform vec3 pointPos[${MAX_POINT_LIGHTS}];
+uniform vec3 pointColor[${MAX_POINT_LIGHTS}];
+uniform float pointRange[${MAX_POINT_LIGHTS}];
 void main(void) {
-  vec3 c = texture2D(diffuseSampler, vUV).rgb * tint * vLight;
+  vec3 n = normalize(vNormal);
+  vec3 pl = vec3(0.0);
+  for (int i = 0; i < ${MAX_POINT_LIGHTS}; i++) {
+    float r = pointRange[i];
+    if (r <= 0.0) continue;
+    vec3 L = pointPos[i] - vWorldPos;
+    float d = length(L);
+    float att = clamp(1.0 - d / r, 0.0, 1.0);
+    att *= att;
+    float ndl = max(dot(n, L / max(d, 0.001)), 0.0);
+    pl += pointColor[i] * att * ndl;
+  }
+  vec3 c = texture2D(diffuseSampler, vUV).rgb * tint * (vLight + pl) + emissive;
   gl_FragColor = vec4(mix(fogColor, c, vFog), 1.0);
 }
 `;
@@ -96,15 +111,19 @@ export interface VertexLitOptions {
   vertexColors?: boolean;
   uvScale?: [number, number];
   tint?: Color3;
+  emissive?: Color3;
 }
 
 /**
- * Per-vertex (Gouraud) lit, fogged, textured material: the classic late-90s shading model.
- * Materials are created through the manager so shared lighting stays in sync.
+ * The world material: per-vertex key and ambient light, per-pixel warm point lights,
+ * emissive glow, and distance fog, over a nearest-sampled texture. Materials are created
+ * through the manager so shared lighting stays in sync, and the manager owns the point
+ * lights and assigns the nearest four to each material's mesh every frame.
  */
 export class RetroMaterials {
   private readonly materials = new Set<ShaderMaterial>();
   private readonly observer: Observer<Scene>;
+  readonly lights: PointLightDesc[] = [];
   env: LightingEnvironment;
 
   constructor(
@@ -131,6 +150,10 @@ export class RetroMaterials {
         'fogColor',
         'uvScale',
         'tint',
+        'emissive',
+        'pointPos',
+        'pointColor',
+        'pointRange',
       ],
       samplers: ['diffuseSampler'],
       defines,
@@ -138,10 +161,25 @@ export class RetroMaterials {
     mat.setTexture('diffuseSampler', opts.texture);
     mat.setVector2('uvScale', new Vector2(...(opts.uvScale ?? [1, 1])));
     mat.setColor3('tint', opts.tint ?? Color3.White());
+    mat.setColor3('emissive', opts.emissive ?? Color3.Black());
+    mat.setArray3('pointPos', new Array<number>(MAX_POINT_LIGHTS * 3).fill(0));
+    mat.setArray3('pointColor', new Array<number>(MAX_POINT_LIGHTS * 3).fill(0));
+    mat.setFloats('pointRange', new Array<number>(MAX_POINT_LIGHTS).fill(0));
     mat.backFaceCulling = true;
     this.materials.add(mat);
     this.pushEnv(mat);
     return mat;
+  }
+
+  /** Register a point light; mutate the returned object to move or dim it. */
+  addLight(light: PointLightDesc): PointLightDesc {
+    this.lights.push(light);
+    return light;
+  }
+
+  removeLight(light: PointLightDesc): void {
+    const i = this.lights.indexOf(light);
+    if (i >= 0) this.lights.splice(i, 1);
   }
 
   setEnvironment(next: Partial<LightingEnvironment>): void {
@@ -161,7 +199,37 @@ export class RetroMaterials {
     const cam = this.scene.activeCamera;
     if (!cam) return;
     const p = cam.globalPosition;
-    for (const m of this.materials) m.setVector3('cameraPosition', p);
+    const pos = new Array<number>(MAX_POINT_LIGHTS * 3).fill(0);
+    const col = new Array<number>(MAX_POINT_LIGHTS * 3).fill(0);
+    const rng = new Array<number>(MAX_POINT_LIGHTS).fill(0);
+    for (const m of this.materials) {
+      m.setVector3('cameraPosition', p);
+      if (this.lights.length === 0) continue;
+      // Nearest lights to the material's first mesh. Materials are per object here; a
+      // material shared across distant objects would need per-mesh binding instead.
+      const mesh = m.getBindedMeshes()[0];
+      const centre = mesh ? mesh.getBoundingInfo().boundingSphere.centerWorld : p;
+      const sorted = this.lights
+        .filter((l) => l.intensity > 0 && l.range > 0)
+        .map((l) => ({ l, d: Vector3.DistanceSquared(l.position, centre) }))
+        .sort((a, b) => a.d - b.d)
+        .slice(0, MAX_POINT_LIGHTS);
+      pos.fill(0);
+      col.fill(0);
+      rng.fill(0);
+      sorted.forEach(({ l }, i) => {
+        pos[i * 3] = l.position.x;
+        pos[i * 3 + 1] = l.position.y;
+        pos[i * 3 + 2] = l.position.z;
+        col[i * 3] = l.color.r * l.intensity;
+        col[i * 3 + 1] = l.color.g * l.intensity;
+        col[i * 3 + 2] = l.color.b * l.intensity;
+        rng[i] = l.range;
+      });
+      m.setArray3('pointPos', pos);
+      m.setArray3('pointColor', col);
+      m.setFloats('pointRange', rng);
+    }
   }
 
   dispose(): void {

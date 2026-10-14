@@ -12,7 +12,7 @@ import { Vector3 } from '@babylonjs/core/Maths/math.vector';
 import type { Mesh } from '@babylonjs/core/Meshes/mesh';
 import type { Scene } from '@babylonjs/core/scene';
 import type { ShaderMaterial } from '@babylonjs/core/Materials/shaderMaterial';
-import { applyRetroSampling, type RetroMaterials } from '../render/materials';
+import { applyRetroSampling, type PointLightDesc, type RetroMaterials } from '../render/materials';
 
 export interface DevArena {
   spawn: Vector3;
@@ -21,6 +21,8 @@ export interface DevArena {
   tappable: Mesh[];
   materialOf(mesh: Mesh): ShaderMaterial | undefined;
   setMipmaps(on: boolean): void;
+  /** Scale every lantern and window light. */
+  setLightIntensity(v: number): void;
   dispose(): void;
 }
 
@@ -58,7 +60,11 @@ export function buildDevArena(scene: Scene, materials: RetroMaterials): DevArena
     stone: checker(scene, 'dev-stone', '#8d8a80', '#737068'),
     wood: checker(scene, 'dev-wood', '#9b6b35', '#7f5527'),
     target: checker(scene, 'dev-target', '#c0392b', '#96281b', 4),
+    iron: checker(scene, 'dev-iron', '#2b2b2e', '#232326', 4),
+    plaster: checker(scene, 'dev-plaster', '#b9ad95', '#a89c86', 8),
+    glass: checker(scene, 'dev-glass', '#ffd08a', '#ffbf63', 2),
   };
+  const lights: PointLightDesc[] = [];
   const meshes: Mesh[] = [];
   const tappable: Mesh[] = [];
   const byMesh = new Map<Mesh, ShaderMaterial>();
@@ -69,19 +75,45 @@ export function buildDevArena(scene: Scene, materials: RetroMaterials): DevArena
     pos: [number, number, number],
     tex: DynamicTexture,
     uv: [number, number],
-    opts: { rotX?: number; rotY?: number; tappable?: boolean } = {},
+    opts: {
+      rotX?: number;
+      rotY?: number;
+      tappable?: boolean;
+      emissive?: Color3;
+      noPhysics?: boolean;
+    } = {},
   ): Mesh => {
     const m = CreateBox(name, { width: size[0], height: size[1], depth: size[2] }, scene);
     m.position.set(pos[0], pos[1], pos[2]);
     if (opts.rotX) m.rotation.x = opts.rotX;
     if (opts.rotY) m.rotation.y = opts.rotY;
-    const mat = materials.create({ name: `${name}-mat`, texture: tex, uvScale: uv });
+    const mat = materials.create({
+      name: `${name}-mat`,
+      texture: tex,
+      uvScale: uv,
+      ...(opts.emissive ? { emissive: opts.emissive } : {}),
+    });
     m.material = mat;
     byMesh.set(m, mat);
-    new PhysicsAggregate(m, PhysicsShapeType.BOX, { mass: 0, friction: 0.8 }, scene);
+    if (!opts.noPhysics) {
+      new PhysicsAggregate(m, PhysicsShapeType.BOX, { mass: 0, friction: 0.8 }, scene);
+    }
     meshes.push(m);
     if (opts.tappable) tappable.push(m);
     return m;
+  };
+
+  // A lantern on a post: iron post, glowing lamp box, warm point light.
+  const warm = new Color3(1.0, 0.62, 0.3);
+  const lantern = (x: number, z: number): void => {
+    box(`dev-post-${x}-${z}`, [0.12, 2.6, 0.12], [x, 1.3, z], textures.iron, [1, 8]);
+    box(`dev-lamp-${x}-${z}`, [0.3, 0.35, 0.3], [x, 2.75, z], textures.glass, [1, 1], {
+      emissive: new Color3(1.1, 0.78, 0.42),
+      noPhysics: true,
+    });
+    lights.push(
+      materials.addLight({ position: new Vector3(x, 2.7, z), color: warm, range: 9, intensity: 1 }),
+    );
   };
 
   // Floor and perimeter.
@@ -146,6 +178,29 @@ export function buildDevArena(scene: Scene, materials: RetroMaterials): DevArena
     meshes.push(p);
   }
 
+  // Lanterns around the spawn and along the way to the stairs.
+  lantern(-3, -11);
+  lantern(3, -11);
+  lantern(6, 2);
+  lantern(-6, -1);
+
+  // A house front with glowing windows, to judge emissive bloom and warm light pools.
+  box('dev-house', [8, 4.5, 0.5], [-12, 2.25, 8], textures.plaster, [8, 4.5]);
+  for (const wx of [-14.5, -12, -9.5]) {
+    box(`dev-window-${wx}`, [0.9, 1.1, 0.12], [wx, 2.4, 7.72], textures.glass, [1, 1], {
+      emissive: new Color3(1.05, 0.7, 0.36),
+      noPhysics: true,
+    });
+    lights.push(
+      materials.addLight({
+        position: new Vector3(wx, 2.3, 7.2),
+        color: warm,
+        range: 6,
+        intensity: 0.8,
+      }),
+    );
+  }
+
   // Tap targets.
   box('dev-target-1', [1, 1, 1], [3, 0.5, -8], textures.target, [1, 1], { tappable: true });
   box('dev-target-2', [1, 1.5, 1], [-3, 0.75, -8], textures.target, [1, 1], { tappable: true });
@@ -155,6 +210,13 @@ export function buildDevArena(scene: Scene, materials: RetroMaterials): DevArena
     for (const t of Object.values(textures)) applyRetroSampling(t, on);
   };
   setMipmaps(true);
+  const baseIntensity = lights.map((l) => l.intensity);
+  const setLightIntensity = (v: number): void => {
+    lights.forEach((l, i) => {
+      l.intensity = (baseIntensity[i] ?? 1) * v;
+    });
+  };
+  setLightIntensity(2.2);
 
   return {
     spawn: new Vector3(0, 0, -14),
@@ -162,7 +224,9 @@ export function buildDevArena(scene: Scene, materials: RetroMaterials): DevArena
     tappable,
     materialOf: (m) => byMesh.get(m),
     setMipmaps,
+    setLightIntensity,
     dispose() {
+      for (const l of lights) materials.removeLight(l);
       for (const m of meshes) m.dispose();
       for (const t of Object.values(textures)) t.dispose();
     },

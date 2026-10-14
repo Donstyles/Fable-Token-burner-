@@ -3,12 +3,21 @@ import { DEFAULT_FILTER, FILTER_MODES, type FilterSettings } from '../render/fil
 
 const KEY = 'ftb.settings.v1';
 
+export type UpscaleMode = 'linear' | 'nearest';
+export const UPSCALE_MODES: readonly UpscaleMode[] = ['linear', 'nearest'];
+
 export interface Settings {
   renderPreset: RenderPreset;
   filter: FilterSettings;
+  /** How the world render is stretched to the display: soft (look target) or pixelated. */
+  upscale: UpscaleMode;
 }
 
-const defaults: Settings = { renderPreset: DEFAULT_RENDER_PRESET, filter: { ...DEFAULT_FILTER } };
+const defaults: Settings = {
+  renderPreset: DEFAULT_RENDER_PRESET,
+  filter: { ...DEFAULT_FILTER },
+  upscale: 'linear',
+};
 
 function num(v: unknown, fallback: number, min: number, max: number): number {
   return typeof v === 'number' && Number.isFinite(v) ? Math.min(max, Math.max(min, v)) : fallback;
@@ -29,6 +38,11 @@ export function loadSettings(): Settings {
     const mode = f.mode;
     return {
       renderPreset: isRenderPreset(obj.renderPreset) ? obj.renderPreset : defaults.renderPreset,
+      upscale:
+        typeof obj.upscale === 'string' &&
+        (UPSCALE_MODES as readonly string[]).includes(obj.upscale)
+          ? (obj.upscale as UpscaleMode)
+          : defaults.upscale,
       filter: {
         mode:
           typeof mode === 'string' && (FILTER_MODES as readonly string[]).includes(mode)

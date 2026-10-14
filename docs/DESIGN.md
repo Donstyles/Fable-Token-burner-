@@ -32,18 +32,38 @@ Reference screenshots live in `artwork/reference/` (third-party, never shipped).
 
 ## 4. Art direction
 
-- Full 3D with real lighting and particle systems, chosen for technical ease.
-- MM6 look through the render path: the world renders at **1080 lines**
-  (720-line performance preset), upscaled with nearest-neighbour sampling;
-  nearest-neighbour texture filtering, posterize and dither post-processing
-  (dither cell size adjustable), fog, animation sampled at a low frame rate.
-  **UI and text render natively in HTML.** Decided 2026-10-14; the look
-  comes from the filters, not from a low resolution.
-- **No billboard enemies.** Everything is a mesh.
-- UI adapted for touch and modern screens (19.5:9), but the MM6 influence and
-  the marble decor are incorporated: marble pillar framing, gold-framed oval
-  portraits with HP/SP bars, stone panels with gold borders for tooltips,
-  the book-shelf buttons, blackletter headings.
+**Structure, interface and tone** come from Might and Magic VI. **The 3D
+rendering look** comes from the five images in `artwork/reference/look/`
+(owner, 2026-10-14), to be emulated precisely: early-2000s 3D realism, not
+1998 software rendering. The MM6 posterize and dither filter stays available
+as an option but is off.
+
+The look, as a checklist for the renderer:
+
+- **Geometry**: low-poly but complete; hard silhouettes; a few hundred to a
+  few thousand triangles per model. **No billboard enemies.**
+- **Textures**: low resolution (128–512 px) with visible texels up close,
+  sampled nearest-neighbour with mipmaps so distance stays calm. Painterly or
+  photo-sourced.
+- **Lighting**: per-vertex key and ambient; **warm point lights** from
+  lanterns and windows pooling on nearby surfaces (per pixel, up to four per
+  object); cool blue-violet dusk ambient; no real-time shadows, baked light
+  where the level is static.
+- **Glow**: emissive windows and lanterns with soft bloom.
+- **Atmosphere**: heavy distance fog tinted like the sky, fog banks lying in
+  valleys and between trees, gradient skies with cloud texture, overcast or
+  dusk by default.
+- **Grade**: cool shadows and warm highlights, slightly lifted blacks, gentle
+  vignette, soft overall. No dithering or posterisation by default.
+- **Wet surfaces**: cobbles after rain reflect the lamps (specular pass,
+  Phase 3).
+- **Resolution**: 1080 lines (720 preset), **linear** upscale so the frame is
+  slightly soft rather than pixelated as a whole; UI and text native.
+- **Animation**: sampled at a low frame rate for creatures, as before.
+- **UI**: adapted for touch and modern screens (19.5:9) but the MM6
+  influence and the marble decor are incorporated: marble pillar framing,
+  gold-framed oval portraits with HP/SP bars, stone panels with gold borders
+  for tooltips, the book-shelf buttons, blackletter headings.
 
 ## 5. Asset pipeline (Meshy)
 
@@ -472,6 +492,10 @@ and icons all share it, so world and UI agree.
   at native resolution.
 - 2026-10-14 – Implementation plan (`PLAN.md`) approved: phase order with 2
   and 4 interleaved, GitHub Pages hosting, dev-only test arena in Phase 1.
+- 2026-10-14 – **Rendering look re-targeted** to the owner's five reference
+  images (early-2000s 3D realism: low-poly, low-res textures, warm point
+  lights, bloom, tinted fog, split-toned grade, linear upscale). MM6 filter
+  kept as an off-by-default option. Section 4 rewritten.
 - 2026-10-14 – Sideways strafing on the left stick (one axis per gesture,
   blocked while looking), first at backward speed, then doubled to two
   thirds. Magnetic level view added, then made an off-by-default toggle. In

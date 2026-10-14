@@ -5,7 +5,7 @@ const executablePath = process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE;
 
 export default defineConfig({
   testDir: 'tests/e2e',
-  timeout: 60_000,
+  timeout: 120_000, // software GL with the grade pipeline is slow
   retries: process.env.CI ? 1 : 0,
   reporter: process.env.CI ? [['github'], ['list']] : 'list',
   use: {

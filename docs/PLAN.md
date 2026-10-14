@@ -232,7 +232,11 @@ and tests); kernel scope creep (mitigated by the fixed element list above).
 ## Phase 3 – Water, light, atmosphere
 
 **Goal:** real water and waterfalls, the lighting model, particles and fog,
-all under the filter and within budget on the phone.
+all within budget on the phone. (2026-10-14: the look target changed to the
+reference images in `artwork/reference/look/`; bloom, grading, sky dome,
+point lights and emissives were pulled forward into Phase 1 so they can be
+tuned in the arena. Phase 3 adds wet-surface specular, fog banks and cloud
+texture on top.)
 
 **Steps**
 

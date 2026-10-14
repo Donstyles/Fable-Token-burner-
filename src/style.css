@@ -53,7 +53,7 @@ img {
   pointer-events: none;
 }
 
-/* The world: rendered below native resolution and upscaled with nearest-neighbour. */
+/* The world: rendered at the chosen line count and stretched to the display, soft by default. */
 #world {
   position: fixed;
   inset: 0;
@@ -61,6 +61,9 @@ img {
   height: 100%;
   display: block;
   outline: none;
+  image-rendering: auto;
+}
+#world.pixelated {
   image-rendering: pixelated;
   image-rendering: crisp-edges;
 }

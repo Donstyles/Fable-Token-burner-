@@ -23,8 +23,9 @@ export interface FilterSettings {
   ditherCell: number;
 }
 
+/** Off by default since the look re-target (2026-10-14); the MM6 modes stay available. */
 export const DEFAULT_FILTER: FilterSettings = {
-  mode: 'palette',
+  mode: 'off',
   levels: 16,
   dither: 0.6,
   ditherCell: 2,

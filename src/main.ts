@@ -43,6 +43,11 @@ tryLockLandscape();
 installServiceWorker(ui);
 
 const app = boot(canvas, ui);
+// `?lite`: cheap rendering for automated tests on software GL (no bloom, 720 lines).
+if (new URLSearchParams(location.search).has('lite')) {
+  app.setGrade({ bloom: false, vignette: 0 });
+  app.setRenderPreset('lines-720');
+}
 
 declare global {
   interface Window {

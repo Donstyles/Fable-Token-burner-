@@ -12,6 +12,8 @@ import { bindInput } from '../app/input/dom';
 import { PartyController, DEFAULT_TUNING } from '../world/player';
 import { FILTER_MODES, type FilterMode } from '../render/filter';
 import { RENDER_PRESETS, type RenderPreset } from '../render/resolution';
+import { ENVIRONMENT_PRESETS, type EnvironmentPreset } from '../render/environment';
+import { UPSCALE_MODES, type UpscaleMode } from '../app/settings';
 import { buildDevArena, FLASH_TINT } from './arena';
 import { createDevPanel, type Field } from './panel';
 import { diag, diagText } from '../app/diag';
@@ -29,6 +31,8 @@ export interface DevHandle {
   debug(): { support: number; move: number; velocity: [number, number, number]; airborne: boolean };
   /** Move the party to a feet position and heading, for tests. */
   teleport(x: number, y: number, z: number, yawDeg: number): void;
+  /** Accumulated simulated seconds, so tests can measure speeds independent of frame rate. */
+  simTime(): number;
   pickAt(x: number, y: number): string | null;
   /** Pointer event counters and consumed taps, for diagnosing input on real devices. */
   events: { down: number; move: number; up: number; cancel: number; taps: number; types: string[] };
@@ -93,6 +97,7 @@ export async function startDev(app: App): Promise<DevHandle> {
     teleport(x, y, z, yawDeg) {
       party.teleport(new Vector3(x, y, z), yawDeg);
     },
+    simTime: () => simTime,
   };
 
   // Tap feedback: flash the tapped mesh.
@@ -114,8 +119,10 @@ export async function startDev(app: App): Promise<DevHandle> {
     panel.toast(`tapped ${mesh.name}`);
   };
 
+  let simTime = 0;
   scene.onBeforeRenderObservable.add(() => {
     const dt = Math.min(engine.getDeltaTime() / 1000, 0.05);
+    simTime += dt;
     const input = zones.consume();
     party.update(dt, input);
     events.taps += input.taps.length;
@@ -147,8 +154,96 @@ export async function startDev(app: App): Promise<DevHandle> {
       },
       {
         kind: 'select',
+        key: 'upscale',
+        label: 'upscale',
+        options: UPSCALE_MODES,
+        get: () => app.settings().upscale,
+        set: (v) => app.setUpscale(v as UpscaleMode),
+      },
+      {
+        kind: 'select',
+        key: 'environment',
+        label: 'sky / light',
+        options: ENVIRONMENT_PRESETS,
+        get: () => 'dusk-violet',
+        set: (v) => app.setEnvironmentPreset(v as EnvironmentPreset),
+      },
+      range(
+        'bloomWeight',
+        'bloom',
+        0,
+        1,
+        0.05,
+        () => app.grade.settings.bloomWeight,
+        (v) => app.setGrade({ bloomWeight: v }),
+      ),
+      range(
+        'bloomThreshold',
+        'bloom threshold',
+        0.3,
+        1.2,
+        0.05,
+        () => app.grade.settings.bloomThreshold,
+        (v) => app.setGrade({ bloomThreshold: v }),
+      ),
+      range(
+        'vignette',
+        'vignette',
+        0,
+        3,
+        0.1,
+        () => app.grade.settings.vignette,
+        (v) => app.setGrade({ vignette: v }),
+      ),
+      range(
+        'contrast',
+        'contrast',
+        0.8,
+        1.5,
+        0.02,
+        () => app.grade.settings.contrast,
+        (v) => app.setGrade({ contrast: v }),
+      ),
+      range(
+        'exposure',
+        'exposure',
+        0.5,
+        1.8,
+        0.05,
+        () => app.grade.settings.exposure,
+        (v) => app.setGrade({ exposure: v }),
+      ),
+      range(
+        'splitTone',
+        'split tone',
+        0,
+        50,
+        1,
+        () => app.grade.settings.splitTone,
+        (v) => app.setGrade({ splitTone: v }),
+      ),
+      range(
+        'saturation',
+        'saturation',
+        -60,
+        60,
+        5,
+        () => app.grade.settings.saturation,
+        (v) => app.setGrade({ saturation: v }),
+      ),
+      range(
+        'lamps',
+        'lamp intensity',
+        0,
+        5,
+        0.1,
+        () => 2.2,
+        (v) => arena.setLightIntensity(v),
+      ),
+      {
+        kind: 'select',
         key: 'filterMode',
-        label: 'filter',
+        label: 'mm6 filter',
         options: FILTER_MODES,
         get: () => app.filter.settings.mode,
         set: (v) => app.setFilter({ mode: v as FilterMode }),

@@ -6,7 +6,10 @@ import { UniversalCamera } from '@babylonjs/core/Cameras/universalCamera';
 import { computeRenderTarget, hasUsableSize, type RenderPreset } from '../render/resolution';
 import { RetroFilter, type FilterSettings } from '../render/filter';
 import { RetroMaterials } from '../render/materials';
-import { loadSettings, saveSettings, type Settings } from './settings';
+import { GradePass, type GradeSettings } from '../render/grade';
+import { SkyDome } from '../render/sky';
+import { ENVIRONMENTS, type EnvironmentPreset } from '../render/environment';
+import { loadSettings, saveSettings, type Settings, type UpscaleMode } from './settings';
 import { createDevOverlay, isDevMode, type DevOverlay } from './dev-overlay';
 import { diag } from './diag';
 
@@ -17,10 +20,15 @@ export interface App {
   canvas: HTMLCanvasElement;
   uiLayer: HTMLElement;
   filter: RetroFilter;
+  grade: GradePass;
   materials: RetroMaterials;
+  sky: SkyDome;
   settings(): Settings;
   setRenderPreset(preset: RenderPreset): void;
   setFilter(next: Partial<FilterSettings>): void;
+  setGrade(next: Partial<GradeSettings>): void;
+  setUpscale(mode: UpscaleMode): void;
+  setEnvironmentPreset(preset: EnvironmentPreset): void;
   dispose(): void;
 }
 
@@ -43,17 +51,24 @@ export function boot(canvas: HTMLCanvasElement, uiLayer: HTMLElement): App {
   scene.clearColor = new Color4(0.043, 0.039, 0.031, 1);
   const camera = new UniversalCamera('camera', new Vector3(0, 1.65, 0), scene);
   camera.minZ = 0.05;
-  camera.maxZ = 400;
+  camera.maxZ = 1200; // room for the sky dome
   camera.fov = 1.15; // ~66° vertical on a 21:9 phone, close to MM6's wide view
   camera.inputs.clear(); // movement comes from our own controller
 
   const materials = new RetroMaterials(scene);
+  const sky = new SkyDome(scene, materials.env);
+  // Post order: grade (bloom, curves, vignette) first, then the optional MM6 filter last.
+  const grade = new GradePass(scene, camera);
   const filter = new RetroFilter(
     scene,
     camera,
     `${import.meta.env.BASE_URL}filter/lut-mm6.png`,
     settings.filter,
   );
+  const applyUpscale = (mode: UpscaleMode): void => {
+    canvas.classList.toggle('pixelated', mode === 'nearest');
+  };
+  applyUpscale(settings.upscale);
 
   let preset: RenderPreset = settings.renderPreset;
   const overlay: DevOverlay | null = isDevMode() ? createDevOverlay(engine, uiLayer) : null;
@@ -107,7 +122,9 @@ export function boot(canvas: HTMLCanvasElement, uiLayer: HTMLElement): App {
     canvas,
     uiLayer,
     filter,
+    grade,
     materials,
+    sky,
     settings: () => structuredClone(settings),
     setRenderPreset(next) {
       preset = next;
@@ -120,6 +137,18 @@ export function boot(canvas: HTMLCanvasElement, uiLayer: HTMLElement): App {
       settings = { ...settings, filter: filter.settings };
       saveSettings(settings);
     },
+    setGrade(next) {
+      grade.apply(next);
+    },
+    setUpscale(mode) {
+      applyUpscale(mode);
+      settings = { ...settings, upscale: mode };
+      saveSettings(settings);
+    },
+    setEnvironmentPreset(preset) {
+      materials.setEnvironment(ENVIRONMENTS[preset]);
+      sky.apply(materials.env);
+    },
     dispose() {
       window.removeEventListener('resize', onResize);
       window.visualViewport?.removeEventListener('resize', onResize);
@@ -130,6 +159,8 @@ export function boot(canvas: HTMLCanvasElement, uiLayer: HTMLElement): App {
       overlay?.dispose();
       engine.stopRenderLoop();
       filter.dispose();
+      grade.dispose();
+      sky.dispose();
       materials.dispose();
       scene.dispose();
       engine.dispose();

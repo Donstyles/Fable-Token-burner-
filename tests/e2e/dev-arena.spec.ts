@@ -8,6 +8,8 @@ import { expect, test, type CDPSession, type Page } from '@playwright/test';
 type Point = { x: number; y: number };
 type Dev = {
   ready: boolean;
+  simTime(): number;
+  debug(): { move: number; velocity: [number, number, number] };
   positionOf(): { x: number; y: number; z: number };
   yawDeg(): number;
   pitchDeg(): number;
@@ -28,11 +30,62 @@ async function touch(type: 'touchStart' | 'touchMove' | 'touchEnd', points: Poin
 const position = (page: Page) =>
   page.evaluate(() => (window as unknown as W).ftb!.dev!.positionOf());
 
+const simTime = (page: Page) => page.evaluate(() => (window as unknown as W).ftb!.dev!.simTime());
+
+type Sample = { x: number; y: number; z: number; t: number };
+/** Position and simulated time read in one call, so speeds can be computed exactly. */
+const sample = (page: Page) =>
+  page.evaluate(() => {
+    const d = (window as unknown as W).ftb!.dev!;
+    return { ...d.positionOf(), t: d.simTime() } as Sample;
+  });
+
+/**
+ * Measure speed along `axis` over at least `seconds` of simulated time, starting from the
+ * first sample that shows movement (touch delivery lags by a frame or two).
+ */
+async function measureSpeed(page: Page, axis: (s: Sample) => number, seconds: number) {
+  const start = Date.now();
+  const base = await sample(page);
+  let s0 = base;
+  while (Math.abs(axis(s0) - axis(base)) < 0.02 && Date.now() - start < 40_000) {
+    await page.waitForTimeout(100);
+    s0 = await sample(page);
+  }
+  let s1 = s0;
+  while (s1.t - s0.t < seconds && Date.now() - start < 40_000) {
+    await page.waitForTimeout(100);
+    s1 = await sample(page);
+  }
+  return { speed: (axis(s1) - axis(s0)) / Math.max(1e-6, s1.t - s0.t), s0, s1 };
+}
+
+/** Wait until the movement request is gone and the party has come to rest. */
+async function untilStopped(page: Page, maxMs = 20_000) {
+  const start = Date.now();
+  for (;;) {
+    const d = await page.evaluate(() => (window as unknown as W).ftb!.dev!.debug());
+    const h = Math.hypot(d.velocity[0], d.velocity[2]);
+    if ((d.move === 0 && h < 0.05) || Date.now() - start > maxMs) return;
+    await page.waitForTimeout(100);
+  }
+}
+
+/** Wait until at least `seconds` of simulated time have passed (frame pacing varies). */
+async function simWait(page: Page, seconds: number, maxMs = 40_000) {
+  const t0 = await simTime(page);
+  const start = Date.now();
+  while ((await simTime(page)) - t0 < seconds && Date.now() - start < maxMs) {
+    await page.waitForTimeout(100);
+  }
+  return (await simTime(page)) - t0;
+}
+
 /** Poll the party position until `done` holds or the deadline passes (headless pacing varies). */
 async function untilPosition(
   page: Page,
   done: (p: { x: number; y: number; z: number }) => boolean,
-  maxMs = 15_000,
+  maxMs = 45_000,
 ) {
   const start = Date.now();
   let p = await position(page);
@@ -48,7 +101,7 @@ const pitch = (page: Page) => page.evaluate(() => (window as unknown as W).ftb!.
 test.describe('dev build', () => {
   test.beforeEach(async ({ page, browserName }) => {
     if (browserName === 'chromium') cdp = await page.context().newCDPSession(page);
-    await page.goto('dev/?dev');
+    await page.goto('dev/?dev&lite');
     await page.waitForFunction(() => (window as unknown as W).ftb?.dev?.ready === true, null, {
       timeout: 90_000,
     });
@@ -61,30 +114,29 @@ test.describe('dev build', () => {
     browserName,
   }) => {
     test.skip(browserName !== 'chromium', 'touch injection needs CDP');
-    const before = await position(page);
     await touch('touchStart', [{ x: 200, y: 320 }]);
     await touch('touchMove', [{ x: 200, y: 180 }]);
-    await page.waitForTimeout(800);
+    const m = await measureSpeed(page, (q) => q.z, 0.6);
     await touch('touchEnd', []);
+    expect(m.speed).toBeGreaterThan(3.9); // 4.5 m/s walk
+    expect(m.speed).toBeLessThan(5.1);
+    expect(Math.abs(m.s1.x - m.s0.x)).toBeLessThan(0.2); // no strafe, no drift
+    // Instant stop: once the release has landed, no further drift.
+    await untilStopped(page);
     const after = await position(page);
-    expect(after.z - before.z).toBeGreaterThan(1.5);
-    expect(Math.abs(after.x - before.x)).toBeLessThan(0.2); // no strafe, no drift
-    await page.waitForTimeout(300);
+    await simWait(page, 0.3);
     const later = await position(page);
-    expect(Math.abs(later.z - after.z)).toBeLessThan(0.3);
+    expect(Math.abs(later.z - after.z)).toBeLessThan(0.1);
   });
 
   test('walks backward at a third of the speed', async ({ page, browserName }) => {
     test.skip(browserName !== 'chromium', 'touch injection needs CDP');
-    const before = await position(page);
     await touch('touchStart', [{ x: 200, y: 200 }]);
     await touch('touchMove', [{ x: 200, y: 340 }]);
-    await page.waitForTimeout(800);
+    const m = await measureSpeed(page, (q) => -q.z, 0.6);
     await touch('touchEnd', []);
-    const after = await position(page);
-    const moved = before.z - after.z;
-    expect(moved).toBeGreaterThan(0.4);
-    expect(moved).toBeLessThan(1.6);
+    expect(m.speed).toBeGreaterThan(1.25); // one third of 4.5
+    expect(m.speed).toBeLessThan(1.75);
   });
 
   test('strafes slowly on a sideways drag without moving forward', async ({
@@ -92,16 +144,13 @@ test.describe('dev build', () => {
     browserName,
   }) => {
     test.skip(browserName !== 'chromium', 'touch injection needs CDP');
-    const before = await position(page);
     await touch('touchStart', [{ x: 200, y: 300 }]);
     await touch('touchMove', [{ x: 340, y: 300 }]);
-    await page.waitForTimeout(800);
+    const m = await measureSpeed(page, (q) => q.x, 0.6);
     await touch('touchEnd', []);
-    const after = await position(page);
-    const moved = after.x - before.x;
-    expect(moved).toBeGreaterThan(1.0);
-    expect(moved).toBeLessThan(3.0);
-    expect(Math.abs(after.z - before.z)).toBeLessThan(0.2);
+    expect(m.speed).toBeGreaterThan(2.6); // two thirds of 4.5
+    expect(m.speed).toBeLessThan(3.4);
+    expect(Math.abs(m.s1.z - m.s0.z)).toBeLessThan(0.2);
   });
 
   test('snaps back to level after a small look, keeps a large one', async ({
@@ -125,13 +174,13 @@ test.describe('dev build', () => {
     await touch('touchStart', [{ x: 700, y: 200 }]);
     await touch('touchMove', [{ x: 700, y: 228 }]);
     await touch('touchEnd', []);
-    await page.waitForTimeout(1500);
+    await simWait(page, 0.6);
     expect(Math.abs(await pitch(page))).toBeLessThan(0.5);
     // Large: ~20° down, stays.
     await touch('touchStart', [{ x: 700, y: 200 }]);
     await touch('touchMove', [{ x: 700, y: 311 }]);
     await touch('touchEnd', []);
-    await page.waitForTimeout(1500);
+    await simWait(page, 0.6);
     expect(await pitch(page)).toBeGreaterThan(15);
   });
 
@@ -207,6 +256,12 @@ test.describe('dev build', () => {
     page,
     browserName,
   }) => {
+    // Full look for the capture (the shared setup loads the lite variant).
+    await page.goto('dev/?dev');
+    await page.waitForFunction(() => (window as unknown as W).ftb?.dev?.ready === true, null, {
+      timeout: 90_000,
+    });
+    await page.waitForTimeout(500);
     const shot = await page.screenshot({ path: `test-results/arena-palette-${browserName}.png` });
     // Mean brightness of the lower 80% of the frame; the empty clear colour scores ~8.
     const { default: sharp } = await import('sharp');
