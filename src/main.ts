@@ -12,9 +12,22 @@ if (!canvas || !ui) throw new Error('index.html is missing #world or #ui');
 installAudioUnlock();
 tryLockLandscape();
 
-// Service worker: offline shell and auto-update. Silent on failure (e.g. insecure context).
+// Service worker: offline shell and auto-update. Installed web apps only check for a new
+// version at launch, so also check whenever the app returns to the foreground and hourly.
 try {
-  registerSW({ immediate: true });
+  registerSW({
+    immediate: true,
+    onRegisteredSW(_url, registration) {
+      if (!registration) return;
+      const check = (): void => {
+        registration.update().catch(() => {});
+      };
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') check();
+      });
+      setInterval(check, 60 * 60 * 1000);
+    },
+  });
 } catch {
   // Not available in this context.
 }
