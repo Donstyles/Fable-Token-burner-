@@ -106,10 +106,15 @@ device, before any real content exists.
 **Steps**
 
 1. Render filter pipeline (`src/render`):
-   - Internal resolution fixed at 360 lines, width by aspect, upscaled with
-     nearest-neighbour. The HUD is HTML at native resolution, so text stays
-     crisp while the world is chunky (the owner may prefer a pixelated HUD;
-     both are a switch).
+   - Internal resolution by **integer downscale** of the physical display,
+     so every game pixel is an exact block of screen pixels. Default 2×
+     (1398×645 on the iPhone 14 Pro Max, about 480 lines inside the HUD
+     frame, above MM6's 344-line viewport). Presets: 3× "retro" (932×430),
+     2× "default", 1× "sharp" (native). Exposed as a player setting and on
+     the dev panel. The retro look comes mainly from posterize, dither,
+     texture filtering and low-fps animation, so resolution can sit higher
+     without losing it. The HUD is HTML at native resolution, so text stays
+     crisp; a switch pixelates the HUD too.
    - Post-process chain: posterize (configurable levels per channel),
      4×4 ordered dither, optional palette LUT (a starting palette is
      extracted from the reference screenshots; a palette is not copyrightable),
@@ -393,6 +398,7 @@ by designing at device resolution from the start.
 
 1. The phase order above, with 2 and 4 interleaved.
 2. GitHub Pages as the hosting for on-device testing.
-3. HUD at native resolution (crisp) over a 360-line world, with a switch to
-   pixelate the HUD too.
+3. World rendered at an integer downscale, default 2× (645 lines on the
+   iPhone 14 Pro Max), with 3× and native presets; HUD at native resolution
+   with a switch to pixelate it too.
 4. Dev-only test arena in Phase 1, deleted in Phase 2.
