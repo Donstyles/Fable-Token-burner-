@@ -20,7 +20,9 @@
     "e2e": "playwright test",
     "secrets:guard": "tsx tools/secrets-guard.ts",
     "icons": "tsx tools/icons.ts",
-    "check": "npm run lint && npm run typecheck && npm run test && npm run secrets:guard"
+    "check": "npm run lint && npm run typecheck && npm run test && npm run secrets:guard",
+    "build:dev": "vite build --mode devbuild",
+    "palette": "tsx tools/palette.ts"
   },
   "dependencies": {
     "@babylonjs/core": "^9.30.0",
