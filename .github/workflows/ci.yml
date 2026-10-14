@@ -27,7 +27,7 @@ jobs:
       - name: Secrets guard (tree and build output)
         run: npm run secrets:guard -- --dist
       - name: Install Playwright browser
-        run: npx playwright install --with-deps chromium
+        run: npx playwright install --with-deps chromium webkit
       - name: Smoke test
         run: npm run e2e
       - uses: actions/upload-artifact@v4

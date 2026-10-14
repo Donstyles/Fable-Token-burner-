@@ -15,7 +15,10 @@ npm install --no-audit --no-fund --prefer-offline
 # Git hooks (secrets guard, lint, format on commit).
 npx lefthook install >/dev/null 2>&1 || true
 
-# Playwright: use the pre-installed Chromium instead of downloading one.
+# Playwright: use the pre-installed Chromium; WebKit (Safari's engine) is installed once.
+if ! ls /opt/pw-browsers 2>/dev/null | grep -q '^webkit-'; then
+  PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD= npx playwright install --with-deps webkit >/dev/null 2>&1 || true
+fi
 if [ -n "${CLAUDE_ENV_FILE:-}" ]; then
   if [ -x /opt/pw-browsers/chromium ]; then
     echo 'export PLAYWRIGHT_CHROMIUM_EXECUTABLE=/opt/pw-browsers/chromium' >> "$CLAUDE_ENV_FILE"

@@ -4,6 +4,7 @@ import { installAudioUnlock } from './app/audio-unlock';
 import { tryLockLandscape } from './app/orientation';
 import { installDiagnostics, diag, diagText } from './app/diag';
 import { installServiceWorker } from './app/update-prompt';
+import { installLogButton } from './app/log-button';
 import type { DevHandle } from './dev/index';
 
 const canvas = document.getElementById('world') as HTMLCanvasElement | null;
@@ -11,6 +12,13 @@ const ui = document.getElementById('ui');
 if (!canvas || !ui) throw new Error('index.html is missing #world or #ui');
 
 installDiagnostics(canvas);
+if (
+  import.meta.env.DEV ||
+  import.meta.env.MODE === 'devbuild' ||
+  new URLSearchParams(location.search).has('dev')
+) {
+  installLogButton(ui);
+}
 installAudioUnlock();
 tryLockLandscape();
 installServiceWorker(ui);

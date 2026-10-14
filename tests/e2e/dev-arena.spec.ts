@@ -31,8 +31,8 @@ const yaw = (page: Page) => page.evaluate(() => (window as unknown as W).ftb!.de
 const pitch = (page: Page) => page.evaluate(() => (window as unknown as W).ftb!.dev!.pitchDeg());
 
 test.describe('dev build', () => {
-  test.beforeEach(async ({ page }) => {
-    cdp = await page.context().newCDPSession(page);
+  test.beforeEach(async ({ page, browserName }) => {
+    if (browserName === 'chromium') cdp = await page.context().newCDPSession(page);
     await page.goto('dev/?dev');
     await page.waitForFunction(() => (window as unknown as W).ftb?.dev?.ready === true, null, {
       timeout: 90_000,
@@ -41,7 +41,11 @@ test.describe('dev build', () => {
     await page.waitForTimeout(500);
   });
 
-  test('walks forward on a left-side drag up and stops on release', async ({ page }) => {
+  test('walks forward on a left-side drag up and stops on release', async ({
+    page,
+    browserName,
+  }) => {
+    test.skip(browserName !== 'chromium', 'touch injection needs CDP');
     const before = await position(page);
     await touch('touchStart', [{ x: 200, y: 320 }]);
     await touch('touchMove', [{ x: 200, y: 180 }]);
@@ -55,7 +59,8 @@ test.describe('dev build', () => {
     expect(Math.abs(later.z - after.z)).toBeLessThan(0.3);
   });
 
-  test('walks backward at a third of the speed', async ({ page }) => {
+  test('walks backward at a third of the speed', async ({ page, browserName }) => {
+    test.skip(browserName !== 'chromium', 'touch injection needs CDP');
     const before = await position(page);
     await touch('touchStart', [{ x: 200, y: 200 }]);
     await touch('touchMove', [{ x: 200, y: 340 }]);
@@ -67,7 +72,8 @@ test.describe('dev build', () => {
     expect(moved).toBeLessThan(1.6);
   });
 
-  test('free-looks while stationary and turns while walking', async ({ page }) => {
+  test('free-looks while stationary and turns while walking', async ({ page, browserName }) => {
+    test.skip(browserName !== 'chromium', 'touch injection needs CDP');
     const yaw0 = await yaw(page);
     await touch('touchStart', [{ x: 700, y: 200 }]);
     await touch('touchMove', [{ x: 760, y: 240 }]);
@@ -98,7 +104,8 @@ test.describe('dev build', () => {
     expect(pitch2).toBeCloseTo(pitch1, 1);
   });
 
-  test('tap on a target registers through picking', async ({ page }) => {
+  test('tap on a target registers through picking', async ({ page, browserName }) => {
+    test.skip(browserName !== 'chromium', 'touch injection needs CDP');
     const pt = await page.evaluate(() =>
       (window as unknown as W).ftb!.dev!.screenPointOf('dev-target-1'),
     );
@@ -111,7 +118,24 @@ test.describe('dev build', () => {
     expect(tapped).toBe('dev-target-1');
   });
 
-  test('captures the filter for review', async ({ page }) => {
+  test('renders the arena (not a black canvas) and captures the filter', async ({
+    page,
+    browserName,
+  }) => {
+    const shot = await page.screenshot({ path: `test-results/arena-palette-${browserName}.png` });
+    // Mean brightness of the lower 80% of the frame; the empty clear colour scores ~8.
+    const { default: sharp } = await import('sharp');
+    const meta = await sharp(shot).metadata();
+    const stats = await sharp(shot)
+      .extract({
+        left: 0,
+        top: Math.round((meta.height ?? 0) * 0.2),
+        width: meta.width ?? 1,
+        height: Math.round((meta.height ?? 0) * 0.8),
+      })
+      .greyscale()
+      .stats();
+    expect(stats.channels[0]?.mean ?? 0).toBeGreaterThan(20);
     await page.screenshot({ path: 'test-results/arena-palette.png' });
     await page.evaluate(() => (window as unknown as W).ftb!.setFilter({ mode: 'posterize' }));
     await page.waitForTimeout(100);

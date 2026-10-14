@@ -31,12 +31,12 @@ export interface App {
 export function boot(canvas: HTMLCanvasElement, uiLayer: HTMLElement): App {
   let settings = loadSettings();
 
-  const engine = new Engine(canvas, true, {
+  // No MSAA: the full-screen filter pass makes it pointless, and it costs memory on phones.
+  const engine = new Engine(canvas, false, {
     // We control the render size ourselves via the hardware scaling level.
     adaptToDeviceRatio: false,
     preserveDrawingBuffer: false,
     stencil: true,
-    powerPreference: 'high-performance',
   });
 
   const scene = new Scene(engine);
