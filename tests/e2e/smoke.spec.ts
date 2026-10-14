@@ -44,4 +44,13 @@ test('serves a web app manifest', async ({ page, request }) => {
   const manifest = await res.json();
   expect(manifest.display).toBe('standalone');
   expect(manifest.orientation).toBe('landscape');
+  // Icons come from the owner's image via `npm run icons`; the manifest must carry them.
+  expect(manifest.icons.length).toBeGreaterThanOrEqual(2);
+  for (const icon of manifest.icons) {
+    const iconRes = await request.get(new URL(icon.src, page.url()).toString());
+    expect(iconRes.ok(), icon.src).toBe(true);
+  }
+  // iOS reads the apple-touch-icon link rather than the manifest.
+  const apple = await page.locator('link[rel="apple-touch-icon"]').getAttribute('href');
+  expect(apple).toBeTruthy();
 });

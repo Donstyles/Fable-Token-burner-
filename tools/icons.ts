@@ -19,10 +19,14 @@ if (!src) {
 const outDir = 'public/icons';
 mkdirSync(outDir, { recursive: true });
 
+/**
+ * The prompt card keeps the subject inside the central 70 percent, which is within the
+ * maskable safe zone, so the maskable icon is the same crop with a different purpose.
+ */
 const sizes = [
   { file: 'icon-192.png', size: 192, purpose: 'any' },
   { file: 'icon-512.png', size: 512, purpose: 'any' },
-  { file: 'icon-maskable-512.png', size: 512, purpose: 'maskable', pad: 0.1 },
+  { file: 'icon-maskable-512.png', size: 512, purpose: 'maskable' },
   { file: 'apple-touch-icon.png', size: 180, purpose: 'apple' },
   { file: 'favicon-32.png', size: 32, purpose: 'favicon' },
 ];
@@ -36,21 +40,10 @@ if (!meta.width || !meta.height || meta.width !== meta.height || meta.width < 10
 
 const manifest: { src: string; sizes: string; type: string; purpose?: string }[] = [];
 for (const s of sizes) {
-  const inner = s.pad ? Math.round(s.size * (1 - 2 * s.pad)) : s.size;
-  let pipeline = sharp(src).resize(inner, inner, { fit: 'cover' });
-  if (s.pad) {
-    const stats = await sharp(src).stats();
-    const [r, g, b] = stats.channels.map((c) => Math.round(c.mean));
-    const margin = Math.round((s.size - inner) / 2);
-    pipeline = pipeline.extend({
-      top: margin,
-      bottom: s.size - inner - margin,
-      left: margin,
-      right: s.size - inner - margin,
-      background: { r: r ?? 0, g: g ?? 0, b: b ?? 0, alpha: 1 },
-    });
-  }
-  await pipeline.png().toFile(join(outDir, s.file));
+  await sharp(src)
+    .resize(s.size, s.size, { fit: 'cover' })
+    .png({ compressionLevel: 9 })
+    .toFile(join(outDir, s.file));
   if (s.purpose === 'any' || s.purpose === 'maskable') {
     manifest.push({
       src: `icons/${s.file}`,
