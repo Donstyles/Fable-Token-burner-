@@ -1,3 +1,4 @@
+import { execSync } from 'node:child_process';
 import { existsSync, readFileSync } from 'node:fs';
 import { defineConfig, type Plugin } from 'vitest/config';
 import { VitePWA } from 'vite-plugin-pwa';
@@ -40,6 +41,17 @@ function iconLinks(): Plugin {
   };
 }
 
+/** Build version from git: commit count and short hash, e.g. "v41 f700d5e". */
+function appVersion(): string {
+  try {
+    const count = execSync('git rev-list --count HEAD', { encoding: 'utf8' }).trim();
+    const sha = execSync('git rev-parse --short=7 HEAD', { encoding: 'utf8' }).trim();
+    return `v${count} ${sha}`;
+  } catch {
+    return 'v0 local';
+  }
+}
+
 // GitHub Pages serves project sites under /<repo>/ ; CI sets BASE_PATH accordingly.
 // `vite build --mode devbuild` produces the development build (dev arena, tuning panel)
 // under <base>dev/ so production never contains it.
@@ -48,6 +60,9 @@ export default defineConfig(({ mode }) => {
   const base = (process.env.BASE_PATH ?? '/') + (devBuild ? 'dev/' : '');
   return {
     base,
+    define: {
+      __APP_VERSION__: JSON.stringify(appVersion() + (devBuild ? ' dev' : '')),
+    },
     plugins: [
       iconLinks(),
       VitePWA({

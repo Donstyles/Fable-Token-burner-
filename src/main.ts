@@ -5,6 +5,7 @@ import { tryLockLandscape } from './app/orientation';
 import { installDiagnostics, diag, diagText } from './app/diag';
 import { installServiceWorker } from './app/update-prompt';
 import { installLogButton } from './app/log-button';
+import { APP_VERSION, installVersionTag } from './app/version';
 import type { DevHandle } from './dev/index';
 
 // Tell the boot watchdog in index.html that the module is running.
@@ -15,6 +16,8 @@ const ui = document.getElementById('ui');
 if (!canvas || !ui) throw new Error('index.html is missing #world or #ui');
 
 installDiagnostics(canvas);
+diag(`version ${APP_VERSION}`);
+installVersionTag(ui);
 // iOS: no pinch-zoom gestures, no long-press menus, anywhere on the page.
 for (const type of ['gesturestart', 'gesturechange', 'gestureend']) {
   document.addEventListener(type, (e) => e.preventDefault(), { passive: false });

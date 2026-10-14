@@ -25,6 +25,9 @@ test('boots to a rendering canvas with no console errors', async ({ page }) => {
   // Landscape: the rotate overlay stays hidden.
   await expect(page.locator('#rotate')).toBeHidden();
 
+  // Every build names itself in the corner.
+  await expect(page.locator('#version-tag')).toHaveText(/^v\d+ [0-9a-f]{7}/);
+
   await page.screenshot({ path: 'test-results/boot-landscape.png' });
   expect(errors).toEqual([]);
 });

@@ -184,3 +184,18 @@ img {
   border: 1px solid #9ad;
   z-index: 60;
 }
+
+/* Build version, always visible, deliberately faint. */
+.version-tag {
+  position: absolute;
+  right: calc(var(--sar) + 6px);
+  bottom: calc(var(--sab) + 4px);
+  font:
+    10px ui-monospace,
+    Menlo,
+    Consolas,
+    monospace;
+  color: rgba(232, 220, 192, 0.55);
+  pointer-events: none;
+  letter-spacing: 0.02em;
+}
