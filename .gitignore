@@ -1,0 +1,29 @@
+# secrets – never commit
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+
+# dependencies and build output
+node_modules/
+dist/
+dev-dist/
+.vite/
+*.tsbuildinfo
+
+# test output
+test-results/
+playwright-report/
+blob-report/
+coverage/
+
+# pipeline scratch (committed outputs live in assets/)
+pipeline/work/
+
+# editors and OS
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json

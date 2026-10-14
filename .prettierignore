@@ -1,0 +1,7 @@
+node_modules
+dist
+dev-dist
+assets
+artwork
+pipeline/inbox
+package-lock.json
