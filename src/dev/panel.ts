@@ -79,6 +79,48 @@ export function createDevPanel(parent: HTMLElement, fields: Field[]): DevPanel {
     store(values);
   };
 
+  /** Current value of every field, for handing back to the developer. */
+  const snapshot = (): string => {
+    const out: Record<string, unknown> = {};
+    for (const f of fields) if (f.kind !== 'button') out[f.key] = f.get();
+    return JSON.stringify(out);
+  };
+
+  // "copy values": clipboard first, the share sheet second, a selectable box last.
+  const copyRow = document.createElement('div');
+  copyRow.className = 'dev-row dev-copy';
+  const copyBtn = document.createElement('button');
+  copyBtn.type = 'button';
+  copyBtn.textContent = 'copy values';
+  const fallback = document.createElement('textarea');
+  fallback.className = 'dev-fallback';
+  fallback.readOnly = true;
+  fallback.hidden = true;
+  copyBtn.addEventListener('click', async () => {
+    const text = snapshot();
+    try {
+      await navigator.clipboard.writeText(text);
+      api.toast('values copied, paste them in chat');
+      return;
+    } catch {
+      // fall through
+    }
+    try {
+      if (navigator.share) {
+        await navigator.share({ title: 'Token Burner tuning', text });
+        return;
+      }
+    } catch {
+      // fall through
+    }
+    fallback.value = text;
+    fallback.hidden = false;
+    fallback.focus();
+    fallback.select();
+  });
+  copyRow.append(copyBtn, fallback);
+  body.appendChild(copyRow);
+
   for (const f of fields) {
     const row = document.createElement('label');
     row.className = 'dev-row';
@@ -140,7 +182,7 @@ export function createDevPanel(parent: HTMLElement, fields: Field[]): DevPanel {
   parent.append(root, toastEl);
   let toastTimer = 0;
 
-  return {
+  const api: DevPanel = {
     toast(text) {
       toastEl.textContent = text;
       toastEl.hidden = false;
@@ -154,4 +196,5 @@ export function createDevPanel(parent: HTMLElement, fields: Field[]): DevPanel {
       toastEl.remove();
     },
   };
+  return api;
 }

@@ -68,3 +68,23 @@
     serif;
   pointer-events: none;
 }
+
+.dev-copy {
+  grid-template-columns: 1fr;
+}
+.dev-copy button {
+  color: var(--gold);
+  border-color: var(--gold);
+}
+.dev-fallback {
+  width: 100%;
+  min-height: 60px;
+  font:
+    11px ui-monospace,
+    Menlo,
+    Consolas,
+    monospace;
+  background: #111;
+  color: var(--ink);
+  border: 1px solid #555;
+}
