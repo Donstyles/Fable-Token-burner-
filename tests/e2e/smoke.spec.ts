@@ -35,6 +35,36 @@ test('asks to rotate in portrait', async ({ page }) => {
   await expect(page.locator('#rotate')).toBeVisible();
 });
 
+test('recovers from a portrait launch followed by rotation', async ({ page }) => {
+  // Launch in portrait (as an installed app often does), then rotate to landscape.
+  await page.setViewportSize({ width: 430, height: 932 });
+  await page.goto('/?dev');
+  await page.waitForFunction(() => {
+    const app = (window as unknown as { ftb?: { engine: { getFps(): number } } }).ftb;
+    return !!app && app.engine.getFps() > 0;
+  });
+  await expect(page.locator('#rotate')).toBeVisible();
+  await page.setViewportSize({ width: 932, height: 430 });
+  await expect(page.locator('#rotate')).toBeHidden();
+  await page.waitForTimeout(300);
+  const size = await page.evaluate(() => {
+    const app = (
+      window as unknown as {
+        ftb: { engine: { getRenderWidth(): number; getRenderHeight(): number; getFps(): number } };
+      }
+    ).ftb;
+    return {
+      w: app.engine.getRenderWidth(),
+      h: app.engine.getRenderHeight(),
+      fps: app.engine.getFps(),
+    };
+  });
+  expect(size.h).toBe(1080);
+  expect(size.w).toBeGreaterThan(2000);
+  expect(size.fps).toBeGreaterThan(0);
+  await expect(page.locator('#dev-overlay')).toContainText('×1080');
+});
+
 test('serves a web app manifest', async ({ page, request }) => {
   await page.goto('/');
   const href = await page.locator('link[rel="manifest"]').getAttribute('href');

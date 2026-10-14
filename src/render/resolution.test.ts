@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { computeRenderTarget, isRenderPreset } from './resolution';
+import { computeRenderTarget, hasUsableSize, isRenderPreset } from './resolution';
 
 // iPhone 14 Pro Max, landscape, standalone: 932×430 CSS points at DPR 3.
 const iphone = { cssWidth: 932, cssHeight: 430, devicePixelRatio: 3 };
@@ -36,6 +36,30 @@ describe('computeRenderTarget', () => {
     expect(t.height).toBe(600);
     expect(t.upscale).toBe(1);
     expect(t.hardwareScalingLevel).toBe(1);
+  });
+});
+
+describe('degenerate sizes', () => {
+  it('never yields a zero or non-finite scaling level', () => {
+    for (const m of [
+      { cssWidth: 0, cssHeight: 0, devicePixelRatio: 3 },
+      { cssWidth: 932, cssHeight: 0, devicePixelRatio: 3 },
+      { cssWidth: NaN, cssHeight: NaN, devicePixelRatio: NaN },
+      { cssWidth: 932, cssHeight: 430, devicePixelRatio: 0 },
+    ]) {
+      const t = computeRenderTarget('lines-1080', m);
+      expect(Number.isFinite(t.hardwareScalingLevel)).toBe(true);
+      expect(t.hardwareScalingLevel).toBeGreaterThan(0);
+      expect(t.width).toBeGreaterThanOrEqual(1);
+      expect(t.height).toBeGreaterThanOrEqual(1);
+    }
+  });
+
+  it('reports usable sizes', () => {
+    expect(hasUsableSize(932, 430)).toBe(true);
+    expect(hasUsableSize(0, 430)).toBe(false);
+    expect(hasUsableSize(1, 1)).toBe(false);
+    expect(hasUsableSize(NaN, 430)).toBe(false);
   });
 });
 

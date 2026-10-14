@@ -3,7 +3,7 @@ import { Scene } from '@babylonjs/core/scene';
 import { Color4 } from '@babylonjs/core/Maths/math.color';
 import { Vector3 } from '@babylonjs/core/Maths/math.vector';
 import { UniversalCamera } from '@babylonjs/core/Cameras/universalCamera';
-import { computeRenderTarget, type RenderPreset } from '../render/resolution';
+import { computeRenderTarget, hasUsableSize, type RenderPreset } from '../render/resolution';
 import { RetroFilter, type FilterSettings } from '../render/filter';
 import { RetroMaterials } from '../render/materials';
 import { loadSettings, saveSettings, type Settings } from './settings';
@@ -58,9 +58,13 @@ export function boot(canvas: HTMLCanvasElement, uiLayer: HTMLElement): App {
   const overlay: DevOverlay | null = isDevMode() ? createDevOverlay(engine, uiLayer) : null;
 
   const applyResolution = (): void => {
+    const w = canvas.clientWidth;
+    const h = canvas.clientHeight;
+    // Mid-rotation on iOS the canvas can report a zero size; wait for a real one.
+    if (!hasUsableSize(w, h)) return;
     const target = computeRenderTarget(preset, {
-      cssWidth: canvas.clientWidth,
-      cssHeight: canvas.clientHeight,
+      cssWidth: w,
+      cssHeight: h,
       devicePixelRatio: window.devicePixelRatio || 1,
     });
     engine.setHardwareScalingLevel(target.hardwareScalingLevel);
@@ -68,13 +72,22 @@ export function boot(canvas: HTMLCanvasElement, uiLayer: HTMLElement): App {
     overlay?.update(preset, target);
   };
 
+  // Size changes arrive through several channels on mobile; respond to all of them and
+  // re-check a few times after an orientation change until the layout settles.
   const onResize = (): void => applyResolution();
   window.addEventListener('resize', onResize);
-  // iOS standalone mode reports the final size a tick after orientation changes.
+  window.visualViewport?.addEventListener('resize', onResize);
+  const timers: number[] = [];
   const onOrientation = (): void => {
-    setTimeout(applyResolution, 50);
+    for (const ms of [50, 250, 700, 1500]) timers.push(window.setTimeout(applyResolution, ms));
   };
   window.addEventListener('orientationchange', onOrientation);
+  const onVisible = (): void => {
+    if (document.visibilityState === 'visible') applyResolution();
+  };
+  document.addEventListener('visibilitychange', onVisible);
+  const observer = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(onResize) : null;
+  observer?.observe(canvas);
   applyResolution();
 
   engine.runRenderLoop(() => {
@@ -103,7 +116,11 @@ export function boot(canvas: HTMLCanvasElement, uiLayer: HTMLElement): App {
     },
     dispose() {
       window.removeEventListener('resize', onResize);
+      window.visualViewport?.removeEventListener('resize', onResize);
       window.removeEventListener('orientationchange', onOrientation);
+      document.removeEventListener('visibilitychange', onVisible);
+      observer?.disconnect();
+      for (const t of timers) clearTimeout(t);
       overlay?.dispose();
       engine.stopRenderLoop();
       filter.dispose();
