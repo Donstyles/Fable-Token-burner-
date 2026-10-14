@@ -143,7 +143,10 @@ device, before any real content exists.
    showcase level exists. This is the one exception to "no placeholders" and
    it never leaves the dev build. The dev build is a separate Vite build
    (`npm run build:dev`) deployed under `/dev/` on Pages, so the production
-   URL never contains it; the owner tests at `…/dev/`.
+   URL never contains it; the owner tests at `…/dev/`. The production service
+   worker's scope contains `/dev/`, so it is configured never to answer a
+   `/dev/` navigation with its own cached page (learned the hard way on
+   2026-10-14: Safari showed the cached production page at the dev URL).
 5. Capture pipeline: Playwright screenshots at device resolution for every
    review, so look changes are compared side by side.
 

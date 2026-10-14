@@ -69,6 +69,9 @@ export default defineConfig(({ mode }) => {
           // Babylon and future level data are large; raise the precache limit.
           maximumFileSizeToCacheInBytes: 20 * 1024 * 1024,
           globPatterns: ['**/*.{js,css,html,png,svg,webp,wasm,glb,json,woff2}'],
+          // The production worker's scope contains /dev/. It must never answer a /dev/
+          // navigation with its own cached page, or the dev build is unreachable.
+          navigateFallbackDenylist: devBuild ? [] : [/\/dev\//],
         },
       }),
     ],

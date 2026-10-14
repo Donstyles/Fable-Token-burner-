@@ -7,6 +7,9 @@ import { installServiceWorker } from './app/update-prompt';
 import { installLogButton } from './app/log-button';
 import type { DevHandle } from './dev/index';
 
+// Tell the boot watchdog in index.html that the module is running.
+(window as unknown as { __ftbBooted?: boolean }).__ftbBooted = true;
+
 const canvas = document.getElementById('world') as HTMLCanvasElement | null;
 const ui = document.getElementById('ui');
 if (!canvas || !ui) throw new Error('index.html is missing #world or #ui');

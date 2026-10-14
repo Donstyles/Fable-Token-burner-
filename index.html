@@ -13,6 +13,51 @@
     <meta name="apple-mobile-web-app-title" content="Token Burner" />
     <meta name="format-detection" content="telephone=no" />
     <title>Fable Token Burner</title>
+    <script>
+      // Boot watchdog: plain script, runs even when the module below fails to load or
+      // parse. Reports resource and script failures on screen so a dead page is never silent.
+      (function () {
+        var problems = [];
+        var shown = false;
+        function show() {
+          if (shown) return;
+          shown = true;
+          var box = document.createElement('pre');
+          box.id = 'boot-failure';
+          box.setAttribute(
+            'style',
+            'position:fixed;left:8px;right:8px;top:40px;z-index:2000;max-height:70%;overflow:auto;' +
+              'background:rgba(0,0,0,.85);color:#e8dcc0;border:1px solid #c9a227;padding:10px;' +
+              'font:12px/1.4 ui-monospace,Menlo,monospace;white-space:pre-wrap;word-break:break-all',
+          );
+          box.textContent =
+            'The game code did not start.\n' +
+            navigator.userAgent +
+            '\n' +
+            (problems.length ? problems.join('\n') : 'No script or resource error was reported.') +
+            '\nTry: reload, or Settings > Safari > Advanced > Website Data > remove this site.';
+          document.body.appendChild(box);
+        }
+        window.addEventListener(
+          'error',
+          function (e) {
+            var t = e.target;
+            if (t && t !== window && (t.src || t.href)) {
+              problems.push('failed to load: ' + (t.src || t.href));
+            } else if (e.message) {
+              problems.push(
+                'error: ' + e.message + ' @' + (e.filename || '') + ':' + (e.lineno || ''),
+              );
+            }
+            if (!window.__ftbBooted) setTimeout(show, 50);
+          },
+          true,
+        );
+        setTimeout(function () {
+          if (!window.__ftbBooted) show();
+        }, 8000);
+      })();
+    </script>
   </head>
   <body>
     <canvas id="world" aria-label="Game view"></canvas>
