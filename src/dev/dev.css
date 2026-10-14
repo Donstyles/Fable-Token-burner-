@@ -1,0 +1,70 @@
+.dev-panel {
+  position: absolute;
+  top: calc(var(--sat) + 6px);
+  right: calc(var(--sar) + 8px);
+  font:
+    13px/1.3 ui-monospace,
+    Menlo,
+    Consolas,
+    monospace;
+  color: var(--ink);
+  z-index: 50;
+}
+.dev-toggle {
+  float: right;
+  background: rgba(0, 0, 0, 0.6);
+  color: var(--gold);
+  border: 1px solid var(--gold);
+  border-radius: 4px;
+  padding: 6px 12px;
+  font: inherit;
+}
+.dev-body {
+  clear: both;
+  margin-top: 6px;
+  width: 300px;
+  max-height: calc(100vh - var(--sat) - var(--sab) - 60px);
+  overflow-y: auto;
+  background: rgba(0, 0, 0, 0.75);
+  border: 1px solid #444;
+  border-radius: 6px;
+  padding: 8px;
+  touch-action: pan-y;
+}
+.dev-row {
+  display: grid;
+  grid-template-columns: 110px 1fr 44px;
+  gap: 6px;
+  align-items: center;
+  padding: 4px 0;
+}
+.dev-row input[type='range'] {
+  width: 100%;
+  min-height: 28px;
+}
+.dev-row select,
+.dev-row button {
+  font: inherit;
+  min-height: 28px;
+  background: #222;
+  color: var(--ink);
+  border: 1px solid #555;
+  border-radius: 4px;
+}
+.dev-row output {
+  text-align: right;
+}
+.dev-toast {
+  position: absolute;
+  left: 50%;
+  bottom: calc(var(--sab) + 24px);
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.7);
+  color: var(--gold);
+  padding: 8px 14px;
+  border-radius: 6px;
+  font:
+    15px Georgia,
+    serif;
+  pointer-events: none;
+}

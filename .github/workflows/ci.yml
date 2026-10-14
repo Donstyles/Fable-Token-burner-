@@ -23,6 +23,7 @@ jobs:
       - run: npm run format:check
       - run: npm run test
       - run: npm run build
+      - run: npm run build:dev
       - name: Secrets guard (tree and build output)
         run: npm run secrets:guard -- --dist
       - name: Install Playwright browser

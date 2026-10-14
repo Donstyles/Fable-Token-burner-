@@ -41,51 +41,56 @@ function iconLinks(): Plugin {
 }
 
 // GitHub Pages serves project sites under /<repo>/ ; CI sets BASE_PATH accordingly.
-const base = process.env.BASE_PATH ?? '/';
-
-export default defineConfig({
-  base,
-  plugins: [
-    iconLinks(),
-    VitePWA({
-      registerType: 'autoUpdate',
-      includeAssets: ['icons/*.png'],
-      manifest: {
-        name: 'Fable Token Burner',
-        short_name: 'Token Burner',
-        description: 'A Might and Magic VI inspired first-person party RPG.',
-        display: 'standalone',
-        orientation: 'landscape',
-        background_color: '#0b0a08',
-        theme_color: '#0b0a08',
-        start_url: '.',
-        scope: '.',
-        icons: manifestIcons(),
-      },
-      workbox: {
-        // Babylon and future level data are large; raise the precache limit.
-        maximumFileSizeToCacheInBytes: 20 * 1024 * 1024,
-        globPatterns: ['**/*.{js,css,html,png,svg,webp,wasm,glb,json,woff2}'],
-      },
-    }),
-  ],
-  optimizeDeps: {
-    exclude: ['@babylonjs/havok'],
-  },
-  build: {
-    target: 'es2022',
-    chunkSizeWarningLimit: 4000,
-    rollupOptions: {
-      output: {
-        manualChunks(id: string) {
-          if (id.includes('@babylonjs/core')) return 'babylon';
-          return undefined;
+// `vite build --mode devbuild` produces the development build (dev arena, tuning panel)
+// under <base>dev/ so production never contains it.
+export default defineConfig(({ mode }) => {
+  const devBuild = mode === 'devbuild';
+  const base = (process.env.BASE_PATH ?? '/') + (devBuild ? 'dev/' : '');
+  return {
+    base,
+    plugins: [
+      iconLinks(),
+      VitePWA({
+        registerType: 'autoUpdate',
+        includeAssets: ['icons/*.png'],
+        manifest: {
+          name: devBuild ? 'Fable Token Burner (dev)' : 'Fable Token Burner',
+          short_name: devBuild ? 'Burner dev' : 'Token Burner',
+          description: 'A Might and Magic VI inspired first-person party RPG.',
+          display: 'standalone',
+          orientation: 'landscape',
+          background_color: '#0b0a08',
+          theme_color: '#0b0a08',
+          start_url: '.',
+          scope: '.',
+          icons: manifestIcons(),
+        },
+        workbox: {
+          // Babylon and future level data are large; raise the precache limit.
+          maximumFileSizeToCacheInBytes: 20 * 1024 * 1024,
+          globPatterns: ['**/*.{js,css,html,png,svg,webp,wasm,glb,json,woff2}'],
+        },
+      }),
+    ],
+    optimizeDeps: {
+      exclude: ['@babylonjs/havok'],
+    },
+    build: {
+      outDir: devBuild ? 'dist/dev' : 'dist',
+      target: 'es2022',
+      chunkSizeWarningLimit: 4000,
+      rollupOptions: {
+        output: {
+          manualChunks(id: string) {
+            if (id.includes('@babylonjs/core')) return 'babylon';
+            return undefined;
+          },
         },
       },
     },
-  },
-  test: {
-    include: ['src/**/*.test.ts', 'kernel/**/*.test.ts', 'tools/**/*.test.ts'],
-    environment: 'node',
-  },
+    test: {
+      include: ['src/**/*.test.ts', 'kernel/**/*.test.ts', 'tools/**/*.test.ts'],
+      environment: 'node',
+    },
+  };
 });

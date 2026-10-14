@@ -28,6 +28,10 @@ jobs:
         run: npm run build
         env:
           BASE_PATH: /${{ github.event.repository.name }}/
+      - name: Build the development variant under /dev/
+        run: npm run build:dev
+        env:
+          BASE_PATH: /${{ github.event.repository.name }}/
       - name: Secrets guard on build output
         run: npm run secrets:guard -- --dist
       - uses: actions/upload-pages-artifact@v3
