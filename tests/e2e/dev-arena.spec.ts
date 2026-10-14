@@ -72,17 +72,54 @@ test.describe('dev build', () => {
     expect(moved).toBeLessThan(1.6);
   });
 
+  test('strafes slowly on a sideways drag without moving forward', async ({
+    page,
+    browserName,
+  }) => {
+    test.skip(browserName !== 'chromium', 'touch injection needs CDP');
+    const before = await position(page);
+    await touch('touchStart', [{ x: 200, y: 300 }]);
+    await touch('touchMove', [{ x: 340, y: 300 }]);
+    await page.waitForTimeout(800);
+    await touch('touchEnd', []);
+    const after = await position(page);
+    const moved = after.x - before.x;
+    expect(moved).toBeGreaterThan(0.4);
+    expect(moved).toBeLessThan(1.6);
+    expect(Math.abs(after.z - before.z)).toBeLessThan(0.2);
+  });
+
+  test('snaps back to level after a small look, keeps a large one', async ({
+    page,
+    browserName,
+  }) => {
+    test.skip(browserName !== 'chromium', 'touch injection needs CDP');
+    // Small: ~5° down at 0.18°/px, then release.
+    await touch('touchStart', [{ x: 700, y: 200 }]);
+    await touch('touchMove', [{ x: 700, y: 228 }]);
+    await touch('touchEnd', []);
+    await page.waitForTimeout(600);
+    expect(Math.abs(await pitch(page))).toBeLessThan(0.5);
+    // Large: ~20° down, stays.
+    await touch('touchStart', [{ x: 700, y: 200 }]);
+    await touch('touchMove', [{ x: 700, y: 311 }]);
+    await touch('touchEnd', []);
+    await page.waitForTimeout(600);
+    expect(await pitch(page)).toBeGreaterThan(15);
+  });
+
   test('free-looks while stationary and turns while walking', async ({ page, browserName }) => {
     test.skip(browserName !== 'chromium', 'touch injection needs CDP');
     const yaw0 = await yaw(page);
+    // 80 px down is ~14°, beyond the magnetic level snap, so the pitch stays.
     await touch('touchStart', [{ x: 700, y: 200 }]);
-    await touch('touchMove', [{ x: 760, y: 240 }]);
+    await touch('touchMove', [{ x: 760, y: 280 }]);
     await touch('touchEnd', []);
     await page.waitForTimeout(100);
     const yaw1 = await yaw(page);
     const pitch1 = await pitch(page);
     expect(yaw1).toBeGreaterThan(yaw0 + 5);
-    expect(pitch1).toBeGreaterThan(3); // dragged down: looks down
+    expect(pitch1).toBeGreaterThan(10); // dragged down: looks down
 
     // Walking: a right-side drag turns, and its vertical component is ignored.
     await touch('touchStart', [{ x: 200, y: 320 }]);

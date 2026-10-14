@@ -93,10 +93,17 @@ owner approving a specific batch first: asset list plus expected credit cost.
 
 - **Left half of the screen – invisible move stick.** Touch anywhere on the
   left, hold and drag forward to walk. Drag backward to walk backward at
-  **one third** of forward speed. Nothing is drawn on screen. The stick is
-  tank-style: forward and backward only, **no strafing**.
+  **one third** of forward speed. Drag sideways to **strafe at that same
+  slow speed** (added 2026-10-14). Each stick gesture is one axis: whichever
+  direction leaves the dead zone first wins until the stick returns to
+  centre, so strafing never combines with forward or backward movement.
+  Strafing cannot start while the right thumb is looking around. Strafing
+  counts as moving, so the right thumb turns rather than looks during it.
+  Nothing is drawn on screen.
 - **Right half of the screen – invisible look area.** Free look (yaw and
-  pitch) works **only while stationary**.
+  pitch) works **only while stationary**. **Magnetic level view** (added
+  2026-10-14): when a look drag ends within a few degrees of level, the pitch
+  eases back to exactly level; larger pitches stay where they are.
 - **Turning while walking.** While the left thumb is held and the party is
   walking, dragging the right thumb left or right turns the party. Vertical
   drag does nothing in this state.
@@ -465,6 +472,8 @@ and icons all share it, so world and UI agree.
   at native resolution.
 - 2026-10-14 – Implementation plan (`PLAN.md`) approved: phase order with 2
   and 4 interleaved, GitHub Pages hosting, dev-only test arena in Phase 1.
+- 2026-10-14 – Slow sideways strafing on the left stick (one axis per
+  gesture, blocked while looking) and magnetic snap to level view.
 - 2026-10-14 – Phase 0 accepted on device. Phase 1 built: palette-LUT filter
   (256-colour palette extracted from the reference screenshots' viewport,
   64³ LUT, Bayer dither with cell size), posterize mode, vertex-lit fogged

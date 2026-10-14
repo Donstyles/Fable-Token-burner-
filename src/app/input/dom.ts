@@ -42,7 +42,9 @@ export function bindInput(canvas: HTMLCanvasElement, zones: InputZones): () => v
     const back = keys.has('KeyS') || keys.has('ArrowDown') ? 1 : 0;
     const left = keys.has('KeyA') || keys.has('ArrowLeft') ? 1 : 0;
     const right = keys.has('KeyD') || keys.has('ArrowRight') ? 1 : 0;
-    zones.setKeyboard(fwd - back, right - left);
+    const strafeL = keys.has('KeyQ') ? 1 : 0;
+    const strafeR = keys.has('KeyE') ? 1 : 0;
+    zones.setKeyboard(fwd - back, right - left, strafeR - strafeL);
   };
   const onKeyDown = (e: KeyboardEvent): void => {
     if (e.repeat) return;

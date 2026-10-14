@@ -2,8 +2,10 @@
  * Touch control scheme from DESIGN.md 7.1, as a pure state machine so it can be unit tested.
  *
  * - Left half: invisible move stick. Hold and drag up to walk forward, down to walk
- *   backward at one third speed. No strafing.
- * - Right half: free look (yaw and pitch) only while stationary; while walking, horizontal
+ *   backward at one third speed, or sideways to strafe at that same slow speed. Each
+ *   stick gesture is one axis: whichever direction leaves the dead zone first wins until
+ *   the stick returns to centre. Strafing cannot start while the right thumb is looking.
+ * - Right half: free look (yaw and pitch) only while stationary; while moving, horizontal
  *   drag turns the party and vertical drag is ignored.
  * - A short touch without movement, on either half, is a tap (interact or attack).
  */
@@ -37,6 +39,10 @@ export interface Tap {
 export interface FrameInput {
   /** Forward speed fraction: 0..1 forward, negative (down to -backwardFactor) backward. */
   move: number;
+  /** Sideways speed fraction, positive right, magnitude up to backwardFactor. */
+  strafe: number;
+  /** True in the frame the look drag ended. */
+  lookReleased: boolean;
   /** Horizontal drag in px accumulated while walking: positive turns right. */
   turnPx: number;
   /** Drag accumulated while stationary: positive x looks right, positive y looks down. */
@@ -55,17 +61,22 @@ interface Pointer {
   lastY: number;
   startTime: number;
   maxTravel: number;
+  /** Axis a move gesture committed to once it left the dead zone. */
+  axis: 'none' | 'vertical' | 'horizontal';
 }
 
 export class InputZones {
   private config: ZoneConfig;
   private readonly pointers = new Map<number, Pointer>();
   private move = 0;
+  private strafe = 0;
+  private lookReleased = false;
   private turnPx = 0;
   private lookX = 0;
   private lookY = 0;
   private taps: Tap[] = [];
   private keyMove = 0;
+  private keyStrafe = 0;
   private keyTurn = 0;
   /** Diagnostics: why the last release was or was not a tap. */
   lastRelease: { role: string; durationMs: number; travelPx: number; tap: boolean } | null = null;
@@ -82,9 +93,9 @@ export class InputZones {
     this.config = { ...this.config, ...next };
   }
 
-  /** True while the stick (or a key) is driving movement. */
+  /** True while the stick (or a key) is driving movement, forward, backward or sideways. */
   get isWalking(): boolean {
-    return this.effectiveMove() !== 0;
+    return this.effectiveMove() !== 0 || this.effectiveStrafe() !== 0;
   }
 
   pointerDown(id: number, x: number, y: number, time: number): void {
@@ -105,6 +116,7 @@ export class InputZones {
       lastY: y,
       startTime: time,
       maxTravel: 0,
+      axis: 'none',
     });
   }
 
@@ -118,7 +130,28 @@ export class InputZones {
     p.maxTravel = Math.max(p.maxTravel, Math.hypot(x - p.startX, y - p.startY));
 
     if (p.role === 'move') {
-      this.move = this.stickAmount(p.startY - y);
+      const up = p.startY - y;
+      const right = x - p.startX;
+      const dead = this.config.deadZonePx;
+      if (p.axis === 'none') {
+        if (Math.abs(up) > dead && Math.abs(up) >= Math.abs(right)) p.axis = 'vertical';
+        else if (Math.abs(right) > dead) {
+          // Strafing cannot start while the right thumb is looking around.
+          if (!(this.hasRole('look') && !this.isWalking)) p.axis = 'horizontal';
+        }
+      } else if (Math.abs(up) <= dead && Math.abs(right) <= dead) {
+        p.axis = 'none';
+      }
+      if (p.axis === 'vertical') {
+        this.move = this.stickAmount(up);
+        this.strafe = 0;
+      } else if (p.axis === 'horizontal') {
+        this.move = 0;
+        this.strafe = this.sideAmount(right);
+      } else {
+        this.move = 0;
+        this.strafe = 0;
+      }
     } else if (p.role === 'look') {
       if (this.isWalking) {
         this.turnPx += dx;
@@ -133,7 +166,11 @@ export class InputZones {
     const p = this.pointers.get(id);
     if (!p) return;
     this.pointers.delete(id);
-    if (p.role === 'move') this.move = 0;
+    if (p.role === 'move') {
+      this.move = 0;
+      this.strafe = 0;
+    }
+    if (p.role === 'look') this.lookReleased = true;
     const travel = Math.max(p.maxTravel, Math.hypot(x - p.startX, y - p.startY));
     const tap =
       p.role !== 'ignored' &&
@@ -147,19 +184,29 @@ export class InputZones {
     const p = this.pointers.get(id);
     if (!p) return;
     this.pointers.delete(id);
-    if (p.role === 'move') this.move = 0;
+    if (p.role === 'move') {
+      this.move = 0;
+      this.strafe = 0;
+    }
+    if (p.role === 'look') this.lookReleased = true;
   }
 
-  /** Desktop fallback: W/S style move axis (-1..1) and A/D style turn axis (-1..1). */
-  setKeyboard(move: number, turn: number): void {
+  /**
+   * Desktop fallback: W/S move axis (-1..1), A/D turn axis (-1..1), Q/E strafe axis
+   * (-1..1). Strafe yields to forward/backward, as on the stick.
+   */
+  setKeyboard(move: number, turn: number, strafe = 0): void {
     this.keyMove = Math.max(-1, Math.min(1, move));
     this.keyTurn = Math.max(-1, Math.min(1, turn));
+    this.keyStrafe = Math.max(-1, Math.min(1, strafe));
   }
 
   /** Read and reset this frame's accumulated input. `move` is a level, not a delta. */
   consume(): FrameInput {
     const out: FrameInput = {
       move: this.effectiveMove(),
+      strafe: this.effectiveStrafe(),
+      lookReleased: this.lookReleased,
       turnPx: this.turnPx,
       lookX: this.lookX,
       lookY: this.lookY,
@@ -169,15 +216,23 @@ export class InputZones {
     this.turnPx = 0;
     this.lookX = 0;
     this.lookY = 0;
+    this.lookReleased = false;
     this.taps = [];
     return out;
   }
 
   private effectiveMove(): number {
     if (this.move !== 0) return this.move;
+    if (this.strafe !== 0) return 0;
     if (this.keyMove > 0) return this.keyMove;
     if (this.keyMove < 0) return this.keyMove * this.config.backwardFactor;
     return 0;
+  }
+
+  private effectiveStrafe(): number {
+    if (this.strafe !== 0) return this.strafe;
+    if (this.move !== 0 || this.keyMove !== 0) return 0;
+    return this.keyStrafe * this.config.backwardFactor;
   }
 
   private hasRole(role: Pointer['role']): boolean {
@@ -192,5 +247,14 @@ export class InputZones {
     if (mag <= deadZonePx) return 0;
     const t = Math.min(1, (mag - deadZonePx) / Math.max(1, fullPx - deadZonePx));
     return travelUp > 0 ? t : -t * backwardFactor;
+  }
+
+  /** Map sideways stick travel (px, right positive) to a slow strafe fraction. */
+  private sideAmount(travelRight: number): number {
+    const { deadZonePx, fullPx, backwardFactor } = this.config;
+    const mag = Math.abs(travelRight);
+    if (mag <= deadZonePx) return 0;
+    const t = Math.min(1, (mag - deadZonePx) / Math.max(1, fullPx - deadZonePx));
+    return Math.sign(travelRight) * t * backwardFactor;
   }
 }

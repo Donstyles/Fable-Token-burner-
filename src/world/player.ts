@@ -33,6 +33,10 @@ export interface PartyTuning {
   fallDamageMinM: number;
   /** Fraction of the velocity difference applied per step: 1 is instant start and stop. */
   accelGain: number;
+  /** Magnetic level view: when a look drag ends within this many degrees of level, snap to level. */
+  levelSnapDeg: number;
+  /** Speed of the snap, degrees per second. */
+  levelSnapDegPerSec: number;
 }
 
 export const DEFAULT_TUNING: PartyTuning = {
@@ -50,6 +54,8 @@ export const DEFAULT_TUNING: PartyTuning = {
   maxSlopeDeg: 50,
   fallDamageMinM: 3,
   accelGain: 1,
+  levelSnapDeg: 8,
+  levelSnapDegPerSec: 45,
 };
 
 export interface FallEvent {
@@ -61,9 +67,16 @@ const DEG = Math.PI / 180;
 const UP = new Vector3(0, 1, 0);
 const DOWN = new Vector3(0, -1, 0);
 
+/** Move `value` toward zero by at most `step`. */
+function towardZero(value: number, step: number): number {
+  if (Math.abs(value) <= step) return 0;
+  return value - Math.sign(value) * step;
+}
+
 /**
  * First-person party movement on a Havok character capsule, driven by FrameInput.
- * Tank controls: forward and backward along the facing, turning by yaw, no strafing.
+ * Tank controls: forward and backward along the facing, slow sideways strafing, turning by
+ * yaw, and a magnetic snap back to a level view after small pitch excursions.
  */
 export class PartyController {
   readonly onFall = new Observable<FallEvent>();
@@ -74,7 +87,9 @@ export class PartyController {
   private readonly controller: PhysicsCharacterController;
   private readonly gravityVec = new Vector3();
   private readonly forward = new Vector3();
+  private readonly right = new Vector3();
   private readonly desired = new Vector3();
+  private levelling = false;
   private airborne = false;
   private apexY = 0;
   private landedY = 0;
@@ -123,6 +138,7 @@ export class PartyController {
     this.controller.setVelocity(Vector3.Zero());
     if (yawDeg !== undefined) this.yaw = yawDeg * DEG;
     this.pitch = 0;
+    this.levelling = false;
     this.airborne = false;
     this.syncCamera();
   }
@@ -136,22 +152,36 @@ export class PartyController {
     if (dt <= 0) return;
     const t = this.tuning;
 
-    // Orientation. Right drag turns while walking and looks while stationary.
+    // Orientation. Right drag turns while moving and looks while stationary.
     this.yaw += input.turnPx * t.turnDegPerPx * DEG;
     this.yaw += input.keyTurn * t.keyTurnDegPerSec * DEG * dt;
     this.yaw += input.lookX * t.lookDegPerPx * DEG;
-    this.pitch += input.lookY * t.lookDegPerPx * DEG;
+    if (input.lookY !== 0) {
+      this.levelling = false;
+      this.pitch += input.lookY * t.lookDegPerPx * DEG;
+    }
     this.pitch = Math.max(t.pitchMinDeg * DEG, Math.min(t.pitchMaxDeg * DEG, this.pitch));
+
+    // Magnetic level view: a look drag that ends close to level eases back to level.
+    if (input.lookReleased && Math.abs(this.pitch) <= t.levelSnapDeg * DEG) this.levelling = true;
+    if (this.levelling) {
+      this.pitch = towardZero(this.pitch, t.levelSnapDegPerSec * DEG * dt);
+      if (this.pitch === 0) this.levelling = false;
+    }
 
     // Facing on the ground plane (Babylon is left-handed: yaw 0 faces +Z, turning right is +yaw).
     this.forward.set(Math.sin(this.yaw), 0, Math.cos(this.yaw));
+    this.right.set(Math.cos(this.yaw), 0, -Math.sin(this.yaw));
 
     const cc = this.controller;
     const support: CharacterSurfaceInfo = cc.checkSupport(dt, DOWN);
     this.lastSupport = support.supportedState;
     this.lastInputMove = input.move;
     const current = cc.getVelocity();
-    this.desired.copyFrom(this.forward).scaleInPlace(input.move * t.walkSpeed);
+    this.desired
+      .copyFrom(this.forward)
+      .scaleInPlace(input.move * t.walkSpeed)
+      .addInPlace(this.right.scale(input.strafe * t.walkSpeed));
     this.gravityVec.set(0, -t.gravity, 0);
 
     let next: Vector3;

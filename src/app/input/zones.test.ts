@@ -34,10 +34,39 @@ describe('move stick (left half)', () => {
     expect(z.consume().move).toBeCloseTo(-1 / 3);
   });
 
-  it('ignores sideways travel: no strafing', () => {
+  it('strafes sideways at the slow speed, right positive', () => {
     z.pointerDown(1, 200, 200, 0);
     z.pointerMove(1, 400, 200, 10);
-    expect(z.consume().move).toBe(0);
+    let f = z.consume();
+    expect(f.move).toBe(0);
+    expect(f.strafe).toBeCloseTo(1 / 3);
+    z.pointerMove(1, 100, 200, 20);
+    f = z.consume();
+    expect(f.strafe).toBeCloseTo(-1 / 3);
+    expect(z.isWalking).toBe(true);
+  });
+
+  it('commits to one axis per gesture until the stick returns to centre', () => {
+    z.pointerDown(1, 200, 300, 0);
+    z.pointerMove(1, 200, 240, 10); // vertical wins
+    z.pointerMove(1, 300, 240, 20); // diagonal: still vertical, no strafe
+    let f = z.consume();
+    expect(f.move).toBe(1);
+    expect(f.strafe).toBe(0);
+    z.pointerMove(1, 200, 300, 30); // back to centre releases the axis
+    z.pointerMove(1, 300, 300, 40); // now horizontal wins
+    f = z.consume();
+    expect(f.move).toBe(0);
+    expect(f.strafe).toBeCloseTo(1 / 3);
+  });
+
+  it('cannot start strafing while the right thumb is looking around', () => {
+    z.pointerDown(2, 700, 200, 0); // looking (stationary)
+    z.pointerDown(1, 200, 300, 5);
+    z.pointerMove(1, 300, 300, 10);
+    expect(z.consume().strafe).toBe(0);
+    z.pointerMove(1, 200, 100, 20); // forward is still allowed
+    expect(z.consume().move).toBe(1);
   });
 
   it('stops when released', () => {
@@ -89,6 +118,15 @@ describe('look area (right half)', () => {
     expect(f.turnPx).toBe(10);
     expect(f.lookX).toBe(10);
     expect(f.lookY).toBe(30);
+  });
+
+  it('reports the frame the look drag ended', () => {
+    z.pointerDown(2, 700, 200, 0);
+    z.pointerMove(2, 720, 230, 10);
+    expect(z.consume().lookReleased).toBe(false);
+    z.pointerUp(2, 720, 230, 400);
+    expect(z.consume().lookReleased).toBe(true);
+    expect(z.consume().lookReleased).toBe(false);
   });
 
   it('accumulates and resets per frame', () => {
@@ -152,6 +190,15 @@ describe('keyboard fallback', () => {
     const f = z.consume();
     expect(f.move).toBeCloseTo(-1 / 3);
     expect(f.keyTurn).toBe(1);
+  });
+
+  it('Q/E strafe slowly and yield to forward/backward', () => {
+    z.setKeyboard(0, 0, 1);
+    expect(z.consume().strafe).toBeCloseTo(1 / 3);
+    z.setKeyboard(1, 0, 1);
+    const f = z.consume();
+    expect(f.move).toBe(1);
+    expect(f.strafe).toBe(0);
   });
 
   it('touch takes precedence over keys', () => {
