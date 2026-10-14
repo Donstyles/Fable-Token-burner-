@@ -106,15 +106,15 @@ device, before any real content exists.
 **Steps**
 
 1. Render filter pipeline (`src/render`):
-   - Internal resolution by **integer downscale** of the physical display,
-     so every game pixel is an exact block of screen pixels. Default 2×
-     (1398×645 on the iPhone 14 Pro Max, about 480 lines inside the HUD
-     frame, above MM6's 344-line viewport). Presets: 3× "retro" (932×430),
-     2× "default", 1× "sharp" (native). Exposed as a player setting and on
-     the dev panel. The retro look comes mainly from posterize, dither,
-     texture filtering and low-fps animation, so resolution can sit higher
-     without losing it. The HUD is HTML at native resolution, so text stays
-     crisp; a switch pixelates the HUD too.
+   - World rendered at a fixed line count, **1080 lines by default**
+     (2340×1080 on the iPhone 14 Pro Max), with a **720-line** performance
+     preset; width follows the display aspect. Upscaled to the display with
+     nearest-neighbour. At these densities the scale factor need not be an
+     integer; any unevenness is below what the eye resolves at 460 ppi. The
+     retro look comes from posterize, dither, texture filtering and low-fps
+     animation, so the dither cell size is a separate setting (1 or 2 px) to
+     keep the pattern visible at 1080. Exposed as a player setting and on
+     the dev panel. **UI and text are HTML at native resolution.**
    - Post-process chain: posterize (configurable levels per channel),
      4×4 ordered dither, optional palette LUT (a starting palette is
      extracted from the reference screenshots; a palette is not copyrightable),
@@ -398,7 +398,6 @@ by designing at device resolution from the start.
 
 1. The phase order above, with 2 and 4 interleaved.
 2. GitHub Pages as the hosting for on-device testing.
-3. World rendered at an integer downscale, default 2× (645 lines on the
-   iPhone 14 Pro Max), with 3× and native presets; HUD at native resolution
-   with a switch to pixelate it too.
+3. World rendered at 1080 lines by default with a 720-line performance
+   preset; UI and text at native resolution. (Decided 2026-10-14.)
 4. Dev-only test arena in Phase 1, deleted in Phase 2.
