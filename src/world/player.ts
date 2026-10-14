@@ -41,6 +41,8 @@ export interface PartyTuning {
   levelSnapDeg: number;
   /** Speed of the snap, degrees per second. */
   levelSnapDegPerSec: number;
+  /** Eye height follows the capsule with this rate (1/s); 0 disables smoothing. */
+  eyeSmoothing: number;
 }
 
 export const DEFAULT_TUNING: PartyTuning = {
@@ -61,6 +63,7 @@ export const DEFAULT_TUNING: PartyTuning = {
   levelSnapEnabled: false,
   levelSnapDeg: 8,
   levelSnapDegPerSec: 45,
+  eyeSmoothing: 14,
 };
 
 export interface FallEvent {
@@ -76,6 +79,12 @@ const DOWN = new Vector3(0, -1, 0);
 function towardZero(value: number, step: number): number {
   if (Math.abs(value) <= step) return 0;
   return value - Math.sign(value) * step;
+}
+
+/** Exponential ease of `current` toward `target` at `rate` per second over `dt`. */
+export function easeToward(current: number, target: number, rate: number, dt: number): number {
+  if (rate <= 0 || dt <= 0) return target;
+  return target + (current - target) * Math.exp(-rate * dt);
 }
 
 /**
@@ -99,6 +108,8 @@ export class PartyController {
   private readonly right = new Vector3();
   private readonly desired = new Vector3();
   private levelling = false;
+  /** Smoothed eye height, so step-ups and small drops do not pop the view. */
+  private eyeY: number | null = null;
   private airborne = false;
   private apexY = 0;
   private landedY = 0;
@@ -152,6 +163,7 @@ export class PartyController {
     this.pitch = 0;
     this.levelling = false;
     this.airborne = false;
+    this.eyeY = null;
     this.syncCamera();
   }
 
@@ -245,7 +257,7 @@ export class PartyController {
     const wanted = Math.hypot(this.desired.x, this.desired.z);
     const got = cc.getVelocity();
     this.blocked = wanted > 0.1 && Math.hypot(got.x, got.z) < 0.25 * wanted;
-    this.syncCamera();
+    this.syncCamera(dt);
   }
 
   /**
@@ -320,10 +332,13 @@ export class PartyController {
     if (height >= this.tuning.fallDamageMinM) this.onFall.notifyObservers({ height });
   }
 
-  private syncCamera(): void {
+  private syncCamera(dt = 0): void {
     const c = this.controller.getPosition();
-    const eye = c.y - this.tuning.capsuleHeight / 2 + this.tuning.eyeHeight;
-    this.camera.position.set(c.x, eye, c.z);
+    const target = c.y - this.tuning.capsuleHeight / 2 + this.tuning.eyeHeight;
+    // Smooth only while on the ground; falling must feel immediate.
+    if (this.eyeY === null || this.airborne || dt <= 0) this.eyeY = target;
+    else this.eyeY = easeToward(this.eyeY, target, this.tuning.eyeSmoothing, dt);
+    this.camera.position.set(c.x, this.eyeY, c.z);
     this.camera.rotation.set(this.pitch, this.yaw, 0);
   }
 }
