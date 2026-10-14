@@ -1,0 +1,12 @@
+# Pre-commit guard rails. Install once with `npx lefthook install` (npm install does it).
+pre-commit:
+  parallel: false
+  commands:
+    secrets:
+      run: npm run --silent secrets:guard -- --staged
+    lint:
+      glob: '*.{ts,js}'
+      run: npx eslint {staged_files}
+    format:
+      glob: '*.{ts,js,json,css,html,md,yml,yaml}'
+      run: npx prettier --check {staged_files}
