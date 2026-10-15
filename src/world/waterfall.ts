@@ -124,6 +124,7 @@ export class LevelWaterfalls {
   private readonly states: FallState[] = [];
   private time = 0;
   private particlesOn = true;
+  private soundOnValue = true;
   private soundVolumeValue = 0.8;
 
   constructor(
@@ -200,11 +201,20 @@ export class LevelWaterfalls {
     }
   }
 
+  get soundOn(): boolean {
+    return this.soundOnValue;
+  }
+
+  get particlesEnabled(): boolean {
+    return this.particlesOn;
+  }
+
   setSound(on: boolean): void {
+    this.soundOnValue = on;
     for (const s of this.states) s.sound.setEnabled(on);
   }
 
-  update(dt: number, listener: Vector3, listenerYaw: number): void {
+  update(dt: number, listener: Vector3): void {
     this.time += dt;
     const env = this.materials.env;
     for (const s of this.states) {
@@ -212,7 +222,7 @@ export class LevelWaterfalls {
       s.material.setVector3('cameraPosition', listener);
       s.material.setFloat('fogDensity', env.fogDensity);
       s.material.setColor3('fogColor', env.fogColor);
-      s.sound.update(listener, listenerYaw);
+      s.sound.update(listener);
     }
   }
 

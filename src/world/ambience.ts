@@ -1,17 +1,20 @@
 /**
- * Procedural ambience through Web Audio. A waterfall is filtered brown noise with a slow
- * swell, placed in 3D with inverse-distance attenuation. No audio files: the sound is
- * synthesised, so it is neither a placeholder nor a licence question.
+ * Waterfall sound: a synthesised loop (rumble and spray hiss, Phase 4 brings recordings)
+ * played as a Babylon spatial sound. The sheet is a line source: each frame the sound
+ * sits at the point of the sheet nearest the listener, so the fall is loud from the
+ * bridge beside it, at the lip and at the pool alike.
  */
 import { Vector3 } from '@babylonjs/core/Maths/math.vector';
-import { getAudioContext } from '../app/audio-unlock';
+import type { StaticSound } from '@babylonjs/core/AudioV2/abstractAudio/staticSound';
+import { getAudioContext, installAudio } from '../app/audio';
 import { diag } from '../app/diag';
 
 /** Full loudness within this many metres of the sheet, then inverse falloff. */
 const FALL_REF = 4;
 const FALL_ROLLOFF = 1.3;
+const LOOP_SECONDS = 6;
 
-function brownNoise(ctx: AudioContext, seconds = 4): AudioBuffer {
+function brownNoise(ctx: BaseAudioContext, seconds: number): AudioBuffer {
   const rate = ctx.sampleRate;
   const buffer = ctx.createBuffer(2, rate * seconds, rate);
   for (let ch = 0; ch < 2; ch++) {
@@ -39,52 +42,104 @@ function brownNoise(ctx: AudioContext, seconds = 4): AudioBuffer {
   return buffer;
 }
 
-let sharedNoise: AudioBuffer | null = null;
-
-/** Flat noise for the spray hiss; phone speakers carry this where the rumble is lost. */
-function whiteNoise(ctx: AudioContext, seconds = 2): AudioBuffer {
+function whiteNoise(ctx: BaseAudioContext, seconds: number): AudioBuffer {
   const buffer = ctx.createBuffer(1, Math.floor(ctx.sampleRate * seconds), ctx.sampleRate);
   const data = buffer.getChannelData(0);
-  for (let i = 0; i < data.length; i++) data[i] = (Math.random() * 2 - 1) * 0.5;
+  let seed = 99;
+  for (let i = 0; i < data.length; i++) {
+    seed = (seed * 1664525 + 1013904223) >>> 0;
+    data[i] = (seed / 0xffffffff - 0.5) * 1.0;
+  }
   return buffer;
 }
-let sharedHiss: AudioBuffer | null = null;
+
+/** Renders the rumble (low-passed brown noise) and spray hiss (3 kHz band) into one loop. */
+async function renderWaterfallLoop(rate: number): Promise<AudioBuffer> {
+  const off = new OfflineAudioContext(2, rate * LOOP_SECONDS, rate);
+  const rumble = off.createBufferSource();
+  rumble.buffer = brownNoise(off, LOOP_SECONDS);
+  const low = off.createBiquadFilter();
+  low.type = 'lowpass';
+  low.frequency.value = 1600;
+  low.Q.value = 0.6;
+  const high = off.createBiquadFilter();
+  high.type = 'highpass';
+  high.frequency.value = 70;
+  const rumbleGain = off.createGain();
+  rumbleGain.gain.value = 1.6;
+  const hiss = off.createBufferSource();
+  hiss.buffer = whiteNoise(off, LOOP_SECONDS);
+  const band = off.createBiquadFilter();
+  band.type = 'bandpass';
+  band.frequency.value = 3000;
+  band.Q.value = 0.5;
+  const hissGain = off.createGain();
+  hissGain.gain.value = 0.5;
+  const limiter = off.createDynamicsCompressor();
+  limiter.threshold.value = -6;
+  limiter.knee.value = 6;
+  limiter.ratio.value = 4;
+  rumble.connect(low);
+  low.connect(high);
+  high.connect(rumbleGain);
+  rumbleGain.connect(limiter);
+  hiss.connect(band);
+  band.connect(hissGain);
+  hissGain.connect(limiter);
+  limiter.connect(off.destination);
+  rumble.start();
+  hiss.start();
+  return off.startRendering();
+}
+
+let sharedLoop: Promise<AudioBuffer> | null = null;
 
 export class WaterfallSound {
-  private ctx: AudioContext | null = null;
-  /** Mix of rumble and hiss at the fall's own loudness. */
-  private mix: GainNode | null = null;
-  /** Distance attenuation, computed per frame. */
-  private distance: GainNode | null = null;
-  private pan: StereoPannerNode | null = null;
-  private source: AudioBufferSourceNode | null = null;
-  private hiss: AudioBufferSourceNode | null = null;
+  private sound: StaticSound | null = null;
   private enabled = true;
   private master = 1;
-  private reportedAudible = false;
+  private readonly at = new Vector3();
+  private reportedNear = false;
 
-  /**
-   * The sheet is a line source from `lip` to `plunge`: each frame the emitter sits at the
-   * point of the sheet nearest the listener, so the fall is loud from the bridge beside
-   * it, at the lip and at the pool alike. Distance and stereo placement are computed here
-   * and applied to plain gain and stereo-pan nodes: the 3D panner and listener produced
-   * silence on the owner's iPhone while a plain oscillator played (2026-10-15). `volume`
-   * is this fall's own loudness; `setVolume` scales every fall alike.
-   */
+  /** `volume` is this fall's own loudness; `setVolume` scales every fall alike. */
   constructor(
     private readonly lip: Vector3,
     private readonly plunge: Vector3,
     private readonly volume: number,
-  ) {}
+  ) {
+    this.at.copyFrom(lip);
+    void this.init();
+  }
 
-  private nearestPoint(listener: Vector3): Vector3 {
-    const d = this.plunge.subtract(this.lip);
-    const len2 = d.lengthSquared();
-    const t =
-      len2 < 1e-6
-        ? 0
-        : Math.min(1, Math.max(0, Vector3.Dot(listener.subtract(this.lip), d) / len2));
-    return this.lip.add(d.scale(t));
+  private async init(): Promise<void> {
+    const engine = await installAudio();
+    const ctx = getAudioContext();
+    if (!engine || !ctx) return;
+    sharedLoop ??= renderWaterfallLoop(ctx.sampleRate);
+    const buffer = await sharedLoop;
+    const sound = await engine.createSoundAsync('waterfall', buffer, {
+      loop: true,
+      volume: this.gain(),
+      spatialEnabled: true,
+      spatialAutoUpdate: true,
+      spatialPanningModel: 'equalpower',
+      spatialDistanceModel: 'inverse',
+      spatialMinDistance: FALL_REF,
+      spatialMaxDistance: 90,
+      spatialRolloffFactor: FALL_ROLLOFF,
+      spatialPosition: this.at.clone(),
+    });
+    sound.play();
+    this.sound = sound;
+    diag(`fall sound: playing (engine ${engine.state}, loop ${LOOP_SECONDS} s)`);
+  }
+
+  private gain(): number {
+    return this.enabled ? this.volume * this.master : 0;
+  }
+
+  private applyGain(): void {
+    if (this.sound) this.sound.volume = this.gain();
   }
 
   setEnabled(on: boolean): void {
@@ -97,116 +152,29 @@ export class WaterfallSound {
     this.applyGain();
   }
 
-  private applyGain(): void {
-    if (this.mix) this.mix.gain.value = this.enabled ? this.volume * this.master : 0;
+  private nearestPoint(listener: Vector3): Vector3 {
+    const d = this.plunge.subtract(this.lip);
+    const len2 = d.lengthSquared();
+    const t =
+      len2 < 1e-6
+        ? 0
+        : Math.min(1, Math.max(0, Vector3.Dot(listener.subtract(this.lip), d) / len2));
+    return this.lip.add(d.scale(t));
   }
 
-  /** Call every frame; the graph is built once the audio context is running. */
-  update(listener: Vector3, listenerYaw: number): void {
-    if (!this.ctx) {
-      const ctx = getAudioContext();
-      if (!ctx || ctx.state !== 'running') return;
-      this.build(ctx);
+  /** Call every frame with the listener position. */
+  update(listener: Vector3): void {
+    if (!this.sound) return;
+    this.at.copyFrom(this.nearestPoint(listener));
+    this.sound.spatial.position = this.at;
+    if (!this.reportedNear && this.enabled && Vector3.Distance(this.at, listener) < 12) {
+      this.reportedNear = true;
+      diag(`fall sound: within 12 m, volume ${this.gain().toFixed(2)}`);
     }
-    const ctx = this.ctx!;
-    const at = this.nearestPoint(listener);
-    const dx = at.x - listener.x;
-    const dy = at.y - listener.y;
-    const dz = at.z - listener.z;
-    const d = Math.hypot(dx, dy, dz);
-    // Inverse distance: full within REF metres, then REF / (REF + ROLLOFF * (d - REF)).
-    const att = FALL_REF / (FALL_REF + FALL_ROLLOFF * Math.max(d - FALL_REF, 0));
-    // Stereo from the bearing: Babylon is left-handed, right = (cos yaw, 0, -sin yaw).
-    const rx = Math.cos(listenerYaw);
-    const rz = -Math.sin(listenerYaw);
-    const pan = d > 0.01 ? Math.max(-1, Math.min(1, (dx * rx + dz * rz) / d)) * 0.7 : 0;
-    const t = ctx.currentTime;
-    this.distance!.gain.setTargetAtTime(att, t, 0.08);
-    this.pan?.pan.setTargetAtTime(pan, t, 0.08);
-    if (!this.reportedAudible && this.enabled && att * this.volume * this.master > 0.05) {
-      this.reportedAudible = true;
-      diag(
-        `fall sound: audible, ${d.toFixed(1)} m from the sheet, gain ${(att * this.volume * this.master).toFixed(2)}`,
-      );
-    }
-  }
-
-  private build(ctx: AudioContext): void {
-    this.ctx = ctx;
-    sharedNoise ??= brownNoise(ctx);
-    const source = ctx.createBufferSource();
-    source.buffer = sharedNoise;
-    source.loop = true;
-    const low = ctx.createBiquadFilter();
-    low.type = 'lowpass';
-    low.frequency.value = 1600;
-    low.Q.value = 0.6;
-    const high = ctx.createBiquadFilter();
-    high.type = 'highpass';
-    high.frequency.value = 70;
-    // Steady: a fall is a continuous stream, so no swell (owner, 2026-10-15).
-    const mix = ctx.createGain();
-    mix.gain.value = this.enabled ? this.volume * this.master : 0;
-    // Spray hiss on top of the rumble: a band around 3 kHz that small speakers reproduce.
-    sharedHiss ??= whiteNoise(ctx);
-    const hiss = ctx.createBufferSource();
-    hiss.buffer = sharedHiss;
-    hiss.loop = true;
-    const band = ctx.createBiquadFilter();
-    band.type = 'bandpass';
-    band.frequency.value = 3000;
-    band.Q.value = 0.5;
-    const hissGain = ctx.createGain();
-    hissGain.gain.value = 0.35;
-    // Make-up gain for the phone speaker, with a gentle limiter so the lip does not clip.
-    const boost = ctx.createGain();
-    boost.gain.value = 1.6;
-    const limiter = ctx.createDynamicsCompressor();
-    limiter.threshold.value = -6;
-    limiter.knee.value = 6;
-    limiter.ratio.value = 4;
-    limiter.attack.value = 0.005;
-    limiter.release.value = 0.1;
-    const distance = ctx.createGain();
-    distance.gain.value = 0;
-    const pan = typeof ctx.createStereoPanner === 'function' ? ctx.createStereoPanner() : null;
-    source.connect(low);
-    low.connect(high);
-    high.connect(mix);
-    hiss.connect(band);
-    band.connect(hissGain);
-    hissGain.connect(mix);
-    mix.connect(boost);
-    boost.connect(limiter);
-    limiter.connect(distance);
-    if (pan) {
-      distance.connect(pan);
-      pan.connect(ctx.destination);
-    } else {
-      distance.connect(ctx.destination);
-    }
-    source.start();
-    hiss.start();
-    this.source = source;
-    this.hiss = hiss;
-    this.mix = mix;
-    this.distance = distance;
-    this.pan = pan;
-    diag(`fall sound: built (context ${ctx.state}, stereo ${pan ? 'yes' : 'no'})`);
   }
 
   dispose(): void {
-    try {
-      this.source?.stop();
-      this.hiss?.stop();
-    } catch {
-      // already stopped
-    }
-    this.source?.disconnect();
-    this.hiss?.disconnect();
-    this.mix?.disconnect();
-    this.distance?.disconnect();
-    this.pan?.disconnect();
-    this.ctx = null;
+    this.sound?.dispose();
+    this.sound = null;
   }
 }

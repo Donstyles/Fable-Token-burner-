@@ -28,11 +28,13 @@ import { createDevPanel, type Field } from './panel';
 import { diag, diagText } from '../app/diag';
 import {
   AUDIO_SESSION_TYPES,
+  attachListener,
   getAudioSessionType,
-  playTestTone,
+  installAudio,
+  playTestSound,
   setAudioSessionType,
   type AudioSessionType,
-} from '../app/audio-unlock';
+} from '../app/audio';
 
 export interface DevHandle {
   ready: boolean;
@@ -106,6 +108,9 @@ export async function startDev(app: App): Promise<DevHandle> {
     'quarter',
   );
   const waterfalls = new LevelWaterfalls(scene, level.waterfalls, app.materials);
+  // Babylon's listener rides the camera; sounds place themselves in scene space.
+  void installAudio().then(() => attachListener(app.camera));
+  let mipmapsOn = true;
   const torch = new Torch(app.materials);
   const braziers = new Braziers(scene, level.lights);
   const fog = new FogBySpace(app.materials, level.spaces);
@@ -255,7 +260,7 @@ export async function startDev(app: App): Promise<DevHandle> {
     const yaw = fly ? flyYaw : party.yaw;
     underwater.set(isUnderwater(level.water, eye));
     water.update(eye, dt);
-    waterfalls.update(dt, eye, yaw);
+    waterfalls.update(dt, eye);
     torch.update(dt, eye, yaw);
     fog.update(dt, eye);
     events.taps += input.taps.length;
@@ -379,7 +384,7 @@ export async function startDev(app: App): Promise<DevHandle> {
         kind: 'toggle',
         key: 'particles',
         label: 'particles',
-        get: () => true,
+        get: () => waterfalls.particlesEnabled,
         set: (v) => {
           waterfalls.setParticles(v);
           braziers.setEnabled(v);
@@ -389,8 +394,11 @@ export async function startDev(app: App): Promise<DevHandle> {
         kind: 'toggle',
         key: 'sound',
         label: 'waterfall sound',
-        get: () => true,
+        get: () => waterfalls.soundOn,
         set: (v) => waterfalls.setSound(v),
+        // Showed "on" whatever its state and restored a stored "off" at every launch:
+        // the fall was silent from v60 to v70 for this alone (2026-10-15).
+        persist: false,
       },
       range(
         'soundVolume',
@@ -416,7 +424,7 @@ export async function startDev(app: App): Promise<DevHandle> {
         kind: 'button',
         key: 'testTone',
         label: 'test tone',
-        run: () => playTestTone(),
+        run: () => playTestSound(),
       },
       {
         kind: 'toggle',
@@ -616,8 +624,11 @@ export async function startDev(app: App): Promise<DevHandle> {
         kind: 'toggle',
         key: 'mipmaps',
         label: 'mipmaps',
-        get: () => true,
-        set: (v) => setRoleMipmaps(textures, v),
+        get: () => mipmapsOn,
+        set: (v) => {
+          mipmapsOn = v;
+          setRoleMipmaps(textures, v);
+        },
       },
       range(
         'walkSpeed',

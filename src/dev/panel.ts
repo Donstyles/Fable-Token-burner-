@@ -97,9 +97,13 @@ export function createDevPanel(
   });
   root.append(toggle, body);
 
+  // Slider drags fire many times a second; write storage a little later, once.
+  let storeTimer: ReturnType<typeof setTimeout> | null = null;
   const remember = (key: string, v: unknown): void => {
-    if (!volatile.has(key)) values[key] = v;
-    store(values);
+    if (volatile.has(key)) return;
+    values[key] = v;
+    if (storeTimer) clearTimeout(storeTimer);
+    storeTimer = setTimeout(() => store(values), 250);
   };
 
   /** Current value of every field, for handing back to the developer. */

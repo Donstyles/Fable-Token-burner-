@@ -1,7 +1,7 @@
 import './style.css';
 import { boot, type App } from './app/boot';
-import { installAudioUnlock } from './app/audio-unlock';
 import { installForcedLandscape, tryLockLandscape } from './app/orientation';
+import { installAudio } from './app/audio';
 import { installDiagnostics, diag, diagText } from './app/diag';
 import { installServiceWorker } from './app/update-prompt';
 import { installLogButton } from './app/log-button';
@@ -40,7 +40,7 @@ if (
   installLogButton(ui);
   installSoundButton(ui);
 }
-installAudioUnlock();
+void installAudio();
 tryLockLandscape();
 installForcedLandscape();
 installServiceWorker(ui);

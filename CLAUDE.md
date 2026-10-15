@@ -11,6 +11,9 @@ anything. Both are the source of truth; update them when a decision changes.
   them. `npm run secrets:guard` must stay clean.
 - Meshy API calls happen only for an owner-approved batch file.
 - Work on the designated branch; commit in logical steps.
+- Before building any system, check whether Babylon.js or an established
+  library already provides it, and prefer that (owner, 2026-10-15, after a
+  hand-rolled sound chain cost hours). Sound is Babylon's audio engine.
 
 ## Commands
 

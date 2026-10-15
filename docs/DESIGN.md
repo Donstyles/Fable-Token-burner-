@@ -672,6 +672,20 @@ and icons all share it, so world and UI agree.
   nearest point of the sheet and applied to a gain and a stereo-pan node.
   The graph is built only once the context is running, and the dev log
   records when it is built and when it first becomes audible.
+- 2026-10-15 – **Root cause of the silent fall, v60 to v70.** The dev panel's
+  "waterfall sound" switch displayed "on" whatever its state, and its saved
+  value was restored at every launch. The owner switched it off on v59 when
+  the fall was too loud; every later build restored that "off" while the
+  panel claimed "on". The audio chain was never the fault. Every switch now
+  reports its real state and the sound switch no longer persists.
+- 2026-10-15 – **Sound is Babylon's audio engine** (owner: "check each time
+  whether Babylon already has it", now a rule in CLAUDE.md). The hand-rolled
+  Web Audio chain is gone: Babylon's AudioV2 engine owns the context,
+  resumes it on the first interaction, carries the listener on the camera
+  and spatialises the fall (inverse model, 4 m reference, rolloff 1.3).
+  Ours is only the iOS session type, pausing while hidden, and the
+  synthesised loop (rumble and hiss rendered offline into one buffer) until
+  Phase 4 brings recordings. Panel storage writes are debounced.
 - 2026-10-15 – **Owner's look tuning becomes the default** (sent from the
   dev panel after playing the water build, "looks moody"): posterize filter
   on at 5 levels with dither 0.45 (cell 2), bloom off, vignette 0.6, contrast
