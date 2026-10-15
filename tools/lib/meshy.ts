@@ -205,23 +205,15 @@ export class MeshyClient {
   }
 
   /**
-   * Submit a task and poll until it is terminal or the timeout passes. On a timeout the
-   * outcome carries the task id with a non-terminal status; `wait` resumes it.
+   * Submit a task with exactly one POST and return its id at once, so the caller can record
+   * it before polling with `wait`; a crash while waiting then loses nothing.
    */
   async create(
     resource: MeshyResource,
     flags: string[],
     operationId: string,
   ): Promise<TaskOutcome> {
-    const args = [
-      resource,
-      'create',
-      ...flags,
-      '--timeout',
-      String(this.timeoutSeconds),
-      '--operation-id',
-      operationId,
-    ];
+    const args = [resource, 'create', ...flags, '--async', '--operation-id', operationId];
     this.log(`  meshy ${args.join(' ')}`);
     if (this.dryRun) {
       return {
@@ -232,17 +224,10 @@ export class MeshyClient {
       };
     }
     const res = await runMeshy(args);
+    if (!res.envelope.ok) throw failure(res, `${resource} create`);
     const taskId = taskIdOf(res.envelope);
-    if (!res.envelope.ok) {
-      if (res.exitCode === EXIT_TIMED_OUT && taskId) {
-        this.log(
-          `  ${resource} ${taskId}: still running after ${this.timeoutSeconds} s, waiting on`,
-        );
-        return { taskId, status: 'IN_PROGRESS', consumedCredits: null, faceCount: null };
-      }
-      throw failure(res, `${resource} create`);
-    }
-    return outcomeOf(res.envelope);
+    if (!taskId) throw new MeshyError(`${resource} create: no task id`, 'no_task_id', 0, null);
+    return { taskId, status: 'PENDING', consumedCredits: null, faceCount: null };
   }
 
   /** Poll an existing task until it is terminal or the timeout passes. */
