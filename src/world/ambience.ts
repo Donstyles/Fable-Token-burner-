@@ -153,7 +153,7 @@ export class WaterfallSound {
     // a murmur from the hall. Phone speakers lose anything much below a tenth.
     panner.refDistance = 4;
     panner.maxDistance = 90;
-    panner.rolloffFactor = 1.6;
+    panner.rolloffFactor = 1.3;
     if (panner.positionX) {
       panner.positionX.value = -this.lip.x;
       panner.positionY.value = this.lip.y;

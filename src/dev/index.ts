@@ -29,6 +29,7 @@ import { diag, diagText } from '../app/diag';
 import {
   AUDIO_SESSION_TYPES,
   getAudioSessionType,
+  playTestTone,
   setAudioSessionType,
   type AudioSessionType,
 } from '../app/audio-unlock';
@@ -407,6 +408,12 @@ export async function startDev(app: App): Promise<DevHandle> {
         options: AUDIO_SESSION_TYPES,
         get: () => getAudioSessionType(),
         set: (v) => setAudioSessionType(v as AudioSessionType),
+      },
+      {
+        kind: 'button',
+        key: 'testTone',
+        label: 'test tone',
+        run: () => playTestTone(),
       },
       {
         kind: 'toggle',

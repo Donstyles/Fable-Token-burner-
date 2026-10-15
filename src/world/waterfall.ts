@@ -124,7 +124,7 @@ export class LevelWaterfalls {
   private readonly states: FallState[] = [];
   private time = 0;
   private particlesOn = true;
-  private soundVolumeValue = 0.6;
+  private soundVolumeValue = 0.8;
 
   constructor(
     private readonly scene: Scene,
@@ -174,7 +174,7 @@ export class LevelWaterfalls {
         fall,
         material,
         systems,
-        sound: new WaterfallSound(fall.lip, foot, Math.min(1, 0.4 + drop / 60)),
+        sound: new WaterfallSound(fall.lip, foot, Math.min(1, 0.6 + drop / 60)),
       });
     }
     this.setSoundVolume(this.soundVolume);

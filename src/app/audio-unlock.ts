@@ -58,6 +58,47 @@ function tryResume(): void {
   });
 }
 
+/** Creates the context if needed and resumes it; call from a user gesture. */
+function ensureContext(): AudioContext | null {
+  try {
+    if (!context) {
+      context = new AudioContext();
+      context.onstatechange = () => diag(`audio: ${context?.state ?? 'none'}`);
+    }
+    tryResume();
+    return context;
+  } catch {
+    // No WebAudio: the game runs silent.
+    return null;
+  }
+}
+
+/**
+ * A short 440 Hz beep straight to the output, bypassing every game mixer and panner: a
+ * diagnostic for the phone's audio path (dev panel "test tone"). Logged either way.
+ */
+export function playTestTone(): void {
+  const ctx = ensureContext();
+  if (!ctx) {
+    diag('tone: no WebAudio');
+    return;
+  }
+  const osc = ctx.createOscillator();
+  osc.type = 'sine';
+  osc.frequency.value = 440;
+  const gain = ctx.createGain();
+  const t = ctx.currentTime;
+  gain.gain.setValueAtTime(0, t);
+  gain.gain.linearRampToValueAtTime(0.25, t + 0.02);
+  gain.gain.setValueAtTime(0.25, t + 0.7);
+  gain.gain.linearRampToValueAtTime(0, t + 0.8);
+  osc.connect(gain);
+  gain.connect(ctx.destination);
+  osc.start(t);
+  osc.stop(t + 0.85);
+  diag(`tone: played (context ${ctx.state}, rate ${ctx.sampleRate})`);
+}
+
 export function installAudioUnlock(target: EventTarget = window): void {
   applySessionType(sessionType);
   // The playback session's Now Playing entry shows this instead of a bare page title.
@@ -78,15 +119,7 @@ export function installAudioUnlock(target: EventTarget = window): void {
     }
   }
   const onGesture = (): void => {
-    try {
-      if (!context) {
-        context = new AudioContext();
-        context.onstatechange = () => diag(`audio: ${context?.state ?? 'none'}`);
-      }
-      tryResume();
-    } catch {
-      // No WebAudio: the game runs silent.
-    }
+    ensureContext();
   };
   const events = ['pointerdown', 'touchend', 'keydown'] as const;
   for (const e of events) target.addEventListener(e, onGesture, { passive: true });
