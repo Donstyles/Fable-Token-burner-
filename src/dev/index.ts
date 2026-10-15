@@ -385,6 +385,15 @@ export async function startDev(app: App): Promise<DevHandle> {
         get: () => true,
         set: (v) => waterfalls.setSound(v),
       },
+      range(
+        'soundVolume',
+        'waterfall volume',
+        0,
+        1,
+        0.05,
+        () => waterfalls.soundVolume,
+        (v) => waterfalls.setSoundVolume(v),
+      ),
       {
         kind: 'toggle',
         key: 'wire',

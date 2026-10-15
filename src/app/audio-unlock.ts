@@ -3,8 +3,10 @@
  * first touch, click or key and resumed; everything audio-related obtains it from here.
  *
  * iOS specifics: Web Audio obeys the ring/silent switch unless the page asks for a
- * playback session, and the context is suspended ("interrupted") when the app goes to
- * the background, so every later gesture resumes it again rather than only the first.
+ * playback session; a playback session also keeps playing in the background like a
+ * music app, so the context is suspended whenever the page is hidden and resumed when
+ * it is shown again or on the next gesture (the system may also interrupt it, so every
+ * gesture resumes, not only the first).
  */
 import { diag } from './diag';
 
@@ -48,7 +50,14 @@ export function installAudioUnlock(target: EventTarget = window): void {
   };
   const events = ['pointerdown', 'touchend', 'keydown'] as const;
   for (const e of events) target.addEventListener(e, onGesture, { passive: true });
+  const onHidden = (): void => {
+    context?.suspend().catch(() => {
+      // Nothing to do: the next resume attempt reports the state.
+    });
+  };
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'visible') tryResume();
+    else onHidden();
   });
+  window.addEventListener('pagehide', onHidden);
 }

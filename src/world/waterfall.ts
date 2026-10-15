@@ -124,6 +124,7 @@ export class LevelWaterfalls {
   private readonly states: FallState[] = [];
   private time = 0;
   private particlesOn = true;
+  private soundVolumeValue = 0.4;
 
   constructor(
     private readonly scene: Scene,
@@ -173,9 +174,20 @@ export class LevelWaterfalls {
         fall,
         material,
         systems,
-        sound: new WaterfallSound(foot, Math.min(1, 0.4 + drop / 40)),
+        sound: new WaterfallSound(foot, Math.min(1, 0.2 + drop / 60)),
       });
     }
+    this.setSoundVolume(this.soundVolume);
+  }
+
+  /** Master loudness for every fall, 0 to 1 (owner: the first mix was "way too loud"). */
+  get soundVolume(): number {
+    return this.soundVolumeValue;
+  }
+
+  setSoundVolume(v: number): void {
+    this.soundVolumeValue = v;
+    for (const s of this.states) s.sound.setVolume(v);
   }
 
   setParticles(on: boolean): void {

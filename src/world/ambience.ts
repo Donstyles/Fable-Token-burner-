@@ -51,9 +51,10 @@ export class WaterfallSound {
   private gain: GainNode | null = null;
   private source: AudioBufferSourceNode | null = null;
   private hiss: AudioBufferSourceNode | null = null;
-  private lfo: OscillatorNode | null = null;
   private enabled = true;
+  private master = 1;
 
+  /** `volume` is this fall's own loudness; `setVolume` scales every fall alike. */
   constructor(
     private readonly position: Vector3,
     private readonly volume: number,
@@ -61,7 +62,16 @@ export class WaterfallSound {
 
   setEnabled(on: boolean): void {
     this.enabled = on;
-    if (this.gain) this.gain.gain.value = on ? this.volume : 0;
+    this.applyGain();
+  }
+
+  setVolume(master: number): void {
+    this.master = master;
+    this.applyGain();
+  }
+
+  private applyGain(): void {
+    if (this.gain) this.gain.gain.value = this.enabled ? this.volume * this.master : 0;
   }
 
   /** Call every frame; the graph is built once the audio context exists (after a gesture). */
@@ -105,15 +115,9 @@ export class WaterfallSound {
     const high = ctx.createBiquadFilter();
     high.type = 'highpass';
     high.frequency.value = 70;
+    // Steady: a fall is a continuous stream, so no swell (owner, 2026-10-15).
     const gain = ctx.createGain();
-    gain.gain.value = this.enabled ? this.volume : 0;
-    // A slow swell so the roar breathes.
-    const lfo = ctx.createOscillator();
-    lfo.frequency.value = 0.13;
-    const depth = ctx.createGain();
-    depth.gain.value = this.volume * 0.18;
-    lfo.connect(depth);
-    depth.connect(gain.gain);
+    gain.gain.value = this.enabled ? this.volume * this.master : 0;
     const panner = ctx.createPanner();
     panner.panningModel = 'equalpower';
     panner.distanceModel = 'inverse';
@@ -137,7 +141,7 @@ export class WaterfallSound {
     band.frequency.value = 3000;
     band.Q.value = 0.5;
     const hissGain = ctx.createGain();
-    hissGain.gain.value = 0.3;
+    hissGain.gain.value = 0.2;
     source.connect(low);
     low.connect(high);
     high.connect(gain);
@@ -148,10 +152,8 @@ export class WaterfallSound {
     panner.connect(ctx.destination);
     source.start();
     hiss.start();
-    lfo.start();
     this.source = source;
     this.hiss = hiss;
-    this.lfo = lfo;
     this.gain = gain;
     this.panner = panner;
   }
@@ -160,13 +162,11 @@ export class WaterfallSound {
     try {
       this.source?.stop();
       this.hiss?.stop();
-      this.lfo?.stop();
     } catch {
       // already stopped
     }
     this.source?.disconnect();
     this.hiss?.disconnect();
-    this.lfo?.disconnect();
     this.gain?.disconnect();
     this.panner?.disconnect();
     this.ctx = null;

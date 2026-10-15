@@ -594,6 +594,13 @@ and icons all share it, so world and UI agree.
   and a low-passed brown-noise roar is almost inaudible on a phone speaker,
   so the waterfall gained a spray hiss band around 3 kHz. The context's
   state changes are written to the dev log ("audio: running").
+- 2026-10-15 – **Audio on v59** (owner): sound starts on the first touch,
+  which is the platform rule (no browser plays before a gesture); the
+  playback session kept playing while the app was minimised, so the context
+  is now suspended whenever the page is hidden; the fall was "way too loud",
+  so each fall's loudness is lower and a master "waterfall volume" (default
+  0.4) is in the dev panel; and the slow swell is gone because a fall is a
+  continuous stream.
 - 2026-10-15 – **Owner's look tuning becomes the default** (sent from the
   dev panel after playing the water build, "looks moody"): posterize filter
   on at 5 levels with dither 0.45 (cell 2), bloom off, vignette 0.6, contrast
