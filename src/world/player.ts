@@ -116,6 +116,10 @@ export class PartyController {
   /** Diagnostics for the dev build. */
   lastSupport: CharacterSupportedState = CharacterSupportedState.UNSUPPORTED;
   lastInputMove = 0;
+  /** Water over the feet in metres, set by the world each frame; slows walking. */
+  waterDepth = 0;
+  /** Walking speed multiplier for the current water depth; 1 on dry ground. */
+  speedFactor = 1;
 
   constructor(
     scene: Scene,
@@ -204,10 +208,11 @@ export class PartyController {
     this.lastSupport = support.supportedState;
     this.lastInputMove = input.move;
     const current = cc.getVelocity();
+    const speed = t.walkSpeed * this.speedFactor;
     this.desired
       .copyFrom(this.forward)
-      .scaleInPlace(input.move * t.walkSpeed)
-      .addInPlace(this.right.scale(input.strafe * t.walkSpeed));
+      .scaleInPlace(input.move * speed)
+      .addInPlace(this.right.scale(input.strafe * speed));
     this.gravityVec.set(0, -t.gravity, 0);
 
     let next: Vector3;

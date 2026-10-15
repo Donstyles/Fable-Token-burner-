@@ -362,6 +362,18 @@ rotations, joined by **connectors**:
   the pool.
 - Rules as in MM6: wading slows, deep water damages without Water Walk.
 
+Status 2026-10-15 (Phase 3): built as above with these specifics. Reflection
+and refraction render at a quarter of the world resolution by default (half
+and eighth selectable; never full, owner's call). One water material per
+body, each reflecting only the chunks within 45 m, passes switched off
+beyond 60 m. The ripple normal map and the waterfall foam streaks are
+generated in code. The waterfall sound is synthesised (filtered brown noise
+with a slow swell) and placed in 3D with inverse-distance attenuation, so no
+audio file is needed. Wading: over 0.25 m halves walking speed, over 1.3 m
+drops it to a third and counts as deep; the hit points that deep water
+should damage arrive with the party in Phase 5, so for now the dev build
+only announces it. The disturbed patch in the plunge pool is still to do.
+
 ### 11.4 Authoring: level scripts
 
 Source of truth per dungeon is `levels/<id>/level.ts`, written against the
@@ -391,6 +403,13 @@ Baked per-vertex lighting from the level's light list, with occlusion, gives
 the moody MM6 falloff cheaply. On top: a dynamic torch light around the
 party, point lights on braziers and under waterfalls, emissive glow for
 magical features, particle fire. Dark beyond torch range.
+
+Status 2026-10-15: the torch is a live per-pixel point light carried just
+ahead of the eyes with a candle flicker; braziers burn with additive flame
+particles and thin smoke (the compile step tags each light as lantern,
+brazier or glow); fog eases toward the preset of whichever space the party
+stands in (each hall, shaft, corridor and cavern has bounds and an optional
+fog preset in the sidecar; the smallest containing space wins).
 
 ### 11.7 Movement and navigation
 
@@ -513,6 +532,11 @@ and icons all share it, so world and UI agree.
   64³ LUT, Bayer dither with cell size), posterize mode, vertex-lit fogged
   material, touch zones per 7.1, Havok capsule controller with instant
   start/stop, dev arena and tuning panel in a separate dev build at `/dev/`.
+- 2026-10-15 – **Phase 3 built**: live water on every body (quarter-res
+  reflection and refraction, clip planes honoured by the retro material),
+  waterfall ribbons with scrolling foam, spray and mist, synthesised
+  waterfall sound, wading rules, torch light, brazier fire and smoke, fog by
+  space. Showcase gained a brook in a side tunnel that falls into the chasm.
 - 2026-10-15 – **Phase 3 started.** Owner's call: water reflection and
   refraction render at half or quarter of the world resolution (quarter by
   default, selectable in the dev panel), never full.

@@ -26,7 +26,7 @@ week-plus. These are effort sizes, not calendar promises.
 | 0     | Accepted 2026-10-14                                                         |
 | 1     | Accepted 2026-10-14 (stair feel to be settled by ramp colliders in Phase 2) |
 | 2     | Accepted 2026-10-15 on device (walking good, mood fine for now)             |
-| 3     | In progress since 2026-10-15                                                |
+| 3     | Built 2026-10-15, awaiting on-device frame rate and look sign-off           |
 | 4–7   | Not started                                                                 |
 
 ## Phase overview
@@ -264,6 +264,11 @@ texture on top.)
    particle fire, smoke.
 5. Fog presets per space type; darkness beyond torch range.
 6. Showcase level gains its river, waterfall and flooded undercroft.
+
+**Status 2026-10-15:** steps 1–6 built (see DESIGN.md 11.3 and 11.6 status
+notes). Not yet: the disturbed-water patch under the waterfall, swept river
+surfaces with their own flow (rivers share the one flow direction of their
+material), and deep-water damage, which waits for hit points in Phase 5.
 
 **Deliverables:** showcase level with live water and lighting.
 

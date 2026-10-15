@@ -16,6 +16,9 @@ import { PartyController, DEFAULT_TUNING } from '../world/player';
 import { loadLevel, type LoadedLevel } from '../world/level';
 import { loadRoleTextures, setRoleMipmaps } from '../world/textures';
 import { LevelWater, WATER_QUALITIES, type WaterQuality } from '../world/water';
+import { LevelWaterfalls } from '../world/waterfall';
+import { Braziers, FogBySpace, Torch } from '../world/atmosphere';
+import { UnderwaterTint, isUnderwater, wadeSpeedFactor, waterDepthAt } from '../world/wading';
 import { ROLE } from '../../kernel/elements/roles';
 import { FILTER_MODES, type FilterMode } from '../render/filter';
 import { RENDER_PRESETS, type RenderPreset } from '../render/resolution';
@@ -36,7 +39,14 @@ export interface DevHandle {
   positionOf(): { x: number; y: number; z: number };
   yawDeg(): number;
   pitchDeg(): number;
-  debug(): { support: number; move: number; velocity: [number, number, number]; airborne: boolean };
+  debug(): {
+    support: number;
+    move: number;
+    velocity: [number, number, number];
+    airborne: boolean;
+    waterDepth: number;
+    space: string | null;
+  };
   /** Move the party to a feet position and heading, for tests. */
   teleport(x: number, y: number, z: number, yawDeg: number): void;
   /** Named level points in scene space, for tests. */
@@ -88,6 +98,11 @@ export async function startDev(app: App): Promise<DevHandle> {
       }),
     'quarter',
   );
+  const waterfalls = new LevelWaterfalls(scene, level.waterfalls, app.materials);
+  const torch = new Torch(app.materials);
+  const braziers = new Braziers(scene, level.lights);
+  const fog = new FogBySpace(app.materials, level.spaces);
+  const underwater = new UnderwaterTint(uiLayer);
   diag(`water: ${level.water.length} bodies, ${level.waterfalls.length} falls`);
 
   const zones = new InputZones({ width: canvas.clientWidth, height: canvas.clientHeight });
@@ -136,6 +151,8 @@ export async function startDev(app: App): Promise<DevHandle> {
         move: party.lastInputMove,
         velocity: [v.x, v.y, v.z],
         airborne: party.isAirborne,
+        waterDepth: party.waterDepth,
+        space: fog.space,
       };
     },
     pickAt(x, y) {
@@ -209,13 +226,31 @@ export async function startDev(app: App): Promise<DevHandle> {
   };
 
   let simTime = 0;
+  let lastDeepToast = -10;
   scene.onBeforeRenderObservable.add(() => {
     const dt = Math.min(engine.getDeltaTime() / 1000, 0.05);
     simTime += dt;
     const input = zones.consume();
-    if (fly) flyUpdate(dt, input);
-    else party.update(dt, input);
-    water.update(camera.globalPosition);
+    if (fly) {
+      flyUpdate(dt, input);
+    } else {
+      // Wading: depth over the feet slows the walk; eyes under the surface tint the view.
+      const depth = waterDepthAt(level.water, party.position);
+      party.waterDepth = depth;
+      party.speedFactor = wadeSpeedFactor(depth);
+      party.update(dt, input);
+      if (depth >= 1.3 && simTime - lastDeepToast > 2) {
+        lastDeepToast = simTime;
+        panel.toast('deep water');
+      }
+    }
+    const eye = camera.globalPosition;
+    const yaw = fly ? flyYaw : party.yaw;
+    underwater.set(isUnderwater(level.water, eye));
+    water.update(eye);
+    waterfalls.update(dt, eye, yaw);
+    torch.update(dt, eye, yaw);
+    fog.update(dt, eye);
     events.taps += input.taps.length;
     for (const t of input.taps) handleTap(t.x, t.y);
   });
@@ -288,6 +323,39 @@ export async function startDev(app: App): Promise<DevHandle> {
         () => water.look.waveHeight,
         (v) => water.setLook({ waveHeight: v }),
       ),
+      {
+        kind: 'toggle',
+        key: 'torch',
+        label: 'torch',
+        get: () => true,
+        set: (v) => torch.setEnabled(v),
+      },
+      range(
+        'torchPower',
+        'torch power',
+        0,
+        3,
+        0.1,
+        () => torch.base,
+        (v) => (torch.base = v),
+      ),
+      {
+        kind: 'toggle',
+        key: 'particles',
+        label: 'particles',
+        get: () => true,
+        set: (v) => {
+          waterfalls.setParticles(v);
+          braziers.setEnabled(v);
+        },
+      },
+      {
+        kind: 'toggle',
+        key: 'sound',
+        label: 'waterfall sound',
+        get: () => true,
+        set: (v) => waterfalls.setSound(v),
+      },
       {
         kind: 'toggle',
         key: 'wire',

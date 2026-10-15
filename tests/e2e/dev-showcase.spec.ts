@@ -12,7 +12,12 @@ type Point = { x: number; y: number };
 type Dev = {
   ready: boolean;
   simTime(): number;
-  debug(): { move: number; velocity: [number, number, number] };
+  debug(): { move: number; velocity: [number, number, number]; waterDepth: number };
+  water: { currentQuality: string };
+  level: {
+    water: { mesh: { material: { getClassName(): string } | null } }[];
+    waterfalls: unknown[];
+  };
   positionOf(): { x: number; y: number; z: number };
   pointOf(name: string): { x: number; y: number; z: number } | null;
   teleport(x: number, y: number, z: number, yaw: number): void;
@@ -231,6 +236,37 @@ test.describe('dev build', () => {
     await touch('touchEnd', []);
     expect(p.y).toBeGreaterThan(-4.8);
     expect(p.z).toBeLessThan(-12);
+  });
+
+  test('wades at half speed through the undercroft pool', async ({ page, browserName }) => {
+    test.skip(browserName !== 'chromium', 'touch injection needs CDP');
+    // The undercroft floor is at y = -9 under 0.4 m of water: shallow wading.
+    await page.evaluate(() => (window as unknown as W).ftb!.dev!.teleport(2, -9, -4, 0));
+    await page.waitForTimeout(400);
+    const depth = await page.evaluate(() => (window as unknown as W).ftb!.dev!.debug().waterDepth);
+    expect(depth).toBeGreaterThan(0.3);
+    expect(depth).toBeLessThan(0.5);
+    await touch('touchStart', [{ x: 200, y: 320 }]);
+    await touch('touchMove', [{ x: 200, y: 180 }]);
+    const { speed } = await measureSpeed(page, (s) => s.z, 1);
+    await touch('touchEnd', []);
+    expect(speed).toBeGreaterThan(1.8);
+    expect(speed).toBeLessThan(2.7);
+  });
+
+  test('water bodies and the waterfall are live', async ({ page }) => {
+    const info = await page.evaluate(() => {
+      const d = (window as unknown as W).ftb!.dev!;
+      return {
+        quality: d.water.currentQuality,
+        bodies: d.level.water.map((w) => w.mesh.material?.getClassName() ?? null),
+        falls: d.level.waterfalls.length,
+      };
+    });
+    expect(info.quality).toBe('quarter');
+    expect(info.bodies.length).toBe(3);
+    for (const cls of info.bodies) expect(cls).toBe('WaterMaterial');
+    expect(info.falls).toBe(1);
   });
 
   test('tap on the level registers through picking', async ({ page, browserName }) => {
