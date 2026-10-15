@@ -240,8 +240,9 @@ test.describe('dev build', () => {
 
   test('wades at half speed through the undercroft pool', async ({ page, browserName }) => {
     test.skip(browserName !== 'chromium', 'touch injection needs CDP');
-    // The undercroft floor is at y = -9 under 0.4 m of water: shallow wading.
-    await page.evaluate(() => (window as unknown as W).ftb!.dev!.teleport(2, -9, -4, 0));
+    // The undercroft floor is at y = -9 under 0.4 m of water: shallow wading. Start on the
+    // centre line, between the two rows of columns, with 10 m of clear water ahead.
+    await page.evaluate(() => (window as unknown as W).ftb!.dev!.teleport(0, -9, -4.5, 0));
     await page.waitForTimeout(400);
     const depth = await page.evaluate(() => (window as unknown as W).ftb!.dev!.debug().waterDepth);
     expect(depth).toBeGreaterThan(0.3);
