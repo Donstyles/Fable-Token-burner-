@@ -12,7 +12,9 @@ import { diag } from '../app/diag';
 /** Full loudness within this many metres of the sheet, then inverse falloff. */
 const FALL_REF = 4;
 const FALL_ROLLOFF = 1.3;
-const LOOP_SECONDS = 6;
+const LOOP_SECONDS = 12;
+/** The loop's tail is blended into its head over this long, so the seam is inaudible. */
+const SEAM_SECONDS = 0.75;
 
 function brownNoise(ctx: BaseAudioContext, seconds: number): AudioBuffer {
   const rate = ctx.sampleRate;
@@ -89,7 +91,27 @@ async function renderWaterfallLoop(rate: number): Promise<AudioBuffer> {
   limiter.connect(off.destination);
   rumble.start();
   hiss.start();
-  return off.startRendering();
+  return seamless(await off.startRendering(), off);
+}
+
+/**
+ * Equal-power cross-fade of the loop's tail into its head (the filters and limiter in the
+ * render undo any seam prepared in the noise itself), then the tail is dropped.
+ */
+function seamless(buffer: AudioBuffer, ctx: BaseAudioContext): AudioBuffer {
+  const fade = Math.floor(buffer.sampleRate * SEAM_SECONDS);
+  const length = buffer.length - fade;
+  const out = ctx.createBuffer(buffer.numberOfChannels, length, buffer.sampleRate);
+  for (let ch = 0; ch < buffer.numberOfChannels; ch++) {
+    const src = buffer.getChannelData(ch);
+    const dst = out.getChannelData(ch);
+    dst.set(src.subarray(0, length));
+    for (let i = 0; i < fade; i++) {
+      const t = (i / fade) * (Math.PI / 2);
+      dst[i] = (src[length + i] ?? 0) * Math.cos(t) + (src[i] ?? 0) * Math.sin(t);
+    }
+  }
+  return out;
 }
 
 let sharedLoop: Promise<AudioBuffer> | null = null;

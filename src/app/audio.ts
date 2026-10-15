@@ -113,17 +113,28 @@ export function installAudio(): Promise<AudioEngineV2 | null> {
       diag(`audio engine: unavailable (${String(e)})`);
       return null;
     }
+    // Silence first, then pause: pausing a live graph on iOS left a short whine.
+    const hide = (): void => {
+      if (!engine) return;
+      engine.volume = 0;
+      void engine.pauseAsync().catch(() => {});
+      // A playback session would keep a Now Playing entry while minimised.
+      if (sessionType === 'playback') applySessionType('ambient');
+    };
     document.addEventListener('visibilitychange', () => {
       if (document.visibilityState === 'visible') {
         if (sessionType === 'playback') applySessionType('playback');
-        void engine?.resumeAsync().catch(() => {});
+        void engine
+          ?.resumeAsync()
+          .catch(() => {})
+          .finally(() => {
+            if (engine) engine.volume = 1;
+          });
       } else {
-        void engine?.pauseAsync().catch(() => {});
-        // A playback session would keep a Now Playing entry while minimised.
-        if (sessionType === 'playback') applySessionType('ambient');
+        hide();
       }
     });
-    window.addEventListener('pagehide', () => void engine?.pauseAsync().catch(() => {}));
+    window.addEventListener('pagehide', hide);
     return engine;
   })();
   return enginePromise;

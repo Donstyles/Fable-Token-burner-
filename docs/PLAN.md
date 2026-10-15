@@ -265,9 +265,11 @@ texture on top.)
 5. Fog presets per space type; darkness beyond torch range.
 6. Showcase level gains its river, waterfall and flooded undercroft.
 
-**Status 2026-10-15:** steps 1–6 built (see DESIGN.md 11.3 and 11.6 status
-notes); water motion and the mirror plane fixed the same day after the
-owner's on-device screenshots (DESIGN.md decision log). Not yet: the disturbed-water patch under the waterfall, swept river
+**Accepted 2026-10-15 with notes** (owner: "Go next. I want to play a game").
+Steps 1–6 built (see DESIGN.md 11.3 and 11.6 status notes); water motion,
+the mirror plane, the ripples and the sound were fixed the same day after
+the owner's on-device reports (DESIGN.md decision log). Sound runs on
+Babylon's audio engine. Not yet: the disturbed-water patch under the waterfall, swept river
 surfaces with their own flow (rivers share the one flow direction of their
 material), and deep-water damage, which waits for hit points in Phase 5.
 

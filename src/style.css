@@ -133,25 +133,9 @@ html.forced-landscape body {
 }
 
 /* Development builds: always-available log button and box. */
-.log-button {
-  position: absolute;
-  left: 50%;
-  top: calc(var(--sat) + 6px);
-  transform: translateX(-50%);
-  font:
-    12px ui-monospace,
-    Menlo,
-    Consolas,
-    monospace;
-  background: rgba(0, 0, 0, 0.6);
-  color: #9ad;
-  border: 1px solid #9ad;
-  border-radius: 4px;
-  padding: 5px 10px;
-}
 .sound-button {
   position: absolute;
-  left: calc(50% - 150px);
+  left: 50%;
   top: calc(var(--sat) + 6px);
   transform: translateX(-50%);
   font:

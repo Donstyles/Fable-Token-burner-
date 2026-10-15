@@ -686,6 +686,14 @@ and icons all share it, so world and UI agree.
   Ours is only the iOS session type, pausing while hidden, and the
   synthesised loop (rumble and hiss rendered offline into one buffer) until
   Phase 4 brings recordings. Panel storage writes are debounced.
+- 2026-10-15 – **v71 on device: the fall plays.** Three follow-ups from the
+  owner: the loop's seam was audible every few seconds (the render is now
+  12 s with an equal-power cross-fade of the tail into the head, applied
+  after the filters and limiter); minimising left a short whine (the engine
+  is silenced before it is paused); the torch slider showed nothing in lit
+  rooms because the light knee swallowed it (priority lights are now added
+  after the knee, with a hard cap of 1.6). The top "log" button is gone; the
+  panel's "copy log" remains. Phase 3 is accepted with notes; Phase 4 starts.
 - 2026-10-15 – **Owner's look tuning becomes the default** (sent from the
   dev panel after playing the water build, "looks moody"): posterize filter
   on at 5 levels with dither 0.45 (cell 2), bloom off, vignette 0.6, contrast

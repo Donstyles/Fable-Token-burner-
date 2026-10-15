@@ -100,10 +100,14 @@ uniform vec3 pointPos[${MAX_POINT_LIGHTS}];
 uniform vec3 pointColor[${MAX_POINT_LIGHTS}];
 uniform float pointRange[${MAX_POINT_LIGHTS}];
 uniform float lightKnee;
+uniform float priorityLights;
 void main(void) {
   if (clipEnabled > 0.5 && vClip > 0.0) discard;
   vec3 n = normalize(vNormal);
   vec3 pl = vec3(0.0);
+  // Priority lights (the party's torch) are added after the knee, so the torch always
+  // shows, even on a wall a lantern already lights.
+  vec3 carried = vec3(0.0);
   for (int i = 0; i < ${MAX_POINT_LIGHTS}; i++) {
     float r = pointRange[i];
     if (r <= 0.0) continue;
@@ -112,7 +116,9 @@ void main(void) {
     float att = clamp(1.0 - d / r, 0.0, 1.0);
     att *= att;
     float ndl = max(dot(n, L / max(d, 0.001)), 0.0);
-    pl += pointColor[i] * att * ndl;
+    vec3 contribution = pointColor[i] * att * ndl;
+    if (float(i) < priorityLights) carried += contribution;
+    else pl += contribution;
   }
   vec3 light = vLight + pl;
   // Soft knee: light above lightKnee compresses towards lightKnee + 0.5, so a lamp in a
@@ -122,6 +128,7 @@ void main(void) {
     float over = peak - lightKnee;
     light *= (lightKnee + over / (1.0 + 2.0 * over)) / peak;
   }
+  light = min(light + carried, vec3(1.6));
   vec3 c = texture2D(diffuseSampler, vUV).rgb * tint * light + emissive;
   gl_FragColor = vec4(mix(fogColor, c, vFog), 1.0);
 }
@@ -188,6 +195,7 @@ export class RetroMaterials {
         'pointPos',
         'pointColor',
         'lightKnee',
+        'priorityLights',
         'pointRange',
       ],
       samplers: ['diffuseSampler'],
@@ -197,6 +205,7 @@ export class RetroMaterials {
     mat.setVector2('uvScale', new Vector2(...(opts.uvScale ?? [1, 1])));
     mat.setFloat('bakedMix', this.bakedMix);
     mat.setFloat('lightKnee', this.lightKnee);
+    mat.setFloat('priorityLights', 0);
     mat.setVector4('clipPlane', Vector4.Zero());
     mat.setFloat('clipEnabled', 0);
     // Water render passes set scene.clipPlane around their draws; read it per bind so the
@@ -294,6 +303,7 @@ export class RetroMaterials {
       pos.fill(0);
       col.fill(0);
       rng.fill(0);
+      m.setFloat('priorityLights', sorted[0]?.l.priority ? 1 : 0);
       sorted.forEach(({ l }, i) => {
         pos[i * 3] = l.position.x;
         pos[i * 3 + 1] = l.position.y;
