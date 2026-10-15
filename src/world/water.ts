@@ -23,34 +23,30 @@ const DIVISOR: Record<Exclude<WaterQuality, 'off'>, number> = { half: 2, quarter
 
 /**
  * Everything about the surface in metres and seconds; `water-motion.ts` converts the
- * speeds to the shader's own units.
+ * speeds to the shader's own units. The surface is flat: Babylon's vertex waves lift the
+ * mesh in a lattice of cusps and sample the mirror image through them, which folds the
+ * reflection into mirrored bands (owner's screenshots, 2026-10-15), so all motion comes
+ * from the two ripple layers perturbing the reflection and refraction lookups.
  */
 export interface WaterLook extends WaterMotionLook {
-  /** Deep water tint blended over the reflection and refraction mix. */
+  /** Deep water tint. */
   color: Color3;
-  /** How much of the tint shows (0 clear, 1 opaque paint). */
+  /** How much tint covers what shows through the surface when looking down (0 clear). */
   blend: number;
+  /** How much tint covers the mirror image at grazing angles (0 pure mirror). */
+  reflectBlend: number;
   /** Ripple strength in the reflection and refraction lookups. */
   bumpHeight: number;
-  /**
-   * Vertex wave amplitude. Babylon's shader lifts vertices by up to five times this value,
-   * so 0.008 is about 4 cm; the surfaces are tessellated at 1 m, so keep waves long.
-   */
-  waveHeight: number;
-  /** Vertex waves per unit; 3 gives a wavelength of roughly 4 m, right for a 1 m mesh. */
-  waveCount: number;
 }
 
 export const DEFAULT_WATER_LOOK: WaterLook = {
   color: new Color3(0.04, 0.13, 0.15),
-  blend: 0.72,
-  bumpHeight: 0.08,
-  waveHeight: 0.008,
-  waveCount: 3,
-  waveLength: 0.35,
+  blend: 0.6,
+  reflectBlend: 0.3,
+  bumpHeight: 0.12,
+  waveLength: 2,
   rippleSpeed: 0.12,
   flowSpeed: 0.8,
-  wavePeriod: 3.5,
 };
 
 /** Reflections stop being rendered for a body further than this from the camera. */
@@ -59,43 +55,62 @@ const ACTIVE_DISTANCE = 60;
 const REFLECT_DISTANCE = 45;
 
 /**
- * A tileable normal map of overlapping ripples, generated once. Blue is "up"; red and
- * green carry the slope, which the water shader turns into lookup perturbation.
+ * A tileable normal map of wind ripples, generated once: a fixed set of directional waves
+ * with integer wave vectors (so the tile repeats exactly) and amplitudes falling with
+ * frequency, so broad undulations carry fine ripples. Blue is "up"; red and green carry
+ * the slope, which the water shader turns into lookup perturbation.
  */
-function rippleBump(scene: Scene, size = 128): DynamicTexture {
+function rippleBump(scene: Scene, size = 256): DynamicTexture {
   const tex = new DynamicTexture('water-bump', { width: size, height: size }, scene, true);
   const ctx = tex.getContext() as unknown as CanvasRenderingContext2D;
   const img = ctx.createImageData(size, size);
-  const waves = [
-    { kx: 3, ky: 2, a: 1.0, p: 0.3 },
-    { kx: -2, ky: 5, a: 0.7, p: 1.9 },
-    { kx: 6, ky: -4, a: 0.45, p: 4.1 },
-    { kx: 9, ky: 7, a: 0.3, p: 2.2 },
-    { kx: -11, ky: 3, a: 0.22, p: 5.0 },
-  ];
-  const h = (u: number, v: number): number => {
-    let s = 0;
-    for (const w of waves) s += w.a * Math.sin(2 * Math.PI * (w.kx * u + w.ky * v) + w.p);
-    return s;
+  let state = 7;
+  const rand = (): number => {
+    // Small deterministic generator (mulberry32) so every device gets the same ripples.
+    state = (state + 0x6d2b79f5) | 0;
+    let t = Math.imul(state ^ (state >>> 15), 1 | state);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
   };
-  const e = 1 / size;
+  const waves: { kx: number; ky: number; a: number; p: number }[] = [];
+  while (waves.length < 18) {
+    const k = 1 + rand() * 11;
+    const ang = rand() * Math.PI * 2;
+    const kx = Math.round(Math.cos(ang) * k);
+    const ky = Math.round(Math.sin(ang) * k);
+    if (kx === 0 && ky === 0) continue;
+    waves.push({ kx, ky, a: Math.hypot(kx, ky) ** -1.2, p: rand() * Math.PI * 2 });
+  }
+  // Analytic slopes, then scaled so the steepest tilt is about 25 degrees.
+  const slopes = new Float32Array(size * size * 2);
+  let steepest = 0;
   for (let y = 0; y < size; y++) {
     for (let x = 0; x < size; x++) {
       const u = x / size;
       const v = y / size;
-      const dx = (h(u + e, v) - h(u - e, v)) / (2 * e);
-      const dy = (h(u, v + e) - h(u, v - e)) / (2 * e);
-      // Slopes scaled down so the map stays mostly "up".
-      const nx = -dx * 0.012;
-      const ny = -dy * 0.012;
-      const nz = 1;
-      const len = Math.hypot(nx, ny, nz);
-      const i = (y * size + x) * 4;
-      img.data[i] = Math.round(((nx / len) * 0.5 + 0.5) * 255);
-      img.data[i + 1] = Math.round(((ny / len) * 0.5 + 0.5) * 255);
-      img.data[i + 2] = Math.round(((nz / len) * 0.5 + 0.5) * 255);
-      img.data[i + 3] = 255;
+      let dx = 0;
+      let dy = 0;
+      for (const w of waves) {
+        const c = w.a * 2 * Math.PI * Math.cos(2 * Math.PI * (w.kx * u + w.ky * v) + w.p);
+        dx += c * w.kx;
+        dy += c * w.ky;
+      }
+      const i = (y * size + x) * 2;
+      slopes[i] = dx;
+      slopes[i + 1] = dy;
+      steepest = Math.max(steepest, Math.hypot(dx, dy));
     }
+  }
+  const scale = Math.tan((25 * Math.PI) / 180) / steepest;
+  for (let i = 0; i < size * size; i++) {
+    const nx = -(slopes[i * 2] ?? 0) * scale;
+    const ny = -(slopes[i * 2 + 1] ?? 0) * scale;
+    const len = Math.hypot(nx, ny, 1);
+    const o = i * 4;
+    img.data[o] = Math.round(((nx / len) * 0.5 + 0.5) * 255);
+    img.data[o + 1] = Math.round(((ny / len) * 0.5 + 0.5) * 255);
+    img.data[o + 2] = Math.round(((1 / len) * 0.5 + 0.5) * 255);
+    img.data[o + 3] = 255;
   }
   ctx.putImageData(img, 0, 0);
   tex.update(false);
@@ -209,10 +224,14 @@ export class LevelWater {
       mat.disableLighting = true;
       mat.backFaceCulling = false;
       mat.specularColor = Color3.Black();
-      mat.useWorldCoordinatesForWaveDeformation = true;
-      // A second ripple layer at another scale and speed, so the drift does not read as
-      // one sliding sheet.
+      // No vertex waves: see WaterLook. Motion is the two ripple layers (the second at
+      // another scale and speed, so the drift does not read as one sliding sheet).
+      mat.waveHeight = 0;
+      mat.waveSpeed = 0;
       mat.bumpSuperimpose = true;
+      // Grazing views are a mirror, looking down shows through: Babylon's non-linear
+      // fresnel, with its own tint factor for the mirror image.
+      mat.fresnelSeparate = true;
       mat.onBindObservable.add(() => mat.getEffect()?.setFloat('time', shaderTime(this.seconds)));
       this.applyLook(mat, s.body);
       // Reflect and refract the architecture around the body, never other water.
@@ -231,13 +250,12 @@ export class LevelWater {
   private applyLook(mat: WaterMaterial, body: LevelWaterBody): void {
     const l = this.look;
     mat.waterColor = l.color;
+    mat.waterColor2 = l.color;
     mat.colorBlendFactor = l.blend;
+    mat.colorBlendFactor2 = l.reflectBlend;
     mat.bumpHeight = l.bumpHeight;
-    mat.waveHeight = l.waveHeight;
     mat.waveLength = l.waveLength;
-    mat.waveCount = l.waveCount;
     const motion = waterShaderMotion(l, body.flow);
-    mat.waveSpeed = motion.waveSpeed;
     mat.windForce = motion.windForce;
     mat.windDirection = motion.windDirection;
   }

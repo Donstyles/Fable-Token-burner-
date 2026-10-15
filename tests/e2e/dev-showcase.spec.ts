@@ -15,7 +15,10 @@ type Dev = {
   debug(): { move: number; velocity: [number, number, number]; waterDepth: number };
   water: { currentQuality: string; clock: number };
   level: {
-    water: { mesh: { material: { getClassName(): string } | null } }[];
+    water: {
+      y: number;
+      mesh: { material: { getClassName(): string } | null; position: { y: number } };
+    }[];
     waterfalls: unknown[];
   };
   positionOf(): { x: number; y: number; z: number };
@@ -261,12 +264,15 @@ test.describe('dev build', () => {
       return {
         quality: d.water.currentQuality,
         bodies: d.level.water.map((w) => w.mesh.material?.getClassName() ?? null),
+        // Babylon mirrors and clips at the mesh's own height, so it must sit at the water level.
+        levelOffsets: d.level.water.map((w) => Math.abs(w.mesh.position.y - w.y)),
         falls: d.level.waterfalls.length,
       };
     });
     expect(info.quality).toBe('quarter');
     expect(info.bodies.length).toBe(3);
     for (const cls of info.bodies) expect(cls).toBe('WaterMaterial');
+    for (const off of info.levelOffsets) expect(off).toBeLessThan(1e-6);
     expect(info.falls).toBe(1);
     // The surfaces animate on our clock, not Babylon's delta-equality guard.
     const clock = (): Promise<number> =>

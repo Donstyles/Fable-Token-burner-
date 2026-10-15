@@ -214,7 +214,13 @@ export async function loadLevel(
     const body = sidecar.water.find((w) => w.name === name);
     if (!body) continue;
     const mesh = new Mesh(`water:${name}`, scene);
-    toVertexData(p).applyToMesh(mesh, false);
+    // Babylon's water material mirrors and clips the scene at the mesh's own height, so
+    // the mesh sits at the water level with its vertices relative to it.
+    const vd = toVertexData(p);
+    const positions = vd.positions!;
+    for (let i = 1; i < positions.length; i += 3) positions[i] = (positions[i] ?? 0) - body.y;
+    vd.applyToMesh(mesh, false);
+    mesh.position.y = body.y;
     mesh.parent = root;
     mesh.isPickable = false;
     const b = boundsToBabylon(body.bounds);

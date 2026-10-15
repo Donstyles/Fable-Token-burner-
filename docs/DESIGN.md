@@ -367,9 +367,12 @@ Status 2026-10-15 (Phase 3): built as above with these specifics. Reflection
 and refraction render at a quarter of the world resolution by default (half
 and eighth selectable; never full, owner's call). One water material per
 body, each reflecting only the chunks within 45 m, passes switched off
-beyond 60 m. Surface motion is specified in metres and seconds and driven by
-our own clock (see the 2026-10-15 decision-log entry on still water). The
-ripple normal map and the waterfall foam streaks are generated in code. The waterfall sound is synthesised (filtered brown noise
+beyond 60 m. Each water mesh sits at its water level, which is where Babylon
+puts the mirror and clip planes. The surface is flat (no vertex waves); its
+motion is two ripple layers, specified in metres and seconds and driven by
+our own clock (see the 2026-10-15 decision-log entries on still water and
+kaleidoscope reflections). The ripple normal map and the waterfall foam
+streaks are generated in code. The waterfall sound is synthesised (filtered brown noise
 with a slow swell) and placed in 3D with inverse-distance attenuation, so no
 audio file is needed. Wading: over 0.25 m halves walking speed, over 1.3 m
 drops it to a third and counts as deep; the hit points that deep water
@@ -551,6 +554,19 @@ and icons all share it, so world and UI agree.
   the materials read our own simulated clock, and a second ripple layer
   (`bumpSuperimpose`) stops the drift reading as one sliding sheet. The dev
   panel exposes wave period, ripple drift, river flow and ripple size.
+- 2026-10-15 – **Kaleidoscope reflections fixed** (owner's screenshot from
+  inside the undercroft, "looks like ass"). Babylon's `WaterMaterial` mirrors
+  and clips the scene at its mesh's own position, and our water meshes sat at
+  the origin with world-space vertices, so every body reflected about height
+  zero (8.6 m above the undercroft pool) and refracted the whole room. Water
+  meshes now sit at their water level with vertices relative to it. The
+  vertex waves are gone for good: the shader lifts the mesh in a lattice of
+  cusps and samples the mirror through them, which can only fold the image,
+  so the surface is flat and all motion is the two ripple layers (a richer
+  generated ripple map: 18 directional waves on a 2 m tile). Babylon's
+  non-linear fresnel (`fresnelSeparate`) is on, so grazing views are a mirror
+  with a tint of its own and looking down shows through. Dev panel: "mirror
+  tint" replaces the wave sliders.
 - 2026-10-15 – **Owner's look tuning becomes the default** (sent from the
   dev panel after playing the water build, "looks moody"): posterize filter
   on at 5 levels with dither 0.45 (cell 2), bloom off, vignette 0.6, contrast
