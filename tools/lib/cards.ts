@@ -27,17 +27,23 @@ export const FRAMING: Record<CardKind, string> = {
   sky: 'Seamless 360-degree equirectangular panorama of a sky, horizon at the vertical centre, no ground, no text.',
 };
 
-/** The blockquote under "## Style prefix" in the style bible, as one paragraph. */
-export function stylePrefix(styleMarkdown: string): string {
-  const section = styleMarkdown.split(/^## Style prefix\s*$/m)[1];
-  if (!section) throw new Error(`${STYLE_PATH}: no "## Style prefix" section`);
-  const quote = section.split(/^## /m)[0] ?? '';
+/** Kinds whose image feeds Meshy, which want a photograph rather than a painting. */
+export const PHOTO_KINDS: readonly CardKind[] = ['humanoid', 'prop', 'building'];
+
+/** The blockquote under the named "## … prefix" section of the style bible, as one paragraph. */
+export function stylePrefix(
+  styleMarkdown: string,
+  section: 'Style prefix' | '3D reference prefix' = 'Style prefix',
+): string {
+  const sectionText = styleMarkdown.split(new RegExp(`^## ${section}\\s*$`, 'm'))[1];
+  if (!sectionText) throw new Error(`${STYLE_PATH}: no "## ${section}" section`);
+  const quote = sectionText.split(/^## /m)[0] ?? '';
   const lines = quote
     .split('\n')
     .filter((l) => l.startsWith('>'))
     .map((l) => l.replace(/^>\s?/, '').trim());
   const text = lines.join(' ').replace(/\s+/g, ' ').trim();
-  if (!text) throw new Error(`${STYLE_PATH}: the style prefix blockquote is empty`);
+  if (!text) throw new Error(`${STYLE_PATH}: the "${section}" blockquote is empty`);
   return text;
 }
 
@@ -51,7 +57,11 @@ export interface Card {
 }
 
 export function makeCard(id: string, kind: CardKind, subject: string, styleMarkdown: string): Card {
-  const prompt = `${stylePrefix(styleMarkdown)} ${subject.trim().replace(/\.?$/, '.')} ${FRAMING[kind]}`;
+  const prefix = stylePrefix(
+    styleMarkdown,
+    PHOTO_KINDS.includes(kind) ? '3D reference prefix' : 'Style prefix',
+  );
+  const prompt = `${prefix} ${subject.trim().replace(/\.?$/, '.')} ${FRAMING[kind]}`;
   const returnPath = `${INBOX_DIR}/${id}.png`;
   const markdown = [
     `# Prompt card: ${id}`,

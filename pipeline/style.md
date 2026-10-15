@@ -14,6 +14,19 @@ card. Keep the prefix verbatim so all art shares one look.
 > texture; no modern digital gloss, no lens flare, no photorealism, no text,
 > no watermark, no signature.
 
+## 3D reference prefix
+
+Concept images that feed Meshy (humanoids, props, buildings) are not
+illustrations. Meshy builds the mesh and texture from what it sees, and the
+game's own filter supplies the 1998 look afterwards. A painted, polished image
+reads as generic AI art (owner, 2026-10-15) and gives Meshy painterly texture
+to copy. These cards use a photographic prefix instead:
+
+> Plain photograph of a historical reenactment costume worn by a real person,
+> muted natural colours, real wear, dirt and mended cloth, no fantasy polish,
+> no idealised face, no smile, no dramatic lighting, no text, no watermark,
+> no signature.
+
 ## Forbidden
 
 - Text, letters, logos or watermarks in the image.
