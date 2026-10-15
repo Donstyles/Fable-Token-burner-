@@ -186,10 +186,11 @@ export default function showcase(plan: LevelBuilder): void {
     name: 'tunnel-brook',
     path: [
       [22, 1.3, 21],
-      [22, 1.3, 9.4],
+      [22, 1.3, 9.2],
     ],
     width: 3,
   });
+  // The brook ends exactly where the sheet leaves the lip.
   plan.waterfall({ name: 'chasm-fall', lip: [22, 1.3, 9.2], plunge: [22, -22.5, 4.5], width: 2.6 });
   plan.lantern({ at: [19.9, 3.4, 14], facing: [1, 0, 0], color: warm, range: 10, intensity: 2.2 });
   plan.light([22, -21, 0], [0.3, 0.55, 0.95], 22, 2.2); // glow from the water below

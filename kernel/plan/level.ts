@@ -118,6 +118,8 @@ export interface Waterfall {
   /** Where it hits the pool. */
   plunge: Vec3;
   width: number;
+  /** Arc length of the sheet in metres, so the runtime can fade the foam in over a distance. */
+  length: number;
   mesh: MeshData;
 }
 
@@ -756,8 +758,10 @@ export class LevelBuilder {
     const run: Vec3 = [o.plunge[0] - o.lip[0], 0, o.plunge[2] - o.lip[2]];
     const runLen = v3.length(run);
     const across: Vec3 = runLen > 1e-6 ? v3.normalize([-run[2], 0, run[0]]) : [1, 0, 0];
-    // Cubic Bézier: tangent horizontal at the lip, vertical at the plunge.
-    const c1: Vec3 = v3.add(o.lip, v3.scale(run, 0.45));
+    // Cubic Bézier: tangent horizontal at the lip, vertical at the plunge. The first control
+    // point sits close to the lip so the sheet bends down within a metre of leaving it,
+    // like a slow stream over an edge, rather than shooting out horizontally.
+    const c1: Vec3 = v3.add(o.lip, v3.scale(run, 0.15));
     const c2: Vec3 = [o.plunge[0], o.plunge[1] + drop * 0.45, o.plunge[2]];
     const segments = Math.max(6, Math.round(Math.hypot(drop, runLen) / 0.8));
     const m = new MeshBuilder();
@@ -779,11 +783,13 @@ export class LevelBuilder {
       ];
     };
     const half = v3.scale(across, o.width / 2);
+    let length = 0;
     for (let i = 0; i < segments; i++) {
       const t0 = i / segments;
       const t1 = (i + 1) / segments;
       const p0 = at(t0);
       const p1 = at(t1);
+      length += v3.length(v3.sub(p1, p0));
       const a = v3.sub(p0, half);
       const b = v3.add(p0, half);
       const c = v3.add(p1, half);
@@ -810,7 +816,7 @@ export class LevelBuilder {
       });
     }
     this.falls.push({
-      fall: { name: o.name, lip: o.lip, plunge: o.plunge, width: o.width },
+      fall: { name: o.name, lip: o.lip, plunge: o.plunge, width: o.width, length },
       mesh: m,
     });
   }

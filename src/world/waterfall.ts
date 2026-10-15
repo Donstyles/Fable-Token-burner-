@@ -50,6 +50,7 @@ uniform vec3 fogColor;
 uniform vec3 tint;
 uniform float time;
 uniform float stretch;
+uniform float fadeIn;
 void main(void) {
   // Foam streaks scroll down the fall; a slow sideways wobble keeps them from reading as a conveyor.
   vec2 uv = vec2(vUV.x * 2.0 + 0.04 * sin(vUV.y * 18.0 + time * 3.0), vUV.y * stretch - time * 1.6);
@@ -57,7 +58,9 @@ void main(void) {
   float foam2 = texture2D(foamSampler, uv * vec2(1.7, 0.6) + vec2(0.3, time * 0.4)).r;
   float f = clamp(foam * 0.7 + foam2 * 0.5, 0.0, 1.0);
   // Thin and clear at the lip, white and broken toward the plunge.
-  float body = smoothstep(0.0, 0.12, vUV.y);
+  // Foam reaches full strength within the first stretch of the sheet (a fraction of its
+  // length set from metres by the runtime), so the fall visibly starts at the lip.
+  float body = smoothstep(0.0, fadeIn, vUV.y);
   float edge = 1.0 - smoothstep(0.35, 0.5, abs(vUV.x - 0.5));
   float alpha = (0.35 + 0.55 * f) * body * edge;
   vec3 c = mix(tint, vec3(0.92, 0.97, 1.0), f) * (0.55 + 0.45 * vUV.y);
@@ -139,6 +142,7 @@ export class LevelWaterfalls {
           'fogColor',
           'time',
           'stretch',
+          'fadeIn',
           'tint',
         ],
         samplers: ['foamSampler'],
@@ -148,6 +152,7 @@ export class LevelWaterfalls {
       material.setFloat('time', 0);
       const drop = Math.abs(fall.lip.y - fall.plunge.y);
       material.setFloat('stretch', Math.max(1, drop / 3));
+      material.setFloat('fadeIn', Math.min(0.5, 0.6 / Math.max(fall.length, 0.6)));
       material.setColor3('tint', new Color3(0.22, 0.38, 0.44));
       material.backFaceCulling = true;
       material.disableDepthWrite = true;

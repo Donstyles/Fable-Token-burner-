@@ -35,6 +35,7 @@ export interface SidecarWaterfall {
   lip: V3;
   plunge: V3;
   width: number;
+  length: number;
 }
 
 export interface SidecarSpace {
@@ -81,6 +82,8 @@ export interface LevelWaterfall {
   lip: Vector3;
   plunge: Vector3;
   width: number;
+  /** Arc length of the sheet in metres. */
+  length: number;
   mesh: Mesh;
 }
 
@@ -248,6 +251,7 @@ export async function loadLevel(
       lip: toBabylon(fall.lip),
       plunge: toBabylon(fall.plunge),
       width: fall.width,
+      length: fall.length,
       mesh,
     });
   }

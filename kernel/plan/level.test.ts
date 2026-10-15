@@ -290,6 +290,9 @@ describe('level planner', () => {
     expect(brook.mesh.indices.length).toBeGreaterThan(0);
     const fall = out.waterfalls[0]!;
     expect(fall.name).toBe('fall');
+    // At least the straight-line distance from lip to plunge, and not wildly more.
+    expect(fall.length).toBeGreaterThan(Math.hypot(8.2, 4));
+    expect(fall.length).toBeLessThan(Math.hypot(8.2, 4) * 1.5);
     expect(fall.mesh.positions.length / 3).toBeGreaterThan(20);
     // The ribbon spans from the lip down to the plunge point.
     let minY = Infinity;

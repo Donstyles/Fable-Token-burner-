@@ -579,6 +579,13 @@ and icons all share it, so world and UI agree.
   rebuilt when "water passes" changes; it is detached before a material is
   disposed. The e2e test toggles the passes and checks both. The ripple map
   is normalised to a typical 16° tilt so the default ripple is visible.
+- 2026-10-15 – **Gap between the brook and the fall** (owner's screenshot).
+  The brook ended 20 cm short of the lip, the foam faded in over the first
+  12 % of the sheet (3 m on the chasm fall) and the sheet ran 2 m out
+  horizontally before bending. Now the brook ends at the lip, the planner
+  records each sheet's arc length so the runtime fades the foam in over
+  0.6 m, and the first Bézier control point sits at 15 % of the run so the
+  sheet bends down within a metre of the lip.
 - 2026-10-15 – **Owner's look tuning becomes the default** (sent from the
   dev panel after playing the water build, "looks moody"): posterize filter
   on at 5 levels with dither 0.45 (cell 2), bloom off, vignette 0.6, contrast
