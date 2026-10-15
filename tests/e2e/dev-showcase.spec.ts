@@ -13,7 +13,7 @@ type Dev = {
   ready: boolean;
   simTime(): number;
   debug(): { move: number; velocity: [number, number, number]; waterDepth: number };
-  water: { currentQuality: string };
+  water: { currentQuality: string; clock: number };
   level: {
     water: { mesh: { material: { getClassName(): string } | null } }[];
     waterfalls: unknown[];
@@ -268,6 +268,12 @@ test.describe('dev build', () => {
     expect(info.bodies.length).toBe(3);
     for (const cls of info.bodies) expect(cls).toBe('WaterMaterial');
     expect(info.falls).toBe(1);
+    // The surfaces animate on our clock, not Babylon's delta-equality guard.
+    const clock = (): Promise<number> =>
+      page.evaluate(() => (window as unknown as W).ftb!.dev!.water.clock);
+    const t0 = await clock();
+    await page.waitForTimeout(500);
+    expect((await clock()) - t0).toBeGreaterThan(0.25);
   });
 
   test('tap on the level registers through picking', async ({ page, browserName }) => {

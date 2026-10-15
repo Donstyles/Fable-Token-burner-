@@ -367,8 +367,9 @@ Status 2026-10-15 (Phase 3): built as above with these specifics. Reflection
 and refraction render at a quarter of the world resolution by default (half
 and eighth selectable; never full, owner's call). One water material per
 body, each reflecting only the chunks within 45 m, passes switched off
-beyond 60 m. The ripple normal map and the waterfall foam streaks are
-generated in code. The waterfall sound is synthesised (filtered brown noise
+beyond 60 m. Surface motion is specified in metres and seconds and driven by
+our own clock (see the 2026-10-15 decision-log entry on still water). The
+ripple normal map and the waterfall foam streaks are generated in code. The waterfall sound is synthesised (filtered brown noise
 with a slow swell) and placed in 3D with inverse-distance attenuation, so no
 audio file is needed. Wading: over 0.25 m halves walking speed, over 1.3 m
 drops it to a third and counts as deep; the hit points that deep water
@@ -539,6 +540,17 @@ and icons all share it, so world and UI agree.
   clear water showed the torch-lit floor through them. Waves are now 3 cm
   with a 4 m wavelength, the water is more opaque (blend 0.72) with a softer
   ripple (0.08), and the dev slider range matches.
+- 2026-10-15 – Water stood still on device (owner: "is the water supposed to
+  not be moving?"). Two causes in Babylon's `WaterMaterial`: its `time`
+  uniform counts hundreds of seconds, so with our metre-scaled ripple UVs the
+  stock-sized wind force drifted 3 mm/s and a swell took 21 minutes; and it
+  only advances that clock when a frame's delta differs from the previous
+  one, which stalls on iOS Safari's millisecond timer. The look is now in
+  metres and seconds (`water-motion.ts` converts: still ripples drift
+  0.12 m/s, rivers 0.8 m/s along their flow, one swell per 3.5 s, 4 cm high),
+  the materials read our own simulated clock, and a second ripple layer
+  (`bumpSuperimpose`) stops the drift reading as one sliding sheet. The dev
+  panel exposes wave period, ripple drift, river flow and ripple size.
 - 2026-10-15 – **Owner's look tuning becomes the default** (sent from the
   dev panel after playing the water build, "looks moody"): posterize filter
   on at 5 levels with dither 0.45 (cell 2), bloom off, vignette 0.6, contrast

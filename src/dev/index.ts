@@ -247,7 +247,7 @@ export async function startDev(app: App): Promise<DevHandle> {
     const eye = camera.globalPosition;
     const yaw = fly ? flyYaw : party.yaw;
     underwater.set(isUnderwater(level.water, eye));
-    water.update(eye);
+    water.update(eye, dt);
     waterfalls.update(dt, eye, yaw);
     torch.update(dt, eye, yaw);
     fog.update(dt, eye);
@@ -324,6 +324,42 @@ export async function startDev(app: App): Promise<DevHandle> {
         0.001,
         () => water.look.waveHeight,
         (v) => water.setLook({ waveHeight: v }),
+      ),
+      range(
+        'waterPeriod',
+        'wave period s',
+        1,
+        12,
+        0.25,
+        () => water.look.wavePeriod,
+        (v) => water.setLook({ wavePeriod: v }),
+      ),
+      range(
+        'waterDrift',
+        'ripple drift m/s',
+        0,
+        0.6,
+        0.02,
+        () => water.look.rippleSpeed,
+        (v) => water.setLook({ rippleSpeed: v }),
+      ),
+      range(
+        'waterFlow',
+        'river flow m/s',
+        0,
+        3,
+        0.1,
+        () => water.look.flowSpeed,
+        (v) => water.setLook({ flowSpeed: v }),
+      ),
+      range(
+        'waterTile',
+        'ripple size m',
+        0.1,
+        2,
+        0.05,
+        () => water.look.waveLength,
+        (v) => water.setLook({ waveLength: v }),
       ),
       {
         kind: 'toggle',

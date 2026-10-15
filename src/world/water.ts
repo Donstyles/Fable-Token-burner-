@@ -14,13 +14,18 @@ import type { Material } from '@babylonjs/core/Materials/material';
 import type { Mesh } from '@babylonjs/core/Meshes/mesh';
 import type { RetroMaterials } from '../render/materials';
 import type { LevelWaterBody } from './level';
+import { shaderTime, waterShaderMotion, type WaterMotionLook } from './water-motion';
 
 export const WATER_QUALITIES = ['quarter', 'half', 'eighth', 'off'] as const;
 export type WaterQuality = (typeof WATER_QUALITIES)[number];
 
 const DIVISOR: Record<Exclude<WaterQuality, 'off'>, number> = { half: 2, quarter: 4, eighth: 8 };
 
-export interface WaterLook {
+/**
+ * Everything about the surface in metres and seconds; `water-motion.ts` converts the
+ * speeds to the shader's own units.
+ */
+export interface WaterLook extends WaterMotionLook {
   /** Deep water tint blended over the reflection and refraction mix. */
   color: Color3;
   /** How much of the tint shows (0 clear, 1 opaque paint). */
@@ -29,27 +34,23 @@ export interface WaterLook {
   bumpHeight: number;
   /**
    * Vertex wave amplitude. Babylon's shader lifts vertices by up to five times this value,
-   * so 0.006 is about 3 cm; the surfaces are tessellated at 1 m, so keep waves long.
+   * so 0.008 is about 4 cm; the surfaces are tessellated at 1 m, so keep waves long.
    */
   waveHeight: number;
-  /** Ripple texture scale (smaller = finer ripples). */
-  waveLength: number;
-  waveSpeed: number;
   /** Vertex waves per unit; 3 gives a wavelength of roughly 4 m, right for a 1 m mesh. */
   waveCount: number;
-  /** Ripple drift speed along the flow. */
-  windForce: number;
 }
 
 export const DEFAULT_WATER_LOOK: WaterLook = {
   color: new Color3(0.04, 0.13, 0.15),
   blend: 0.72,
   bumpHeight: 0.08,
-  waveHeight: 0.006,
-  waveLength: 0.35,
-  waveSpeed: 0.5,
+  waveHeight: 0.008,
   waveCount: 3,
-  windForce: 1.6,
+  waveLength: 0.35,
+  rippleSpeed: 0.12,
+  flowSpeed: 0.8,
+  wavePeriod: 3.5,
 };
 
 /** Reflections stop being rendered for a body further than this from the camera. */
@@ -116,6 +117,12 @@ export class LevelWater {
   look: WaterLook;
   /** Set by the caller each frame: still water near the camera keeps its passes on. */
   private cameraPosition = new Vector3();
+  /**
+   * Simulated seconds driving the shader's `time`. Babylon only advances its own clock when
+   * a frame's delta differs from the previous one, which stalls the water on iOS Safari's
+   * millisecond timer, so every material reads this clock instead.
+   */
+  private seconds = 0;
 
   constructor(
     private readonly scene: Scene,
@@ -154,8 +161,14 @@ export class LevelWater {
     for (const s of this.states) if (s.material) this.applyLook(s.material, s.body);
   }
 
-  /** Call once per frame with the camera position. */
-  update(cameraPosition: Vector3): void {
+  /** Simulated seconds the surfaces have been animating. */
+  get clock(): number {
+    return this.seconds;
+  }
+
+  /** Call once per frame with the camera position and the frame's simulated seconds. */
+  update(cameraPosition: Vector3, dt: number): void {
+    this.seconds += dt;
     this.cameraPosition.copyFrom(cameraPosition);
     // Babylon's water shader reads the scene fog; keep it equal to the level fog.
     const env = this.materials.env;
@@ -197,6 +210,10 @@ export class LevelWater {
       mat.backFaceCulling = false;
       mat.specularColor = Color3.Black();
       mat.useWorldCoordinatesForWaveDeformation = true;
+      // A second ripple layer at another scale and speed, so the drift does not read as
+      // one sliding sheet.
+      mat.bumpSuperimpose = true;
+      mat.onBindObservable.add(() => mat.getEffect()?.setFloat('time', shaderTime(this.seconds)));
       this.applyLook(mat, s.body);
       // Reflect and refract the architecture around the body, never other water.
       const near = this.reflectables.filter((m) => {
@@ -218,11 +235,11 @@ export class LevelWater {
     mat.bumpHeight = l.bumpHeight;
     mat.waveHeight = l.waveHeight;
     mat.waveLength = l.waveLength;
-    mat.waveSpeed = l.waveSpeed;
     mat.waveCount = l.waveCount;
-    const still = body.flow.lengthSquared() < 1e-6;
-    mat.windForce = still ? l.windForce * 0.5 : l.windForce * 1.5;
-    mat.windDirection = still ? new Vector2(0.7, 0.7) : body.flow.clone();
+    const motion = waterShaderMotion(l, body.flow);
+    mat.waveSpeed = motion.waveSpeed;
+    mat.windForce = motion.windForce;
+    mat.windDirection = motion.windDirection;
   }
 
   dispose(): void {

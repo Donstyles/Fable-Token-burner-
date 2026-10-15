@@ -266,7 +266,8 @@ texture on top.)
 6. Showcase level gains its river, waterfall and flooded undercroft.
 
 **Status 2026-10-15:** steps 1–6 built (see DESIGN.md 11.3 and 11.6 status
-notes). Not yet: the disturbed-water patch under the waterfall, swept river
+notes); water motion fixed the same day after the owner saw it stand still on
+device (shader clock and units, DESIGN.md decision log). Not yet: the disturbed-water patch under the waterfall, swept river
 surfaces with their own flow (rivers share the one flow direction of their
 material), and deep-water damage, which waits for hit points in Phase 5.
 
