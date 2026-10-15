@@ -28,6 +28,8 @@ export interface PointLightDesc {
   /** Distance at which the light reaches zero. */
   range: number;
   intensity: number;
+  /** Always among a material's bound lights, ahead of the nearest ones (the torch). */
+  priority?: boolean;
 }
 
 export const MAX_POINT_LIGHTS = 4;
@@ -269,13 +271,24 @@ export class RetroMaterials {
     for (const m of this.materials) {
       m.setVector3('cameraPosition', p);
       if (this.lights.length === 0) continue;
-      // Nearest lights to the material's first mesh. Materials are per object here; a
-      // material shared across distant objects would need per-mesh binding instead.
+      // Nearest lights to the material's first mesh, measured to its bounding box rather
+      // than its centre (level chunks are 12 m wide, and a light at a chunk's edge is as
+      // real as one at its centre). Priority lights, the torch, come first regardless, so
+      // the party's own light never loses its slot to four lanterns (owner, 2026-10-15).
+      // Materials are per object here; a material shared across distant objects would
+      // need per-mesh binding instead.
       const mesh = m.getBindedMeshes()[0];
-      const centre = mesh ? mesh.getBoundingInfo().boundingSphere.centerWorld : p;
+      const box = mesh?.getBoundingInfo().boundingBox;
+      const distanceSq = (q: Vector3): number => {
+        if (!box) return Vector3.DistanceSquared(q, p);
+        const dx = Math.max(box.minimumWorld.x - q.x, 0, q.x - box.maximumWorld.x);
+        const dy = Math.max(box.minimumWorld.y - q.y, 0, q.y - box.maximumWorld.y);
+        const dz = Math.max(box.minimumWorld.z - q.z, 0, q.z - box.maximumWorld.z);
+        return dx * dx + dy * dy + dz * dz;
+      };
       const sorted = this.lights
         .filter((l) => l.intensity > 0 && l.range > 0)
-        .map((l) => ({ l, d: Vector3.DistanceSquared(l.position, centre) }))
+        .map((l) => ({ l, d: l.priority ? -1 : distanceSq(l.position) }))
         .sort((a, b) => a.d - b.d)
         .slice(0, MAX_POINT_LIGHTS);
       pos.fill(0);

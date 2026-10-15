@@ -9,6 +9,8 @@ export type Field =
       step: number;
       get: () => number;
       set: (v: number) => void;
+      /** false: never restored from or written to storage (device-specific choices). */
+      persist?: boolean;
     }
   | {
       kind: 'select';
@@ -17,8 +19,16 @@ export type Field =
       options: readonly string[];
       get: () => string;
       set: (v: string) => void;
+      persist?: boolean;
     }
-  | { kind: 'toggle'; key: string; label: string; get: () => boolean; set: (v: boolean) => void }
+  | {
+      kind: 'toggle';
+      key: string;
+      label: string;
+      get: () => boolean;
+      set: (v: boolean) => void;
+      persist?: boolean;
+    }
   | { kind: 'button'; key: string; label: string; run: () => void };
 
 const STORAGE_KEY = 'ftb.dev.v1';
@@ -57,12 +67,16 @@ export function createDevPanel(
   options: DevPanelOptions = {},
 ): DevPanel {
   const stored = loadStored();
+  const volatile = new Set(
+    fields.filter((f) => 'persist' in f && f.persist === false).map((f) => f.key),
+  );
   const values: Record<string, unknown> = { ...stored };
+  for (const key of volatile) delete values[key];
 
   // Apply persisted values first so the game starts in the tuned state.
   for (const f of fields) {
     const v = stored[f.key];
-    if (v === undefined) continue;
+    if (v === undefined || volatile.has(f.key)) continue;
     if (f.kind === 'range' && typeof v === 'number') f.set(v);
     else if (f.kind === 'select' && typeof v === 'string' && f.options.includes(v)) f.set(v);
     else if (f.kind === 'toggle' && typeof v === 'boolean') f.set(v);
@@ -84,7 +98,7 @@ export function createDevPanel(
   root.append(toggle, body);
 
   const remember = (key: string, v: unknown): void => {
-    values[key] = v;
+    if (!volatile.has(key)) values[key] = v;
     store(values);
   };
 

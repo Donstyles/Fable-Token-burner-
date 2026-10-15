@@ -5,6 +5,7 @@ import { installForcedLandscape, tryLockLandscape } from './app/orientation';
 import { installDiagnostics, diag, diagText } from './app/diag';
 import { installServiceWorker } from './app/update-prompt';
 import { installLogButton } from './app/log-button';
+import { installSoundButton } from './app/sound-button';
 import { APP_VERSION, installVersionTag } from './app/version';
 import type { DevHandle } from './dev/index';
 
@@ -37,6 +38,7 @@ if (
   new URLSearchParams(location.search).has('dev')
 ) {
   installLogButton(ui);
+  installSoundButton(ui);
 }
 installAudioUnlock();
 tryLockLandscape();

@@ -652,6 +652,18 @@ and icons all share it, so world and UI agree.
   above the knee (default 0.9) compresses towards knee + 0.5, so a lamp in a
   corner brightens the wall without blowing it out to white. Dev panel
   "light knee" slider (2.5 is off); the torch power slider tops out at 2.
+- 2026-10-15 – **v68 log: the session flipped to ambient at 0.64 s.** The
+  dev panel persists its values per device and restored the owner's
+  "ambient" choice from an earlier test at every launch, so every build
+  since v65 ran the session that is silent on that phone, whatever the
+  default. The audio session field no longer persists; fields can opt out.
+  A "test sound" button sits on the main screen of development builds
+  (two loud square-wave beeps straight to the output) because the one
+  inside the long panel was never reached. The torch toggle now shows its
+  real state, and the torch is a priority light: it always takes one of a
+  material's four light slots, measured against the mesh's bounding box
+  instead of its centre, so it no longer loses out to four lanterns on a
+  12 m chunk.
 - 2026-10-15 – **Owner's look tuning becomes the default** (sent from the
   dev panel after playing the water build, "looks moody"): posterize filter
   on at 5 levels with dither 0.45 (cell 2), bloom off, vignette 0.6, contrast

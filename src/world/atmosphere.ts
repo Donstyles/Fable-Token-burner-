@@ -24,7 +24,12 @@ export class Torch {
       color: new Color3(1, 0.7, 0.42),
       range: 9,
       intensity: this.base,
+      priority: true,
     });
+  }
+
+  get enabled(): boolean {
+    return this.on;
   }
 
   setEnabled(on: boolean): void {

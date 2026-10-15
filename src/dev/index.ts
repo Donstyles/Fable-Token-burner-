@@ -363,7 +363,7 @@ export async function startDev(app: App): Promise<DevHandle> {
         kind: 'toggle',
         key: 'torch',
         label: 'torch',
-        get: () => true,
+        get: () => torch.enabled,
         set: (v) => torch.setEnabled(v),
       },
       range(
@@ -408,6 +408,9 @@ export async function startDev(app: App): Promise<DevHandle> {
         options: AUDIO_SESSION_TYPES,
         get: () => getAudioSessionType(),
         set: (v) => setAudioSessionType(v as AudioSessionType),
+        // The owner's phone kept "ambient" from an earlier test and every later build
+        // started silent (2026-10-15): the session is a diagnostic, not a tuning value.
+        persist: false,
       },
       {
         kind: 'button',

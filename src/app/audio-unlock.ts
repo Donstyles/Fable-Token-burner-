@@ -83,20 +83,27 @@ export function playTestTone(): void {
     diag('tone: no WebAudio');
     return;
   }
-  const osc = ctx.createOscillator();
-  osc.type = 'sine';
-  osc.frequency.value = 440;
-  const gain = ctx.createGain();
-  const t = ctx.currentTime;
-  gain.gain.setValueAtTime(0, t);
-  gain.gain.linearRampToValueAtTime(0.25, t + 0.02);
-  gain.gain.setValueAtTime(0.25, t + 0.7);
-  gain.gain.linearRampToValueAtTime(0, t + 0.8);
-  osc.connect(gain);
-  gain.connect(ctx.destination);
-  osc.start(t);
-  osc.stop(t + 0.85);
-  diag(`tone: played (context ${ctx.state}, rate ${ctx.sampleRate})`);
+  // Two beeps, loud and in the band every phone speaker carries.
+  const t0 = ctx.currentTime;
+  for (const [offset, hz] of [
+    [0, 440],
+    [0.6, 660],
+  ] as const) {
+    const osc = ctx.createOscillator();
+    osc.type = 'square';
+    osc.frequency.value = hz;
+    const gain = ctx.createGain();
+    const t = t0 + offset;
+    gain.gain.setValueAtTime(0, t);
+    gain.gain.linearRampToValueAtTime(0.4, t + 0.02);
+    gain.gain.setValueAtTime(0.4, t + 0.4);
+    gain.gain.linearRampToValueAtTime(0, t + 0.5);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start(t);
+    osc.stop(t + 0.55);
+  }
+  diag(`tone: played (context ${ctx.state}, rate ${ctx.sampleRate}, session ${sessionType})`);
 }
 
 export function installAudioUnlock(target: EventTarget = window): void {
