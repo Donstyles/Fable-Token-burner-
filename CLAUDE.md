@@ -9,7 +9,10 @@ anything. Both are the source of truth; update them when a decision changes.
   `dev-*`, excluded from production, and deleted when the real thing lands.
 - Secrets live only in environment variables. Never print, commit or bundle
   them. `npm run secrets:guard` must stay clean.
-- Meshy API calls happen only for an owner-approved batch file.
+- Meshy API calls happen only for an owner-approved batch file, through
+  `npm run asset -- run <nnn>` (`--dry-run` first). The key is a network
+  secret the cloud proxy injects; it is never in the container, so never ask
+  for it, look for it or paste it anywhere.
 - Work on the designated branch; commit in logical steps.
 - Before building any system, check whether Babylon.js or an established
   library already provides it, and prefer that (owner, 2026-10-15, after a
@@ -25,8 +28,9 @@ anything. Both are the source of truth; update them when a decision changes.
 - `npm run textures` – fetch the CC0 role textures listed in
   `pipeline/textures.json`
 - `npm run asset -- <command>` – asset pipeline: `manifest`, `validate`,
-  `card <kind> <id> "<subject>"`, `batch new|show|approve` (Meshy batches
-  run only after the owner approves them by number)
+  `card <kind> <id> "<subject>"`, `batch new|show|approve`,
+  `run <nnn> [--dry-run] [--force]` (runs only a batch the owner approved by
+  number)
 
 ## Layout
 

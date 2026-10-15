@@ -1,19 +1,20 @@
 /**
- * Asset pipeline CLI (DESIGN.md 10.9, PLAN.md Phase 4 step 1).
+ * Asset pipeline CLI (DESIGN.md 10.9, PLAN.md Phase 4 steps 1 and 3).
  *
  *   npm run asset -- manifest                       list recorded assets
- *   npm run asset -- validate                       check manifests, files, sizes, polycounts
+ *   npm run asset -- validate                       check manifests, files, sizes, polycounts, clips
  *   npm run asset -- card <kind> <id> "<subject>"   write pipeline/cards/<id>.md for the owner
  *   npm run asset -- batch new <name> <id>:<height-m> [...]   plan a humanoid batch
  *   npm run asset -- batch show <nnn>
  *   npm run asset -- batch approve <nnn>            after the owner approves it in chat
+ *   npm run asset -- run <nnn> [--dry-run] [--force] run an approved batch through Meshy
  *
- * Nothing here calls Meshy; the client (step 3) runs approved batches only.
+ * Only `run` talks to Meshy, and only for an approved batch (`--dry-run` prints the commands).
  */
 import { access, readFile, stat } from 'node:fs/promises';
 import sharp from 'sharp';
-import { parseGlb } from '../src/world/glb';
 import {
+  HUMANOID_CLIPS,
   findBatch,
   formatBatch,
   humanoidItems,
@@ -23,8 +24,11 @@ import {
 } from './lib/batch';
 import { INBOX_DIR, loadStyle, makeCard, writeCard, type CardKind } from './lib/cards';
 import { isValidId, readManifest, type AssetEntry } from './lib/manifest';
+import { CHARACTER_TEXTURE_SIZE, inspectGlb } from './lib/postprocess';
+import { runBatch } from './lib/run';
 
-const MAX_HUMANOID_TRIANGLES = 4000;
+/** Meshy targets 4000 and lands near it; a tenth over is accepted, more is a regeneration. */
+const MAX_HUMANOID_TRIANGLES = 4400;
 const TEXTURE_MANIFEST = 'assets/textures/manifest.json';
 
 async function exists(path: string): Promise<boolean> {
@@ -89,20 +93,29 @@ async function validate(): Promise<void> {
         file.endsWith('.glb') &&
         (a.kind === 'character' || a.kind === 'prop' || a.kind === 'building')
       ) {
-        const buffer = await readFile(file);
-        const nodes = parseGlb(
-          buffer.buffer.slice(buffer.byteOffset, buffer.byteOffset + buffer.byteLength),
-        );
-        const triangles = nodes.reduce(
-          (n, node) => n + node.primitives.reduce((m, p) => m + p.indices.length / 3, 0),
-          0,
-        );
-        if (a.kind === 'character' && triangles > MAX_HUMANOID_TRIANGLES) {
+        const report = await inspectGlb(file);
+        if (a.kind === 'character' && report.triangles > MAX_HUMANOID_TRIANGLES) {
           problems.push(
-            `${a.id}: ${file} has ${triangles} triangles, limit ${MAX_HUMANOID_TRIANGLES}`,
+            `${a.id}: ${file} has ${report.triangles} triangles, limit ${MAX_HUMANOID_TRIANGLES}`,
           );
         }
-        if (triangles === 0) problems.push(`${a.id}: ${file} has no triangles`);
+        if (report.triangles === 0) problems.push(`${a.id}: ${file} has no triangles`);
+        if (a.kind === 'character') {
+          const expected = [...HUMANOID_CLIPS];
+          if (JSON.stringify(report.clips) !== JSON.stringify(expected)) {
+            problems.push(
+              `${a.id}: ${file} clips are [${report.clips.join(', ')}], expected [${expected.join(', ')}]`,
+            );
+          }
+          for (const t of report.textures) {
+            if (t.width > CHARACTER_TEXTURE_SIZE || t.height > CHARACTER_TEXTURE_SIZE) {
+              problems.push(
+                `${a.id}: ${file} texture ${t.name || '?'} is ${t.width}x${t.height}, limit ${CHARACTER_TEXTURE_SIZE}`,
+              );
+            }
+          }
+          if (!report.textures.length) problems.push(`${a.id}: ${file} has no texture`);
+        }
       }
       if (/\.(png|jpg|jpeg|webp)$/i.test(file)) {
         const meta = await sharp(file).metadata();
@@ -183,6 +196,28 @@ async function batch(args: string[]): Promise<void> {
   fail('batch new|show|approve');
 }
 
+async function run(args: string[]): Promise<void> {
+  const number = Number(args[0]);
+  if (!Number.isInteger(number)) fail('run <nnn> [--dry-run] [--force]');
+  const flags = new Set(args.slice(1));
+  for (const f of flags) if (f !== '--dry-run' && f !== '--force') fail(`unknown flag ${f}`);
+  try {
+    const summary = await runBatch(number, {
+      dryRun: flags.has('--dry-run'),
+      force: flags.has('--force'),
+    });
+    if (!summary.run.finished) return;
+    for (const a of summary.assets) {
+      console.info(
+        `${a.id.padEnd(24)} ${a.file}  ${a.credits === null ? 'credits not reported per task' : `${a.credits} cr`}`,
+      );
+    }
+    await validate();
+  } catch (e) {
+    fail(`asset run: ${e instanceof Error ? e.message : String(e)}`);
+  }
+}
+
 const [command, ...args] = process.argv.slice(2);
 switch (command) {
   case 'manifest':
@@ -197,10 +232,13 @@ switch (command) {
   case 'batch':
     await batch(args);
     break;
+  case 'run':
+    await run(args);
+    break;
   default: {
     const size = (await stat('pipeline/style.md')).size;
     console.info(
-      `usage: asset manifest | validate | card <kind> <id> "<subject>" | batch new|show|approve\n(style bible: pipeline/style.md, ${size} bytes)`,
+      `usage: asset manifest | validate | card <kind> <id> "<subject>" | batch new|show|approve | run <nnn> [--dry-run] [--force]\n(style bible: pipeline/style.md, ${size} bytes)`,
     );
   }
 }

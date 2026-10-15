@@ -22,6 +22,29 @@ export const HUMANOID_CLIPS = [
   'block',
 ] as const;
 
+export type HumanoidClip = (typeof HUMANOID_CLIPS)[number];
+
+/**
+ * Meshy animation-library actions behind each clip, chosen once from the catalog
+ * (678 actions, 2026-10-15) and reused for every humanoid so all characters share one set.
+ */
+export const HUMANOID_ACTIONS: Record<HumanoidClip, { id: number; name: string }> = {
+  idle: { id: 0, name: 'Idle' },
+  walk: { id: 30, name: 'Casual Walk' },
+  run: { id: 14, name: 'Run 2' },
+  attack_1: { id: 97, name: 'Left Slash' },
+  attack_2: { id: 240, name: 'Thrust Slash' },
+  hit: { id: 178, name: 'Hit Reaction' },
+  death: { id: 188, name: 'Fall Dead from Abdominal Injury' },
+  cast: { id: 125, name: 'Charged Spell Cast' },
+  talk: { id: 313, name: 'Talk with Hands Open' },
+  block: { id: 138, name: 'Block1' },
+};
+
+export function actionIds(clips: readonly HumanoidClip[]): number[] {
+  return clips.map((c) => HUMANOID_ACTIONS[c].id);
+}
+
 /**
  * Credit estimates. Text-to-image and animation prices are documented in DESIGN.md 10.0;
  * image-to-3D and rigging are assumptions from Meshy's public pricing until the first
@@ -46,6 +69,30 @@ export interface BatchItem {
   estimateBasis: string;
 }
 
+/** One Meshy task of a run, enough to resume or audit it. */
+export interface TaskRecord {
+  taskId: string;
+  status: string;
+  /** What Meshy reported for the task; null when the server did not say. */
+  consumedCredits: number | null;
+  operationId: string;
+}
+
+/**
+ * Appended by the client. A run without `finished` is resumed by the next `asset run`;
+ * task records are written after every step so a crash loses nothing billable.
+ */
+export interface BatchRun {
+  started: string;
+  finished?: string;
+  balanceBefore?: number;
+  balanceAfter?: number;
+  /** Balance before minus balance after: what the batch really cost. */
+  consumedCredits?: number;
+  taskIds: string[];
+  tasks: Record<string, Partial<Record<BatchStep, TaskRecord>>>;
+}
+
 export interface Batch {
   number: number;
   name: string;
@@ -53,8 +100,7 @@ export interface Batch {
   approved: boolean;
   items: BatchItem[];
   estimatedCredits: number;
-  /** Appended by the client: when it ran and what Meshy charged. */
-  runs: { started: string; finished?: string; consumedCredits?: number; taskIds: string[] }[];
+  runs: BatchRun[];
 }
 
 export function batchFileName(number: number, name: string): string {
@@ -79,7 +125,7 @@ export function humanoidItems(assetId: string, heightMetres: number, input: stri
       input,
       params: {
         model_type: 'smart-topology',
-        ai_model: 'meshy-t2',
+        ai_model: 'meshy-t2.5',
         target_polycount: 4000,
         pose_mode: 'a-pose',
         should_texture: true,
@@ -102,7 +148,7 @@ export function humanoidItems(assetId: string, heightMetres: number, input: stri
     {
       assetId,
       step: 'animate',
-      params: { clips: [...HUMANOID_CLIPS] },
+      params: { clips: [...HUMANOID_CLIPS], action_ids: actionIds(HUMANOID_CLIPS) },
       estimatedCredits: CREDITS.animatePerAction.credits * HUMANOID_CLIPS.length,
       estimateBasis: `${HUMANOID_CLIPS.length} actions, ${CREDITS.animatePerAction.basis}`,
     },
@@ -159,5 +205,11 @@ export function formatBatch(batch: Batch): string {
     );
   }
   lines.push(`  estimated total ${batch.estimatedCredits} credits; runs: ${batch.runs.length}`);
+  for (const r of batch.runs) {
+    const cost = r.consumedCredits === undefined ? 'cost unknown' : `${r.consumedCredits} credits`;
+    lines.push(
+      `    run ${r.started} ${r.finished ? `finished ${r.finished}, ${cost}` : 'unfinished (resumable)'}, ${r.taskIds.length} task(s)`,
+    );
+  }
   return lines.join('\n');
 }

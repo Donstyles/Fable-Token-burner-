@@ -297,12 +297,14 @@ with first real assets.
    power-of-two resize, optional palette quantisation, atlas packing);
    ChatGPT texture prompt cards. First texture batch for the showcase
    materials (ashlar, flagstone, plank, iron, rock, plaster). No credits.
-3. Meshy client: reads `MESHY_API_KEY` from the environment only, redacts
-   headers from all logs, `--dry-run` prints requests without secrets,
-   immediate download of expiring outputs, polling with backoff. Chain:
-   image-to-3D (Smart Topology, `meshy-t2`, 4000 polys, A-pose) → rigging →
-   animation (standard 10-clip set) → gltf-transform post-process → manifest.
-   First batch: one humanoid NPC, approved separately.
+3. Meshy client: the official `@meshy-ai/cli` through the cloud proxy, which
+   injects the key from a network secret (the key never enters the
+   container); `--dry-run` prints the commands; outputs are downloaded at
+   once; operation ids and task records in the batch file make every step
+   resumable. Chain: image-to-3D (Smart Topology, `meshy-t2.5`, 4000 polys,
+   A-pose) → rigging → animation (standard 10-clip set) → gltf-transform
+   post-process → manifest. First batch: one humanoid NPC, approved
+   separately.
 4. Characters: doll template with anchors; character-sheet prompt card;
    portrait cropper and posterizer; diff-extraction overlay tool with
    alignment check; icon processor. First pass: two base dolls, two
@@ -317,8 +319,12 @@ GLB polycounts), `card` (prompt cards from the style bible into
 `pipeline/cards/`) and `batch new|show|approve` (humanoid batches with the
 three Meshy steps and credit estimates; image-to-3D and rigging prices are
 assumptions until the first batch confirms them). Step 2's Poly Haven fetcher
-already exists from Phase 2. Next: step 3, the Meshy client, which needs
-`MESHY_API_KEY` in the cloud environment's secrets.
+already exists from Phase 2. Step 3 built (2026-10-15): `run <nnn>
+[--dry-run] [--force]` on the official CLI through the proxy, dry run
+verified against the live balance (4,790 credits); concept-image prompts
+became photographic after the owner rejected the painted innkeeper. Next:
+the owner's innkeeper image into `pipeline/inbox/`, batch 001, approval, the
+first real run (which confirms the credit cost per humanoid).
 
 **Deliverables:** `npm run asset:*` commands, first real textures in the
 showcase, one rigged and animated NPC walking in the viewer, two dolls with
@@ -327,8 +333,9 @@ overlays rendering in a test screen.
 **Acceptance:** owner reviews the first outputs of each pipeline; credit
 cost per humanoid is now known and recorded.
 
-**Needs from owner:** `MESHY_API_KEY` and `FREESOUND_API_KEY` in the cloud
-environment's secrets; ChatGPT images for each prompt card; batch approvals.
+**Needs from owner:** the Meshy network secret (added 2026-10-15) and
+`FREESOUND_API_KEY` in the cloud environment; ChatGPT images for each prompt
+card; batch approvals.
 
 **Risks:** Meshy output variance (regeneration budget set per batch); ChatGPT
 moving the figure between base and dressed doll (alignment check rejects and
@@ -439,15 +446,15 @@ by designing at device resolution from the start.
 
 ## Owner actions, by when they are needed
 
-| When    | Action                                                                                                                                |
-| ------- | ------------------------------------------------------------------------------------------------------------------------------------- |
-| Phase 0 | Enable GitHub Pages (source: GitHub Actions) and secret-scanning push protection; supply the app icon image from a prompt card        |
-| Phase 1 | Test controls and look on the iPhone, give feedback                                                                                   |
-| Phase 2 | Review the authoring API and the showcase                                                                                             |
-| Phase 4 | Add `MESHY_API_KEY` and `FREESOUND_API_KEY` to the cloud environment secrets; return ChatGPT images for prompt cards; approve batches |
-| Phase 5 | Decide rule questions as they come up; approve screens                                                                                |
-| Phase 6 | Approve content docs; supply music; approve batches                                                                                   |
-| Phase 7 | Final device testing                                                                                                                  |
+| When    | Action                                                                                                                                                 |
+| ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Phase 0 | Enable GitHub Pages (source: GitHub Actions) and secret-scanning push protection; supply the app icon image from a prompt card                         |
+| Phase 1 | Test controls and look on the iPhone, give feedback                                                                                                    |
+| Phase 2 | Review the authoring API and the showcase                                                                                                              |
+| Phase 4 | Meshy key as a network secret (done 2026-10-15); `FREESOUND_API_KEY` as an environment secret; return ChatGPT images for prompt cards; approve batches |
+| Phase 5 | Decide rule questions as they come up; approve screens                                                                                                 |
+| Phase 6 | Approve content docs; supply music; approve batches                                                                                                    |
+| Phase 7 | Final device testing                                                                                                                                   |
 
 ## Decisions approved with this plan (2026-10-14)
 

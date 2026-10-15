@@ -39,6 +39,7 @@
     "@gltf-transform/core": "^4.5.1",
     "@gltf-transform/extensions": "^4.5.1",
     "@gltf-transform/functions": "^4.5.1",
+    "@meshy-ai/cli": "^0.4.4",
     "@playwright/test": "^1.64.0",
     "@recast-navigation/core": "^0.43.1",
     "@recast-navigation/generators": "^0.43.1",

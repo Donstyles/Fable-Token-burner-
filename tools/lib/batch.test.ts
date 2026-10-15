@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import {
   CREDITS,
+  HUMANOID_ACTIONS,
   HUMANOID_CLIPS,
+  actionIds,
   batchFileName,
   formatBatch,
   humanoidItems,
@@ -19,13 +21,23 @@ describe('batches', () => {
     const items = humanoidItems('innkeeper', 1.75, 'innkeeper.png');
     expect(items.map((i) => i.step)).toEqual(['image-to-3d', 'rig', 'animate']);
     expect(items[0]?.params['model_type']).toBe('smart-topology');
-    expect(items[0]?.params['ai_model']).toBe('meshy-t2');
+    expect(items[0]?.params['ai_model']).toBe('meshy-t2.5');
     expect(items[0]?.params['target_polycount']).toBe(4000);
     expect(items[1]?.params['height_meters']).toBe(1.75);
     expect(items[2]?.params['clips']).toEqual([...HUMANOID_CLIPS]);
+    expect(items[2]?.params['action_ids']).toEqual(actionIds(HUMANOID_CLIPS));
     expect(items[2]?.estimatedCredits).toBe(
       CREDITS.animatePerAction.credits * HUMANOID_CLIPS.length,
     );
+  });
+
+  it('maps every clip to a distinct catalog action, at most ten per request', () => {
+    const ids = actionIds(HUMANOID_CLIPS);
+    expect(ids).toHaveLength(HUMANOID_CLIPS.length);
+    expect(new Set(ids).size).toBe(ids.length);
+    expect(ids.length).toBeLessThanOrEqual(10);
+    expect(HUMANOID_ACTIONS.walk.name).toMatch(/walk/i);
+    expect(HUMANOID_ACTIONS.run.name).toMatch(/run/i);
   });
 
   it('starts unapproved with the summed estimate', () => {

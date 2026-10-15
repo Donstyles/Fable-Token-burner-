@@ -157,7 +157,7 @@ scriptable.
 | Source                                     | Used for                                                                   | Cost                  | Access                                                                             |
 | ------------------------------------------ | -------------------------------------------------------------------------- | --------------------- | ---------------------------------------------------------------------------------- |
 | ChatGPT image generation (owner's account) | Concept images for Meshy, tileable textures, UI art, portraits, icons, sky | Free                  | Claude writes the exact prompt, owner returns the image                            |
-| Meshy text-to-image                        | Same as above when the owner is unavailable                                | 3–9 credits per image | API (`MESHY_API_KEY`)                                                              |
+| Meshy text-to-image                        | Same as above when the owner is unavailable                                | 3–9 credits per image | Official CLI through the cloud proxy, see below                                    |
 | Meshy image-to-3D (Smart Topology)         | All 3D models                                                              | Credits, see 10.1     | API                                                                                |
 | Meshy rigging + animation library          | Humanoid rigs and clips                                                    | Credits, see 10.1     | API                                                                                |
 | Poly Haven, ambientCG                      | Photo-based tileable materials (stone, wood, dirt, marble…)                | Free, CC0             | Public HTTPS API, no key; verified reachable from the build environment 2026-10-11 |
@@ -181,10 +181,11 @@ CC0 library access (verified 2026-10-11 from this environment, no key needed):
 
 Meshy API facts verified 2026-10-11:
 
-- Smart Topology is `model_type: "smart-topology"` with `ai_model: "meshy-t2"`.
-  `target_polycount` ranges 100–15,000, default 4,000, triangle-only output,
-  parts natively separated. No "T2.5" exists in the API; the web app label
-  maps to `meshy-t2`.
+- Smart Topology is `model_type: "smart-topology"` with `ai_model` `meshy-t2`
+  (100–15,000 triangles) or `meshy-t2.5` (100–30,000, the default; verified
+  2026-10-15 through the official CLI, which corrects the 2026-10-11 note that
+  no T2.5 existed). Triangle-only output, parts natively separated. We use
+  `meshy-t2.5` at `target_polycount` 4,000.
 - Image-to-3D accepts `pose_mode: "a-pose" | "t-pose"`, `texture_resolution`
   2k/4k/8k, `auto_size` with `origin_at: "bottom"`, `target_formats`.
 - Text-to-image models: `nano-banana` (3 cr), `nano-banana-2` (6),
@@ -197,6 +198,18 @@ Meshy API facts verified 2026-10-11:
   merged into one GLB per request. Non-humanoid rigs are not supported.
 - Download URLs expire. Outputs are fetched immediately and committed.
 
+Meshy access (decided 2026-10-15): the API key is a **network secret** of the
+cloud environment (allowed host `api.meshy.ai`, header
+`Authorization: Bearer …`). The outbound proxy injects it; the key never
+enters the container, the repo, the logs or the chat, and nobody asks the
+owner to paste it anywhere else. The client is the official `@meshy-ai/cli`
+(devDependency, per the library-first rule), driven by `tools/lib/meshy.ts`
+with a placeholder `MESHY_API_KEY`, `NODE_USE_ENV_PROXY=1` and the proxy's
+CA bundle, always with `--format json --output-schema v1` and one
+`--operation-id` per step so a repeated request replays the journal instead
+of billing again. Verified through the proxy: `balance` (4,790 credits on
+2026-10-15) and the animation catalog (678 actions).
+
 ### 10.1 Humanoids (party, NPCs, humanoid enemies)
 
 1. **Concept image.** Claude writes a prompt card (exact prompt + required
@@ -204,19 +217,24 @@ Meshy API facts verified 2026-10-11:
    background, flat even lighting, single subject). Owner generates it in
    ChatGPT and returns it. **One concept image per model** (decided
    2026-10-11); no turnaround sheets.
-2. **Image-to-3D.** `model_type: smart-topology`, `ai_model: meshy-t2`,
+2. **Image-to-3D.** `model_type: smart-topology`, `ai_model: meshy-t2.5`,
    `target_polycount: 4000`, `pose_mode: a-pose`, `should_texture: true`,
    `texture_resolution: 2k`, `enable_pbr: false`, `auto_size: true`,
    `origin_at: bottom`, `target_formats: ["glb"]`.
 3. **Rigging.** `height_meters` per character.
 4. **Animation.** One request with the standard humanoid action set (up to
    10 clips, names fixed project-wide): idle, walk, run, attack_1, attack_2,
-   hit, death, cast, talk, block. Exact library `action_id`s chosen once and
-   reused.
-5. **Post-process (code).** gltf-transform: prune, dedupe, quantize,
-   meshopt compression, textures downscaled to 512 and optionally
-   palette-quantized, clips renamed to the standard names, bounds and
-   polycount validated.
+   hit, death, cast, talk, block. Library `action_id`s chosen 2026-10-15 and
+   fixed in `HUMANOID_ACTIONS`: idle 0 (Idle), walk 30 (Casual Walk), run 14
+   (Run 2), attack_1 97 (Left Slash), attack_2 240 (Thrust Slash), hit 178
+   (Hit Reaction), death 188 (Fall Dead from Abdominal Injury), cast 125
+   (Charged Spell Cast), talk 313 (Talk with Hands Open), block 138 (Block1).
+5. **Post-process (code).** gltf-transform (`tools/lib/postprocess.ts`):
+   clips renamed to the standard names in request order, dedup, prune,
+   textures scaled to 512 PNG. `validate` checks triangles (at most 4,400, a
+   tenth over the 4,000 target), clip names and texture size. Quantisation
+   and meshopt compression wait until file size matters (meshopt needs a
+   decoder on the Babylon side).
 6. **Commit** to `assets/characters/<id>/` with a manifest entry.
 
 Credit cost per humanoid is confirmed from `consumed_credits` on the first
@@ -304,9 +322,19 @@ stats, a readable sans for tooltips. Downloaded and subset by script.
   manifest completeness before commit.
 
 Status 2026-10-15: `tools/asset.ts` (`npm run asset`) provides `manifest`,
-`validate`, `card` and `batch new|show|approve`; libraries in `tools/lib/`
-(`manifest.ts`, `batch.ts`, `cards.ts`) with unit tests. Prompt cards land in
+`validate`, `card`, `batch new|show|approve` and `run`; libraries in
+`tools/lib/` (`manifest.ts`, `batch.ts`, `cards.ts`, `meshy.ts`, `run.ts`,
+`postprocess.ts`) with unit tests. Prompt cards land in
 `pipeline/cards/<id>.md` and the owner's images in `pipeline/inbox/<id>.png`.
+`run <nnn> [--dry-run] [--force]` runs an approved batch through the CLI:
+image-to-3D → rigging → animation → download → post-process → manifest entry
+(task ids, parameters, credits per task; balance before and after in the
+batch's run record). Task records are written after every step, so an
+interrupted run resumes where it stopped and never resubmits; a finished
+batch needs `--force`. `--dry-run` prints every command and the balance and
+submits nothing (verified 2026-10-15 against the live balance). Work files
+land in the ignored `pipeline/work/`. Concept images for Meshy use the
+photographic "3D reference prefix" of `pipeline/style.md`.
 
 ## 11. Dungeon environments (generated, real 3D architecture)
 
@@ -699,6 +727,26 @@ and icons all share it, so world and UI agree.
   rooms because the light knee swallowed it (priority lights are now added
   after the knee, with a hard cap of 1.6). The top "log" button is gone; the
   panel's "copy log" remains. Phase 3 is accepted with notes; Phase 4 starts.
+- 2026-10-15 – **Meshy key is a network secret; the client is the official
+  CLI.** The owner added the key as a network secret of the cloud environment
+  (host `api.meshy.ai`, Bearer header); the proxy injects it and the key
+  never enters the container. Per the library-first rule the client wraps
+  `@meshy-ai/cli` (journal, polling, downloads, v1 JSON envelope) instead of
+  a hand-written HTTP client, with Node routed through the proxy. `asset run
+<nnn>` chains image-to-3D → rigging → animation → download → post-process →
+  manifest, writes task records after every step, resumes an unfinished run
+  and refuses to rerun a finished batch without `--force`. Dry run verified
+  against the live balance (4,790 credits). The CLI exposes `meshy-t2.5` (up
+  to 30,000 triangles), so humanoids use it at 4,000; the ten library actions
+  are fixed in section 10.1.
+- 2026-10-15 – **Concept images for Meshy are photographs, not paintings**
+  (owner on the first innkeeper image: "Hate this image. Reeks of AI."). The
+  painted style prefix produced generic AI art and would hand Meshy painterly
+  texture to copy; humanoid, prop and building cards now use a photographic
+  "3D reference prefix" (reenactment costume, real wear, no idealised face,
+  flat lighting). The game's filter supplies the period look afterwards.
+  `validate` accepts up to 4,400 triangles per character, a tenth over the
+  target.
 - 2026-10-15 – **Owner's look tuning becomes the default** (sent from the
   dev panel after playing the water build, "looks moody"): posterize filter
   on at 5 levels with dither 0.45 (cell 2), bloom off, vignette 0.6, contrast
