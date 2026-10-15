@@ -57,7 +57,8 @@ The look, as a checklist for the renderer:
   vignette, soft overall. No dithering or posterisation by default.
 - **Wet surfaces**: cobbles after rain reflect the lamps (specular pass,
   Phase 3).
-- **Resolution**: 1080 lines (720 preset), **linear** upscale so the frame is
+- **Resolution**: 720 lines by default since the owner's 2026-10-15 tuning
+  (1080 preset available), **linear** upscale so the frame is
   slightly soft rather than pixelated as a whole; UI and text native.
 - **Animation**: sampled at a low frame rate for creatures, as before.
 - **UI**: adapted for touch and modern screens (19.5:9) but the MM6
@@ -532,6 +533,14 @@ and icons all share it, so world and UI agree.
   64³ LUT, Bayer dither with cell size), posterize mode, vertex-lit fogged
   material, touch zones per 7.1, Havok capsule controller with instant
   start/stop, dev arena and tuning panel in a separate dev build at `/dev/`.
+- 2026-10-15 – **Owner's look tuning becomes the default** (sent from the
+  dev panel after playing the water build, "looks moody"): posterize filter
+  on at 5 levels with dither 0.45 (cell 2), bloom off, vignette 0.6, contrast
+  1.0, exposure 0.85, split tone 11, saturation 0, 720-line render preset,
+  live per-pixel lights on top of the baked light, fog about half as dense
+  (0.016 in the hall), gravity 39, step height 0.4, look 0.33 °/px, turn
+  0.23 °/px. The fog slider now scales the per-space presets instead of
+  fighting them.
 - 2026-10-15 – **Phase 3 built**: live water on every body (quarter-res
   reflection and refraction, clip planes honoured by the retro material),
   waterfall ribbons with scrolling foam, spray and mist, synthesised

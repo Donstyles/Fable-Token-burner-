@@ -26,7 +26,7 @@ export default function showcase(plan: LevelBuilder): void {
     size: [W, D],
     height: H,
     vault: 'barrel',
-    fog: { density: 0.026, color: [0.012, 0.01, 0.015] },
+    fog: { density: 0.016, color: [0.012, 0.01, 0.015] },
     openings: [
       { side: 'west', at: 6, width: 1.8, height: 3 }, // shaft, floor level
       { side: 'west', at: 6, width: 1.6, height: 2.6, sill: GALLERY }, // shaft, gallery level
@@ -99,7 +99,7 @@ export default function showcase(plan: LevelBuilder): void {
     size: [W, D],
     height: 4.5,
     vault: 'barrel',
-    fog: { density: 0.055, color: [0.004, 0.014, 0.016] },
+    fog: { density: 0.032, color: [0.004, 0.014, 0.016] },
     openings: [
       { side: 'west', at: 6, width: 1.6, height: 2.6 },
       { side: 'south', at: 14.4, width: 1.6, height: 2.6 },
@@ -163,7 +163,7 @@ export default function showcase(plan: LevelBuilder): void {
     cell: 0.5,
     roughness: 0.25,
     seed: 3,
-    fog: { density: 0.03, color: [0.004, 0.006, 0.012] },
+    fog: { density: 0.018, color: [0.004, 0.006, 0.012] },
     carve: (s) =>
       s.union(
         // Entry tunnel through the rock face, flat floor at hall level.

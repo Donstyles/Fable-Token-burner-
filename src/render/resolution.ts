@@ -8,7 +8,7 @@ export type RenderPreset = 'lines-1080' | 'lines-720' | 'native';
 
 export const RENDER_PRESETS: readonly RenderPreset[] = ['lines-1080', 'lines-720', 'native'];
 
-export const DEFAULT_RENDER_PRESET: RenderPreset = 'lines-1080';
+export const DEFAULT_RENDER_PRESET: RenderPreset = 'lines-720';
 
 export function presetLines(preset: RenderPreset): number | null {
   switch (preset) {

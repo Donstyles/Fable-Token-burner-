@@ -81,10 +81,10 @@ interface FogTarget {
 }
 
 const DEFAULT_FOG: Record<LevelSpace['kind'], FogTarget> = {
-  hall: { density: 0.028, color: new Color3(0.012, 0.01, 0.015) },
-  shaft: { density: 0.03, color: new Color3(0.012, 0.01, 0.015) },
-  corridor: { density: 0.032, color: new Color3(0.01, 0.009, 0.013) },
-  cavern: { density: 0.03, color: new Color3(0.004, 0.006, 0.012) },
+  hall: { density: 0.016, color: new Color3(0.012, 0.01, 0.015) },
+  shaft: { density: 0.018, color: new Color3(0.012, 0.01, 0.015) },
+  corridor: { density: 0.02, color: new Color3(0.01, 0.009, 0.013) },
+  cavern: { density: 0.018, color: new Color3(0.004, 0.006, 0.012) },
 };
 
 /** Eases the level fog toward the preset of the space containing the party. */
@@ -92,6 +92,8 @@ export class FogBySpace {
   private current: FogTarget;
   private lastSpace: string | null = null;
   rate = 1.2;
+  /** Multiplies every preset's density; the dev panel's fog slider drives it. */
+  scale = 1;
 
   constructor(
     private readonly materials: RetroMaterials,
@@ -130,7 +132,7 @@ export class FogBySpace {
     const target = best ? (best.fog ?? DEFAULT_FOG[best.kind]) : null;
     if (!target) return;
     const k = 1 - Math.exp(-this.rate * dt);
-    this.current.density += (target.density - this.current.density) * k;
+    this.current.density += (target.density * this.scale - this.current.density) * k;
     this.current.color.r += (target.color.r - this.current.color.r) * k;
     this.current.color.g += (target.color.g - this.current.color.g) * k;
     this.current.color.b += (target.color.b - this.current.color.b) * k;

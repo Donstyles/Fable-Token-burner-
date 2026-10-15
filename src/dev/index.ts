@@ -78,7 +78,7 @@ export async function startDev(app: App): Promise<DevHandle> {
     ambientColor: new Color3(0.05, 0.05, 0.07),
     lightColor: new Color3(0, 0, 0),
     fogColor: new Color3(0.01, 0.01, 0.015),
-    fogDensity: 0.028,
+    fogDensity: 0.016,
   });
   app.sky.mesh.setEnabled(false);
   // Real water: reflection and refraction at a fraction of the world resolution.
@@ -266,8 +266,10 @@ export async function startDev(app: App): Promise<DevHandle> {
     set: (v: number) => void,
   ): Field => ({ kind: 'range', key, label, min, max, step, get, set });
   const env = (): typeof app.materials.env => app.materials.env;
-  let liveLights = false;
+  // Owner's tuning 2026-10-15: live per-pixel lights on top of the baked light.
+  let liveLights = true;
   let liveScale = 1;
+  level.setLiveLights(true, liveScale);
 
   const panel = createDevPanel(
     uiLayer,
@@ -524,13 +526,13 @@ export async function startDev(app: App): Promise<DevHandle> {
         (v) => app.setFilter({ ditherCell: v }),
       ),
       range(
-        'fog',
-        'fog density',
+        'fogScale',
+        'fog scale',
         0,
-        0.12,
-        0.005,
-        () => env().fogDensity,
-        (v) => app.materials.setEnvironment({ fogDensity: v }),
+        3,
+        0.1,
+        () => fog.scale,
+        (v) => (fog.scale = v),
       ),
       range(
         'ambient',

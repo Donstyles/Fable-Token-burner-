@@ -25,9 +25,9 @@ export interface FilterSettings {
 
 /** Off by default since the look re-target (2026-10-14); the MM6 modes stay available. */
 export const DEFAULT_FILTER: FilterSettings = {
-  mode: 'off',
-  levels: 16,
-  dither: 0.6,
+  mode: 'posterize',
+  levels: 5,
+  dither: 0.45,
   ditherCell: 2,
 };
 

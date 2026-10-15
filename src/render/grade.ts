@@ -27,15 +27,15 @@ export interface GradeSettings {
 
 export const DEFAULT_GRADE: GradeSettings = {
   bloom: true,
-  bloomThreshold: 0.75,
-  bloomWeight: 0.3,
+  bloomThreshold: 0.4,
+  bloomWeight: 0,
   bloomKernel: 48,
   bloomScale: 0.5,
-  vignette: 1.2,
-  contrast: 1.08,
-  exposure: 1.0,
-  splitTone: 18,
-  saturation: -5,
+  vignette: 0.6,
+  contrast: 1.0,
+  exposure: 0.85,
+  splitTone: 11,
+  saturation: 0,
 };
 
 export class GradePass {
