@@ -112,6 +112,10 @@ uniform float priorityLights;
 void main(void) {
   if (clipEnabled > 0.5 && vClip > 0.0) discard;
   vec3 n = normalize(vNormal);
+#ifdef TWOSIDED
+  // Single sheets (a cloak, an apron) are lit on whichever side faces the camera.
+  if (!gl_FrontFacing) n = -n;
+#endif
   vec3 pl = vec3(0.0);
   // Priority lights (the party's torch) are added after the knee, so the torch always
   // shows, even on a wall a lantern already lights.
@@ -152,6 +156,13 @@ export interface VertexLitOptions {
   uvScale?: [number, number];
   tint?: Color3;
   emissive?: Color3;
+  /** Draw both faces, lit by the side that faces the camera (glTF doubleSided). */
+  doubleSided?: boolean;
+  /**
+   * Ambient light for this material instead of the environment's: characters carry a fill so
+   * they never go black between lamps, like MM6's minimum sprite brightness.
+   */
+  ambient?: Color3;
 }
 
 /**
@@ -162,6 +173,7 @@ export interface VertexLitOptions {
  */
 export class RetroMaterials {
   private readonly materials = new Set<ShaderMaterial>();
+  private readonly ambientOverride = new Map<ShaderMaterial, Color3>();
   private readonly observer: Observer<Scene>;
   readonly lights: PointLightDesc[] = [];
   env: LightingEnvironment;
@@ -182,6 +194,7 @@ export class RetroMaterials {
       : opts.vertexColors
         ? ['#define VERTEXCOLOR']
         : [];
+    if (opts.doubleSided) defines.push('#define TWOSIDED');
     const attributes = ['position', 'normal', 'uv', ...(useColor ? ['color'] : [])];
     const mat = new ShaderMaterial(opts.name, this.scene, SHADER, {
       attributes,
@@ -234,10 +247,17 @@ export class RetroMaterials {
     mat.setArray3('pointPos', new Array<number>(MAX_POINT_LIGHTS * 3).fill(0));
     mat.setArray3('pointColor', new Array<number>(MAX_POINT_LIGHTS * 3).fill(0));
     mat.setFloats('pointRange', new Array<number>(MAX_POINT_LIGHTS).fill(0));
-    mat.backFaceCulling = true;
+    mat.backFaceCulling = !opts.doubleSided;
+    if (opts.ambient) this.ambientOverride.set(mat, opts.ambient);
     this.materials.add(mat);
     this.pushEnv(mat);
     return mat;
+  }
+
+  /** Change a material's own ambient fill (see VertexLitOptions.ambient). */
+  setAmbient(mat: ShaderMaterial, ambient: Color3): void {
+    this.ambientOverride.set(mat, ambient);
+    mat.setColor3('ambientColor', ambient);
   }
 
   /** Register a point light; mutate the returned object to move or dim it. */
@@ -273,7 +293,7 @@ export class RetroMaterials {
   private pushEnv(mat: ShaderMaterial): void {
     mat.setVector3('lightDirection', this.env.lightDirection);
     mat.setColor3('lightColor', this.env.lightColor);
-    mat.setColor3('ambientColor', this.env.ambientColor);
+    mat.setColor3('ambientColor', this.ambientOverride.get(mat) ?? this.env.ambientColor);
     mat.setColor3('fogColor', this.env.fogColor);
     mat.setFloat('fogDensity', this.env.fogDensity);
   }
@@ -331,5 +351,6 @@ export class RetroMaterials {
     this.scene.onBeforeRenderObservable.remove(this.observer);
     for (const m of this.materials) m.dispose();
     this.materials.clear();
+    this.ambientOverride.clear();
   }
 }

@@ -17,15 +17,19 @@ card. Keep the prefix verbatim so all art shares one look.
 ## 3D reference prefix
 
 Concept images that feed Meshy (humanoids, props, buildings) are not
-illustrations. Meshy builds the mesh and texture from what it sees, and the
-game's own filter supplies the 1998 look afterwards. A painted, polished image
-reads as generic AI art (owner, 2026-10-15) and gives Meshy painterly texture
-to copy. These cards use a photographic prefix instead:
+illustrations and not photographs. The first attempt used a reenactment
+photograph (the bandit, batch 001): the layered, loose costume came back as
+separated parts with gaps at the belt and collar, and the model's wide
+stance became a bow-legged walk. Meshy's low-poly mode wants what its own
+examples look like: a clean, stylised concept render with fitted clothing and
+a simple silhouette. The game's filter supplies the 1998 look afterwards, so
+this prefix is for Meshy's eyes only (owner, 2026-10-15):
 
-> Plain photograph of a historical reenactment costume worn by a real person,
-> muted natural colours, real wear, dirt and mended cloth, no fantasy polish,
-> no idealised face, no smile, no dramatic lighting, no text, no watermark,
-> no signature.
+> Clean full-body character concept for a low-polygon video game, rendered
+> like a studio turnaround model: simple solid shapes, clothing fitted to the
+> body, no cape, cloak, skirt or loose straps, nothing dangling or thin, no
+> fur, no transparent cloth, muted natural colours, flat even lighting, no
+> text, no watermark, no signature.
 
 ## Forbidden
 

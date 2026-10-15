@@ -15,7 +15,7 @@ export type CardKind = 'humanoid' | 'prop' | 'building' | 'texture' | 'portrait'
 /** Framing each pipeline needs, appended after the subject. */
 export const FRAMING: Record<CardKind, string> = {
   humanoid:
-    'Full body, standing in a relaxed A-pose with the arms held slightly away from the body, straight front view facing the camera squarely, feet fully visible, nothing cropped, single subject centred, neutral mid-grey background, flat even lighting with no shadow on the background.',
+    "Full body, standing upright in an A-pose with the arms held slightly away from the body, the legs straight and the feet a hand's width apart, straight front view facing the camera squarely, feet fully visible, nothing cropped, single subject centred, neutral mid-grey background, flat even lighting with no shadow on the background.",
   prop: 'Single object, three-quarter view, the entire object visible and centred, neutral mid-grey background, flat even lighting with no shadow on the background.',
   building:
     'Exterior of a single building, three-quarter view from eye level, the entire building visible and centred, neutral mid-grey background, flat even lighting.',
@@ -28,9 +28,10 @@ export const FRAMING: Record<CardKind, string> = {
 };
 
 /**
- * Kinds whose image feeds Meshy, which want a photograph rather than a painting. Meshy's
- * single-image guidance is a clear front-facing image, so humanoids face the camera squarely;
- * props and buildings keep a three-quarter view, which shows their depth.
+ * Kinds whose image feeds Meshy, which want a clean stylised concept render (see the style
+ * bible's "3D reference prefix"). Meshy's single-image guidance is a clear front-facing image,
+ * so humanoids face the camera squarely; props and buildings keep a three-quarter view, which
+ * shows their depth.
  */
 export const PHOTO_KINDS: readonly CardKind[] = ['humanoid', 'prop', 'building'];
 

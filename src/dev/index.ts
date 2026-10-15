@@ -18,7 +18,7 @@ import { loadRoleTextures, setRoleMipmaps } from '../world/textures';
 import { LevelWater, WATER_QUALITIES, type WaterQuality } from '../world/water';
 import { LevelWaterfalls } from '../world/waterfall';
 import { AnimationStepper } from '../render/animation-step';
-import { loadCharacter, type Character } from '../world/character';
+import { DEFAULT_CHARACTER_FILL, loadCharacter, type Character } from '../world/character';
 import { HUMANOID_CLIPS } from '../../kernel/characters/clips';
 import banditUrl from '../../assets/characters/bandit/bandit.glb?url';
 import { Braziers, FogBySpace, Torch } from '../world/atmosphere';
@@ -228,6 +228,15 @@ export async function startDev(app: App): Promise<DevHandle> {
       }, 250),
     );
     const d = pick?.distance ?? 0;
+    // Tapping a character steps to its next clip, so clips can be reviewed on the phone.
+    const character = handle.character;
+    if (character && mesh.name.startsWith(`${character.node.name}:`)) {
+      const clips = character.clips;
+      const next = clips[(clips.indexOf(character.clip ?? '') + 1) % clips.length] ?? 'idle';
+      character.play(next);
+      panel.toast(`${character.node.name}: ${next}`);
+      return;
+    }
     panel.toast(`tapped ${mesh.name} at ${d.toFixed(1)} m`);
   };
 
@@ -447,6 +456,15 @@ export async function startDev(app: App): Promise<DevHandle> {
         set: (v) => handle.character?.play(v),
         persist: false,
       },
+      range(
+        'characterFill',
+        'character fill',
+        0,
+        0.6,
+        0.01,
+        () => handle.character?.fill ?? DEFAULT_CHARACTER_FILL,
+        (v) => handle.character?.setFill(v),
+      ),
       range(
         'animFps',
         'anim steps/s',

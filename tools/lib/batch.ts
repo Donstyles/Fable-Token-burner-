@@ -92,11 +92,14 @@ export async function nextBatchNumber(dir = BATCH_DIR): Promise<number> {
 }
 
 /** The three Meshy steps that turn one concept image into a rigged, animated humanoid. */
+export type PoseMode = 'a-pose' | 't-pose';
+
 export function humanoidItems(
   assetId: string,
   heightMetres: number,
   input: string,
   set: ClipSet = 'combat',
+  pose: PoseMode = 'a-pose',
 ): BatchItem[] {
   const clips = clipSet(set);
   return [
@@ -108,7 +111,7 @@ export function humanoidItems(
         model_type: 'smart-topology',
         ai_model: 'meshy-t2.5',
         target_polycount: 4000,
-        pose_mode: 'a-pose',
+        pose_mode: pose,
         should_texture: true,
         texture_resolution: '2k',
         enable_pbr: false,

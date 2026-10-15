@@ -4,7 +4,7 @@
  *   npm run asset -- manifest                       list recorded assets
  *   npm run asset -- validate                       check manifests, files, sizes, polycounts, clips
  *   npm run asset -- card <kind> <id> "<subject>"   write pipeline/cards/<id>.md for the owner
- *   npm run asset -- batch new <name> <id>:<height-m>[:civilian] [...]   plan a humanoid batch
+ *   npm run asset -- batch new <name> <id>:<height-m>[:civilian] [...] [--pose t-pose]   plan a humanoid batch
  *   npm run asset -- batch show <nnn>
  *   npm run asset -- batch approve <nnn>            after the owner approves it in chat
  *   npm run asset -- run <nnn> [--dry-run] [--force] run an approved batch through Meshy
@@ -29,6 +29,8 @@ import { runBatch } from './lib/run';
 
 /** Meshy targets 4000 and lands near it; a tenth over is accepted, more is a regeneration. */
 const MAX_HUMANOID_TRIANGLES = 4400;
+/** Boundary loops up to this wide are gaps between parts, not a garment's open edge. */
+const MAX_GAP_METRES = 0.3;
 const TEXTURE_MANIFEST = 'assets/textures/manifest.json';
 
 async function exists(path: string): Promise<boolean> {
@@ -116,6 +118,16 @@ async function validate(): Promise<void> {
             }
           }
           if (!report.textures.length) problems.push(`${a.id}: ${file} has no texture`);
+          // Gaps between Meshy's separated parts: small boundary loops. A sheet's border (a
+          // cloak hem) is wide; a gap at a belt or collar is not. Not patched: regenerated.
+          const gaps = report.openLoops.filter((l) => l.extent <= MAX_GAP_METRES);
+          if (gaps.length) {
+            problems.push(
+              `${a.id}: ${file} has ${gaps.length} gap(s) between parts (${gaps
+                .map((g) => `${(g.extent * 100).toFixed(0)} cm`)
+                .join(', ')}): regenerate from a cleaner reference`,
+            );
+          }
         }
       }
       if (/\.(png|jpg|jpeg|webp)$/i.test(file)) {
@@ -162,8 +174,13 @@ async function card(kind: string, id: string, subject: string): Promise<void> {
 async function batch(args: string[]): Promise<void> {
   const [sub, ...rest] = args;
   if (sub === 'new') {
-    const [name, ...specs] = rest;
+    const [name, ...given] = rest;
     if (!name || !isValidId(name)) fail('batch new <name> <id>:<height-m>[:civilian] [...]');
+    // `--pose t-pose` re-poses every character of the batch (legs straight, arms level).
+    const poseAt = given.indexOf('--pose');
+    const pose = poseAt >= 0 ? given[poseAt + 1] : 'a-pose';
+    if (pose !== 'a-pose' && pose !== 't-pose') fail('--pose a-pose|t-pose');
+    const specs = given.filter((_, i) => i !== poseAt && i !== poseAt + 1);
     if (!specs.length) fail('give at least one <id>:<height-m>[:civilian]');
     const items = [];
     for (const spec of specs) {
@@ -175,7 +192,7 @@ async function batch(args: string[]): Promise<void> {
       const input = `${id}.png`;
       if (!(await exists(`${INBOX_DIR}/${input}`)))
         fail(`${INBOX_DIR}/${input} missing: the owner's concept image comes first`);
-      items.push(...humanoidItems(id, metres, input, set));
+      items.push(...humanoidItems(id, metres, input, set, pose));
     }
     const b = makeBatch(await nextBatchNumber(), name, items);
     const path = await writeBatch(b);

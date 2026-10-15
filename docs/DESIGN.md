@@ -213,7 +213,7 @@ of billing again. Verified through the proxy: `balance` (4,790 credits on
 ### 10.1 Humanoids (party, NPCs, humanoid enemies)
 
 1. **Concept image.** Claude writes a prompt card (exact prompt + required
-   framing: full body, A-pose, straight front view, neutral grey background, flat even lighting, single subject). Meshy's single-image guidance is a clear front-facing image; a three-quarter view is kept only for props and buildings, where it shows depth. Owner generates it in
+   framing: full body, A-pose with straight legs, straight front view, neutral grey background, flat even lighting, single subject). Meshy's single-image guidance is a clear front-facing image; a three-quarter view is kept only for props and buildings, where it shows depth. Reference style (2026-10-15): a clean stylised concept render with fitted clothing and no loose cloth; a reenactment photograph gave separated parts with gaps and a splayed stance. Owner generates it in
    ChatGPT and returns it. **One concept image per model** (decided
    2026-10-11); no turnaround sheets.
 2. **Image-to-3D.** `model_type: smart-topology`, `ai_model: meshy-t2.5`,
@@ -226,9 +226,7 @@ of billing again. Verified through the proxy: `balance` (4,790 credits on
    (Run 2), attack_1 97 (Left Slash), attack_2 240 (Thrust Slash), hit 178
    (Hit Reaction), death 188 (Fall Dead from Abdominal Injury), cast 125
    (Charged Spell Cast), talk 313 (Talk with Hands Open), block 138 (Block1).
-5. **Post-process (code).** gltf-transform (`tools/lib/postprocess.ts`):
-   clips renamed to the standard names in request order, dedup, prune,
-   textures scaled to 512 PNG. `validate` checks triangles (at most 4,400, a
+5. **Post-process (code).** gltf-transform (`tools/lib/postprocess.ts`): clips renamed to the standard names in request order, dedup, prune, textures scaled to 512 PNG. The mesh is never patched: `validate` measures open boundary loops and reports loops up to 30 cm as gaps between parts, which means regenerating from a cleaner reference (owner, 2026-10-15). `validate` checks triangles (at most 4,400, a
    tenth over the 4,000 target), clip names and texture size. Quantisation
    and meshopt compression wait until file size matters (meshopt needs a
    decoder on the Babylon side).
@@ -771,6 +769,23 @@ and icons all share it, so world and UI agree.
   the dev panel selects the clip. The clip sets live in
   `kernel/characters/clips.ts`, shared by the tools and the runtime. The
   bandit stands four metres ahead of the showcase spawn, facing the party.
+- 2026-10-15 – **The bandit on the phone: holes and a bow-legged walk**
+  (owner). The holes are in Meshy's mesh: smart topology delivers separated
+  parts and left gaps where the belt, the hilt and the collar meet the body
+  (four boundary loops of 10 to 20 cm at the front, measured as open
+  edges). Owner's call: **do not patch the model**; it is a generation
+  problem, most likely the photographic reference (layered, loose costume)
+  for a low-poly mode. `validate` now reports gaps between parts and the
+  asset stays as Meshy delivered it until regenerated. The Meshy reference
+  prefix becomes a clean stylised concept render with fitted clothing and no
+  cloak (`pipeline/style.md`). Two rendering faults are fixed regardless: the
+  material culled the back faces of the double-sided cloak and apron (now
+  drawn two-sided, lit by the side facing the camera), and characters had no
+  fill between lamps (a grey fill, 0.22, with a panel slider). The walk is
+  bow-legged because the rest pose has the knees 10 cm wider than the hips,
+  the photograph's stance kept by the retargeted clips; the card now asks for
+  straight legs, and `batch new --pose t-pose` is available. Tapping a
+  character in the dev build steps through its clips.
 - 2026-10-15 – **Owner's look tuning becomes the default** (sent from the
   dev panel after playing the water build, "looks moody"): posterize filter
   on at 5 levels with dither 0.45 (cell 2), bloom off, vignette 0.6, contrast

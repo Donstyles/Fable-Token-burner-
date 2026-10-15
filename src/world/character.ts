@@ -13,9 +13,14 @@ import type { PBRMaterial } from '@babylonjs/core/Materials/PBR/pbrMaterial';
 import type { Texture } from '@babylonjs/core/Materials/Textures/texture';
 import type { Scene } from '@babylonjs/core/scene';
 import type { Vector3 } from '@babylonjs/core/Maths/math.vector';
+import { Color3 } from '@babylonjs/core/Maths/math.color';
+import type { ShaderMaterial } from '@babylonjs/core/Materials/shaderMaterial';
 import { ONE_SHOT_CLIPS } from '../../kernel/characters/clips';
 import type { AnimationStepper } from '../render/animation-step';
 import { applyRetroSampling, type RetroMaterials } from '../render/materials';
+
+/** Fill light on characters, so they read between lamps (MM6 never drew a black sprite). */
+export const DEFAULT_CHARACTER_FILL = 0.22;
 
 export interface CharacterOptions {
   name: string;
@@ -30,12 +35,14 @@ export class Character {
   /** Owns the loaded hierarchy; move or turn this. */
   readonly node: TransformNode;
   readonly meshes: AbstractMesh[];
+  private fillLevel = DEFAULT_CHARACTER_FILL;
   private readonly groups = new Map<string, AnimationGroup>();
   private current: AnimationGroup | null = null;
 
   constructor(
     scene: Scene,
     private readonly stepper: AnimationStepper,
+    private readonly materials: RetroMaterials,
     root: AbstractMesh,
     meshes: AbstractMesh[],
     groups: AnimationGroup[],
@@ -55,6 +62,19 @@ export class Character {
 
   get clips(): string[] {
     return [...this.groups.keys()];
+  }
+
+  /** Grey fill level, 0 to 1. */
+  get fill(): number {
+    return this.fillLevel;
+  }
+
+  setFill(level: number): void {
+    this.fillLevel = level;
+    const ambient = new Color3(level, level, level);
+    for (const mesh of this.meshes) {
+      this.materials.setAmbient(mesh.material as ShaderMaterial, ambient);
+    }
   }
 
   get clip(): string | null {
@@ -110,10 +130,16 @@ export async function loadCharacter(
     const texture = pbr?.albedoTexture as Texture | null;
     if (!texture) throw new Error(`${url}: ${mesh.name} has no base colour texture`);
     applyRetroSampling(texture, true);
-    mesh.material = materials.create({ name: `${opts.name}-${mesh.name}`, texture });
+    // Meshy marks thin sheets (cloak, apron) double-sided; culling them cuts holes in the front.
+    mesh.material = materials.create({
+      name: `${opts.name}-${mesh.name}`,
+      texture,
+      doubleSided: pbr?.backFaceCulling === false,
+      ambient: new Color3(DEFAULT_CHARACTER_FILL, DEFAULT_CHARACTER_FILL, DEFAULT_CHARACTER_FILL),
+    });
     pbr?.dispose(false, false);
     mesh.isPickable = true;
     mesh.name = `${opts.name}:${mesh.name}`;
   }
-  return new Character(scene, stepper, root, meshes, container.animationGroups, opts);
+  return new Character(scene, stepper, materials, root, meshes, container.animationGroups, opts);
 }
