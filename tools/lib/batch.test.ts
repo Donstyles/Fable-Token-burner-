@@ -1,3 +1,7 @@
+import { mkdtemp, readFile, rm } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { check } from 'prettier';
 import { describe, expect, it } from 'vitest';
 import {
   CREDITS,
@@ -9,6 +13,7 @@ import {
   humanoidItems,
   makeBatch,
   totalCredits,
+  writeBatch,
 } from './batch';
 
 describe('batches', () => {
@@ -44,6 +49,21 @@ describe('batches', () => {
     expect(ids.length).toBeLessThanOrEqual(10);
     expect(HUMANOID_ACTIONS.walk.name).toMatch(/walk/i);
     expect(HUMANOID_ACTIONS.run.name).toMatch(/run/i);
+  });
+
+  it('writes batch files in the layout the pre-commit formatter expects', async () => {
+    const dir = await mkdtemp(join(tmpdir(), 'ftb-batch-'));
+    try {
+      const path = await writeBatch(
+        makeBatch(1, 'first-enemy', humanoidItems('bandit', 1.78, 'bandit.png')),
+        dir,
+      );
+      const text = await readFile(path, 'utf8');
+      expect(await check(text, { parser: 'json' })).toBe(true);
+      expect(text).toContain('"target_formats": ["glb"]');
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
   });
 
   it('starts unapproved with the summed estimate', () => {

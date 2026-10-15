@@ -1,0 +1,59 @@
+{
+  "number": 1,
+  "name": "first-enemy",
+  "created": "2026-10-15",
+  "approved": false,
+  "items": [
+    {
+      "assetId": "bandit",
+      "step": "image-to-3d",
+      "input": "bandit.png",
+      "params": {
+        "model_type": "smart-topology",
+        "ai_model": "meshy-t2.5",
+        "target_polycount": 4000,
+        "pose_mode": "a-pose",
+        "should_texture": true,
+        "texture_resolution": "2k",
+        "enable_pbr": false,
+        "auto_size": true,
+        "origin_at": "bottom",
+        "target_formats": ["glb"]
+      },
+      "estimatedCredits": 20,
+      "estimateBasis": "assumed from public pricing, unconfirmed"
+    },
+    {
+      "assetId": "bandit",
+      "step": "rig",
+      "params": {
+        "height_meters": 1.78
+      },
+      "estimatedCredits": 10,
+      "estimateBasis": "assumed from public pricing, unconfirmed"
+    },
+    {
+      "assetId": "bandit",
+      "step": "animate",
+      "params": {
+        "clips": [
+          "idle",
+          "walk",
+          "run",
+          "attack_1",
+          "attack_2",
+          "hit",
+          "death",
+          "cast",
+          "talk",
+          "block"
+        ],
+        "action_ids": [0, 30, 14, 97, 240, 178, 188, 125, 313, 138]
+      },
+      "estimatedCredits": 30,
+      "estimateBasis": "10 actions, documented (DESIGN.md 10.0)"
+    }
+  ],
+  "estimatedCredits": 60,
+  "runs": []
+}

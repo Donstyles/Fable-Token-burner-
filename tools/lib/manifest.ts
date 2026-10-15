@@ -3,7 +3,8 @@
  * with where it came from, what it cost and which files it owns. Textures keep their own
  * manifest in assets/textures/ (written by `npm run textures`); `validate` reads both.
  */
-import { readFile, writeFile } from 'node:fs/promises';
+import { readFile } from 'node:fs/promises';
+import { writeJsonFile } from './json';
 
 export const MANIFEST_PATH = 'assets/manifest.json';
 
@@ -58,7 +59,7 @@ export async function readManifest(path = MANIFEST_PATH): Promise<Manifest> {
 
 export async function writeManifest(manifest: Manifest, path = MANIFEST_PATH): Promise<void> {
   manifest.assets.sort((a, b) => a.id.localeCompare(b.id));
-  await writeFile(path, `${JSON.stringify(manifest, null, 2)}\n`);
+  await writeJsonFile(path, manifest);
 }
 
 export function upsertAsset(manifest: Manifest, entry: AssetEntry): void {

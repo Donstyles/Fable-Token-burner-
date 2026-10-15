@@ -3,8 +3,9 @@
  * estimated credit cost, the owner approves it by number, and only then does the client
  * run it. No batch runs twice without `--force`. Nothing here talks to Meshy.
  */
-import { readdir, readFile, writeFile } from 'node:fs/promises';
+import { readdir, readFile } from 'node:fs/promises';
 import { join } from 'node:path';
+import { writeJsonFile } from './json';
 
 export const BATCH_DIR = 'pipeline/batches';
 
@@ -193,7 +194,7 @@ export function makeBatch(
 
 export async function writeBatch(batch: Batch, dir = BATCH_DIR): Promise<string> {
   const path = join(dir, batchFileName(batch.number, batch.name));
-  await writeFile(path, `${JSON.stringify(batch, null, 2)}\n`);
+  await writeJsonFile(path, batch);
   return path;
 }
 
