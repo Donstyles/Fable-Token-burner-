@@ -36,11 +36,21 @@ function brownNoise(ctx: AudioContext, seconds = 4): AudioBuffer {
 
 let sharedNoise: AudioBuffer | null = null;
 
+/** Flat noise for the spray hiss; phone speakers carry this where the rumble is lost. */
+function whiteNoise(ctx: AudioContext, seconds = 2): AudioBuffer {
+  const buffer = ctx.createBuffer(1, Math.floor(ctx.sampleRate * seconds), ctx.sampleRate);
+  const data = buffer.getChannelData(0);
+  for (let i = 0; i < data.length; i++) data[i] = (Math.random() * 2 - 1) * 0.5;
+  return buffer;
+}
+let sharedHiss: AudioBuffer | null = null;
+
 export class WaterfallSound {
   private ctx: AudioContext | null = null;
   private panner: PannerNode | null = null;
   private gain: GainNode | null = null;
   private source: AudioBufferSourceNode | null = null;
+  private hiss: AudioBufferSourceNode | null = null;
   private lfo: OscillatorNode | null = null;
   private enabled = true;
 
@@ -117,14 +127,30 @@ export class WaterfallSound {
     } else {
       panner.setPosition(-this.position.x, this.position.y, this.position.z);
     }
+    // Spray hiss on top of the rumble: a band around 3 kHz that small speakers reproduce.
+    sharedHiss ??= whiteNoise(ctx);
+    const hiss = ctx.createBufferSource();
+    hiss.buffer = sharedHiss;
+    hiss.loop = true;
+    const band = ctx.createBiquadFilter();
+    band.type = 'bandpass';
+    band.frequency.value = 3000;
+    band.Q.value = 0.5;
+    const hissGain = ctx.createGain();
+    hissGain.gain.value = 0.3;
     source.connect(low);
     low.connect(high);
     high.connect(gain);
+    hiss.connect(band);
+    band.connect(hissGain);
+    hissGain.connect(gain);
     gain.connect(panner);
     panner.connect(ctx.destination);
     source.start();
+    hiss.start();
     lfo.start();
     this.source = source;
+    this.hiss = hiss;
     this.lfo = lfo;
     this.gain = gain;
     this.panner = panner;
@@ -133,11 +159,13 @@ export class WaterfallSound {
   dispose(): void {
     try {
       this.source?.stop();
+      this.hiss?.stop();
       this.lfo?.stop();
     } catch {
       // already stopped
     }
     this.source?.disconnect();
+    this.hiss?.disconnect();
     this.lfo?.disconnect();
     this.gain?.disconnect();
     this.panner?.disconnect();

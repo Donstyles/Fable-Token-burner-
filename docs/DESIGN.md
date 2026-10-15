@@ -586,6 +586,14 @@ and icons all share it, so world and UI agree.
   records each sheet's arc length so the runtime fades the foam in over
   0.6 m, and the first Bézier control point sits at 15 % of the run so the
   sheet bends down within a metre of the lip.
+- 2026-10-15 – **No sound on the phone** (owner). Three iOS facts applied:
+  Web Audio obeys the ring/silent switch unless the page asks for a playback
+  audio session (`navigator.audioSession.type = 'playback'`, iOS 17+); the
+  context is suspended when the app goes to the background, so every gesture
+  and every return to the foreground resumes it, not only the first touch;
+  and a low-passed brown-noise roar is almost inaudible on a phone speaker,
+  so the waterfall gained a spray hiss band around 3 kHz. The context's
+  state changes are written to the dev log ("audio: running").
 - 2026-10-15 – **Owner's look tuning becomes the default** (sent from the
   dev panel after playing the water build, "looks moody"): posterize filter
   on at 5 levels with dither 0.45 (cell 2), bloom off, vignette 0.6, contrast
