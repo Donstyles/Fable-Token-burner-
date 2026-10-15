@@ -1,0 +1,44 @@
+import { describe, expect, it } from 'vitest';
+import {
+  CREDITS,
+  HUMANOID_CLIPS,
+  batchFileName,
+  formatBatch,
+  humanoidItems,
+  makeBatch,
+  totalCredits,
+} from './batch';
+
+describe('batches', () => {
+  it('names files by zero-padded number', () => {
+    expect(batchFileName(1, 'first-npc')).toBe('001-first-npc.json');
+    expect(batchFileName(42, 'props')).toBe('042-props.json');
+  });
+
+  it('plans the three Meshy steps for a humanoid with the standard clip set', () => {
+    const items = humanoidItems('innkeeper', 1.75, 'innkeeper.png');
+    expect(items.map((i) => i.step)).toEqual(['image-to-3d', 'rig', 'animate']);
+    expect(items[0]?.params['model_type']).toBe('smart-topology');
+    expect(items[0]?.params['ai_model']).toBe('meshy-t2');
+    expect(items[0]?.params['target_polycount']).toBe(4000);
+    expect(items[1]?.params['height_meters']).toBe(1.75);
+    expect(items[2]?.params['clips']).toEqual([...HUMANOID_CLIPS]);
+    expect(items[2]?.estimatedCredits).toBe(
+      CREDITS.animatePerAction.credits * HUMANOID_CLIPS.length,
+    );
+  });
+
+  it('starts unapproved with the summed estimate', () => {
+    const batch = makeBatch(
+      1,
+      'first-npc',
+      humanoidItems('innkeeper', 1.75, 'innkeeper.png'),
+      new Date('2026-10-15'),
+    );
+    expect(batch.approved).toBe(false);
+    expect(batch.created).toBe('2026-10-15');
+    expect(batch.estimatedCredits).toBe(totalCredits(batch.items));
+    expect(batch.estimatedCredits).toBeGreaterThan(0);
+    expect(formatBatch(batch)).toContain('awaiting approval');
+  });
+});

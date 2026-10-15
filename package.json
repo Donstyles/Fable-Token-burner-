@@ -24,7 +24,9 @@
     "build:dev": "vite build --mode devbuild",
     "palette": "tsx tools/palette.ts",
     "level:build": "tsx tools/level-build.ts",
-    "textures": "tsx tools/textures.ts"
+    "textures": "tsx tools/textures.ts",
+    "asset": "tsx tools/asset.ts",
+    "asset:validate": "tsx tools/asset.ts validate"
   },
   "dependencies": {
     "@babylonjs/core": "^9.30.0",

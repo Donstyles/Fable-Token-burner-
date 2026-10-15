@@ -303,6 +303,11 @@ stats, a readable sans for tooltips. Downloaded and subset by script.
 - A `validate` script enforces polycount, texture size, bounds, clip names and
   manifest completeness before commit.
 
+Status 2026-10-15: `tools/asset.ts` (`npm run asset`) provides `manifest`,
+`validate`, `card` and `batch new|show|approve`; libraries in `tools/lib/`
+(`manifest.ts`, `batch.ts`, `cards.ts`) with unit tests. Prompt cards land in
+`pipeline/cards/<id>.md` and the owner's images in `pipeline/inbox/<id>.png`.
+
 ## 11. Dungeon environments (generated, real 3D architecture)
 
 Requirements (2026-10-11): real 3D environments, not a cell maze. Walkways,

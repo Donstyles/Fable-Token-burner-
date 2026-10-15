@@ -24,6 +24,9 @@ anything. Both are the source of truth; update them when a decision changes.
   `build`, `build:dev` or `dev`; CI and Pages do)
 - `npm run textures` – fetch the CC0 role textures listed in
   `pipeline/textures.json`
+- `npm run asset -- <command>` – asset pipeline: `manifest`, `validate`,
+  `card <kind> <id> "<subject>"`, `batch new|show|approve` (Meshy batches
+  run only after the owner approves them by number)
 
 ## Layout
 

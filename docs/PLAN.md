@@ -311,6 +311,15 @@ with first real assets.
    environment), trim, normalise, encode to AAC; owner-track importer.
 6. Fonts: Google Fonts OFL download and subset.
 
+**Status 2026-10-15:** started. Step 1 built: `npm run asset` CLI with
+`manifest`, `validate` (texture sizes and attribution, asset files, licences,
+GLB polycounts), `card` (prompt cards from the style bible into
+`pipeline/cards/`) and `batch new|show|approve` (humanoid batches with the
+three Meshy steps and credit estimates; image-to-3D and rigging prices are
+assumptions until the first batch confirms them). Step 2's Poly Haven fetcher
+already exists from Phase 2. Next: step 3, the Meshy client, which needs
+`MESHY_API_KEY` in the cloud environment's secrets.
+
 **Deliverables:** `npm run asset:*` commands, first real textures in the
 showcase, one rigged and animated NPC walking in the viewer, two dolls with
 overlays rendering in a test screen.

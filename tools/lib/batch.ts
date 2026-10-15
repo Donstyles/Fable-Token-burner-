@@ -1,0 +1,163 @@
+/**
+ * Meshy batches (DESIGN.md 10.9): Claude writes `pipeline/batches/NNN-name.json` with an
+ * estimated credit cost, the owner approves it by number, and only then does the client
+ * run it. No batch runs twice without `--force`. Nothing here talks to Meshy.
+ */
+import { readdir, readFile, writeFile } from 'node:fs/promises';
+import { join } from 'node:path';
+
+export const BATCH_DIR = 'pipeline/batches';
+
+/** Standard humanoid clip set (DESIGN.md 10.1), names fixed project-wide. */
+export const HUMANOID_CLIPS = [
+  'idle',
+  'walk',
+  'run',
+  'attack_1',
+  'attack_2',
+  'hit',
+  'death',
+  'cast',
+  'talk',
+  'block',
+] as const;
+
+/**
+ * Credit estimates. Text-to-image and animation prices are documented in DESIGN.md 10.0;
+ * image-to-3D and rigging are assumptions from Meshy's public pricing until the first
+ * batch reports `consumed_credits`, which then replaces them here.
+ */
+export const CREDITS = {
+  textToImage: { 'nano-banana': 3, 'nano-banana-2': 6, 'nano-banana-pro': 9 } as const,
+  imageTo3d: { credits: 20, basis: 'assumed from public pricing, unconfirmed' },
+  rig: { credits: 10, basis: 'assumed from public pricing, unconfirmed' },
+  animatePerAction: { credits: 3, basis: 'documented (DESIGN.md 10.0)' },
+} as const;
+
+export type BatchStep = 'image-to-3d' | 'rig' | 'animate' | 'text-to-image';
+
+export interface BatchItem {
+  assetId: string;
+  step: BatchStep;
+  /** Input file under pipeline/inbox/, for steps that take an image. */
+  input?: string;
+  params: Record<string, unknown>;
+  estimatedCredits: number;
+  estimateBasis: string;
+}
+
+export interface Batch {
+  number: number;
+  name: string;
+  created: string;
+  approved: boolean;
+  items: BatchItem[];
+  estimatedCredits: number;
+  /** Appended by the client: when it ran and what Meshy charged. */
+  runs: { started: string; finished?: string; consumedCredits?: number; taskIds: string[] }[];
+}
+
+export function batchFileName(number: number, name: string): string {
+  return `${String(number).padStart(3, '0')}-${name}.json`;
+}
+
+export async function nextBatchNumber(dir = BATCH_DIR): Promise<number> {
+  let max = 0;
+  for (const f of await readdir(dir)) {
+    const m = /^(\d{3})-/.exec(f);
+    if (m) max = Math.max(max, Number(m[1]));
+  }
+  return max + 1;
+}
+
+/** The three Meshy steps that turn one concept image into a rigged, animated humanoid. */
+export function humanoidItems(assetId: string, heightMetres: number, input: string): BatchItem[] {
+  return [
+    {
+      assetId,
+      step: 'image-to-3d',
+      input,
+      params: {
+        model_type: 'smart-topology',
+        ai_model: 'meshy-t2',
+        target_polycount: 4000,
+        pose_mode: 'a-pose',
+        should_texture: true,
+        texture_resolution: '2k',
+        enable_pbr: false,
+        auto_size: true,
+        origin_at: 'bottom',
+        target_formats: ['glb'],
+      },
+      estimatedCredits: CREDITS.imageTo3d.credits,
+      estimateBasis: CREDITS.imageTo3d.basis,
+    },
+    {
+      assetId,
+      step: 'rig',
+      params: { height_meters: heightMetres },
+      estimatedCredits: CREDITS.rig.credits,
+      estimateBasis: CREDITS.rig.basis,
+    },
+    {
+      assetId,
+      step: 'animate',
+      params: { clips: [...HUMANOID_CLIPS] },
+      estimatedCredits: CREDITS.animatePerAction.credits * HUMANOID_CLIPS.length,
+      estimateBasis: `${HUMANOID_CLIPS.length} actions, ${CREDITS.animatePerAction.basis}`,
+    },
+  ];
+}
+
+export function totalCredits(items: readonly BatchItem[]): number {
+  return items.reduce((sum, i) => sum + i.estimatedCredits, 0);
+}
+
+export function makeBatch(
+  number: number,
+  name: string,
+  items: BatchItem[],
+  created = new Date(),
+): Batch {
+  return {
+    number,
+    name,
+    created: created.toISOString().slice(0, 10),
+    approved: false,
+    items,
+    estimatedCredits: totalCredits(items),
+    runs: [],
+  };
+}
+
+export async function writeBatch(batch: Batch, dir = BATCH_DIR): Promise<string> {
+  const path = join(dir, batchFileName(batch.number, batch.name));
+  await writeFile(path, `${JSON.stringify(batch, null, 2)}\n`);
+  return path;
+}
+
+export async function findBatch(
+  number: number,
+  dir = BATCH_DIR,
+): Promise<{ path: string; batch: Batch } | null> {
+  const prefix = `${String(number).padStart(3, '0')}-`;
+  for (const f of await readdir(dir)) {
+    if (!f.startsWith(prefix) || !f.endsWith('.json')) continue;
+    const path = join(dir, f);
+    return { path, batch: JSON.parse(await readFile(path, 'utf8')) as Batch };
+  }
+  return null;
+}
+
+export function formatBatch(batch: Batch): string {
+  const lines = [
+    `batch ${String(batch.number).padStart(3, '0')} ${batch.name}  (${batch.approved ? 'approved' : 'awaiting approval'}, created ${batch.created})`,
+  ];
+  for (const i of batch.items) {
+    lines.push(
+      `  ${i.assetId.padEnd(20)} ${i.step.padEnd(14)} ${String(i.estimatedCredits).padStart(4)} cr  ${i.estimateBasis}`,
+    );
+  }
+  lines.push(`  estimated total ${batch.estimatedCredits} credits; runs: ${batch.runs.length}`);
+  return lines.join('\n');
+}
