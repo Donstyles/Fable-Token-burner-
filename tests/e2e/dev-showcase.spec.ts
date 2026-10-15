@@ -32,6 +32,12 @@ type Dev = {
   pitchDeg(): number;
   screenPointOf(name: string): Point | null;
   lastTap: string | null;
+  character: {
+    clip: string | null;
+    clips: string[];
+    frame: number;
+    play(name: string): void;
+  } | null;
 };
 type W = Window & { ftb?: { dev?: Dev; setFilter(n: { mode: string }): void } };
 
@@ -243,6 +249,49 @@ test.describe('dev build', () => {
     await touch('touchEnd', []);
     expect(p.y).toBeGreaterThan(-4.8);
     expect(p.z).toBeLessThan(-12);
+  });
+
+  test('shows the bandit walking four metres ahead of the spawn', async ({ page }) => {
+    await page.waitForFunction(() => (window as unknown as W).ftb!.dev!.character !== null, null, {
+      timeout: 30_000,
+    });
+    const first = await page.evaluate(() => {
+      const c = (window as unknown as W).ftb!.dev!.character!;
+      return { clip: c.clip, clips: c.clips, frame: c.frame };
+    });
+    expect(first.clip).toBe('walk');
+    expect(first.clips).toEqual([
+      'idle',
+      'walk',
+      'run',
+      'attack_1',
+      'attack_2',
+      'hit',
+      'death',
+      'cast',
+      'talk',
+      'block',
+    ]);
+    // The stepper advances the clip in discrete steps; after half a second it has moved on.
+    await page.waitForTimeout(600);
+    const later = await page.evaluate(() => (window as unknown as W).ftb!.dev!.character!.frame);
+    expect(later).not.toBe(first.frame);
+    // His feet project into the view from the spawn, which faces him.
+    const feet = await page.evaluate(() =>
+      (window as unknown as W).ftb!.dev!.screenPointOf('bandit:char1'),
+    );
+    expect(feet).not.toBeNull();
+    const size = page.viewportSize()!;
+    expect(feet!.x).toBeGreaterThan(size.width * 0.3);
+    expect(feet!.x).toBeLessThan(size.width * 0.7);
+    expect(feet!.y).toBeGreaterThan(size.height * 0.4);
+    expect(feet!.y).toBeLessThan(size.height);
+    await page.screenshot({ path: `test-results/bandit-${test.info().project.name}.png` });
+    // Switching clips takes effect at once.
+    await page.evaluate(() => (window as unknown as W).ftb!.dev!.character!.play('attack_1'));
+    expect(await page.evaluate(() => (window as unknown as W).ftb!.dev!.character!.clip)).toBe(
+      'attack_1',
+    );
   });
 
   test('wades at half speed through the undercroft pool', async ({ page, browserName }) => {

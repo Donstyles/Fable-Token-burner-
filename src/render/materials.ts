@@ -1,4 +1,7 @@
 import { ShaderMaterial } from '@babylonjs/core/Materials/shaderMaterial';
+// Side-effect imports: register the skinning includes used by the vertex shader.
+import '@babylonjs/core/Shaders/ShadersInclude/bonesDeclaration';
+import '@babylonjs/core/Shaders/ShadersInclude/bonesVertex';
 import { ShaderStore } from '@babylonjs/core/Engines/shaderStore';
 import { Constants } from '@babylonjs/core/Engines/constants';
 import { Color3 } from '@babylonjs/core/Maths/math.color';
@@ -44,6 +47,9 @@ attribute vec2 uv;
 #if defined(VERTEXCOLOR) || defined(BAKED)
 attribute vec4 color;
 #endif
+// Skinned characters: Babylon adds the bone attributes, defines and uniforms when the mesh
+// has a skeleton; for everything else NUM_BONE_INFLUENCERS is 0 and these are empty.
+#include<bonesDeclaration>
 uniform mat4 world;
 uniform mat4 viewProjection;
 uniform vec3 cameraPosition;
@@ -61,8 +67,10 @@ varying vec3 vWorldPos;
 varying vec3 vNormal;
 varying float vFog;
 void main(void) {
-  vec4 wp = world * vec4(position, 1.0);
-  vec3 n = normalize(mat3(world) * normal);
+  mat4 finalWorld = world;
+#include<bonesVertex>
+  vec4 wp = finalWorld * vec4(position, 1.0);
+  vec3 n = normalize(mat3(finalWorld) * normal);
   float ndl = max(dot(n, -lightDirection), 0.0);
   vec3 light = ambientColor + lightColor * ndl;
 #ifdef BAKED

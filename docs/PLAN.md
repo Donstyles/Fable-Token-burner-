@@ -321,7 +321,7 @@ assumptions until the first batch confirms them). Step 2's Poly Haven fetcher
 already exists from Phase 2. Step 3 built (2026-10-15): `run <nnn>
 [--dry-run] [--force]` on the official CLI through the proxy, dry run
 verified against the live balance (4,790 credits); concept-image prompts
-became photographic after the owner rejected the painted innkeeper. The innkeeper needs no rig (service NPCs are portraits); her photograph is in `pipeline/inbox/` for step 4. Batch 001 (the bandit, combat set) ran 2026-10-15: 50 credits, 3,641 triangles, ten clips; the credit cost per humanoid is now known (15 + 5 + 3 per clip) and used for estimates. Next: the bandit walking in the viewer, then step 4.
+became photographic after the owner rejected the painted innkeeper. The innkeeper needs no rig (service NPCs are portraits); her photograph is in `pipeline/inbox/` for step 4. Batch 001 (the bandit, combat set) ran 2026-10-15: 50 credits, 3,641 triangles, ten clips; the credit cost per humanoid is now known (15 + 5 + 3 per clip) and used for estimates. The bandit walks in the dev viewer (Babylon's glTF loader, retro material with bone skinning, clips by name through the stepper; e2e covers it). Next: step 4, characters (dolls, portraits, icons), with the innkeeper's photograph as the first portrait.
 
 **Deliverables:** `npm run asset:*` commands, first real textures in the
 showcase, one rigged and animated enemy walking in the viewer, two dolls with

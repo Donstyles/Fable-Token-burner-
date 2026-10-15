@@ -17,6 +17,10 @@ import { loadLevel, type LoadedLevel } from '../world/level';
 import { loadRoleTextures, setRoleMipmaps } from '../world/textures';
 import { LevelWater, WATER_QUALITIES, type WaterQuality } from '../world/water';
 import { LevelWaterfalls } from '../world/waterfall';
+import { AnimationStepper } from '../render/animation-step';
+import { loadCharacter, type Character } from '../world/character';
+import { HUMANOID_CLIPS } from '../../kernel/characters/clips';
+import banditUrl from '../../assets/characters/bandit/bandit.glb?url';
 import { Braziers, FogBySpace, Torch } from '../world/atmosphere';
 import { UnderwaterTint, isUnderwater, wadeSpeedFactor, waterDepthAt } from '../world/wading';
 import { ROLE } from '../../kernel/elements/roles';
@@ -65,6 +69,9 @@ export interface DevHandle {
   pickAt(x: number, y: number): string | null;
   /** Pointer event counters and consumed taps, for diagnosing input on real devices. */
   events: { down: number; move: number; up: number; cancel: number; taps: number; types: string[] };
+  /** The first Meshy character, placed ahead of the spawn; null until loaded. */
+  character: Character | null;
+  stepper: AnimationStepper;
 }
 
 const DEG = Math.PI / 180;
@@ -116,6 +123,26 @@ export async function startDev(app: App): Promise<DevHandle> {
   const fog = new FogBySpace(app.materials, level.spaces);
   const underwater = new UnderwaterTint(uiLayer);
   diag(`water: ${level.water.length} bodies, ${level.waterfalls.length} falls`);
+  // The bandit (batch 001) walks on the spot four metres ahead of the spawn, facing the party;
+  // clips step at MM6's rate regardless of the display refresh.
+  const stepper = new AnimationStepper(scene, 10);
+  const ahead = new Vector3(
+    Math.sin(level.spawnYawDeg * DEG),
+    0,
+    Math.cos(level.spawnYawDeg * DEG),
+  );
+  void loadCharacter(scene, app.materials, stepper, banditUrl, {
+    name: 'bandit',
+    position: level.spawn.add(ahead.scale(4)),
+    yawDeg: level.spawnYawDeg + 180,
+    clip: 'walk',
+  }).then(
+    (c) => {
+      handle.character = c;
+      diag(`bandit: ${c.clips.length} clips, playing ${c.clip}`);
+    },
+    (e: unknown) => diag(`bandit failed: ${e instanceof Error ? e.message : String(e)}`),
+  );
 
   const zones = new InputZones({ width: canvas.clientWidth, height: canvas.clientHeight });
   bindInput(canvas, zones);
@@ -138,6 +165,8 @@ export async function startDev(app: App): Promise<DevHandle> {
     water,
     lastTap: null,
     events,
+    character: null,
+    stepper,
     screenPointOf(name) {
       const mesh = scene.getMeshByName(name);
       if (!mesh) return null;
@@ -408,6 +437,26 @@ export async function startDev(app: App): Promise<DevHandle> {
         0.05,
         () => waterfalls.soundVolume,
         (v) => waterfalls.setSoundVolume(v),
+      ),
+      {
+        kind: 'select',
+        key: 'banditClip',
+        label: 'bandit clip',
+        options: HUMANOID_CLIPS,
+        get: () => handle.character?.clip ?? 'walk',
+        set: (v) => handle.character?.play(v),
+        persist: false,
+      },
+      range(
+        'animFps',
+        'anim steps/s',
+        2,
+        30,
+        1,
+        () => stepper.stepFps,
+        (v) => {
+          stepper.stepFps = v;
+        },
       ),
       {
         kind: 'select',

@@ -317,7 +317,7 @@ stats, a readable sans for tooltips. Downloaded and subset by script.
 - A `validate` script enforces polycount, texture size, bounds, clip names and
   manifest completeness before commit.
 
-Status 2026-10-15: `tools/asset.ts` (`npm run asset`) provides `manifest`,
+Status 2026-10-15: the first character, the bandit, loads and walks in the dev viewer (`src/world/character.ts`, clip sets in `kernel/characters/clips.ts`). `tools/asset.ts` (`npm run asset`) provides `manifest`,
 `validate`, `card`, `batch new|show|approve` and `run`; libraries in
 `tools/lib/` (`manifest.ts`, `batch.ts`, `cards.ts`, `meshy.ts`, `run.ts`,
 `postprocess.ts`) with unit tests. Prompt cards land in
@@ -761,6 +761,16 @@ and icons all share it, so world and UI agree.
   below the 60 estimated; the estimates now use the reported prices. The
   post-processed GLB has 3,641 triangles, ten standard-named clips and one
   512 texture at 1.2 MiB; `validate` passes.
+- 2026-10-15 – **The bandit walks in the viewer.** Characters load through
+  Babylon's glTF loader (`src/world/character.ts`); the loader's PBR
+  material is swapped for the world's retro material over the same
+  base-colour texture, so characters get the per-pixel point lights, the
+  knee and the fog like everything else. The retro vertex shader now carries
+  Babylon's bone includes, which are empty for unskinned meshes. Clips play
+  by name through the low-frame-rate stepper (10 steps per second, tunable);
+  the dev panel selects the clip. The clip sets live in
+  `kernel/characters/clips.ts`, shared by the tools and the runtime. The
+  bandit stands four metres ahead of the showcase spawn, facing the party.
 - 2026-10-15 – **Owner's look tuning becomes the default** (sent from the
   dev panel after playing the water build, "looks moody"): posterize filter
   on at 5 levels with dither 0.45 (cell 2), bloom off, vignette 0.6, contrast
