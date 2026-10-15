@@ -533,6 +533,12 @@ and icons all share it, so world and UI agree.
   64³ LUT, Bayer dither with cell size), posterize mode, vertex-lit fogged
   material, touch zones per 7.1, Havok capsule controller with instant
   start/stop, dev arena and tuning panel in a separate dev build at `/dev/`.
+- 2026-10-15 – Water looked wrong from inside the undercroft (owner's
+  screenshots): Babylon's water shader lifts vertices by five times its wave
+  height, so a 5 cm setting folded the 1 m mesh into 25 cm ridges, and the
+  clear water showed the torch-lit floor through them. Waves are now 3 cm
+  with a 4 m wavelength, the water is more opaque (blend 0.72) with a softer
+  ripple (0.08), and the dev slider range matches.
 - 2026-10-15 – **Owner's look tuning becomes the default** (sent from the
   dev panel after playing the water build, "looks moody"): posterize filter
   on at 5 levels with dither 0.45 (cell 2), bloom off, vignette 0.6, contrast

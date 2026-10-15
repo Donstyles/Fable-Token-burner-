@@ -318,10 +318,10 @@ export async function startDev(app: App): Promise<DevHandle> {
       ),
       range(
         'waterWave',
-        'water wave m',
+        'water wave',
         0,
-        0.3,
-        0.01,
+        0.03,
+        0.001,
         () => water.look.waveHeight,
         (v) => water.setLook({ waveHeight: v }),
       ),

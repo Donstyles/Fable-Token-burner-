@@ -27,21 +27,28 @@ export interface WaterLook {
   blend: number;
   /** Ripple strength in the reflection and refraction lookups. */
   bumpHeight: number;
-  /** Vertex wave amplitude in metres (the surfaces are tessellated at 1 m). */
+  /**
+   * Vertex wave amplitude. Babylon's shader lifts vertices by up to five times this value,
+   * so 0.006 is about 3 cm; the surfaces are tessellated at 1 m, so keep waves long.
+   */
   waveHeight: number;
+  /** Ripple texture scale (smaller = finer ripples). */
   waveLength: number;
   waveSpeed: number;
+  /** Vertex waves per unit; 3 gives a wavelength of roughly 4 m, right for a 1 m mesh. */
+  waveCount: number;
   /** Ripple drift speed along the flow. */
   windForce: number;
 }
 
 export const DEFAULT_WATER_LOOK: WaterLook = {
-  color: new Color3(0.05, 0.16, 0.18),
-  blend: 0.38,
-  bumpHeight: 0.22,
-  waveHeight: 0.05,
+  color: new Color3(0.04, 0.13, 0.15),
+  blend: 0.72,
+  bumpHeight: 0.08,
+  waveHeight: 0.006,
   waveLength: 0.35,
   waveSpeed: 0.5,
+  waveCount: 3,
   windForce: 1.6,
 };
 
@@ -212,6 +219,7 @@ export class LevelWater {
     mat.waveHeight = l.waveHeight;
     mat.waveLength = l.waveLength;
     mat.waveSpeed = l.waveSpeed;
+    mat.waveCount = l.waveCount;
     const still = body.flow.lengthSquared() < 1e-6;
     mat.windForce = still ? l.windForce * 0.5 : l.windForce * 1.5;
     mat.windDirection = still ? new Vector2(0.7, 0.7) : body.flow.clone();
