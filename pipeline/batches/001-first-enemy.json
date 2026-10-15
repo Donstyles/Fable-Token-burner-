@@ -2,7 +2,7 @@
   "number": 1,
   "name": "first-enemy",
   "created": "2026-10-15",
-  "approved": false,
+  "approved": true,
   "items": [
     {
       "assetId": "bandit",
