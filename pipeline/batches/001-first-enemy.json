@@ -58,8 +58,33 @@
   "runs": [
     {
       "started": "2026-10-15T20:54:35.617Z",
-      "taskIds": [],
-      "tasks": {},
+      "taskIds": [
+        "01a14158-74eb-7218-b8b3-a8133a9afd6b",
+        "01a1415a-42b5-769a-a390-4706a7810043",
+        "01a1415a-7b47-74d5-8064-b6945c01ed11"
+      ],
+      "tasks": {
+        "bandit": {
+          "image-to-3d": {
+            "taskId": "01a14158-74eb-7218-b8b3-a8133a9afd6b",
+            "status": "SUCCEEDED",
+            "consumedCredits": 15,
+            "operationId": "b001-bandit-image-to-3d-r1"
+          },
+          "rig": {
+            "taskId": "01a1415a-42b5-769a-a390-4706a7810043",
+            "status": "SUCCEEDED",
+            "consumedCredits": 5,
+            "operationId": "b001-bandit-rig-r1"
+          },
+          "animate": {
+            "taskId": "01a1415a-7b47-74d5-8064-b6945c01ed11",
+            "status": "SUCCEEDED",
+            "consumedCredits": 30,
+            "operationId": "b001-bandit-animate-r1"
+          }
+        }
+      },
       "balanceBefore": 4790
     }
   ]
