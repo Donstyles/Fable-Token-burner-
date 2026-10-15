@@ -5,11 +5,13 @@
  * nearby level chunks, and passes switched off while the body is far from the camera.
  */
 import { WaterMaterial } from '@babylonjs/materials/water/waterMaterial';
+import { HemisphericLight } from '@babylonjs/core/Lights/hemisphericLight';
 import { DynamicTexture } from '@babylonjs/core/Materials/Textures/dynamicTexture';
 import { Texture } from '@babylonjs/core/Materials/Textures/texture';
 import { Color3 } from '@babylonjs/core/Maths/math.color';
 import { Vector2, Vector3 } from '@babylonjs/core/Maths/math.vector';
 import { Scene } from '@babylonjs/core/scene';
+import type { BaseTexture } from '@babylonjs/core/Materials/Textures/baseTexture';
 import type { Material } from '@babylonjs/core/Materials/material';
 import type { Mesh } from '@babylonjs/core/Meshes/mesh';
 import type { RetroMaterials } from '../render/materials';
@@ -81,9 +83,10 @@ function rippleBump(scene: Scene, size = 256): DynamicTexture {
     if (kx === 0 && ky === 0) continue;
     waves.push({ kx, ky, a: Math.hypot(kx, ky) ** -1.2, p: rand() * Math.PI * 2 });
   }
-  // Analytic slopes, then scaled so the steepest tilt is about 25 degrees.
+  // Analytic slopes, then scaled so the typical (RMS) tilt is about 16 degrees; the
+  // normalisation below lets the rare peaks saturate gracefully.
   const slopes = new Float32Array(size * size * 2);
-  let steepest = 0;
+  let sumSq = 0;
   for (let y = 0; y < size; y++) {
     for (let x = 0; x < size; x++) {
       const u = x / size;
@@ -98,10 +101,10 @@ function rippleBump(scene: Scene, size = 256): DynamicTexture {
       const i = (y * size + x) * 2;
       slopes[i] = dx;
       slopes[i + 1] = dy;
-      steepest = Math.max(steepest, Math.hypot(dx, dy));
+      sumSq += dx * dx + dy * dy;
     }
   }
-  const scale = Math.tan((25 * Math.PI) / 180) / steepest;
+  const scale = Math.tan((16 * Math.PI) / 180) / Math.sqrt(sumSq / (size * size));
   for (let i = 0; i < size * size; i++) {
     const nx = -(slopes[i * 2] ?? 0) * scale;
     const ny = -(slopes[i * 2 + 1] ?? 0) * scale;
@@ -119,6 +122,16 @@ function rippleBump(scene: Scene, size = 256): DynamicTexture {
   return tex;
 }
 
+/**
+ * `WaterMaterial.dispose()` also disposes whatever bump texture it holds. Ours is shared by
+ * every body and outlives the materials (they are rebuilt when the quality changes), so it
+ * is detached first. The property is typed non-null, hence the cast.
+ */
+function disposeKeepingBump(mat: WaterMaterial): void {
+  (mat as unknown as { bumpTexture: BaseTexture | null }).bumpTexture = null;
+  mat.dispose();
+}
+
 interface BodyState {
   body: LevelWaterBody;
   material: WaterMaterial | null;
@@ -127,6 +140,15 @@ interface BodyState {
 
 export class LevelWater {
   private readonly bump: DynamicTexture;
+  /**
+   * The water shader only perturbs the reflection with the ripple map when its NORMAL
+   * define is on, and Babylon sets that only while at least one light reaches the mesh
+   * with lighting enabled; with lighting off the shader applies one constant offset
+   * instead (the "ripple slider slides the reflection" bug, 2026-10-15). The shader never
+   * uses the light's diffuse result, so this light exists only to unlock that path. It is
+   * scoped to the water meshes; our own materials ignore scene lights anyway.
+   */
+  private readonly normalsLight: HemisphericLight;
   private readonly states: BodyState[] = [];
   private quality: WaterQuality;
   look: WaterLook;
@@ -149,6 +171,9 @@ export class LevelWater {
     look: WaterLook = DEFAULT_WATER_LOOK,
   ) {
     this.bump = rippleBump(scene);
+    this.normalsLight = new HemisphericLight('water-normals', Vector3.Up(), scene);
+    this.normalsLight.includedOnlyMeshes = bodies.map((b) => b.mesh);
+    this.normalsLight.specular = Color3.Black();
     this.look = { ...look };
     this.quality = quality;
     for (const body of bodies) {
@@ -207,7 +232,7 @@ export class LevelWater {
 
   private rebuild(): void {
     for (const s of this.states) {
-      s.material?.dispose();
+      if (s.material) disposeKeepingBump(s.material);
       s.material = null;
       if (this.quality === 'off') {
         s.body.mesh.material = this.fallback();
@@ -221,7 +246,9 @@ export class LevelWater {
       );
       const mat = new WaterMaterial(`water:${s.body.name}`, this.scene, size);
       mat.bumpTexture = this.bump;
-      mat.disableLighting = true;
+      // Lighting stays on (see normalsLight); one light is enough and specular is black.
+      mat.disableLighting = false;
+      mat.maxSimultaneousLights = 1;
       mat.backFaceCulling = false;
       mat.specularColor = Color3.Black();
       // No vertex waves: see WaterLook. Motion is the two ripple layers (the second at
@@ -261,8 +288,9 @@ export class LevelWater {
   }
 
   dispose(): void {
-    for (const s of this.states) s.material?.dispose();
+    for (const s of this.states) if (s.material) disposeKeepingBump(s.material);
     this.states.length = 0;
+    this.normalsLight.dispose();
     this.bump.dispose();
     this.scene.fogMode = Scene.FOGMODE_NONE;
   }

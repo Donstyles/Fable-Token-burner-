@@ -13,11 +13,15 @@ type Dev = {
   ready: boolean;
   simTime(): number;
   debug(): { move: number; velocity: [number, number, number]; waterDepth: number };
-  water: { currentQuality: string; clock: number };
+  water: { currentQuality: string; clock: number; setQuality(q: string): void };
   level: {
     water: {
       y: number;
-      mesh: { material: { getClassName(): string } | null; position: { y: number } };
+      mesh: {
+        material: { getClassName(): string; bumpTexture?: { isReady(): boolean } | null } | null;
+        position: { y: number };
+        subMeshes: { materialDefines: Record<string, unknown> | null }[];
+      };
     }[];
     waterfalls: unknown[];
   };
@@ -286,6 +290,33 @@ test.describe('dev build', () => {
     const after = await clocks();
     expect(after.water - before.water).toBeGreaterThan(0.04);
     expect(after.water - before.water).toBeCloseTo(after.sim - before.sim, 3);
+    // Changing the passes rebuilds the materials; the shared ripple map must survive that
+    // (Babylon's water material disposes its bump texture with itself).
+    const rippleAlive = await page.evaluate(() => {
+      const d = (window as unknown as W).ftb!.dev!;
+      d.water.setQuality('half');
+      d.water.setQuality('quarter');
+      return d.level.water.map((w) => w.mesh.material?.bumpTexture?.isReady() ?? false);
+    });
+    for (const alive of rippleAlive) expect(alive).toBe(true);
+    // The shader perturbs the reflection per pixel only with NORMAL on (needs a light).
+    // Defines exist only for a body that has been drawn, so look at the pool first.
+    await page.evaluate(() => (window as unknown as W).ftb!.dev!.teleport(0, -9, -4.5, 0));
+    await page.waitForFunction(
+      () =>
+        (window as unknown as W).ftb!.dev!.level.water.some(
+          (w) => w.mesh.subMeshes[0]?.materialDefines != null,
+        ),
+      null,
+      { timeout: 30_000 },
+    );
+    const normals = await page.evaluate(() =>
+      (window as unknown as W)
+        .ftb!.dev!.level.water.map((w) => w.mesh.subMeshes[0]?.materialDefines?.['NORMAL'])
+        .filter((n) => n !== undefined),
+    );
+    expect(normals.length).toBeGreaterThan(0);
+    for (const n of normals) expect(n).toBe(true);
   });
 
   test('tap on the level registers through picking', async ({ page, browserName }) => {

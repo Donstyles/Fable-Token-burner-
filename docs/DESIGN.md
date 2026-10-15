@@ -567,6 +567,18 @@ and icons all share it, so world and UI agree.
   non-linear fresnel (`fresnelSeparate`) is on, so grazing views are a mirror
   with a tint of its own and looking down shows through. Dev panel: "mirror
   tint" replaces the wave sliders.
+- 2026-10-15 – **Ripple slider slid the whole reflection** (owner's
+  screenshots). Two causes. The water shader perturbs the reflection per
+  pixel only when its NORMAL define is on, which Babylon sets only while a
+  light reaches the mesh with lighting enabled; we had disabled lighting (so
+  the torch would not light the water) and the shader fell into a branch
+  that applies one constant offset. The shader never uses the light's diffuse
+  result, so lighting is on again with one hemispheric light scoped to the
+  water meshes and black specular. Second, `WaterMaterial.dispose()` disposes
+  its bump texture, and ours is shared and outlives the materials, which are
+  rebuilt when "water passes" changes; it is detached before a material is
+  disposed. The e2e test toggles the passes and checks both. The ripple map
+  is normalised to a typical 16° tilt so the default ripple is visible.
 - 2026-10-15 – **Owner's look tuning becomes the default** (sent from the
   dev panel after playing the water build, "looks moody"): posterize filter
   on at 5 levels with dither 0.45 (cell 2), bloom off, vignette 0.6, contrast
