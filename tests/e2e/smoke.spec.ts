@@ -17,10 +17,10 @@ test('boots to a rendering canvas with no console errors', async ({ page }) => {
     return !!app && app.engine.getFps() > 0;
   });
 
-  // Dev overlay reports the default preset and a 1080-line render size.
+  // Dev overlay reports the default preset (720 lines since the owner's 2026-10-15 tuning).
   const overlay = page.locator('#dev-overlay');
-  await expect(overlay).toContainText('lines-1080');
-  await expect(overlay).toContainText('×1080');
+  await expect(overlay).toContainText('lines-720');
+  await expect(overlay).toContainText('×720');
 
   // Landscape: the rotate overlay stays hidden.
   await expect(page.locator('#rotate')).toBeHidden();
@@ -62,10 +62,10 @@ test('recovers from a portrait launch followed by rotation', async ({ page }) =>
       fps: app.engine.getFps(),
     };
   });
-  expect(size.h).toBe(1080);
-  expect(size.w).toBeGreaterThan(2000);
+  expect(size.h).toBe(720);
+  expect(size.w).toBeGreaterThan(1400);
   expect(size.fps).toBeGreaterThan(0);
-  await expect(page.locator('#dev-overlay')).toContainText('×1080');
+  await expect(page.locator('#dev-overlay')).toContainText('×720');
 });
 
 test('serves a web app manifest', async ({ page, request }) => {
