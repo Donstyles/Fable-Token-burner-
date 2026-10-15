@@ -609,6 +609,11 @@ and icons all share it, so world and UI agree.
   games get: no widget, mixes with music, stops in the background, and is
   muted by the ring/silent switch. A dev-panel select switches between
   ambient and playback for comparison.
+- 2026-10-15 – **Updates not reaching the phone**: the owner tested v59 for
+  an hour after v62 was live; the prompt-mode worker waits for a tap on the
+  "Update ready" bar, which was never seen. The development build now applies
+  an update found within 20 s of launch by itself (a reload at launch, never
+  mid-play); production keeps the bar.
 - 2026-10-15 – **Owner's look tuning becomes the default** (sent from the
   dev panel after playing the water build, "looks moody"): posterize filter
   on at 5 levels with dither 0.45 (cell 2), bloom off, vignette 0.6, contrast

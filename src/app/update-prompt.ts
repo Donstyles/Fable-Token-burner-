@@ -2,10 +2,15 @@ import { registerSW } from 'virtual:pwa-register';
 import { diag } from './diag';
 
 /**
- * Service worker registration without automatic reloads: when a new version is ready a
- * small bar offers to reload. Installed web apps only check at launch, so also check when
- * the app returns to the foreground and hourly. `?nosw` disables the worker for debugging.
+ * Service worker registration without automatic reloads mid-play: when a new version is
+ * ready a small bar offers to reload. Installed web apps only check at launch, so also
+ * check when the app returns to the foreground and hourly. The development build applies
+ * an update found within the first seconds after launch by itself (the owner tested v59
+ * for an hour after v62 was live without seeing the bar, 2026-10-15). `?nosw` disables
+ * the worker for debugging.
  */
+const AUTO_APPLY_WINDOW_MS = 20_000;
+
 export function installServiceWorker(uiLayer: HTMLElement): void {
   if (new URLSearchParams(location.search).has('nosw')) {
     diag('sw disabled by ?nosw');
@@ -32,6 +37,12 @@ export function installServiceWorker(uiLayer: HTMLElement): void {
       },
       onNeedRefresh() {
         diag('sw update ready');
+        const atLaunch = performance.now() < AUTO_APPLY_WINDOW_MS;
+        if (import.meta.env.MODE === 'devbuild' && atLaunch) {
+          diag('reloading for update (dev build, at launch)');
+          void update(true);
+          return;
+        }
         showBar(uiLayer, () => {
           diag('reloading for update');
           void update(true);
