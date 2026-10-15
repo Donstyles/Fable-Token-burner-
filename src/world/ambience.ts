@@ -121,9 +121,11 @@ export class WaterfallSound {
     const panner = ctx.createPanner();
     panner.panningModel = 'equalpower';
     panner.distanceModel = 'inverse';
-    panner.refDistance = 5;
+    // Full loudness within 4 m, a quarter at 10 m, a tenth at 30 m: clear at the fall,
+    // a murmur from the hall. Phone speakers lose anything much below a tenth.
+    panner.refDistance = 4;
     panner.maxDistance = 90;
-    panner.rolloffFactor = 1.1;
+    panner.rolloffFactor = 1.6;
     if (panner.positionX) {
       panner.positionX.value = -this.position.x;
       panner.positionY.value = this.position.y;
