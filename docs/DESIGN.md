@@ -603,6 +603,12 @@ and icons all share it, so world and UI agree.
   continuous stream. The first cut (master 0.4, gentler falloff) left the
   hall silent on the phone, so the falloff is now steeper (reference 4 m,
   rolloff 1.6): clear at the fall, a murmur from the hall.
+- 2026-10-15 – **Now Playing widget** (owner): the playback audio session
+  makes iOS treat the page as media, with the widget in game and when
+  minimised. The session is now "ambient" by default, which is what iOS
+  games get: no widget, mixes with music, stops in the background, and is
+  muted by the ring/silent switch. A dev-panel select switches between
+  ambient and playback for comparison.
 - 2026-10-15 – **Owner's look tuning becomes the default** (sent from the
   dev panel after playing the water build, "looks moody"): posterize filter
   on at 5 levels with dither 0.45 (cell 2), bloom off, vignette 0.6, contrast

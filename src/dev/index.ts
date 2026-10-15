@@ -26,6 +26,12 @@ import { ENVIRONMENT_PRESETS, type EnvironmentPreset } from '../render/environme
 import { UPSCALE_MODES, type UpscaleMode } from '../app/settings';
 import { createDevPanel, type Field } from './panel';
 import { diag, diagText } from '../app/diag';
+import {
+  AUDIO_SESSION_TYPES,
+  getAudioSessionType,
+  setAudioSessionType,
+  type AudioSessionType,
+} from '../app/audio-unlock';
 
 export interface DevHandle {
   ready: boolean;
@@ -394,6 +400,14 @@ export async function startDev(app: App): Promise<DevHandle> {
         () => waterfalls.soundVolume,
         (v) => waterfalls.setSoundVolume(v),
       ),
+      {
+        kind: 'select',
+        key: 'audioSession',
+        label: 'audio session',
+        options: AUDIO_SESSION_TYPES,
+        get: () => getAudioSessionType(),
+        set: (v) => setAudioSessionType(v as AudioSessionType),
+      },
       {
         kind: 'toggle',
         key: 'wire',
