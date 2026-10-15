@@ -174,7 +174,7 @@ export class LevelWaterfalls {
         fall,
         material,
         systems,
-        sound: new WaterfallSound(foot, Math.min(1, 0.4 + drop / 60)),
+        sound: new WaterfallSound(fall.lip, foot, Math.min(1, 0.4 + drop / 60)),
       });
     }
     this.setSoundVolume(this.soundVolume);

@@ -3,7 +3,7 @@
  * swell, placed in 3D with inverse-distance attenuation. No audio files: the sound is
  * synthesised, so it is neither a placeholder nor a licence question.
  */
-import type { Vector3 } from '@babylonjs/core/Maths/math.vector';
+import { Vector3 } from '@babylonjs/core/Maths/math.vector';
 import { getAudioContext } from '../app/audio-unlock';
 
 function brownNoise(ctx: AudioContext, seconds = 4): AudioBuffer {
@@ -54,11 +54,28 @@ export class WaterfallSound {
   private enabled = true;
   private master = 1;
 
-  /** `volume` is this fall's own loudness; `setVolume` scales every fall alike. */
+  /**
+   * The sheet is a line source from `lip` to `plunge`: each frame the emitter sits at the
+   * point of the sheet nearest the listener, so the fall is loud from the bridge beside
+   * it, at the lip and at the pool alike (a point source at the pool was silent 23 m up
+   * on the bridge, 2026-10-15). `volume` is this fall's own loudness; `setVolume` scales
+   * every fall alike.
+   */
   constructor(
-    private readonly position: Vector3,
+    private readonly lip: Vector3,
+    private readonly plunge: Vector3,
     private readonly volume: number,
   ) {}
+
+  private nearestPoint(listener: Vector3): Vector3 {
+    const d = this.plunge.subtract(this.lip);
+    const len2 = d.lengthSquared();
+    const t =
+      len2 < 1e-6
+        ? 0
+        : Math.min(1, Math.max(0, Vector3.Dot(listener.subtract(this.lip), d) / len2));
+    return this.lip.add(d.scale(t));
+  }
 
   setEnabled(on: boolean): void {
     this.enabled = on;
@@ -83,6 +100,17 @@ export class WaterfallSound {
     }
     const ctx = this.ctx!;
     const l = ctx.listener;
+    const at = this.nearestPoint(listener);
+    const p = this.panner!;
+    if (p.positionX) {
+      // Glide so the emitter does not click as the nearest point jumps.
+      const t = ctx.currentTime;
+      p.positionX.setTargetAtTime(-at.x, t, 0.08);
+      p.positionY.setTargetAtTime(at.y, t, 0.08);
+      p.positionZ.setTargetAtTime(at.z, t, 0.08);
+    } else {
+      p.setPosition(-at.x, at.y, at.z);
+    }
     // Web Audio is right-handed; Babylon is left-handed. Mirror X on the way in.
     const fx = -Math.sin(listenerYaw);
     const fz = Math.cos(listenerYaw);
@@ -110,7 +138,7 @@ export class WaterfallSound {
     source.loop = true;
     const low = ctx.createBiquadFilter();
     low.type = 'lowpass';
-    low.frequency.value = 1100;
+    low.frequency.value = 1600;
     low.Q.value = 0.6;
     const high = ctx.createBiquadFilter();
     high.type = 'highpass';
@@ -127,11 +155,11 @@ export class WaterfallSound {
     panner.maxDistance = 90;
     panner.rolloffFactor = 1.6;
     if (panner.positionX) {
-      panner.positionX.value = -this.position.x;
-      panner.positionY.value = this.position.y;
-      panner.positionZ.value = this.position.z;
+      panner.positionX.value = -this.lip.x;
+      panner.positionY.value = this.lip.y;
+      panner.positionZ.value = this.lip.z;
     } else {
-      panner.setPosition(-this.position.x, this.position.y, this.position.z);
+      panner.setPosition(-this.lip.x, this.lip.y, this.lip.z);
     }
     // Spray hiss on top of the rumble: a band around 3 kHz that small speakers reproduce.
     sharedHiss ??= whiteNoise(ctx);
@@ -143,7 +171,7 @@ export class WaterfallSound {
     band.frequency.value = 3000;
     band.Q.value = 0.5;
     const hissGain = ctx.createGain();
-    hissGain.gain.value = 0.2;
+    hissGain.gain.value = 0.35;
     source.connect(low);
     low.connect(high);
     high.connect(gain);

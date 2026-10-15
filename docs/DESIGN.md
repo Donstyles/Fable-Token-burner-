@@ -614,6 +614,12 @@ and icons all share it, so world and UI agree.
   "Update ready" bar, which was never seen. The development build now applies
   an update found within 20 s of launch by itself (a reload at launch, never
   mid-play); production keeps the bar.
+- 2026-10-15 – **Still no sound on v62, phone loud and unmuted** (owner on
+  the bridge). The emitter sat at the plunge pool, 23 m below the bridge, so
+  with the steeper falloff the fall was near-silent everywhere a player can
+  stand. The sheet is now a line source: the emitter follows the point of
+  the sheet nearest the listener. The rumble's low-pass is raised to 1.6 kHz
+  and the spray hiss mixed higher so phone speakers carry it.
 - 2026-10-15 – **Owner's look tuning becomes the default** (sent from the
   dev panel after playing the water build, "looks moody"): posterize filter
   on at 5 levels with dither 0.45 (cell 2), bloom off, vignette 0.6, contrast
