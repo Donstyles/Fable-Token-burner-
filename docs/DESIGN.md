@@ -234,8 +234,7 @@ of billing again. Verified through the proxy: `balance` (4,790 credits on
    decoder on the Babylon side).
 6. **Commit** to `assets/characters/<id>/` with a manifest entry.
 
-Credit cost per humanoid is confirmed from `consumed_credits` on the first
-batch and then used for estimates.
+Credit cost per humanoid, confirmed by batch 001 (2026-10-15, `consumed_credits` and the balance delta agree): image-to-3D 15, rigging 5, animation 3 per clip. A combat humanoid costs 50 credits, a civilian 29. The bandit came back with 3,641 triangles against the 4,000 target.
 
 ### 10.2 Animals and monsters
 
@@ -756,6 +755,12 @@ and icons all share it, so world and UI agree.
   straight front views: Meshy's guidance is a clear front-facing image; the
   three-quarter view in the first card was an inference, kept only for props
   and buildings.
+- 2026-10-15 – **First Meshy character: the bandit** (batch 001, approved
+  by the owner). Image-to-3D, rigging and the ten combat clips ran through
+  the official CLI in three minutes and cost 50 credits (15 + 5 + 30),
+  below the 60 estimated; the estimates now use the reported prices. The
+  post-processed GLB has 3,641 triangles, ten standard-named clips and one
+  512 texture at 1.2 MiB; `validate` passes.
 - 2026-10-15 – **Owner's look tuning becomes the default** (sent from the
   dev panel after playing the water build, "looks moody"): posterize filter
   on at 5 levels with dither 0.45 (cell 2), bloom off, vignette 0.6, contrast

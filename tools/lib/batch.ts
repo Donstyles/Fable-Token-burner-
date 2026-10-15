@@ -57,14 +57,14 @@ export function actionIds(clips: readonly HumanoidClip[]): number[] {
 
 /**
  * Credit estimates. Text-to-image and animation prices are documented in DESIGN.md 10.0;
- * image-to-3D and rigging are assumptions from Meshy's public pricing until the first
- * batch reports `consumed_credits`, which then replaces them here.
+ * image-to-3D and rigging are what Meshy reported (`consumed_credits`) for batch 001 on
+ * 2026-10-15 (smart topology meshy-t2.5 at 4,000 triangles with a 2k texture; rigging).
  */
 export const CREDITS = {
   textToImage: { 'nano-banana': 3, 'nano-banana-2': 6, 'nano-banana-pro': 9 } as const,
-  imageTo3d: { credits: 20, basis: 'assumed from public pricing, unconfirmed' },
-  rig: { credits: 10, basis: 'assumed from public pricing, unconfirmed' },
-  animatePerAction: { credits: 3, basis: 'documented (DESIGN.md 10.0)' },
+  imageTo3d: { credits: 15, basis: 'reported by Meshy for batch 001 (2026-10-15)' },
+  rig: { credits: 5, basis: 'reported by Meshy for batch 001 (2026-10-15)' },
+  animatePerAction: { credits: 3, basis: 'documented (DESIGN.md 10.0), confirmed by batch 001' },
 } as const;
 
 export type BatchStep = 'image-to-3d' | 'rig' | 'animate' | 'text-to-image';
