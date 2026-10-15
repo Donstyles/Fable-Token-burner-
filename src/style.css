@@ -79,46 +79,24 @@ img {
   pointer-events: auto;
 }
 
-/* Portrait: iOS cannot lock orientation, so ask. */
-.rotate-overlay {
-  position: fixed;
-  inset: 0;
-  display: none;
-  align-items: center;
-  justify-content: center;
-  background: var(--bg);
-  z-index: 1000;
+/* Portrait viewport: iOS cannot lock orientation, so the page itself is rotated and the
+   game runs landscape (top edge of the phone to the left). The safe-area variables are
+   remapped to the rotated frame: the notch is now on the game's left, the home indicator
+   on its right. */
+html.forced-landscape {
+  --sat: env(safe-area-inset-right, 0px);
+  --sar: env(safe-area-inset-bottom, 0px);
+  --sab: env(safe-area-inset-left, 0px);
+  --sal: env(safe-area-inset-top, 0px);
 }
-.rotate-card {
-  text-align: center;
-  font-size: 18px;
-  letter-spacing: 0.04em;
-}
-.rotate-glyph {
-  width: 56px;
-  height: 96px;
-  margin: 0 auto 20px;
-  border: 3px solid var(--gold);
-  border-radius: 10px;
-  animation: rotate-hint 2.4s ease-in-out infinite;
-}
-@keyframes rotate-hint {
-  0%,
-  20% {
-    transform: rotate(0deg);
-  }
-  50%,
-  70% {
-    transform: rotate(90deg);
-  }
-  100% {
-    transform: rotate(0deg);
-  }
-}
-@media (orientation: portrait) {
-  .rotate-overlay {
-    display: flex;
-  }
+html.forced-landscape body {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100vh;
+  height: 100vw;
+  transform-origin: 0 0;
+  transform: rotate(90deg) translateY(-100%);
 }
 
 /* Development overlay. */

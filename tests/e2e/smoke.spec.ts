@@ -32,10 +32,24 @@ test('boots to a rendering canvas with no console errors', async ({ page }) => {
   expect(errors).toEqual([]);
 });
 
-test('asks to rotate in portrait', async ({ page }) => {
+test('runs landscape in a portrait viewport', async ({ page }) => {
   await page.setViewportSize({ width: 430, height: 932 });
-  await page.goto('/');
-  await expect(page.locator('#rotate')).toBeVisible();
+  await page.goto('/?dev');
+  await page.waitForFunction(() => {
+    const app = (window as unknown as { ftb?: { engine: { getFps(): number } } }).ftb;
+    return !!app && app.engine.getFps() > 0;
+  });
+  await expect(page.locator('html')).toHaveClass(/forced-landscape/);
+  const size = await page.evaluate(() => {
+    const app = (
+      window as unknown as {
+        ftb: { engine: { getRenderWidth(): number; getRenderHeight(): number } };
+      }
+    ).ftb;
+    return { w: app.engine.getRenderWidth(), h: app.engine.getRenderHeight() };
+  });
+  expect(size.h).toBe(720);
+  expect(size.w).toBeGreaterThan(1400);
 });
 
 test('recovers from a portrait launch followed by rotation', async ({ page }) => {
@@ -46,9 +60,9 @@ test('recovers from a portrait launch followed by rotation', async ({ page }) =>
     const app = (window as unknown as { ftb?: { engine: { getFps(): number } } }).ftb;
     return !!app && app.engine.getFps() > 0;
   });
-  await expect(page.locator('#rotate')).toBeVisible();
+  await expect(page.locator('html')).toHaveClass(/forced-landscape/);
   await page.setViewportSize({ width: 932, height: 430 });
-  await expect(page.locator('#rotate')).toBeHidden();
+  await expect(page.locator('html')).not.toHaveClass(/forced-landscape/);
   await page.waitForTimeout(300);
   const size = await page.evaluate(() => {
     const app = (

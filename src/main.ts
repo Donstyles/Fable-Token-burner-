@@ -1,7 +1,7 @@
 import './style.css';
 import { boot, type App } from './app/boot';
 import { installAudioUnlock } from './app/audio-unlock';
-import { tryLockLandscape } from './app/orientation';
+import { installForcedLandscape, tryLockLandscape } from './app/orientation';
 import { installDiagnostics, diag, diagText } from './app/diag';
 import { installServiceWorker } from './app/update-prompt';
 import { installLogButton } from './app/log-button';
@@ -40,6 +40,7 @@ if (
 }
 installAudioUnlock();
 tryLockLandscape();
+installForcedLandscape();
 installServiceWorker(ui);
 
 const app = boot(canvas, ui);

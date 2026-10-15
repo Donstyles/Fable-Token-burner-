@@ -634,6 +634,24 @@ and icons all share it, so world and UI agree.
   the Media Session API; while hidden the session drops to ambient and the
   context is suspended, so nothing plays when minimised. The dev-panel
   select keeps ambient available for comparison.
+- 2026-10-15 – **v66 silent with media volume at maximum, both sessions.**
+  Measured in headless Chromium, the sound graph is healthy: the noise
+  sources, gains and panner all carry signal at the level the distance maths
+  predicts. What remains is either a level too low for the iPhone speaker
+  (the cuts since v59 took about 12 dB off at the bridge) or iOS not
+  delivering this context's output at all. A "test tone" button in the dev
+  panel plays a 440 Hz beep straight to the output to tell those apart, and
+  the fall is back near the v59 loudness (master 0.8, rolloff 1.3).
+- 2026-10-15 – **No "turn your phone sideways" prompt** (owner). In a
+  portrait viewport the page itself is rotated by CSS and the game runs
+  landscape, top edge of the phone to the left; pointer coordinates, zone
+  sizes and the safe-area variables are remapped to the rotated frame. The
+  overlay is gone; the Android orientation lock attempt stays.
+- 2026-10-15 – **Corners with torches too bright** (owner). The world
+  material now has a soft light knee: the summed vertex and point light
+  above the knee (default 0.9) compresses towards knee + 0.5, so a lamp in a
+  corner brightens the wall without blowing it out to white. Dev panel
+  "light knee" slider (2.5 is off); the torch power slider tops out at 2.
 - 2026-10-15 – **Owner's look tuning becomes the default** (sent from the
   dev panel after playing the water build, "looks moody"): posterize filter
   on at 5 levels with dither 0.45 (cell 2), bloom off, vignette 0.6, contrast

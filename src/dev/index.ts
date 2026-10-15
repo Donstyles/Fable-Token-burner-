@@ -370,7 +370,7 @@ export async function startDev(app: App): Promise<DevHandle> {
         'torchPower',
         'torch power',
         0,
-        3,
+        2,
         0.1,
         () => torch.base,
         (v) => (torch.base = v),
@@ -459,6 +459,15 @@ export async function startDev(app: App): Promise<DevHandle> {
           liveScale = v;
           if (liveLights) level.setLiveLights(true, v);
         },
+      ),
+      range(
+        'lightKnee',
+        'light knee',
+        0.5,
+        2.5,
+        0.05,
+        () => app.materials.lightKnee,
+        (v) => app.materials.setLightKnee(v),
       ),
       {
         kind: 'select',

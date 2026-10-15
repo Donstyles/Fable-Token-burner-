@@ -1,3 +1,4 @@
+import { appSize, toAppPoint } from '../orientation';
 import type { InputZones } from './zones';
 
 /**
@@ -6,10 +7,7 @@ import type { InputZones } from './zones';
  */
 export function bindInput(canvas: HTMLCanvasElement, zones: InputZones): () => void {
   const rect = (): DOMRect => canvas.getBoundingClientRect();
-  const local = (e: PointerEvent): [number, number] => {
-    const r = rect();
-    return [e.clientX - r.left, e.clientY - r.top];
-  };
+  const local = (e: PointerEvent): [number, number] => toAppPoint(e.clientX, e.clientY, rect());
 
   // Use the monotonic clock rather than event.timeStamp: synthetic and injected events do
   // not always share the page's time origin, and tap detection depends on the difference.
@@ -32,8 +30,8 @@ export function bindInput(canvas: HTMLCanvasElement, zones: InputZones): () => v
   };
   const onCancel = (e: PointerEvent): void => zones.pointerCancel(e.pointerId);
   const onResize = (): void => {
-    const r = rect();
-    zones.resize(r.width, r.height);
+    const [w, h] = appSize(rect());
+    zones.resize(w, h);
   };
 
   const keys = new Set<string>();

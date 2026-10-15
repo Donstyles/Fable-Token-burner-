@@ -97,6 +97,7 @@ uniform vec3 emissive;
 uniform vec3 pointPos[${MAX_POINT_LIGHTS}];
 uniform vec3 pointColor[${MAX_POINT_LIGHTS}];
 uniform float pointRange[${MAX_POINT_LIGHTS}];
+uniform float lightKnee;
 void main(void) {
   if (clipEnabled > 0.5 && vClip > 0.0) discard;
   vec3 n = normalize(vNormal);
@@ -111,7 +112,15 @@ void main(void) {
     float ndl = max(dot(n, L / max(d, 0.001)), 0.0);
     pl += pointColor[i] * att * ndl;
   }
-  vec3 c = texture2D(diffuseSampler, vUV).rgb * tint * (vLight + pl) + emissive;
+  vec3 light = vLight + pl;
+  // Soft knee: light above lightKnee compresses towards lightKnee + 0.5, so a lamp in a
+  // corner brightens the wall without blowing it out to white (owner, 2026-10-15).
+  float peak = max(light.r, max(light.g, light.b));
+  if (peak > lightKnee) {
+    float over = peak - lightKnee;
+    light *= (lightKnee + over / (1.0 + 2.0 * over)) / peak;
+  }
+  vec3 c = texture2D(diffuseSampler, vUV).rgb * tint * light + emissive;
   gl_FragColor = vec4(mix(fogColor, c, vFog), 1.0);
 }
 `;
@@ -176,6 +185,7 @@ export class RetroMaterials {
         'emissive',
         'pointPos',
         'pointColor',
+        'lightKnee',
         'pointRange',
       ],
       samplers: ['diffuseSampler'],
@@ -184,6 +194,7 @@ export class RetroMaterials {
     mat.setTexture('diffuseSampler', opts.texture);
     mat.setVector2('uvScale', new Vector2(...(opts.uvScale ?? [1, 1])));
     mat.setFloat('bakedMix', this.bakedMix);
+    mat.setFloat('lightKnee', this.lightKnee);
     mat.setVector4('clipPlane', Vector4.Zero());
     mat.setFloat('clipEnabled', 0);
     // Water render passes set scene.clipPlane around their draws; read it per bind so the
@@ -222,6 +233,14 @@ export class RetroMaterials {
   }
 
   /** Blend between environment light (0) and baked vertex light (1) on baked materials. */
+  /** Where the soft light knee starts; 2.5 is effectively off. */
+  lightKnee = 0.9;
+
+  setLightKnee(v: number): void {
+    this.lightKnee = v;
+    for (const m of this.materials) m.setFloat('lightKnee', v);
+  }
+
   setBakedMix(v: number): void {
     this.bakedMix = v;
     for (const m of this.materials) m.setFloat('bakedMix', v);
