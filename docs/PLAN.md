@@ -25,7 +25,7 @@ week-plus. These are effort sizes, not calendar promises.
 | ----- | --------------------------------------------------------------------------- |
 | 0     | Accepted 2026-10-14                                                         |
 | 1     | Accepted 2026-10-14 (stair feel to be settled by ramp colliders in Phase 2) |
-| 2     | Built 2026-10-14, awaiting owner sign-off on device                         |
+| 2     | Accepted 2026-10-15 on device (walking good, mood fine for now)             |
 | 3–7   | Not started                                                                 |
 
 ## Phase overview
