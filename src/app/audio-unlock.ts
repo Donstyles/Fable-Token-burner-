@@ -3,12 +3,13 @@
  * first touch, click or key and resumed; everything audio-related obtains it from here.
  *
  * iOS specifics: the audio session type decides how the system treats the page. An
- * "ambient" session is what games get: no Now Playing widget, mixes with music, stops in
- * the background, and is muted by the ring/silent switch like any iOS game. A "playback"
- * session plays through the silent switch but shows the media widget and keeps playing
- * when minimised (owner, 2026-10-15: not wanted). The context is also suspended whenever
- * the page is hidden and resumed when it is shown again or on the next gesture (the
- * system may interrupt it, so every gesture resumes, not only the first).
+ * "ambient" session is what games get (no Now Playing widget, mixes with music, stops in
+ * the background), but on the owner's iPhone (iOS 18.7) it produced no sound at all with
+ * the context running and the phone loud and unmuted, while a "playback" session did
+ * (2026-10-15). So playback is the default: it shows the media widget, which carries the
+ * game's name and icon, and while the page is hidden the session drops to ambient and the
+ * context is suspended, so nothing plays or lingers when minimised. Every gesture and
+ * every return to the foreground resumes the context (the system may interrupt it).
  */
 import { diag } from './diag';
 
@@ -16,7 +17,7 @@ export const AUDIO_SESSION_TYPES = ['ambient', 'playback'] as const;
 export type AudioSessionType = (typeof AUDIO_SESSION_TYPES)[number];
 
 let context: AudioContext | null = null;
-let sessionType: AudioSessionType = 'ambient';
+let sessionType: AudioSessionType = 'playback';
 
 export function getAudioSessionType(): AudioSessionType {
   return sessionType;
@@ -59,6 +60,23 @@ function tryResume(): void {
 
 export function installAudioUnlock(target: EventTarget = window): void {
   applySessionType(sessionType);
+  // The playback session's Now Playing entry shows this instead of a bare page title.
+  if ('mediaSession' in navigator && typeof MediaMetadata !== 'undefined') {
+    try {
+      navigator.mediaSession.metadata = new MediaMetadata({
+        title: 'Fable Token Burner',
+        artwork: [
+          {
+            src: `${import.meta.env.BASE_URL}icons/icon-512.png`,
+            sizes: '512x512',
+            type: 'image/png',
+          },
+        ],
+      });
+    } catch {
+      // No media session: the widget shows whatever the system chooses.
+    }
+  }
   const onGesture = (): void => {
     try {
       if (!context) {

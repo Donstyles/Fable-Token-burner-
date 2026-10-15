@@ -626,6 +626,14 @@ and icons all share it, so world and UI agree.
   ambient session is what the switch silences. The session type is now in
   the dev log; while the page is hidden a playback session drops to ambient
   so no Now Playing entry lingers when minimised.
+- 2026-10-15 – **Playback session is the default.** The v65 log showed the
+  ambient session accepted and the context running, with the phone loud and
+  not on silent, and still no sound; the playback session is the only one
+  that plays on the owner's iPhone (iOS 18.7). The price is the Now Playing
+  widget while in game, which now carries the game's name and icon through
+  the Media Session API; while hidden the session drops to ambient and the
+  context is suspended, so nothing plays when minimised. The dev-panel
+  select keeps ambient available for comparison.
 - 2026-10-15 – **Owner's look tuning becomes the default** (sent from the
   dev panel after playing the water build, "looks moody"): posterize filter
   on at 5 levels with dither 0.45 (cell 2), bloom off, vignette 0.6, contrast
