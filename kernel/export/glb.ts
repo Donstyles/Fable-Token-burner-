@@ -10,7 +10,8 @@ import type { LitMeshData } from '../light/bake';
  *   ├── visual               rendered geometry, one child per spatial chunk
  *   │   └── chunk:i:j:k      mesh with one primitive per material role, material "role:N"
  *   ├── collider             one primitive, positions and indices only
- *   └── water                water surfaces, material "role:10"
+ *   ├── water                one primitive per water body, material "water:<name>"
+ *   └── waterfalls           one primitive per fall, material "waterfall:<name>"
  *
  * Primitives carry POSITION, NORMAL, TEXCOORD_0 and, when baked, COLOR_0 (RGB float).
  * Everything else the game needs (spawn, lights, points, navmesh) is in the sidecar JSON.
@@ -71,23 +72,33 @@ function groupTriangles(
   return groups;
 }
 
-export async function buildLevelGlb(
-  level: { visual: MeshData | LitMeshData; collider: MeshData; water: MeshData },
-  opts: GlbOptions,
-): Promise<Uint8Array> {
+export interface GlbLevel {
+  visual: MeshData | LitMeshData;
+  collider: MeshData;
+  water: { name: string; mesh: MeshData }[];
+  waterfalls: { name: string; mesh: MeshData }[];
+}
+
+export async function buildLevelGlb(level: GlbLevel, opts: GlbOptions): Promise<Uint8Array> {
   const doc = new Document();
   const buffer = doc.createBuffer();
   const scene = doc.createScene('level');
-  const materials = new Map<number, ReturnType<Document['createMaterial']>>();
-  const materialFor = (role: number) => {
-    let m = materials.get(role);
+  const materials = new Map<string, ReturnType<Document['createMaterial']>>();
+  const namedMaterial = (name: string) => {
+    let m = materials.get(name);
     if (!m) {
-      m = doc.createMaterial(`role:${role}`).setDoubleSided(false);
-      materials.set(role, m);
+      m = doc.createMaterial(name).setDoubleSided(false);
+      materials.set(name, m);
     }
     return m;
   };
-  const addPrimitive = (mesh: Mesh, g: Group, role: number | null, lit: boolean): Primitive => {
+  const materialFor = (role: number) => namedMaterial(`role:${role}`);
+  const addPrimitive = (
+    mesh: Mesh,
+    g: Group,
+    role: number | string | null,
+    lit: boolean,
+  ): Primitive => {
     const prim = doc.createPrimitive();
     prim.setAttribute(
       'POSITION',
@@ -120,7 +131,8 @@ export async function buildLevelGlb(
     const indexArray =
       g.positions.length / 3 > 65535 ? new Uint32Array(g.indices) : new Uint16Array(g.indices);
     prim.setIndices(doc.createAccessor().setType('SCALAR').setArray(indexArray).setBuffer(buffer));
-    if (role !== null) prim.setMaterial(materialFor(role));
+    if (typeof role === 'number') prim.setMaterial(materialFor(role));
+    else if (role !== null) prim.setMaterial(namedMaterial(role));
     mesh.addPrimitive(prim);
     return prim;
   };
@@ -163,14 +175,23 @@ export async function buildLevelGlb(
   }
   scene.addChild(doc.createNode('collider').setMesh(colliderMesh));
 
-  // Water surfaces.
+  // Water surfaces: one primitive per body, named so the runtime can match the sidecar.
   const waterMesh = doc.createMesh('water');
-  for (const [key, g] of groupTriangles(level.water, (t) =>
-    String(level.water.materials[t] ?? 10),
-  )) {
-    addPrimitive(waterMesh, g, Number(key), false);
+  for (const body of level.water) {
+    for (const g of groupTriangles(body.mesh, () => 'all').values()) {
+      addPrimitive(waterMesh, g, `water:${body.name}`, false);
+    }
   }
   scene.addChild(doc.createNode('water').setMesh(waterMesh));
+
+  // Waterfall ribbons, likewise.
+  const fallMesh = doc.createMesh('waterfalls');
+  for (const fall of level.waterfalls) {
+    for (const g of groupTriangles(fall.mesh, () => 'all').values()) {
+      addPrimitive(fallMesh, g, `waterfall:${fall.name}`, false);
+    }
+  }
+  scene.addChild(doc.createNode('waterfalls').setMesh(fallMesh));
 
   await doc.transform(weld());
   return new NodeIO().writeBinary(doc);

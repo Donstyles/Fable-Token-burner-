@@ -513,6 +513,9 @@ and icons all share it, so world and UI agree.
   64³ LUT, Bayer dither with cell size), posterize mode, vertex-lit fogged
   material, touch zones per 7.1, Havok capsule controller with instant
   start/stop, dev arena and tuning panel in a separate dev build at `/dev/`.
+- 2026-10-15 – **Phase 3 started.** Owner's call: water reflection and
+  refraction render at half or quarter of the world resolution (quarter by
+  default, selectable in the dev panel), never full.
 - 2026-10-15 – **Phase 2 accepted** on the phone: stairs, spiral and bridge
   walk well; the mood is fine for now; the authoring API was judged by the
   result rather than read. Next: Phase 3 (water, light, atmosphere), with the

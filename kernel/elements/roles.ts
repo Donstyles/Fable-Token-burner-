@@ -9,8 +9,10 @@ export const ROLE = {
   marble: 7,
   trim: 8,
   glass: 9,
-  /** Water surface; given the water material at runtime (Phase 3). */
+  /** Water surface; given the water material at runtime. */
   water: 10,
+  /** Waterfall ribbon; scrolling foam material at runtime. */
+  waterfall: 11,
   /** Invisible collision geometry (ramps under stairs). Never rendered. */
   collider: 100,
 } as const;

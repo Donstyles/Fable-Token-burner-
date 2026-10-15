@@ -29,7 +29,8 @@ describe('glb export', () => {
     const materials = root.listMaterials().map((m) => m.getName());
     expect(materials).toContain('role:1');
     expect(materials).toContain('role:2');
-    expect(materials).toContain('role:10');
+    expect(materials).toContain('water:water-1');
+    expect(names).toContain('waterfalls');
     const chunkMesh = root.listMeshes().find((m) => m.getName().startsWith('chunk:'))!;
     const prim = chunkMesh.listPrimitives()[0]!;
     expect(prim.getAttribute('COLOR_0')).not.toBeNull();

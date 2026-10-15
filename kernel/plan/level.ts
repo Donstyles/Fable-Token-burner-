@@ -1,7 +1,7 @@
 import { DEG, mat4, v3, type Mat4, type Vec3 } from '../core/math';
 import { MeshBuilder, type MeshData } from '../core/mesh';
-import { box, cylinder, extrude } from '../core/ops';
-import { arch } from '../core/profile';
+import { box, cylinder, extrude, sweep } from '../core/ops';
+import { arch, rect } from '../core/profile';
 import { csg, unionAll } from '../csg/manifold';
 import { marchingCubes } from '../sdf/marching';
 import { sdf, type SDF } from '../sdf/sdf';
@@ -54,6 +54,8 @@ export interface HallOptions {
   openings?: Opening[];
   /** Rotation about Y in degrees. */
   rotation?: number;
+  /** Fog inside this space; the runtime eases toward it when the party is here. */
+  fog?: FogPreset;
 }
 
 export interface Space {
@@ -90,6 +92,46 @@ export interface LightPlacement {
   color: [number, number, number];
   range: number;
   intensity: number;
+  /** What casts it: braziers get fire and smoke at runtime, glows stay invisible. */
+  kind: 'lantern' | 'brazier' | 'glow';
+}
+
+/** A body of water: one surface at one level, with the direction its surface flows. */
+export interface WaterBody {
+  name: string;
+  kind: 'pool' | 'river';
+  /** Surface height. */
+  y: number;
+  bounds: { min: Vec3; max: Vec3 };
+  /** Unit flow direction on the ground plane (x, z); [0, 0] for still water. */
+  flow: [number, number];
+}
+
+export interface WaterSurface extends WaterBody {
+  mesh: MeshData;
+}
+
+export interface Waterfall {
+  name: string;
+  /** Where the water leaves the lip. */
+  lip: Vec3;
+  /** Where it hits the pool. */
+  plunge: Vec3;
+  width: number;
+  mesh: MeshData;
+}
+
+export interface FogPreset {
+  density: number;
+  color: [number, number, number];
+}
+
+/** A named region of the level, for fog, sound and the automap. */
+export interface SpaceRecord {
+  name: string;
+  kind: 'hall' | 'shaft' | 'corridor' | 'cavern';
+  bounds: { min: Vec3; max: Vec3 };
+  fog?: FogPreset;
 }
 
 export interface NamedPoint {
@@ -104,9 +146,11 @@ export interface LevelOutput {
   visual: MeshData;
   /** Everything the party collides with: solid architecture plus the ramps under stairs. */
   collider: MeshData;
-  water: MeshData;
+  water: WaterSurface[];
+  waterfalls: Waterfall[];
   lights: LightPlacement[];
   points: NamedPoint[];
+  spaces: SpaceRecord[];
   spawn: { position: Vec3; yawDeg: number };
   bounds: { min: Vec3; max: Vec3 };
 }
@@ -122,9 +166,11 @@ export class LevelBuilder {
   private readonly dressing = new MeshBuilder();
   /** Collides only: ramps. */
   private readonly ramps = new MeshBuilder();
-  private readonly water = new MeshBuilder();
+  private readonly waters: { body: WaterBody; mesh: MeshBuilder }[] = [];
+  private readonly falls: { fall: Omit<Waterfall, 'mesh'>; mesh: MeshBuilder }[] = [];
   private readonly lights: LightPlacement[] = [];
   private readonly points: NamedPoint[] = [];
+  private readonly spaces: SpaceRecord[] = [];
   private readonly deferred: Deferred[] = [];
   private spawnPoint: { position: Vec3; yawDeg: number } = { position: [0, 0, 0], yawDeg: 0 };
 
@@ -140,8 +186,14 @@ export class LevelBuilder {
     this.points.push({ name, position, kind });
   }
 
-  light(position: Vec3, color: [number, number, number], range = 9, intensity = 2): void {
-    this.lights.push({ position, color, range, intensity });
+  light(
+    position: Vec3,
+    color: [number, number, number],
+    range = 9,
+    intensity = 2,
+    kind: LightPlacement['kind'] = 'glow',
+  ): void {
+    this.lights.push({ position, color, range, intensity, kind });
   }
 
   /** Place an element. Elements with their own collider keep their visual out of the collision mesh. */
@@ -175,7 +227,7 @@ export class LevelBuilder {
     m.append(box(0.3, 0.05, 0.3, { material: ROLE.iron }).translate(0.42, 0.2, 0));
     this.dressing.append(m, place);
     const lamp = mat4.transformPoint(place, [0.42, 0, 0]);
-    this.light(lamp, o.color ?? [1, 0.62, 0.3], o.range ?? 10, o.intensity ?? 2.5);
+    this.light(lamp, o.color ?? [1, 0.62, 0.3], o.range ?? 10, o.intensity ?? 2.5, 'lantern');
   }
 
   /** A floor brazier: iron bowl on a stand with glowing coals and a warm light. */
@@ -196,6 +248,7 @@ export class LevelBuilder {
       o.color ?? [1, 0.55, 0.22],
       o.range ?? 14,
       o.intensity ?? 2.5,
+      'brazier',
     );
   }
 
@@ -220,6 +273,7 @@ export class LevelBuilder {
     const t = o.wallThickness ?? WALL_T;
     const rot = (o.rotation ?? 0) * DEG;
     const space = makeSpace(o.name, o.at, o.size, o.height, o.rotation ?? 0);
+    this.recordSpace('hall', space, o.fog);
     const place = mat4.compose(o.at, rot);
     const wallMat = o.wallMaterial ?? ROLE.ashlar;
     // Floor.
@@ -372,6 +426,7 @@ export class LevelBuilder {
     wallMaterial?: number;
     align?: { y: number; angleDeg: number };
     openings?: { y: number; width?: number; height?: number }[];
+    fog?: FogPreset;
   }): ShaftSpace {
     const t = WALL_T;
     const r = o.radius;
@@ -454,7 +509,8 @@ export class LevelBuilder {
       cylinder(r + t, 0.5, 24, { material: wallMat }).translate(0, height + headroom, 0),
       place,
     );
-    const space = makeSpace(o.name, base, [2 * r, 2 * r], height, rotation);
+    const space = makeSpace(o.name, base, [2 * r, 2 * r], height + headroom, rotation);
+    this.recordSpace('shaft', space, o.fog);
     return { ...space, radius: r, portal };
   }
 
@@ -470,6 +526,7 @@ export class LevelBuilder {
     height: number;
     vault?: 'flat' | 'barrel';
     material?: number;
+    fog?: FogPreset;
   }): Space {
     const dir = v3.sub(o.to, o.from);
     const length = Math.hypot(dir[0], dir[2]);
@@ -503,7 +560,9 @@ export class LevelBuilder {
       );
     }
     const mid = v3.lerp(o.from, o.to, 0.5);
-    return makeSpace(o.name, mid, [length, w], o.height, yaw / DEG);
+    const space = makeSpace(o.name, mid, [length, w], o.height, yaw / DEG);
+    this.recordSpace('corridor', space, o.fog);
+    return space;
   }
 
   /** A straight flight of stairs between two points; either may be the lower one. */
@@ -596,8 +655,15 @@ export class LevelBuilder {
     roughness?: number;
     seed?: number;
     material?: number;
+    fog?: FogPreset;
   }): void {
     const { min, max } = o.bounds;
+    this.spaces.push({
+      name: o.name,
+      kind: 'cavern',
+      bounds: { min: [...min], max: [...max] },
+      ...(o.fog ? { fog: o.fog } : {}),
+    });
     const centre = v3.scale(v3.add(min, max), 0.5);
     const half = v3.scale(v3.sub(max, min), 0.5);
     // Rock extends past the bounds, so the grid never surfaces the outside of the mass:
@@ -620,20 +686,149 @@ export class LevelBuilder {
     this.solid.append(mesh);
   }
 
-  /** A flat water surface (rendered with the water material) covering a rectangle at height y. */
-  waterPlane(o: { at: Vec3; size: [number, number] }): void {
+  /**
+   * A still water surface covering a rectangle at height y, tessellated so the water
+   * material's waves have vertices to move. `flow` gives a current without changing shape.
+   */
+  waterPlane(o: {
+    name?: string;
+    at: Vec3;
+    size: [number, number];
+    flow?: [number, number];
+    cell?: number;
+  }): void {
     const [w, d] = o.size;
-    const plane = extrude(
-      [
-        [-w / 2, -d / 2],
-        [w / 2, -d / 2],
-        [w / 2, d / 2],
-        [-w / 2, d / 2],
-      ],
-      0.01,
-      { material: ROLE.water, caps: true },
-    ).transform(mat4.rotationX(-90 * DEG));
-    this.water.append(plane, mat4.translation(o.at[0], o.at[1], o.at[2]));
+    const cell = o.cell ?? 1;
+    const nx = Math.max(1, Math.round(w / cell));
+    const nz = Math.max(1, Math.round(d / cell));
+    const m = new MeshBuilder();
+    for (let i = 0; i < nx; i++) {
+      for (let j = 0; j < nz; j++) {
+        const x0 = -w / 2 + (w * i) / nx;
+        const x1 = -w / 2 + (w * (i + 1)) / nx;
+        const z0 = -d / 2 + (d * j) / nz;
+        const z1 = -d / 2 + (d * (j + 1)) / nz;
+        m.addQuad([x0, 0, z0], [x0, 0, z1], [x1, 0, z1], [x1, 0, z0], { material: ROLE.water });
+      }
+    }
+    m.translate(o.at[0], o.at[1], o.at[2]);
+    const name = o.name ?? `water-${this.waters.length + 1}`;
+    this.waters.push({
+      body: {
+        name,
+        kind: 'pool',
+        y: o.at[1],
+        bounds: m.bounds(),
+        flow: o.flow ?? [0, 0],
+      },
+      mesh: m,
+    });
+  }
+
+  /**
+   * A river: a water strip swept along a horizontal path. The current runs from the
+   * first point to the last.
+   */
+  river(o: { name: string; path: Vec3[]; width: number }): void {
+    if (o.path.length < 2) throw new Error(`river ${o.name}: path needs two points`);
+    const strip = sweep(rect(o.width, 0.02), o.path, { material: ROLE.water, caps: false });
+    const first = o.path[0]!;
+    const last = o.path[o.path.length - 1]!;
+    const dir = v3.normalize([last[0] - first[0], 0, last[2] - first[2]]);
+    this.waters.push({
+      body: {
+        name: o.name,
+        kind: 'river',
+        y: first[1],
+        bounds: strip.bounds(),
+        flow: [dir[0], dir[2]],
+      },
+      mesh: strip,
+    });
+  }
+
+  /**
+   * A waterfall: a ribbon from the lip to the plunge point, leaving horizontally and
+   * arriving vertically. The runtime scrolls foam down it and puts spray at the bottom.
+   */
+  waterfall(o: { name: string; lip: Vec3; plunge: Vec3; width: number }): void {
+    const drop = o.lip[1] - o.plunge[1];
+    const run: Vec3 = [o.plunge[0] - o.lip[0], 0, o.plunge[2] - o.lip[2]];
+    const runLen = v3.length(run);
+    const across: Vec3 = runLen > 1e-6 ? v3.normalize([-run[2], 0, run[0]]) : [1, 0, 0];
+    // Cubic Bézier: tangent horizontal at the lip, vertical at the plunge.
+    const c1: Vec3 = v3.add(o.lip, v3.scale(run, 0.45));
+    const c2: Vec3 = [o.plunge[0], o.plunge[1] + drop * 0.45, o.plunge[2]];
+    const segments = Math.max(6, Math.round(Math.hypot(drop, runLen) / 0.8));
+    const m = new MeshBuilder();
+    const at = (t: number): Vec3 => {
+      const u = 1 - t;
+      return [
+        u * u * u * o.lip[0] +
+          3 * u * u * t * c1[0] +
+          3 * u * t * t * c2[0] +
+          t * t * t * o.plunge[0],
+        u * u * u * o.lip[1] +
+          3 * u * u * t * c1[1] +
+          3 * u * t * t * c2[1] +
+          t * t * t * o.plunge[1],
+        u * u * u * o.lip[2] +
+          3 * u * u * t * c1[2] +
+          3 * u * t * t * c2[2] +
+          t * t * t * o.plunge[2],
+      ];
+    };
+    const half = v3.scale(across, o.width / 2);
+    for (let i = 0; i < segments; i++) {
+      const t0 = i / segments;
+      const t1 = (i + 1) / segments;
+      const p0 = at(t0);
+      const p1 = at(t1);
+      const a = v3.sub(p0, half);
+      const b = v3.add(p0, half);
+      const c = v3.add(p1, half);
+      const d = v3.sub(p1, half);
+      // u across the ribbon, v down the fall; the runtime scrolls foam along v.
+      m.addQuad(a, b, c, d, {
+        material: ROLE.waterfall,
+        uvs: [
+          [0, t0],
+          [1, t0],
+          [1, t1],
+          [0, t1],
+        ],
+      });
+      // Back face, so the sheet reads from behind as well.
+      m.addQuad(d, c, b, a, {
+        material: ROLE.waterfall,
+        uvs: [
+          [0, t1],
+          [1, t1],
+          [1, t0],
+          [0, t0],
+        ],
+      });
+    }
+    this.falls.push({
+      fall: { name: o.name, lip: o.lip, plunge: o.plunge, width: o.width },
+      mesh: m,
+    });
+  }
+
+  private recordSpace(kind: SpaceRecord['kind'], space: Space, fog?: FogPreset): void {
+    const corners = (['south', 'north', 'west', 'east'] as const).flatMap((side) => [
+      space.edge(side, 0),
+      space.edge(side, side === 'south' || side === 'north' ? space.size[0] : space.size[1]),
+    ]);
+    const min: Vec3 = [Infinity, space.at[1], Infinity];
+    const max: Vec3 = [-Infinity, space.at[1] + space.height, -Infinity];
+    for (const c of corners) {
+      min[0] = Math.min(min[0], c[0]);
+      min[2] = Math.min(min[2], c[2]);
+      max[0] = Math.max(max[0], c[0]);
+      max[2] = Math.max(max[2], c[2]);
+    }
+    this.spaces.push({ name: space.name, kind, bounds: { min, max }, ...(fog ? { fog } : {}) });
   }
 
   async build(): Promise<LevelOutput> {
@@ -649,9 +844,11 @@ export class LevelBuilder {
       name: this.name,
       visual: visual.toMeshData(),
       collider: collider.toMeshData(),
-      water: this.water.toMeshData(),
+      water: this.waters.map((w) => ({ ...w.body, mesh: w.mesh.toMeshData() })),
+      waterfalls: this.falls.map((f) => ({ ...f.fall, mesh: f.mesh.toMeshData() })),
       lights: this.lights,
       points: this.points,
+      spaces: this.spaces,
       spawn: this.spawnPoint,
       bounds: visual.bounds(),
     };

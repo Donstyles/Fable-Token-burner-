@@ -26,6 +26,7 @@ export default function showcase(plan: LevelBuilder): void {
     size: [W, D],
     height: H,
     vault: 'barrel',
+    fog: { density: 0.026, color: [0.012, 0.01, 0.015] },
     openings: [
       { side: 'west', at: 6, width: 1.8, height: 3 }, // shaft, floor level
       { side: 'west', at: 6, width: 1.6, height: 2.6, sill: GALLERY }, // shaft, gallery level
@@ -98,6 +99,7 @@ export default function showcase(plan: LevelBuilder): void {
     size: [W, D],
     height: 4.5,
     vault: 'barrel',
+    fog: { density: 0.055, color: [0.004, 0.014, 0.016] },
     openings: [
       { side: 'west', at: 6, width: 1.6, height: 2.6 },
       { side: 'south', at: 14.4, width: 1.6, height: 2.6 },
@@ -112,7 +114,7 @@ export default function showcase(plan: LevelBuilder): void {
       radius: 0.45,
     });
   }
-  plan.waterPlane({ at: [0, UNDER + 0.4, 0], size: [W, D] });
+  plan.waterPlane({ name: 'undercroft-pool', at: [0, UNDER + 0.4, 0], size: [W, D] });
   for (const [x, z] of [
     [-8.7, 5],
     [8.7, 5],
@@ -161,6 +163,7 @@ export default function showcase(plan: LevelBuilder): void {
     cell: 0.5,
     roughness: 0.25,
     seed: 3,
+    fog: { density: 0.03, color: [0.004, 0.006, 0.012] },
     carve: (s) =>
       s.union(
         // Entry tunnel through the rock face, flat floor at hall level.
@@ -171,12 +174,24 @@ export default function showcase(plan: LevelBuilder): void {
         s.subtract(s.capsule([28, 1.7, 0], [39, 1.7, 0], 2.7), s.below(0)),
         // The cave at the end.
         s.subtract(s.sphere([45, 2, 0], 7.5), s.below(0)),
+        // A side tunnel high in the north wall; the river runs down it into the chasm.
+        s.subtract(s.capsule([22, 3.2, 8], [22, 3.2, 21], 2.3), s.below(1)),
       ),
   });
   plan.bridge({ from: [rockWest, 0, 0], to: [32.5, 0, 0], width: 2.6, material: ROLE.plank });
   plan.brazier({ at: [12.2, 0, 2.2], intensity: 3, range: 14 });
   plan.brazier({ at: [31.6, 0, -2.2], intensity: 3, range: 14 });
-  plan.waterPlane({ at: [22, -22.5, 0], size: [18, 20] });
+  plan.waterPlane({ name: 'chasm-river', at: [22, -22.5, 0], size: [18, 20], flow: [1, 0] });
+  plan.river({
+    name: 'tunnel-brook',
+    path: [
+      [22, 1.3, 21],
+      [22, 1.3, 9.4],
+    ],
+    width: 3,
+  });
+  plan.waterfall({ name: 'chasm-fall', lip: [22, 1.3, 9.2], plunge: [22, -22.5, 4.5], width: 2.6 });
+  plan.lantern({ at: [19.9, 3.4, 14], facing: [1, 0, 0], color: warm, range: 10, intensity: 2.2 });
   plan.light([22, -21, 0], [0.3, 0.55, 0.95], 22, 2.2); // glow from the water below
   plan.light([33, 2.6, 2.3], warm, 10, 1.8);
   plan.lantern({ at: [45, 2.4, -6.8], facing: [0, 0, 1], color: warm, range: 12, intensity: 2.5 });

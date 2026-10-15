@@ -2,7 +2,7 @@ import { ShaderMaterial } from '@babylonjs/core/Materials/shaderMaterial';
 import { ShaderStore } from '@babylonjs/core/Engines/shaderStore';
 import { Constants } from '@babylonjs/core/Engines/constants';
 import { Color3 } from '@babylonjs/core/Maths/math.color';
-import { Vector2, Vector3 } from '@babylonjs/core/Maths/math.vector';
+import { Vector2, Vector3, Vector4 } from '@babylonjs/core/Maths/math.vector';
 import type { BaseTexture } from '@babylonjs/core/Materials/Textures/baseTexture';
 import type { Texture } from '@babylonjs/core/Materials/Textures/texture';
 import type { Scene } from '@babylonjs/core/scene';
@@ -51,7 +51,9 @@ uniform vec3 ambientColor;
 uniform float fogDensity;
 uniform vec2 uvScale;
 uniform float bakedMix;
+uniform vec4 clipPlane;
 varying vec2 vUV;
+varying float vClip;
 varying vec3 vLight;
 varying vec3 vWorldPos;
 varying vec3 vNormal;
@@ -73,6 +75,8 @@ void main(void) {
   vNormal = n;
   float d = distance(wp.xyz, cameraPosition) * fogDensity;
   vFog = clamp(exp(-d * d), 0.0, 1.0);
+  // Scene clip plane (water reflection and refraction passes); zero plane = no clipping.
+  vClip = dot(wp, clipPlane);
   gl_Position = viewProjection * wp;
 }
 `;
@@ -82,6 +86,8 @@ precision highp float;
 varying vec2 vUV;
 varying vec3 vLight;
 varying vec3 vWorldPos;
+varying float vClip;
+uniform float clipEnabled;
 varying vec3 vNormal;
 varying float vFog;
 uniform sampler2D diffuseSampler;
@@ -92,6 +98,7 @@ uniform vec3 pointPos[${MAX_POINT_LIGHTS}];
 uniform vec3 pointColor[${MAX_POINT_LIGHTS}];
 uniform float pointRange[${MAX_POINT_LIGHTS}];
 void main(void) {
+  if (clipEnabled > 0.5 && vClip > 0.0) discard;
   vec3 n = normalize(vNormal);
   vec3 pl = vec3(0.0);
   for (int i = 0; i < ${MAX_POINT_LIGHTS}; i++) {
@@ -163,6 +170,8 @@ export class RetroMaterials {
         'fogColor',
         'uvScale',
         'bakedMix',
+        'clipPlane',
+        'clipEnabled',
         'tint',
         'emissive',
         'pointPos',
@@ -175,6 +184,21 @@ export class RetroMaterials {
     mat.setTexture('diffuseSampler', opts.texture);
     mat.setVector2('uvScale', new Vector2(...(opts.uvScale ?? [1, 1])));
     mat.setFloat('bakedMix', this.bakedMix);
+    mat.setVector4('clipPlane', Vector4.Zero());
+    mat.setFloat('clipEnabled', 0);
+    // Water render passes set scene.clipPlane around their draws; read it per bind so the
+    // reflection pass clips what lies below the surface and the refraction pass what lies above.
+    mat.onBindObservable.add(() => {
+      const effect = mat.getEffect();
+      const plane = this.scene.clipPlane;
+      if (!effect) return;
+      if (plane) {
+        effect.setFloat4('clipPlane', plane.normal.x, plane.normal.y, plane.normal.z, plane.d);
+        effect.setFloat('clipEnabled', 1);
+      } else {
+        effect.setFloat('clipEnabled', 0);
+      }
+    });
     mat.setColor3('tint', opts.tint ?? Color3.White());
     mat.setColor3('emissive', opts.emissive ?? Color3.Black());
     mat.setArray3('pointPos', new Array<number>(MAX_POINT_LIGHTS * 3).fill(0));

@@ -240,7 +240,66 @@ describe('level planner', () => {
     expect(out.spawn).toEqual({ position: [1, 0, 2], yawDeg: 90 });
     expect(out.points.map((p) => p.name)).toEqual(['spawn', 'chest']);
     expect(out.lights).toHaveLength(1);
-    expect(new Set(out.water.materials)).toEqual(new Set([ROLE.water]));
-    expect(out.water.positions.length / 3).toBeGreaterThan(0);
+    expect(out.water).toHaveLength(1);
+    expect(out.water[0]!.name).toBe('water-1');
+    expect(out.water[0]!.y).toBe(-1);
+    expect(new Set(out.water[0]!.mesh.materials)).toEqual(new Set([ROLE.water]));
+    // Tessellated at 1 m: 6 × 6 quads.
+    expect(out.water[0]!.mesh.indices.length / 3).toBe(72);
+    expect(out.lights[0]!.kind).toBe('glow');
+  });
+
+  it('records spaces, rivers and waterfalls for the runtime', async () => {
+    const plan = new LevelBuilder('atmos');
+    plan.hall({
+      name: 'crypt',
+      at: [10, -4, 0],
+      size: [8, 6],
+      height: 4,
+      fog: { density: 0.05, color: [0, 0.01, 0.02] },
+    });
+    plan.cavern({
+      name: 'cave',
+      bounds: { min: [20, -10, -10], max: [40, 10, 10] },
+      carve: (s) => s.sphere([30, 0, 0], 5),
+      cell: 1,
+    });
+    plan.river({
+      name: 'brook',
+      path: [
+        [30, 0.2, 8],
+        [30, 0.2, 2],
+        [31, 0.2, -4],
+      ],
+      width: 1.5,
+    });
+    plan.waterfall({ name: 'fall', lip: [31, 0.2, -4], plunge: [31, -8, -8], width: 1.5 });
+    plan.brazier({ at: [12, -4, 0] });
+    plan.lantern({ at: [8, -2, 1], facing: [1, 0, 0] });
+    const out = await plan.build();
+    const crypt = out.spaces.find((s) => s.name === 'crypt')!;
+    expect(crypt.kind).toBe('hall');
+    expect(crypt.bounds.min).toEqual([6, -4, -3]);
+    expect(crypt.bounds.max).toEqual([14, 0, 3]);
+    expect(crypt.fog?.density).toBe(0.05);
+    expect(out.spaces.find((s) => s.name === 'cave')?.kind).toBe('cavern');
+    const brook = out.water.find((w) => w.name === 'brook')!;
+    expect(brook.kind).toBe('river');
+    expect(brook.y).toBeCloseTo(0.2, 6);
+    expect(brook.flow[1]).toBeLessThan(-0.9);
+    expect(brook.mesh.indices.length).toBeGreaterThan(0);
+    const fall = out.waterfalls[0]!;
+    expect(fall.name).toBe('fall');
+    expect(fall.mesh.positions.length / 3).toBeGreaterThan(20);
+    // The ribbon spans from the lip down to the plunge point.
+    let minY = Infinity;
+    let maxY = -Infinity;
+    for (let i = 1; i < fall.mesh.positions.length; i += 3) {
+      minY = Math.min(minY, fall.mesh.positions[i]!);
+      maxY = Math.max(maxY, fall.mesh.positions[i]!);
+    }
+    expect(minY).toBeCloseTo(-8, 6);
+    expect(maxY).toBeCloseTo(0.2, 6);
+    expect(out.lights.map((l) => l.kind)).toEqual(['brazier', 'lantern']);
   });
 });

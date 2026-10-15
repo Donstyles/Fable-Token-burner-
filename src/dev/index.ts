@@ -15,6 +15,8 @@ import { bindInput } from '../app/input/dom';
 import { PartyController, DEFAULT_TUNING } from '../world/player';
 import { loadLevel, type LoadedLevel } from '../world/level';
 import { loadRoleTextures, setRoleMipmaps } from '../world/textures';
+import { LevelWater, WATER_QUALITIES, type WaterQuality } from '../world/water';
+import { ROLE } from '../../kernel/elements/roles';
 import { FILTER_MODES, type FilterMode } from '../render/filter';
 import { RENDER_PRESETS, type RenderPreset } from '../render/resolution';
 import { ENVIRONMENT_PRESETS, type EnvironmentPreset } from '../render/environment';
@@ -27,6 +29,7 @@ export interface DevHandle {
   party: PartyController;
   zones: InputZones;
   level: LoadedLevel;
+  water: LevelWater;
   lastTap: string | null;
   /** CSS-pixel screen position of a mesh centre, for tests. */
   screenPointOf(name: string): { x: number; y: number } | null;
@@ -68,6 +71,24 @@ export async function startDev(app: App): Promise<DevHandle> {
     fogDensity: 0.028,
   });
   app.sky.mesh.setEnabled(false);
+  // Real water: reflection and refraction at a fraction of the world resolution.
+  const stillWater = textures.get(ROLE.water)!;
+  const water = new LevelWater(
+    scene,
+    level.water,
+    level.meshes,
+    app.materials,
+    () =>
+      app.materials.create({
+        name: 'water-still',
+        texture: stillWater.texture,
+        uvScale: [1 / stillWater.metresPerTile, 1 / stillWater.metresPerTile],
+        ...(stillWater.emissive ? { emissive: stillWater.emissive } : {}),
+        ...(stillWater.tint ? { tint: stillWater.tint } : {}),
+      }),
+    'quarter',
+  );
+  diag(`water: ${level.water.length} bodies, ${level.waterfalls.length} falls`);
 
   const zones = new InputZones({ width: canvas.clientWidth, height: canvas.clientHeight });
   bindInput(canvas, zones);
@@ -87,6 +108,7 @@ export async function startDev(app: App): Promise<DevHandle> {
     party,
     zones,
     level,
+    water,
     lastTap: null,
     events,
     screenPointOf(name) {
@@ -193,6 +215,7 @@ export async function startDev(app: App): Promise<DevHandle> {
     const input = zones.consume();
     if (fly) flyUpdate(dt, input);
     else party.update(dt, input);
+    water.update(camera.globalPosition);
     events.taps += input.taps.length;
     for (const t of input.taps) handleTap(t.x, t.y);
   });
@@ -229,6 +252,41 @@ export async function startDev(app: App): Promise<DevHandle> {
         1,
         () => flySpeed,
         (v) => (flySpeed = v),
+      ),
+      {
+        kind: 'select',
+        key: 'waterQuality',
+        label: 'water passes',
+        options: WATER_QUALITIES,
+        get: () => water.currentQuality,
+        set: (v) => water.setQuality(v as WaterQuality),
+      },
+      range(
+        'waterBlend',
+        'water tint',
+        0,
+        1,
+        0.02,
+        () => water.look.blend,
+        (v) => water.setLook({ blend: v }),
+      ),
+      range(
+        'waterBump',
+        'water ripple',
+        0,
+        1,
+        0.02,
+        () => water.look.bumpHeight,
+        (v) => water.setLook({ bumpHeight: v }),
+      ),
+      range(
+        'waterWave',
+        'water wave m',
+        0,
+        0.3,
+        0.01,
+        () => water.look.waveHeight,
+        (v) => water.setLook({ waveHeight: v }),
       ),
       {
         kind: 'toggle',

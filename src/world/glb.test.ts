@@ -20,7 +20,7 @@ describe('glb reader', () => {
     bytes.set(glb);
     const nodes = parseGlb(bytes.buffer);
     const names = nodes.map((n) => n.name);
-    expect(names).toEqual(['visual', 'collider', 'water']);
+    expect(names).toEqual(['visual', 'collider', 'water', 'waterfalls']);
     const visualNode = nodes[0]!;
     // A hall centred on the origin straddles the chunk planes: eight chunks.
     expect(visualNode.children.length).toBe(8);
@@ -44,7 +44,7 @@ describe('glb reader', () => {
     expect(collider.normals).toBeNull();
     expect(collider.indices.length / 3).toBe(level.collider.indices.length / 3);
     const water = nodes[2]!.primitives[0]!;
-    expect(water.material).toBe('role:10');
+    expect(water.material).toBe('water:water-1');
     // Positions survive untouched: the walls' cornice spans x in [-3.72, 3.72].
     let minX = Infinity;
     let maxX = -Infinity;

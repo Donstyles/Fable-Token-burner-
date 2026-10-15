@@ -83,10 +83,8 @@ async function buildOne(id: string, validate: boolean): Promise<boolean> {
   const t3 = performance.now();
 
   const glb = await buildLevelGlb(
-    { visual, collider: level.collider, water: level.water },
-    {
-      chunk: options.chunk,
-    },
+    { visual, collider: level.collider, water: level.water, waterfalls: level.waterfalls },
+    { chunk: options.chunk },
   );
   const t4 = performance.now();
 
@@ -96,6 +94,9 @@ async function buildOne(id: string, validate: boolean): Promise<boolean> {
     spawn: level.spawn,
     points: level.points,
     lights: level.lights,
+    spaces: level.spaces,
+    water: level.water.map(({ mesh: _mesh, ...body }) => body),
+    waterfalls: level.waterfalls.map(({ mesh: _mesh, ...fall }) => fall),
     bounds: level.bounds,
     nav: {
       positions: nav.debug.positions.map(round),
