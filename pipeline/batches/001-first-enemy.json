@@ -85,7 +85,10 @@
           }
         }
       },
-      "balanceBefore": 4790
+      "balanceBefore": 4790,
+      "balanceAfter": 4740,
+      "consumedCredits": 50,
+      "finished": "2026-10-15T20:57:25.610Z"
     }
   ]
 }
