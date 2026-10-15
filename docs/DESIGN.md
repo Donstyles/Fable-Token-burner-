@@ -664,6 +664,14 @@ and icons all share it, so world and UI agree.
   material's four light slots, measured against the mesh's bounding box
   instead of its centre, so it no longer loses out to four lanterns on a
   12 m chunk.
+- 2026-10-15 – **Test sound plays, the fall does not** (owner, v69). The
+  phone's audio path, session and volume are therefore fine and the fall's
+  own graph is what iOS refuses to play, although it measures healthy in
+  Chromium. The graph no longer uses the 3D panner or the audio listener:
+  distance attenuation and stereo placement are computed per frame from the
+  nearest point of the sheet and applied to a gain and a stereo-pan node.
+  The graph is built only once the context is running, and the dev log
+  records when it is built and when it first becomes audible.
 - 2026-10-15 – **Owner's look tuning becomes the default** (sent from the
   dev panel after playing the water build, "looks moody"): posterize filter
   on at 5 levels with dither 0.45 (cell 2), bloom off, vignette 0.6, contrast
