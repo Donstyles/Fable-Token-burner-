@@ -303,8 +303,7 @@ with first real assets.
    once; operation ids and task records in the batch file make every step
    resumable. Chain: image-to-3D (Smart Topology, `meshy-t2.5`, 4000 polys,
    A-pose) → rigging → animation (standard 10-clip set) → gltf-transform
-   post-process → manifest. First batch: one humanoid NPC, approved
-   separately.
+   post-process → manifest. First batch: one humanoid enemy (the bandit), approved separately.
 4. Characters: doll template with anchors; character-sheet prompt card;
    portrait cropper and posterizer; diff-extraction overlay tool with
    alignment check; icon processor. First pass: two base dolls, two
@@ -322,12 +321,10 @@ assumptions until the first batch confirms them). Step 2's Poly Haven fetcher
 already exists from Phase 2. Step 3 built (2026-10-15): `run <nnn>
 [--dry-run] [--force]` on the official CLI through the proxy, dry run
 verified against the live balance (4,790 credits); concept-image prompts
-became photographic after the owner rejected the painted innkeeper. Next:
-the owner's innkeeper image into `pipeline/inbox/`, batch 001, approval, the
-first real run (which confirms the credit cost per humanoid).
+became photographic after the owner rejected the painted innkeeper. The innkeeper needs no rig (service NPCs are portraits); her photograph is in `pipeline/inbox/` for step 4. Next: the owner's bandit image, batch 001 (combat set), approval, the first real run (which confirms the credit cost per humanoid).
 
 **Deliverables:** `npm run asset:*` commands, first real textures in the
-showcase, one rigged and animated NPC walking in the viewer, two dolls with
+showcase, one rigged and animated enemy walking in the viewer, two dolls with
 overlays rendering in a test screen.
 
 **Acceptance:** owner reviews the first outputs of each pipeline; credit

@@ -24,6 +24,15 @@ export const HUMANOID_CLIPS = [
 
 export type HumanoidClip = (typeof HUMANOID_CLIPS)[number];
 
+/** Walking townsfolk: no combat. Service NPCs behind a counter are portraits, no model at all. */
+export const CIVILIAN_CLIPS = ['idle', 'walk', 'talk'] as const satisfies readonly HumanoidClip[];
+
+export type ClipSet = 'combat' | 'civilian';
+
+export function clipSet(set: ClipSet): readonly HumanoidClip[] {
+  return set === 'civilian' ? CIVILIAN_CLIPS : HUMANOID_CLIPS;
+}
+
 /**
  * Meshy animation-library actions behind each clip, chosen once from the catalog
  * (678 actions, 2026-10-15) and reused for every humanoid so all characters share one set.
@@ -117,7 +126,13 @@ export async function nextBatchNumber(dir = BATCH_DIR): Promise<number> {
 }
 
 /** The three Meshy steps that turn one concept image into a rigged, animated humanoid. */
-export function humanoidItems(assetId: string, heightMetres: number, input: string): BatchItem[] {
+export function humanoidItems(
+  assetId: string,
+  heightMetres: number,
+  input: string,
+  set: ClipSet = 'combat',
+): BatchItem[] {
+  const clips = clipSet(set);
   return [
     {
       assetId,
@@ -148,9 +163,9 @@ export function humanoidItems(assetId: string, heightMetres: number, input: stri
     {
       assetId,
       step: 'animate',
-      params: { clips: [...HUMANOID_CLIPS], action_ids: actionIds(HUMANOID_CLIPS) },
-      estimatedCredits: CREDITS.animatePerAction.credits * HUMANOID_CLIPS.length,
-      estimateBasis: `${HUMANOID_CLIPS.length} actions, ${CREDITS.animatePerAction.basis}`,
+      params: { clips: [...clips], action_ids: actionIds(clips) },
+      estimatedCredits: CREDITS.animatePerAction.credits * clips.length,
+      estimateBasis: `${clips.length} actions, ${CREDITS.animatePerAction.basis}`,
     },
   ];
 }

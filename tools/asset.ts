@@ -4,7 +4,7 @@
  *   npm run asset -- manifest                       list recorded assets
  *   npm run asset -- validate                       check manifests, files, sizes, polycounts, clips
  *   npm run asset -- card <kind> <id> "<subject>"   write pipeline/cards/<id>.md for the owner
- *   npm run asset -- batch new <name> <id>:<height-m> [...]   plan a humanoid batch
+ *   npm run asset -- batch new <name> <id>:<height-m>[:civilian] [...]   plan a humanoid batch
  *   npm run asset -- batch show <nnn>
  *   npm run asset -- batch approve <nnn>            after the owner approves it in chat
  *   npm run asset -- run <nnn> [--dry-run] [--force] run an approved batch through Meshy
@@ -101,7 +101,8 @@ async function validate(): Promise<void> {
         }
         if (report.triangles === 0) problems.push(`${a.id}: ${file} has no triangles`);
         if (a.kind === 'character') {
-          const expected = [...HUMANOID_CLIPS];
+          const planned = (a.meshy?.params['animate'] as { clips?: string[] } | undefined)?.clips;
+          const expected = planned ?? [...HUMANOID_CLIPS];
           if (JSON.stringify(report.clips) !== JSON.stringify(expected)) {
             problems.push(
               `${a.id}: ${file} clips are [${report.clips.join(', ')}], expected [${expected.join(', ')}]`,
@@ -162,17 +163,19 @@ async function batch(args: string[]): Promise<void> {
   const [sub, ...rest] = args;
   if (sub === 'new') {
     const [name, ...specs] = rest;
-    if (!name || !isValidId(name)) fail('batch new <name> <id>:<height-m> [...]');
-    if (!specs.length) fail('give at least one <id>:<height-m>');
+    if (!name || !isValidId(name)) fail('batch new <name> <id>:<height-m>[:civilian] [...]');
+    if (!specs.length) fail('give at least one <id>:<height-m>[:civilian]');
     const items = [];
     for (const spec of specs) {
-      const [id, height] = spec.split(':');
+      const [id, height, set = 'combat'] = spec.split(':');
       const metres = Number(height);
       if (!id || !isValidId(id) || !(metres > 0.3 && metres < 4)) fail(`bad humanoid spec ${spec}`);
+      if (set !== 'combat' && set !== 'civilian')
+        fail(`${spec}: clip set must be combat or civilian`);
       const input = `${id}.png`;
       if (!(await exists(`${INBOX_DIR}/${input}`)))
         fail(`${INBOX_DIR}/${input} missing: the owner's concept image comes first`);
-      items.push(...humanoidItems(id, metres, input));
+      items.push(...humanoidItems(id, metres, input, set));
     }
     const b = makeBatch(await nextBatchNumber(), name, items);
     const path = await writeBatch(b);

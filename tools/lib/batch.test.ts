@@ -31,6 +31,12 @@ describe('batches', () => {
     );
   });
 
+  it('plans the civilian set for townsfolk', () => {
+    const items = humanoidItems('baker', 1.7, 'baker.png', 'civilian');
+    expect(items[2]?.params['clips']).toEqual(['idle', 'walk', 'talk']);
+    expect(items[2]?.estimatedCredits).toBe(CREDITS.animatePerAction.credits * 3);
+  });
+
   it('maps every clip to a distinct catalog action, at most ten per request', () => {
     const ids = actionIds(HUMANOID_CLIPS);
     expect(ids).toHaveLength(HUMANOID_CLIPS.length);

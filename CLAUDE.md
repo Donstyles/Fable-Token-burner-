@@ -28,9 +28,7 @@ anything. Both are the source of truth; update them when a decision changes.
 - `npm run textures` – fetch the CC0 role textures listed in
   `pipeline/textures.json`
 - `npm run asset -- <command>` – asset pipeline: `manifest`, `validate`,
-  `card <kind> <id> "<subject>"`, `batch new|show|approve`,
-  `run <nnn> [--dry-run] [--force]` (runs only a batch the owner approved by
-  number)
+  `card <kind> <id> "<subject>"`, `batch new <name> <id>:<height-m>[:civilian]|show|approve`, `run <nnn> [--dry-run] [--force]` (runs only a batch the owner approved by number)
 
 ## Layout
 

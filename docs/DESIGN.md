@@ -213,8 +213,7 @@ of billing again. Verified through the proxy: `balance` (4,790 credits on
 ### 10.1 Humanoids (party, NPCs, humanoid enemies)
 
 1. **Concept image.** Claude writes a prompt card (exact prompt + required
-   framing: full body, A-pose, front three-quarter view, neutral grey
-   background, flat even lighting, single subject). Owner generates it in
+   framing: full body, A-pose, straight front view, neutral grey background, flat even lighting, single subject). Meshy's single-image guidance is a clear front-facing image; a three-quarter view is kept only for props and buildings, where it shows depth. Owner generates it in
    ChatGPT and returns it. **One concept image per model** (decided
    2026-10-11); no turnaround sheets.
 2. **Image-to-3D.** `model_type: smart-topology`, `ai_model: meshy-t2.5`,
@@ -222,9 +221,7 @@ of billing again. Verified through the proxy: `balance` (4,790 credits on
    `texture_resolution: 2k`, `enable_pbr: false`, `auto_size: true`,
    `origin_at: bottom`, `target_formats: ["glb"]`.
 3. **Rigging.** `height_meters` per character.
-4. **Animation.** One request with the standard humanoid action set (up to
-   10 clips, names fixed project-wide): idle, walk, run, attack_1, attack_2,
-   hit, death, cast, talk, block. Library `action_id`s chosen 2026-10-15 and
+4. **Animation.** One request per character with its clip set, names fixed project-wide. Combat set (enemies, guards): idle, walk, run, attack_1, attack_2, hit, death, cast, talk, block. Civilian set (walking townsfolk): idle, walk, talk. Service NPCs behind a counter (innkeeper, shopkeepers, trainers, guild masters) are house-screen portraits with no 3D model, as in MM6 (decided 2026-10-15). Library `action_id`s chosen 2026-10-15 and
    fixed in `HUMANOID_ACTIONS`: idle 0 (Idle), walk 30 (Casual Walk), run 14
    (Run 2), attack_1 97 (Left Slash), attack_2 240 (Thrust Slash), hit 178
    (Hit Reaction), death 188 (Fall Dead from Abdominal Injury), cast 125
@@ -747,6 +744,18 @@ and icons all share it, so world and UI agree.
   flat lighting). The game's filter supplies the period look afterwards.
   `validate` accepts up to 4,400 triangles per character, a tenth over the
   target.
+- 2026-10-15 – **Clip sets by role; the first rigged humanoid is an enemy**
+  (owner: "Why does an innkeep need a rigged model?"). Service NPCs
+  (innkeeper, shopkeepers, trainers, guild masters) are house-screen
+  portraits with no 3D model, as in MM6; walking townsfolk get the civilian
+  set (idle, walk, talk: three clips, 9 credits); enemies and guards get the
+  combat set of ten. The owner's innkeeper photograph
+  (`pipeline/inbox/innkeeper.png`) becomes her portrait reference for Phase
+  4 step 4. Batch 001 is a bandit, the first slice's humanoid enemy, which
+  exercises every clip. Concept images for single-image Meshy input are
+  straight front views: Meshy's guidance is a clear front-facing image; the
+  three-quarter view in the first card was an inference, kept only for props
+  and buildings.
 - 2026-10-15 – **Owner's look tuning becomes the default** (sent from the
   dev panel after playing the water build, "looks moody"): posterize filter
   on at 5 levels with dither 0.45 (cell 2), bloom off, vignette 0.6, contrast
