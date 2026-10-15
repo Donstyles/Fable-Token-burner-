@@ -22,16 +22,24 @@ export function getAudioSessionType(): AudioSessionType {
   return sessionType;
 }
 
+function applySessionType(type: string): void {
+  const nav = navigator as Navigator & { audioSession?: { type: string } };
+  if (!nav.audioSession) {
+    diag(`audio session: no API (wanted ${type})`);
+    return;
+  }
+  try {
+    nav.audioSession.type = type;
+    diag(`audio session: ${nav.audioSession.type}`);
+  } catch (e) {
+    diag(`audio session: ${type} refused (${String(e)})`);
+  }
+}
+
 /** Applies immediately where the browser supports the Audio Session API (iOS 17+). */
 export function setAudioSessionType(type: AudioSessionType): void {
   sessionType = type;
-  const nav = navigator as Navigator & { audioSession?: { type: string } };
-  if (!nav.audioSession) return;
-  try {
-    nav.audioSession.type = type;
-  } catch {
-    // Older or stricter engines: keep the default session.
-  }
+  applySessionType(type);
 }
 
 export function getAudioContext(): AudioContext | null {
@@ -50,7 +58,7 @@ function tryResume(): void {
 }
 
 export function installAudioUnlock(target: EventTarget = window): void {
-  setAudioSessionType(sessionType);
+  applySessionType(sessionType);
   const onGesture = (): void => {
     try {
       if (!context) {
@@ -68,10 +76,17 @@ export function installAudioUnlock(target: EventTarget = window): void {
     context?.suspend().catch(() => {
       // Nothing to do: the next resume attempt reports the state.
     });
+    // A playback session would keep a Now Playing entry while minimised; drop to ambient
+    // until the page is shown again.
+    if (sessionType === 'playback') applySessionType('ambient');
   };
   document.addEventListener('visibilitychange', () => {
-    if (document.visibilityState === 'visible') tryResume();
-    else onHidden();
+    if (document.visibilityState === 'visible') {
+      if (sessionType === 'playback') applySessionType('playback');
+      tryResume();
+    } else {
+      onHidden();
+    }
   });
   window.addEventListener('pagehide', onHidden);
 }

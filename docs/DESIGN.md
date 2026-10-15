@@ -620,6 +620,12 @@ and icons all share it, so world and UI agree.
   stand. The sheet is now a line source: the emitter follows the point of
   the sheet nearest the listener. The rumble's low-pass is raised to 1.6 kHz
   and the spray hiss mixed higher so phone speakers carry it.
+- 2026-10-15 – **v64 log shows "audio: running" and still no sound.** On
+  this phone the automatic and ambient sessions were silent and the
+  playback session played, which is the ring/silent switch pattern: an
+  ambient session is what the switch silences. The session type is now in
+  the dev log; while the page is hidden a playback session drops to ambient
+  so no Now Playing entry lingers when minimised.
 - 2026-10-15 – **Owner's look tuning becomes the default** (sent from the
   dev panel after playing the water build, "looks moody"): posterize filter
   on at 5 levels with dither 0.45 (cell 2), bloom off, vignette 0.6, contrast
