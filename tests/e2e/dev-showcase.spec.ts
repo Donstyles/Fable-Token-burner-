@@ -274,12 +274,18 @@ test.describe('dev build', () => {
     for (const cls of info.bodies) expect(cls).toBe('WaterMaterial');
     for (const off of info.levelOffsets) expect(off).toBeLessThan(1e-6);
     expect(info.falls).toBe(1);
-    // The surfaces animate on our clock, not Babylon's delta-equality guard.
-    const clock = (): Promise<number> =>
-      page.evaluate(() => (window as unknown as W).ftb!.dev!.water.clock);
-    const t0 = await clock();
+    // The surfaces animate on our simulated clock (not Babylon's delta-equality guard),
+    // which lags wall time on slow renderers because each frame is capped at 50 ms.
+    const clocks = (): Promise<{ water: number; sim: number }> =>
+      page.evaluate(() => {
+        const d = (window as unknown as W).ftb!.dev!;
+        return { water: d.water.clock, sim: d.simTime() };
+      });
+    const before = await clocks();
     await page.waitForTimeout(500);
-    expect((await clock()) - t0).toBeGreaterThan(0.25);
+    const after = await clocks();
+    expect(after.water - before.water).toBeGreaterThan(0.04);
+    expect(after.water - before.water).toBeCloseTo(after.sim - before.sim, 3);
   });
 
   test('tap on the level registers through picking', async ({ page, browserName }) => {
