@@ -168,6 +168,13 @@
   border-style: dashed;
 }
 
+/* Quest log */
+.quest-objective {
+  margin-top: 2px;
+  font-size: 12px;
+  color: #f0c050;
+}
+
 /* Automap */
 .map-canvas {
   background: #0a0806;

@@ -20,6 +20,7 @@ import {
 } from './context';
 import { button, createFrame, el } from './dom';
 import { renderInventory } from './inventory';
+import { renderMap, renderQuests } from './journal';
 import { renderRest } from './rest';
 import { renderService, type ServiceRef } from './services';
 import { renderSheet } from './sheet';
@@ -58,8 +59,8 @@ const RENDERERS: Record<ScreenName, (ctx: ScreenContext) => void> = {
   items: renderInventory,
   spells: renderSpellbook,
   rest: renderRest,
-  quests: renderSheet,
-  map: renderSheet,
+  quests: renderQuests,
+  map: renderMap,
 };
 
 export interface Screens {
