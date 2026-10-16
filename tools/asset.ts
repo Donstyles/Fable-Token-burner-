@@ -180,7 +180,7 @@ async function batch(args: string[]): Promise<void> {
     const poseAt = given.indexOf('--pose');
     const pose = poseAt >= 0 ? given[poseAt + 1] : 'a-pose';
     if (pose !== 'a-pose' && pose !== 't-pose') fail('--pose a-pose|t-pose');
-    const specs = given.filter((_, i) => i !== poseAt && i !== poseAt + 1);
+    const specs = poseAt < 0 ? given : given.filter((_, i) => i !== poseAt && i !== poseAt + 1);
     if (!specs.length) fail('give at least one <id>:<height-m>[:civilian]');
     const items = [];
     for (const spec of specs) {

@@ -231,6 +231,14 @@ of billing again. Verified through the proxy: `balance` (4,790 credits on
    and meshopt compression wait until file size matters (meshopt needs a
    decoder on the Babylon side).
 6. **Commit** to `assets/characters/<id>/` with a manifest entry.
+7. **Weapons in hand** (2026-10-16): never part of the character mesh. A
+   weapon is a prop (pipeline 10.3, a few hundred triangles) attached to the
+   `RightHand` (or `LeftHand`) joint's transform node with a per-prop grip
+   offset tuned once in the dev panel and stored with the prop. The attack,
+   block and idle clips move the hand; the prop follows. This keeps one
+   bandit mesh for a club, a sword or a bow, and keeps the auto-rigger away
+   from held objects, which it handles badly. A sheathed weapon drawn in the
+   concept image is part of the body and stays sheathed.
 
 Credit cost per humanoid, confirmed by batch 001 (2026-10-15, `consumed_credits` and the balance delta agree): image-to-3D 15, rigging 5, animation 3 per clip. A combat humanoid costs 50 credits, a civilian 29. The bandit came back with 3,641 triangles against the 4,000 target.
 
@@ -786,6 +794,12 @@ and icons all share it, so world and UI agree.
   the photograph's stance kept by the retargeted clips; the card now asks for
   straight legs, and `batch new --pose t-pose` is available. Tapping a
   character in the dev build steps through its clips.
+- 2026-10-16 – **Second bandit image, weapons as props.** The owner's clean
+  concept render (fitted clothing, straight legs, A-pose) replaces the
+  photograph; batch 002 regenerates the bandit from it. Owner's question
+  "how will you put a weapon in his hand?": weapons are separate props
+  attached to the hand joint (10.1 step 7), not modelled into the
+  character.
 - 2026-10-15 – **Owner's look tuning becomes the default** (sent from the
   dev panel after playing the water build, "looks moody"): posterize filter
   on at 5 levels with dither 0.45 (cell 2), bloom off, vignette 0.6, contrast
