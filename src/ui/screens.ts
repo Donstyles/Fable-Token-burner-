@@ -19,7 +19,9 @@ import {
 } from './context';
 import { button, createFrame, el } from './dom';
 import { renderInventory } from './inventory';
+import { renderRest } from './rest';
 import { renderSheet } from './sheet';
+import { renderSpellbook } from './spellbook';
 
 export type {
   CastEvent,
@@ -52,8 +54,8 @@ const SCREEN_TITLES: Record<ScreenName, string> = {
 const RENDERERS: Record<ScreenName, (ctx: ScreenContext) => void> = {
   sheet: renderSheet,
   items: renderInventory,
-  spells: renderSheet,
-  rest: renderSheet,
+  spells: renderSpellbook,
+  rest: renderRest,
   quests: renderSheet,
   map: renderSheet,
 };
