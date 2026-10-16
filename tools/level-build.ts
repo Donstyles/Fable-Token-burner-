@@ -83,11 +83,12 @@ async function buildTerrain(id: string, validate: boolean): Promise<boolean> {
   nav.navMesh.destroy();
   const chunkMetres = mod.default.chunkCells * mod.default.cell;
   // Trees travel as instances in the sidecar (a few bytes each) and are drawn as thin
-  // instances of two prototypes; collision is the terrain chunks plus a cylinder per trunk.
-  const empty = { positions: [], normals: [], uvs: [], indices: [], materials: [] };
+  // instances of two prototypes; collision is the terrain chunks plus a cylinder per trunk,
+  // plus the village solids as a collider mesh.
   const glb = await buildLevelGlb(
     {
-      visual: empty,
+      visual: level.visual,
+      collider: level.solids,
       water: level.water,
       waterfalls: [],
       nodes: [{ name: 'terrain', children: level.chunks }],
@@ -123,6 +124,8 @@ async function buildTerrain(id: string, validate: boolean): Promise<boolean> {
         .filter((c) => c.lod === 0)
         .reduce((n, c) => n + c.mesh.indices.length / 3, 0),
       trees: level.trees.length,
+      houses: level.town.houses.length,
+      visualTriangles: level.visual.indices.length / 3,
       forestTriangles: level.forest.indices.length / 3,
       colliderTriangles: level.collider.indices.length / 3,
       navTriangles: nav.debug.indices.length / 3,
@@ -138,7 +141,8 @@ async function buildTerrain(id: string, validate: boolean): Promise<boolean> {
   console.info(
     [
       `${id}: ${sidecar.stats.triangles} terrain tris at full detail, ${level.trees.length} trees ` +
-        `(${sidecar.stats.forestTriangles} tris), ${(glb.byteLength / 1024 / 1024).toFixed(1)} MB glb, ` +
+        `(${sidecar.stats.forestTriangles} tris), ${level.town.houses.length} houses ` +
+        `(${sidecar.stats.visualTriangles} tris), ${(glb.byteLength / 1024 / 1024).toFixed(1)} MB glb, ` +
         `${sidecar.stats.navTriangles} nav tris, heights ${sidecar.stats.heightMin} to ${sidecar.stats.heightMax} m`,
       `  generate ${ms(t0, t1)}, nav ${ms(t1, t2)}, glb ${ms(t2, t3)}`,
     ].join('\n'),

@@ -30,6 +30,8 @@ export interface ValleyResult {
   road: GroundPath;
   roadWidth: number;
   ravine: GroundPath;
+  /** The village square: flattened ground round the well where the road begins. */
+  town: { centre: P2; y: number; radius: number; roadDirection: number };
   spawn: { position: Vec3; yawDeg: number };
   points: NamedPoint[];
   peaks: { x: number; z: number; height: number }[];
@@ -75,11 +77,13 @@ export function generateValley(spec: ValleySpec): ValleyResult {
       8,
     ),
   );
-  // The serpentine road: from the western bank, switchbacks up the slope to the pass. Laid
-  // out in fractions of the map so a small test map keeps the same shape.
+  // The serpentine road: from the village square on the western bank, switchbacks up the
+  // slope to the pass. Laid out in fractions of the map so a small test map keeps the same
+  // shape.
   const k = half / 512;
+  const townCentre: P2 = [-55 * k, -half * 0.3];
   const roadControls: P2[] = [
-    [-55 * k, -half * 0.3],
+    townCentre,
     [-95 * k, -half * 0.18],
     [-150 * k, -half * 0.32],
     [-205 * k, -half * 0.12],
@@ -133,6 +137,18 @@ export function generateValley(spec: ValleySpec): ValleyResult {
     for (let i = 0; i < n; i++) hf.set(i, j, base(hf.x(i), hf.z(j)));
   }
 
+  // The village square: level ground round the well, blending into the slope beyond.
+  const TOWN_RADIUS = 40;
+  const townY = Math.max(FLOOR + 3, hf.sample(townCentre[0], townCentre[1]));
+  const dTown = (x: number, z: number): number => Math.hypot(x - townCentre[0], z - townCentre[1]);
+  for (let j = 0; j < n; j++) {
+    for (let i = 0; i < n; i++) {
+      const d = dTown(hf.x(i), hf.z(j));
+      if (d > TOWN_RADIUS + 40) continue;
+      hf.set(i, j, lerp(townY, hf.get(i, j), smoothstep(TOWN_RADIUS, TOWN_RADIUS + 40, d)));
+    }
+  }
+
   // The road's own height profile: the land under it, smoothed and never dropping.
   const samples = Math.ceil(road.length / 4);
   const profile: number[] = [];
@@ -182,7 +198,10 @@ export function generateValley(spec: ValleySpec): ValleyResult {
       const dRoad = road.nearest(x, z).distance;
       const dRiver = river.nearest(x, z).distance;
       const dRavine = ravine.nearest(x, z).distance;
-      let path = 1 - smoothstep(ROAD_WIDTH / 2, ROAD_WIDTH / 2 + 3, dRoad);
+      let path = Math.max(
+        1 - smoothstep(ROAD_WIDTH / 2, ROAD_WIDTH / 2 + 3, dRoad),
+        1 - smoothstep(TOWN_RADIUS * 0.6, TOWN_RADIUS * 0.85, dTown(x, z)),
+      );
       let scree =
         smoothstep(32, 46, s) + 0.6 * smoothstep(6, 2, dRiver) * (h < FLOOR + 0.5 ? 1 : 0);
       let snow = smoothstep(235, 268, h) * (1 - smoothstep(35, 50, s));
@@ -203,6 +222,7 @@ export function generateValley(spec: ValleySpec): ValleyResult {
         dRoad > 9 &&
         dRiver > 20 &&
         dRavine > 30 &&
+        dTown(x, z) > TOWN_RADIUS + 20 &&
         fbm(x, z, 140, seed + 11) > 0.1
           ? 1
           : 0;
@@ -220,7 +240,9 @@ export function generateValley(spec: ValleySpec): ValleyResult {
       if (h > top.h) top = { i, j, h };
     }
   }
+  const exit = road.nearest(townCentre[0], townCentre[1]).tangent;
   const points: NamedPoint[] = [
+    { name: 'town', position: at3(road.at(8)), kind: 'poi' },
     { name: 'pass', position: at3(road.at(road.length - 40)), kind: 'poi' },
     { name: 'road-mid', position: at3(road.at(road.length / 2)), kind: 'poi' },
     { name: 'ravine-head', position: at3(ravine.at(ravine.length - 30)), kind: 'poi' },
@@ -238,6 +260,12 @@ export function generateValley(spec: ValleySpec): ValleyResult {
     road,
     roadWidth: ROAD_WIDTH,
     ravine,
+    town: {
+      centre: townCentre,
+      y: townY,
+      radius: TOWN_RADIUS,
+      roadDirection: Math.atan2(exit[1], exit[0]),
+    },
     spawn: { position: at3(start), yawDeg },
     points,
     peaks: peaks.map((p) => ({ x: p.x, z: p.z, height: hf.sample(p.x, p.z) })),

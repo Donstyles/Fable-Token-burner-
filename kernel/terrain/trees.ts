@@ -59,6 +59,7 @@ export function placeTrees(v: ValleyResult, o: ForestOptions = {}): TreeInstance
       // The mask is per vertex; the jittered spot itself must also keep clear.
       if (v.road.nearest(jx, jz).distance < v.roadWidth / 2 + 4) continue;
       if (v.river.nearest(jx, jz).distance < v.riverWidth / 2 + 8) continue;
+      if (Math.hypot(jx - v.town.centre[0], jz - v.town.centre[1]) < v.town.radius + 12) continue;
       const y = hf.sample(jx, jz);
       const kind: TreeKind = y > pineAbove || rng() < 0.3 ? 'pine' : 'broadleaf';
       trees.push({ kind, x: jx, y, z: jz, yaw: rng() * Math.PI * 2, scale: 0.8 + rng() * 0.5 });

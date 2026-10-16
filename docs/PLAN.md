@@ -403,6 +403,8 @@ waterfalls and deserts, walkable end to end.
    quantized export, runtime terrain material and instancing. **Done
    2026-10-16** (DESIGN 15.1).
 2. Village of generated houses on the valley floor, solid, with a well.
+   **Done 2026-10-16** (DESIGN 15.2): seven timber-framed houses round the
+   well, the road starts at the well, the party wakes in the square.
 3. Cave mouth at the ravine head and a scene transition into the dungeon;
    the dungeon's exit back to the valley.
 4. Cascades in the ravine stream (Phase 3 waterfalls on terrain).

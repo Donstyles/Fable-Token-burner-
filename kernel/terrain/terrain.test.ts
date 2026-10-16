@@ -5,6 +5,7 @@ import { terrainMesh } from './mesh';
 import { fbm, ridged } from './noise';
 import { riverSurface } from './river';
 import { GroundPath, smoothPath } from './spline';
+import { buildTown } from './town';
 import { forestMeshes, placeTrees, treeMesh } from './trees';
 import { generateValley, WATER_LEVEL } from './valley';
 
@@ -130,5 +131,48 @@ describe('valley', () => {
     const again = generateValley({ seed: 3, width: 1024, cell: 16 });
     expect(again.height.heights).toEqual(v.height.heights);
     expect(again.spawn).toEqual(v.spawn);
+  });
+});
+
+describe('village', () => {
+  it('rings the well with houses, leaving the road slot open, doors to the square', () => {
+    const town = buildTown({ centre: [100, -50], y: 12, radius: 40, seed: 3, roadDirection: 0 });
+    expect(town.houses).toHaveLength(7);
+    expect(town.well).toEqual([100, -50]);
+    expect(town.visual.indices.length / 3).toBeGreaterThan(500);
+    expect(town.collider.indices.length / 3).toBeGreaterThan(50);
+    for (const h of town.houses) {
+      const angle = Math.atan2(h.z + 50, h.x - 100);
+      // Nothing within the road's slot (±22.5° of +X).
+      expect(Math.abs(angle)).toBeGreaterThan(Math.PI / 8 - 1e-6);
+      // The door (local +Z) points at the well.
+      const door = [-Math.sin(h.yaw), Math.cos(h.yaw)];
+      const toWell = [100 - h.x, -50 - h.z];
+      const len = Math.hypot(toWell[0]!, toWell[1]!);
+      const dot = (door[0]! * toWell[0]! + door[1]! * toWell[1]!) / len;
+      expect(dot).toBeGreaterThan(0.95);
+      expect(h.y).toBe(12);
+    }
+  });
+
+  it('sits on a level square at the start of the road, clear of trees', () => {
+    const v = generateValley({ seed: 7, width: 1024, cell: 16 });
+    const { centre, y, radius } = v.town;
+    expect(v.road.at(0)).toEqual(centre);
+    for (let a = 0; a < Math.PI * 2; a += 0.7) {
+      for (const r of [0, radius * 0.35, radius * 0.7]) {
+        const h = v.height.sample(centre[0] + Math.cos(a) * r, centre[1] + Math.sin(a) * r);
+        expect(Math.abs(h - y)).toBeLessThan(0.5);
+      }
+    }
+    expect(y).toBeGreaterThan(WATER_LEVEL + 2);
+    const town = v.points.find((p) => p.name === 'town')!;
+    expect(Math.hypot(town.position[0] - centre[0], town.position[2] - centre[1])).toBeCloseTo(
+      8,
+      0,
+    );
+    for (const t of placeTrees(v)) {
+      expect(Math.hypot(t.x - centre[0], t.z - centre[1])).toBeGreaterThan(radius + 10);
+    }
   });
 });

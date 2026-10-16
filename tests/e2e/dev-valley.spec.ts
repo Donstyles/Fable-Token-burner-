@@ -39,9 +39,17 @@ test.describe('valley region', () => {
         forest: names.filter((n) => n.startsWith('forest:')).length,
         pass: d.pointOf('pass'),
         summit: d.pointOf('summit'),
+        town: d.pointOf('town'),
+        houses: d.level.sidecar.stats['houses'],
+        solids: names.includes('level-collider'),
         spawn: d.positionOf(),
       };
     });
+    // The village: seven houses and the well round a square the party wakes up in, solid.
+    expect(info.houses).toBe(7);
+    expect(info.solids).toBe(true);
+    expect(info.town).not.toBeNull();
+    expect(Math.hypot(info.town!.x - info.spawn.x, info.town!.z - info.spawn.z)).toBeLessThan(30);
     expect(info.outdoor).toBe(true);
     expect(info.trees).toBeGreaterThan(1000);
     // Ten by ten chunks at three detail levels; exactly one level per chunk is on.

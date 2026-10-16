@@ -444,37 +444,27 @@ export async function loadLevel(
     };
   });
 
-  // Collider: an invisible static mesh shape, or outdoors the full-detail terrain chunks.
+  // Collider: an invisible static mesh shape (indoors the whole level, outdoors the village
+  // solids), plus outdoors the full-detail terrain chunks.
   const collider = new Mesh('level-collider', scene);
   const cp = find('collider')?.primitives[0];
   const aggregates: PhysicsAggregate[] = [];
+  const staticMesh = (mesh: Mesh): PhysicsAggregate =>
+    new PhysicsAggregate(
+      mesh,
+      PhysicsShapeType.MESH,
+      { mass: 0, friction: 0.8, restitution: 0 },
+      scene,
+    );
   if (cp && cp.positions.length) {
     toVertexData(cp).applyToMesh(collider, false);
     collider.isVisible = false;
     collider.isPickable = false;
     collider.parent = root;
-    aggregates.push(
-      new PhysicsAggregate(
-        collider,
-        PhysicsShapeType.MESH,
-        { mass: 0, friction: 0.8, restitution: 0 },
-        scene,
-      ),
-    );
-  } else if (terrainChunks.length) {
-    for (const c of terrainChunks) {
-      aggregates.push(
-        new PhysicsAggregate(
-          c.lods[0]!,
-          PhysicsShapeType.MESH,
-          { mass: 0, friction: 0.8, restitution: 0 },
-          scene,
-        ),
-      );
-    }
-  } else {
-    throw new Error('level has no collider');
+    aggregates.push(staticMesh(collider));
   }
+  for (const c of terrainChunks) aggregates.push(staticMesh(c.lods[0]!));
+  if (!aggregates.length) throw new Error('level has no collider');
 
   // Navmesh overlay, built lazily.
   let navMesh: Mesh | null = null;

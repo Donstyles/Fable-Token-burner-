@@ -623,13 +623,33 @@ generated from a seed by `kernel/terrain/` and compiled by
   thin enough to see 600 m with the far ridges fading; the sky dome from
   the `mm6-day` preset. No shadows, as in MM6.
 
-### 15.2 Plans
+### 15.2 The village
 
-Village of generated timber-framed houses round a well on the valley floor
-(`kernel/terrain/town.ts`); a cave mouth at the ravine head into the
-dungeon (scene transition); cascades in the ravine stream with Phase 3's
-waterfalls; a desert region beyond the pass; far-mountain backdrop beyond
-the map edge.
+- The road begins at the village well, so the party wakes in the square and
+  walks out between two houses onto the serpentine. The square is a disc of
+  40 m radius flattened to one height (blending into the slope over 40 m
+  beyond), trodden earth in the splat, no trees within 20 m of its edge.
+- Houses are generated (`kernel/terrain/town.ts`), in the late-medieval
+  timber-framed manner MM6 draws: a stone plinth, plaster walls between
+  plank posts and an eave beam, a steep plank gable roof with overhanging
+  eaves, plaster gables, a chimney, a trim-stone door and iron-barred
+  windows. Eight slots ring the well at 0.6 of the square's radius; the
+  slot the road leaves through stays empty, so seven houses, every door
+  facing the well, sizes varied by the seed (7–11 m wide, 6–9 m deep,
+  walls 3.2–4.4 m). The well is a stone ring with two posts and a little
+  roof. About 870 triangles in all.
+- Solid: the houses' walls and roof wedges and the well ring go into the
+  GLB `collider` node, which the loader adds to physics beside the terrain
+  chunks, and into the navmesh collider, so monsters path round them. The
+  `town` point (8 m from the well along the road) is in the reachability
+  check.
+- Interiors come with Phase 6 (doors are drawn, not openable yet).
+
+### 15.3 Plans
+
+A cave mouth at the ravine head into the dungeon (scene transition);
+cascades in the ravine stream with Phase 3's waterfalls; a desert region
+beyond the pass; far-mountain backdrop beyond the map edge.
 
 ## 13. Decision log
 

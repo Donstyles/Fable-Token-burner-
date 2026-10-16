@@ -27,6 +27,8 @@ export interface TownSpec {
   y: number;
   radius: number;
   seed: number;
+  /** Direction the road leaves the square, radians from +X toward +Z; that slot stays empty. */
+  roadDirection?: number;
 }
 
 interface B {
@@ -361,11 +363,16 @@ export function wellMesh(
 
 export interface TownResult {
   houses: HouseSpec[];
+  well: P2;
   visual: MeshData;
   collider: MeshData;
 }
 
-/** Eight houses round the well, doors to the square, sizes varied by the seed. */
+/**
+ * Houses round the well in eight slots, doors to the square, sizes varied by the seed. The
+ * slot the road leaves through stays empty, so the road runs from the well out of the
+ * village between two houses.
+ */
 export function buildTown(spec: TownSpec): TownResult {
   let a = spec.seed >>> 0;
   const rng = (): number => {
@@ -377,14 +384,18 @@ export function buildTown(spec: TownSpec): TownResult {
   };
   const houses: HouseSpec[] = [];
   const count = 8;
-  const ring = spec.radius * 0.55;
+  const ring = spec.radius * 0.6;
+  const roadSlot = spec.roadDirection ?? Math.PI;
   for (let i = 0; i < count; i++) {
-    const angle = (i / count) * Math.PI * 2 + (rng() - 0.5) * 0.25;
+    // Slot 0 is the road's; the others fan out from it.
+    if (i === 0) continue;
+    const angle = roadSlot + (i / count) * Math.PI * 2 + (rng() - 0.5) * 0.2;
     const dist = ring * (0.85 + rng() * 0.3);
     const x = spec.centre[0] + Math.cos(angle) * dist;
     const z = spec.centre[1] + Math.sin(angle) * dist;
-    // The door faces the well: local +Z points toward the centre.
-    const yaw = Math.atan2(spec.centre[0] - x, spec.centre[1] - z) + (rng() - 0.5) * 0.2;
+    // The door faces the well: local +Z, which transformInto maps to (-sin yaw, cos yaw),
+    // points toward the centre.
+    const yaw = Math.atan2(x - spec.centre[0], spec.centre[1] - z) + (rng() - 0.5) * 0.2;
     houses.push({
       x,
       z,
@@ -405,5 +416,5 @@ export function buildTown(spec: TownSpec): TownResult {
   };
   for (const h of houses) add(houseMesh(h));
   add(wellMesh(spec.centre[0], spec.y, spec.centre[1]));
-  return { houses, visual, collider };
+  return { houses, well: spec.centre, visual, collider };
 }

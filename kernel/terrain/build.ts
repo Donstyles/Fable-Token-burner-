@@ -5,6 +5,7 @@ import type { NamedPoint, SpaceRecord, WaterSurface } from '../plan/level';
 import { terrainChunks, type TerrainChunk } from './chunks';
 import { appendMesh, terrainMesh, type ColouredMeshData } from './mesh';
 import { riverSurface } from './river';
+import { buildTown, type TownResult } from './town';
 import { forestMeshes, placeTrees, type ForestOptions, type TreeInstance } from './trees';
 import { generateValley, type ValleyResult } from './valley';
 
@@ -20,10 +21,16 @@ export interface TerrainSpec {
 export interface TerrainLevel {
   valley: ValleyResult;
   chunks: TerrainChunk[];
-  /** Trees, chunked by the exporter's centroid grouping. */
+  /** The village: houses and the well, chunked by the exporter's centroid grouping. */
+  visual: MeshData;
+  town: TownResult;
+  /** Forest geometry, for statistics; trees ship as instances. */
   forest: MeshData;
   trees: TreeInstance[];
+  /** Everything the navmesh is built on: terrain, trunks, houses. */
   collider: MeshData;
+  /** What the runtime adds to the terrain chunks for physics: the houses and the well. */
+  solids: MeshData;
   water: WaterSurface[];
   points: NamedPoint[];
   spaces: SpaceRecord[];
@@ -36,9 +43,17 @@ export function buildTerrainLevel(spec: TerrainSpec): TerrainLevel {
   const chunks = terrainChunks(valley, spec.chunkCells);
   const trees = placeTrees(valley, spec.forest);
   const forest = forestMeshes(trees);
-  // The collider is the full-detail terrain plus the trunks.
+  const town = buildTown({
+    centre: valley.town.centre,
+    y: valley.town.y,
+    radius: valley.town.radius,
+    seed: spec.seed,
+    roadDirection: valley.town.roadDirection,
+  });
+  // The navmesh collider is the full-detail terrain plus the trunks and the houses.
   const collider: ColouredMeshData = terrainMesh(valley);
   appendMesh(collider, forest.collider);
+  appendMesh(collider, town.collider);
   const colliderPlain: MeshData = {
     positions: collider.positions,
     normals: collider.normals,
@@ -54,9 +69,12 @@ export function buildTerrainLevel(spec: TerrainSpec): TerrainLevel {
   return {
     valley,
     chunks,
+    visual: town.visual,
+    town,
     forest: forest.visual,
     trees,
     collider: colliderPlain,
+    solids: town.collider,
     water: [riverSurface(valley)],
     points: valley.points,
     spaces: [
