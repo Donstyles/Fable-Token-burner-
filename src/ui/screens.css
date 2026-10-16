@@ -1,0 +1,183 @@
+/* Per-screen styles (Phase 5 step 10) on top of the frame and controls in ui.css: the
+   inventory grid, the spellbook, the rest screen, the services, character creation and the
+   automap. */
+
+/* Inventory */
+.inv-grid {
+  --cell: 32px;
+  display: grid;
+  grid-template-columns: repeat(14, var(--cell));
+  grid-template-rows: repeat(9, var(--cell));
+  gap: 2px;
+  padding: 4px;
+  align-self: flex-start;
+  flex: none;
+  background: #0a0806;
+  border: 1px solid #4a3a20;
+}
+.inv-cell {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid #231b10;
+}
+.inv-item {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: 2px 3px;
+  overflow: hidden;
+  background: linear-gradient(#4a3a24, #2c2014);
+  border: 1px solid #8a7444;
+  border-radius: 3px;
+  font-size: 10px;
+  line-height: 1.1;
+}
+.inv-item.selected {
+  border-color: #f0c050;
+  box-shadow: 0 0 0 1px #f0c050 inset;
+}
+.inv-item.broken {
+  color: #e06050;
+}
+.inv-glyph {
+  font:
+    bold 11px ui-monospace,
+    Menlo,
+    monospace;
+  color: #f0c050;
+}
+.inv-side {
+  flex: 1;
+  min-width: 0;
+  overflow-y: auto;
+}
+.inv-slot .ui-v {
+  font-size: 12px;
+}
+.inv-slot .slot-name {
+  flex: 0 0 76px;
+  font-size: 12px;
+  color: #c8b89a;
+}
+.inv-slot {
+  min-height: 28px;
+}
+.inv-give {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+/* Spellbook */
+.spell-target {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.spell-level {
+  min-width: 2.2em;
+  text-align: center;
+}
+
+/* Rest */
+.rest-clock {
+  font:
+    bold 28px ui-monospace,
+    Menlo,
+    monospace;
+  color: #f0c050;
+}
+.rest-date {
+  color: #c8b89a;
+}
+.rest-actions .ui-btn {
+  min-height: 44px;
+}
+
+/* Services */
+.svc-gold {
+  color: #f0c050;
+}
+
+/* Character creation */
+.cre-root {
+  position: absolute;
+  inset: 0;
+  z-index: 60;
+  padding: var(--sat) var(--sar) var(--sab) var(--sal);
+  display: flex;
+  background: var(--bg);
+}
+.cre-portrait {
+  width: 56px;
+  height: 70px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid var(--gold);
+  border-radius: 50%;
+  background: radial-gradient(#3a2c1c, #140e08);
+  font:
+    bold 30px Georgia,
+    serif;
+  color: #f0e4c8;
+}
+.cre-identity {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+.cre-name {
+  width: 100%;
+  min-height: 36px;
+  padding: 0 8px;
+  background: #0a0806;
+  color: var(--ink);
+  border: 1px solid #7a6a40;
+  border-radius: 4px;
+  font:
+    15px Georgia,
+    serif;
+  -webkit-user-select: text;
+  user-select: text;
+}
+.cre-stat {
+  display: grid;
+  grid-template-columns: 1fr 40px 40px 40px;
+  align-items: center;
+  gap: 4px;
+}
+.cre-stat .ui-btn {
+  min-height: 34px;
+  padding: 0;
+}
+.cre-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.cre-chip {
+  min-height: 32px;
+  padding: 0 8px;
+  font-size: 12px;
+}
+.cre-chip.fixed {
+  opacity: 0.8;
+  border-style: dashed;
+}
+
+/* Quest log */
+.quest-objective {
+  margin-top: 2px;
+  font-size: 12px;
+  color: #f0c050;
+}
+
+/* Automap */
+.map-canvas {
+  background: #0a0806;
+  border: 1px solid #4a3a20;
+  align-self: center;
+}
