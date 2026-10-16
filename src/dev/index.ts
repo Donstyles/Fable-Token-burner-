@@ -24,7 +24,12 @@ import { CombatFeedback } from '../world/combat-feedback';
 import { PortalWatcher, portalUrl, travel, type Portal } from '../world/portals';
 import { Monster } from '../world/monster';
 import { MONSTERS } from '../game/monsters';
-import { Party, TEST_PARTY } from '../game/party';
+import { Party } from '../game/party';
+import { healCharacter, type Character as CharacterSheet } from '../game/character';
+import { testCharacters } from '../game/fixtures';
+import { newGame, type GameState } from '../game/state';
+import { createCreationScreen } from '../ui/creation';
+import { installScreens, type Screens } from '../ui/screens';
 import { mulberry32 } from '../game/rng';
 import { HUMANOID_CLIPS } from '../../kernel/characters/clips';
 import { createPartyStrip } from './party-strip';
@@ -76,6 +81,8 @@ export interface DevHandle {
   simTime(): number;
   feedback: CombatFeedback;
   portals: PortalWatcher;
+  screens: Screens;
+  state: GameState;
   pickAt(x: number, y: number): string | null;
   /** Pointer event counters and consumed taps, for diagnosing input on real devices. */
   events: { down: number; move: number; up: number; cancel: number; taps: number; types: string[] };
@@ -164,9 +171,47 @@ export async function startDev(app: App): Promise<DevHandle> {
   const seed = Number(new URLSearchParams(location.search).get('seed')) || Date.now() % 100000;
   const rng = mulberry32(seed);
   diag(`combat seed ${seed}`);
-  const roster = new Party(TEST_PARTY);
+  // The party: the four test characters, or the ones made on the creation screen (?create).
+  const sheets: CharacterSheet[] = QUERY.has('create')
+    ? await new Promise<CharacterSheet[]>((resolve) => {
+        const creation = createCreationScreen(uiLayer, (made) => {
+          creation.dispose();
+          resolve(made);
+        });
+      })
+    : testCharacters();
+  const game = newGame(sheets, { seed, level: { id: LEVEL, x: 0, y: 0, z: 0, yawDeg: 0 } });
+  if (!game.ok) throw new Error(`new game: ${game.reason}`);
+  const state = game.state;
+  const roster = new Party(state.party);
   const strip = createPartyStrip(uiLayer, roster);
   const feedback = new CombatFeedback(scene, stepper, uiLayer, {}, rng);
+  // Simulated seconds: the party's recovery and the screens' die run on it.
+  let simTime = 0;
+  // The book shelf (DESIGN 14.5): sheet, items, spells, rest, quests, map. An open screen
+  // pauses the world, as MM6's books did. Spell effects beyond healing are reported for now.
+  const screens: Screens = installScreens(uiLayer, state, {
+    now: () => simTime,
+    onClose: () => {},
+    onRest: (kind) =>
+      panel.toast(
+        kind === 'dawn' ? 'waited until dawn' : kind === 'room' ? 'slept at the inn' : 'rested',
+      ),
+    onCast: (cast) => {
+      const caster = state.party[cast.caster]?.name ?? 'someone';
+      if (cast.failed) {
+        panel.toast(`${caster}'s spell fizzles`);
+        return;
+      }
+      for (const e of cast.effects) {
+        if (e.kind === 'heal') {
+          const m = state.party[e.member];
+          if (m) healCharacter(m, e.amount);
+        }
+      }
+      panel.toast(`${caster} casts ${cast.spell}`);
+    },
+  });
   const partyTarget = {
     get position() {
       return party.position;
@@ -297,6 +342,8 @@ export async function startDev(app: App): Promise<DevHandle> {
     simTime: () => simTime,
     feedback,
     portals,
+    screens,
+    state,
   };
 
   void startCombat();
@@ -385,11 +432,13 @@ export async function startDev(app: App): Promise<DevHandle> {
     camera.rotation.set(flyPitch, flyYaw, 0);
   };
 
-  let simTime = 0;
   let lastDeepToast = -10;
   scene.onBeforeRenderObservable.add(() => {
     // Hit stop (DESIGN.md 14.4): the world's step is zero for a few frames after a blow.
-    const dt = feedback.update(Math.min(engine.getDeltaTime() / 1000, 0.05));
+    // An open screen pauses the world; the hit stop also zeroes the step for a few frames.
+    const paused = screens.current() !== null;
+    const dt = paused ? 0 : feedback.update(Math.min(engine.getDeltaTime() / 1000, 0.05));
+    if (paused) stepper.timeScale = 0;
     simTime += dt;
     const input = zones.consume();
     if (fly) {

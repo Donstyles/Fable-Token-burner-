@@ -388,8 +388,10 @@ is interleaved for the outdoor slice.
 
 **Status 2026-10-16, night:** the rules of steps 1 to 3 and 5 to 9 exist as
 `src/game/` (DESIGN 14.5, 192 tests in all) without screens; hit feedback
-(DESIGN 14.4) is in. Next: DOM screens for creation, inventory, spellbook,
-rest and services in the dev build, then the HUD (step 10).
+(DESIGN 14.4) is in. Screens for steps 2, 3, 5, 6, 7 and 8 exist in
+`src/ui/` and open from a book shelf in the dev build (247 tests in all).
+Left: dialogue with NPCs (step 7's talk), save slots in IndexedDB (step 9),
+the HUD frame (step 10), the paper doll, drag and drop, promotions.
 
 **Risks:** touch layout of dense screens (inventory grid, spellbook); solved
 by designing at device resolution from the start.

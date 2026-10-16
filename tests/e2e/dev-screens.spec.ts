@@ -1,0 +1,62 @@
+import { expect, test } from '@playwright/test';
+
+/** The Phase 5 screens (DESIGN 14.5) in the dev build: the book shelf, the screens, creation. */
+type Dev = {
+  ready: boolean;
+  simTime(): number;
+  screens: { open(name: string): void; close(): void; current(): string | null };
+  state: { party: { name: string; hp: number }[]; gold: number; food: number };
+};
+type W = Window & { ftb?: { dev?: Dev } };
+
+const SCREENS = ['sheet', 'items', 'spells', 'rest', 'quests', 'map'];
+
+test.describe('screens', () => {
+  test('the shelf opens every screen and an open screen pauses the world', async ({ page }) => {
+    await page.goto('dev/?dev&lite&seed=3');
+    await page.waitForFunction(() => (window as unknown as W).ftb?.dev?.ready === true, null, {
+      timeout: 120_000,
+    });
+    const party = await page.evaluate(() => (window as unknown as W).ftb!.dev!.state);
+    expect(party.party.map((m) => m.name)).toEqual(['Alric', 'Mira', 'Tobin', 'Sera']);
+    expect(party.gold).toBe(200);
+    expect(party.food).toBe(7);
+    await expect(page.locator('.ui-shelf-btn')).toHaveCount(6);
+    for (const name of SCREENS) {
+      await page.evaluate((n) => (window as unknown as W).ftb!.dev!.screens.open(n), name);
+      expect(await page.evaluate(() => (window as unknown as W).ftb!.dev!.screens.current())).toBe(
+        name,
+      );
+      await expect(page.locator('.ui-modal')).toBeVisible();
+      if (name === 'sheet' || name === 'items' || name === 'spells') {
+        await page.waitForTimeout(400);
+        await page.screenshot({
+          path: `test-results/screen-${name}-${test.info().project.name}.png`,
+        });
+      }
+    }
+    // Paused: simulated time stands still while a screen is open, and runs again after.
+    const t0 = await page.evaluate(() => (window as unknown as W).ftb!.dev!.simTime());
+    await page.waitForTimeout(600);
+    const t1 = await page.evaluate(() => (window as unknown as W).ftb!.dev!.simTime());
+    expect(t1).toBe(t0);
+    await page.evaluate(() => (window as unknown as W).ftb!.dev!.screens.close());
+    expect(await page.evaluate(() => (window as unknown as W).ftb!.dev!.screens.current())).toBe(
+      null,
+    );
+    await page.waitForTimeout(600);
+    const t2 = await page.evaluate(() => (window as unknown as W).ftb!.dev!.simTime());
+    expect(t2).toBeGreaterThan(t1);
+  });
+
+  test('?create shows the creation screen before the world starts', async ({ page }) => {
+    await page.goto('dev/?dev&lite&create');
+    await expect(page.locator('.ui-title')).toHaveText('New Party', { timeout: 120_000 });
+    await expect(page.locator('.cre-chip').first()).toBeVisible();
+    await page.waitForTimeout(400);
+    await page.screenshot({ path: `test-results/screen-creation-${test.info().project.name}.png` });
+    expect(await page.evaluate(() => (window as unknown as W).ftb?.dev?.ready ?? false)).toBe(
+      false,
+    );
+  });
+});

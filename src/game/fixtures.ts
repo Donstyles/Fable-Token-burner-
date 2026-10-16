@@ -1,6 +1,6 @@
 /**
- * Creation inputs for the unit tests: four characters with the whole pool spent. Imported by
- * tests only; the runtime never loads this module.
+ * Creation inputs for the unit tests and the dev build's party: four characters with the
+ * whole pool spent. The production build never loads this module.
  */
 import type { Character } from './character';
 import { createCharacter, type CreationInput, defaultCreation } from './creation';

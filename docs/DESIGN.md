@@ -620,7 +620,25 @@ calendar clock and rest, town services (tavern, temple, guild, trainer,
 shop with Merchant), quests, the automap and versioned save files. Every
 rule followed and every simplification is tabled in `src/game/README.md`.
 The combat party (`party.ts`) is backed by a character sheet or, for test
-data, a plain definition. Screens for these come next.
+data, a plain definition.
+
+Screens (`src/ui/`, 2026-10-16): plain DOM and CSS in the dev build's
+house style (dark stone panels, gold rules, amber selection, monospace
+numbers), phone landscape with the safe areas kept. A book-shelf bar at
+the bottom right opens the character sheet, inventory (the 14 × 9 grid,
+tap to select then tap a cell or slot; equipment slots as a list, no
+paper doll yet), spellbook (schools as tabs, cast reports a `CastEvent`
+whose effects the runtime performs: healing now, the rest toasted), rest
+(8 hours, wait until dawn), quest log and automap; town services (tavern,
+temple, guild, trainer, shop) open from a house record; character
+creation (`?create` in the dev build) makes the four sheets before the
+world starts. Every screen's rows and actions come from a pure
+`*-model.ts` with tests; the DOM is thin. An open screen pauses the
+world, as MM6's books did. The dev party is the four test characters
+(Alric the knight, Mira the archer, Tobin the cleric, Sera the sorcerer)
+outfitted by `newGame`. Known: the dev build's mute button overlaps the
+screen title; portraits are a text initial until the pipeline delivers
+them.
 
 ## 15. Outdoor regions (generated terrain, 2026-10-16)
 
@@ -1069,6 +1087,11 @@ edge; a triplanar terrain projection for steep faces.
   knockback, shake and a few frames of freeze; the party struck gets a
   red flash. Sounds are synthesised through Babylon's audio engine until
   recordings land.
+- 2026-10-16 – **Screens merged** (section 14.5): a background agent built
+  `src/ui/` (sheet, inventory, spellbook, rest, services, creation, quest
+  log, automap) over the rules layer with 47 model tests; wired into the
+  dev build with a book shelf, pausing the world while open; the dev party
+  is now four real character sheets.
 - 2026-10-15 – **Owner's look tuning becomes the default** (sent from the
   dev panel after playing the water build, "looks moody"): posterize filter
   on at 5 levels with dither 0.45 (cell 2), bloom off, vignette 0.6, contrast
