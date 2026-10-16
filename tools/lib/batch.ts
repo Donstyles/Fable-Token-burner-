@@ -66,6 +66,8 @@ export interface BatchRun {
   consumedCredits?: number;
   taskIds: string[];
   tasks: Record<string, Partial<Record<BatchStep, TaskRecord>>>;
+  /** Submissions tried per "<assetId>/<step>": a rejected one (no task) gets a fresh operation id. */
+  attempts?: Record<string, number>;
 }
 
 export interface Batch {

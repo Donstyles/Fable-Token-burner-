@@ -167,8 +167,16 @@ export async function runBatch(number: number, opts: RunOptions = {}): Promise<R
       if (item.step === 'text-to-image')
         throw new Error(`${assetId}: text-to-image is not run here`);
       const resource = RESOURCE[item.step];
-      const operationId = `b${pad(batch.number)}-${assetId}-${item.step}-r${runIndex + 1}`;
       const existing = records[item.step];
+      // The CLI journals every submission by operation id and refuses to reuse one that was
+      // rejected (no task created), so each attempt gets its own id; an accepted attempt is
+      // recorded as a task below before another could start.
+      const attemptKey = `${assetId}/${item.step}`;
+      const attempt = existing
+        ? (run.attempts?.[attemptKey] ?? 1)
+        : ((run.attempts ??= {})[attemptKey] = (run.attempts[attemptKey] ?? 0) + 1);
+      if (!existing) await save();
+      const operationId = `b${pad(batch.number)}-${assetId}-${item.step}-r${runIndex + 1}-a${attempt}`;
       if (existing && TERMINAL_STATES.has(existing.status)) {
         if (existing.status !== 'SUCCEEDED') {
           throw new Error(`${assetId} ${item.step}: task ${existing.taskId} ${existing.status}`);
