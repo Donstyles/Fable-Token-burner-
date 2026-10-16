@@ -7,6 +7,7 @@ import type { Vec3 } from '../core/math';
 import type { NamedPoint } from '../plan/level';
 import { CAVE, caveLocalOf, type CaveSpec } from './cave';
 import { Heightfield } from './heightfield';
+import { layRoad } from './road';
 import { fbm, lerp, ridged, smoothstep } from './noise';
 import { GroundPath, smoothPath, type P2 } from './spline';
 import type { StreamLayout } from './stream';
@@ -219,42 +220,10 @@ export function generateValley(spec: ValleySpec): ValleyResult {
     }
   }
 
-  // The road's own height profile: the land under it, smoothed and never dropping.
-  const samples = Math.ceil(road.length / 4);
-  const profile: number[] = [];
-  for (let s = 0; s <= samples; s++) {
-    const p = road.at((s / samples) * road.length);
-    profile.push(hf.sample(p[0], p[1]));
-  }
-  for (let pass_ = 0; pass_ < 3; pass_++) {
-    for (let s = 1; s < profile.length - 1; s++) {
-      profile[s] = (profile[s - 1]! + profile[s]! * 2 + profile[s + 1]!) / 4;
-    }
-  }
-  // Never dropping, and never steeper than a cart road: the land is cut to match.
-  const maxRise = Math.tan((22 * Math.PI) / 180) * (road.length / samples);
-  for (let s = 1; s < profile.length; s++) {
-    profile[s] = Math.min(Math.max(profile[s]!, profile[s - 1]!), profile[s - 1]! + maxRise);
-  }
-  const roadHeight = (along: number): number => {
-    const f = (along / road.length) * samples;
-    const a = Math.min(samples, Math.max(0, Math.floor(f)));
-    const b = Math.min(samples, a + 1);
-    return lerp(profile[a]!, profile[b]!, f - a);
-  };
-
-  // Pass 2: flatten under the road with a shoulder.
+  // The road: smoothed, never dropping, never steeper than a cart road; the land is cut to
+  // match it within a shoulder.
   const ROAD_WIDTH = 10;
-  for (let j = 0; j < n; j++) {
-    for (let i = 0; i < n; i++) {
-      const x = hf.x(i);
-      const z = hf.z(j);
-      const hit = road.nearest(x, z);
-      if (hit.distance > 22) continue;
-      const w = 1 - smoothstep(ROAD_WIDTH / 2 + 2, 22, hit.distance);
-      hf.set(i, j, lerp(hf.get(i, j), roadHeight(hit.along), w));
-    }
-  }
+  layRoad(hf, road, { width: ROAD_WIDTH, cutTo: 22, maxGradeDeg: 22 });
 
   // Splat weights and the forest mask.
   const splat = new Float32Array(n * n * 3);

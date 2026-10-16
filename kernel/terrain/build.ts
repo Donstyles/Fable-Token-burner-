@@ -11,6 +11,8 @@ import type {
 } from '../plan/level';
 import { caveMouth } from './cave';
 import { terrainChunks, type TerrainChunk } from './chunks';
+import { generateDesert, oasisSurface, type DesertResult } from './desert';
+import type { Heightfield } from './heightfield';
 import { appendMesh, terrainMesh, type ColouredMeshData } from './mesh';
 import { riverSurface } from './river';
 import { streamFalls, streamSurfaces } from './stream';
@@ -18,7 +20,11 @@ import { buildTown, type TownResult } from './town';
 import { forestMeshes, placeTrees, type ForestOptions, type TreeInstance } from './trees';
 import { generateValley, type ValleyResult } from './valley';
 
+export type RegionKind = 'valley' | 'desert';
+
 export interface TerrainSpec {
+  /** Which generator lays the land out; the valley when unset. */
+  region?: RegionKind;
   seed: number;
   width: number;
   cell: number;
@@ -27,27 +33,53 @@ export interface TerrainSpec {
   forest?: ForestOptions;
 }
 
+/** Role names for the terrain material's four slots (DESIGN.md 15.1). */
+export interface TerrainTextures {
+  base: string;
+  path: string;
+  scree: string;
+  snow: string;
+}
+
+/** Lighting, fog and sky for the region, as the runtime's environment fields. */
+export interface RegionEnvironment {
+  lightColor: [number, number, number];
+  ambientColor: [number, number, number];
+  fogColor: [number, number, number];
+  fogDensity: number;
+  skyZenith: [number, number, number];
+  skyHorizon: [number, number, number];
+  cloudAmount: number;
+}
+
 export interface TerrainLevel {
-  valley: ValleyResult;
+  region: RegionKind;
+  height: Heightfield;
+  valley?: ValleyResult;
+  desert?: DesertResult;
   chunks: TerrainChunk[];
-  /** The village: houses and the well, chunked by the exporter's centroid grouping. */
+  /** Structures: houses, the well, the cave; chunked by the exporter's centroid grouping. */
   visual: MeshData;
-  town: TownResult;
+  town?: TownResult;
   /** Forest geometry, for statistics; trees ship as instances. */
   forest: MeshData;
   trees: TreeInstance[];
-  /** Everything the navmesh is built on: terrain, trunks, houses. */
+  /** Everything the navmesh is built on: terrain, trunks, structures. */
   collider: MeshData;
-  /** What the runtime adds to the terrain chunks for physics: houses, the well, the cave. */
+  /** What the runtime adds to the terrain chunks for physics: the structures. */
   solids: MeshData;
   lights: LightPlacement[];
   portals: PortalRecord[];
   water: WaterSurface[];
   waterfalls: Waterfall[];
   points: NamedPoint[];
+  /** Points the reachability check may fail on (summits, fords). */
+  unreachableOk: string[];
   spaces: SpaceRecord[];
-  spawn: ValleyResult['spawn'];
+  spawn: { position: [number, number, number]; yawDeg: number };
   bounds: { min: [number, number, number]; max: [number, number, number] };
+  terrainTextures: TerrainTextures;
+  environment: RegionEnvironment;
 }
 
 function appendPlain(into: MeshData, mesh: MeshData): void {
@@ -59,7 +91,42 @@ function appendPlain(into: MeshData, mesh: MeshData): void {
   for (const m of mesh.materials) into.materials.push(m);
 }
 
-export function buildTerrainLevel(spec: TerrainSpec): TerrainLevel {
+const empty = (): MeshData => ({ positions: [], normals: [], uvs: [], indices: [], materials: [] });
+
+/** The navmesh collider: the full-detail terrain plus whatever else is solid. */
+function navCollider(base: { height: Heightfield; splat: Float32Array }, ...solids: MeshData[]) {
+  const collider: ColouredMeshData = terrainMesh(base);
+  for (const s of solids) appendMesh(collider, s);
+  return {
+    positions: collider.positions,
+    normals: collider.normals,
+    uvs: collider.uvs,
+    indices: collider.indices,
+    materials: collider.materials.map(() => ROLE.collider),
+  };
+}
+
+const VALLEY_ENV: RegionEnvironment = {
+  lightColor: [1.0, 0.92, 0.78],
+  ambientColor: [0.36, 0.4, 0.48],
+  fogColor: [0.62, 0.68, 0.78],
+  fogDensity: 0.0017,
+  skyZenith: [0.15, 0.3, 0.7],
+  skyHorizon: [0.6, 0.7, 0.85],
+  cloudAmount: 0.4,
+};
+
+const DESERT_ENV: RegionEnvironment = {
+  lightColor: [1.0, 0.9, 0.72],
+  ambientColor: [0.44, 0.41, 0.38],
+  fogColor: [0.82, 0.74, 0.6],
+  fogDensity: 0.0014,
+  skyZenith: [0.3, 0.5, 0.82],
+  skyHorizon: [0.86, 0.8, 0.68],
+  cloudAmount: 0.15,
+};
+
+function buildValleyLevel(spec: TerrainSpec): TerrainLevel {
   const valley = generateValley(spec);
   const chunks = terrainChunks(valley, spec.chunkCells);
   const trees = placeTrees(valley, spec.forest);
@@ -72,36 +139,34 @@ export function buildTerrainLevel(spec: TerrainSpec): TerrainLevel {
     roadDirection: valley.town.roadDirection,
   });
   const cave = caveMouth(valley.cave);
-  const visual: MeshData = { positions: [], normals: [], uvs: [], indices: [], materials: [] };
+  const visual = empty();
   appendPlain(visual, town.visual);
   appendPlain(visual, cave.visual);
-  const solids: MeshData = { positions: [], normals: [], uvs: [], indices: [], materials: [] };
+  const solids = empty();
   appendPlain(solids, town.collider);
   appendPlain(solids, cave.collider);
-  // The navmesh collider is the full-detail terrain plus the trunks, the houses and the cave.
-  const collider: ColouredMeshData = terrainMesh(valley);
-  appendMesh(collider, forest.collider);
-  appendMesh(collider, solids);
-  const colliderPlain: MeshData = {
-    positions: collider.positions,
-    normals: collider.normals,
-    uvs: collider.uvs,
-    indices: collider.indices,
-    materials: collider.materials.map(() => ROLE.collider),
-  };
   const half = spec.width / 2;
   const bounds = {
     min: [-half, valley.height.min - 10, -half] as [number, number, number],
     max: [half, valley.height.max + 50, half] as [number, number, number],
   };
+  // The pass: the road's end at the western edge is the door to the desert.
+  const road = valley.road;
+  const at3 = (along: number): [number, number, number] => {
+    const p = road.at(along);
+    return [p[0], valley.height.sample(p[0], p[1]), p[1]];
+  };
+  const back = road.nearest(...road.at(road.length - 10)).tangent;
   return {
+    region: 'valley',
+    height: valley.height,
     valley,
     chunks,
     visual,
     town,
     forest: forest.visual,
     trees,
-    collider: colliderPlain,
+    collider: navCollider(valley, forest.collider, solids),
     solids,
     lights: [
       { position: cave.light, color: [1, 0.62, 0.3], range: 10, intensity: 2.5, kind: 'glow' },
@@ -112,9 +177,17 @@ export function buildTerrainLevel(spec: TerrainSpec): TerrainLevel {
         position: cave.portal,
         radius: 1.6,
         target: { level: 'showcase', entry: 'exit' },
+        arrive: { position: cave.arrive, yawDeg: ((valley.cave.yaw + Math.PI) * 180) / Math.PI },
+      },
+      {
+        name: 'pass',
+        position: at3(road.length - 4),
+        radius: 4,
+        target: { level: 'desert', entry: 'pass' },
+        // Arriving from the desert: on the road just inside the pass, facing back down it.
         arrive: {
-          position: cave.arrive,
-          yawDeg: ((valley.cave.yaw + Math.PI) * 180) / Math.PI,
+          position: at3(road.length - 12),
+          yawDeg: (Math.atan2(-back[0], -back[1]) * 180) / Math.PI,
         },
       },
     ],
@@ -122,15 +195,80 @@ export function buildTerrainLevel(spec: TerrainSpec): TerrainLevel {
     waterfalls: streamFalls(valley.ravine, valley.stream),
     // The cave's portal is a point too, so the build checks the tunnel is reachable.
     points: [...valley.points, { name: 'cave', position: cave.portal, kind: 'door' }],
+    unreachableOk: ['summit', 'ford'],
     spaces: [
       {
         name: 'valley',
         kind: 'cavern',
         bounds,
-        fog: { density: 0.0017, color: [0.62, 0.68, 0.78] },
+        fog: { density: VALLEY_ENV.fogDensity, color: VALLEY_ENV.fogColor },
       },
     ],
     spawn: valley.spawn,
     bounds,
+    terrainTextures: { base: 'grass', path: 'path', scree: 'scree', snow: 'snow' },
+    environment: VALLEY_ENV,
   };
+}
+
+function buildDesertLevel(spec: TerrainSpec): TerrainLevel {
+  const desert = generateDesert(spec);
+  const chunks = terrainChunks(desert, spec.chunkCells);
+  const forest = forestMeshes(desert.trees);
+  const solids = empty();
+  const half = spec.width / 2;
+  const bounds = {
+    min: [-half, desert.height.min - 10, -half] as [number, number, number],
+    max: [half, desert.height.max + 50, half] as [number, number, number],
+  };
+  const road = desert.road;
+  const at3 = (along: number): [number, number, number] => {
+    const p = road.at(along);
+    return [p[0], desert.height.sample(p[0], p[1]), p[1]];
+  };
+  const inward = road.nearest(...road.at(10)).tangent;
+  return {
+    region: 'desert',
+    height: desert.height,
+    desert,
+    chunks,
+    visual: empty(),
+    forest: forest.visual,
+    trees: desert.trees,
+    collider: navCollider(desert, forest.collider),
+    solids,
+    lights: [],
+    portals: [
+      {
+        name: 'pass',
+        position: at3(3),
+        radius: 4,
+        target: { level: 'valley', entry: 'pass' },
+        arrive: {
+          position: at3(10),
+          yawDeg: (Math.atan2(inward[0], inward[1]) * 180) / Math.PI,
+        },
+      },
+    ],
+    water: [oasisSurface(desert)],
+    waterfalls: [],
+    points: desert.points,
+    unreachableOk: [],
+    spaces: [
+      {
+        name: 'desert',
+        kind: 'cavern',
+        bounds,
+        fog: { density: DESERT_ENV.fogDensity, color: DESERT_ENV.fogColor },
+      },
+    ],
+    spawn: desert.spawn,
+    bounds,
+    terrainTextures: { base: 'sand', path: 'path', scree: 'sandstone', snow: 'sand' },
+    environment: DESERT_ENV,
+  };
+}
+
+export function buildTerrainLevel(spec: TerrainSpec): TerrainLevel {
+  return (spec.region ?? 'valley') === 'desert' ? buildDesertLevel(spec) : buildValleyLevel(spec);
 }

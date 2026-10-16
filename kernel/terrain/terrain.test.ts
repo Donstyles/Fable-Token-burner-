@@ -5,7 +5,9 @@ import { terrainMesh } from './mesh';
 import { fbm, ridged } from './noise';
 import { riverSurface } from './river';
 import { GroundPath, smoothPath } from './spline';
+import { buildTerrainLevel } from './build';
 import { CAVE, caveLocalOf, caveMouth } from './cave';
+import { generateDesert } from './desert';
 import { streamFalls, streamSurfaces } from './stream';
 import { buildTown } from './town';
 import { forestMeshes, placeTrees, treeMesh } from './trees';
@@ -265,5 +267,56 @@ describe('ravine stream', () => {
     const water = streamSurfaces(v.ravine, v.stream);
     expect(water).toHaveLength(terraces.length + 1);
     expect(water.at(-1)!.kind).toBe('pool');
+  });
+});
+
+describe('desert', () => {
+  it('lays dunes, mesas, an oasis with trees and a road from the pass', () => {
+    const d = generateDesert({ seed: 11, width: 1024, cell: 16 });
+    expect(d.height.min).toBeGreaterThan(0);
+    expect(d.height.max).toBeLessThan(260);
+    // The road starts at the eastern edge and reaches the mesas in the west.
+    const start = d.road.at(0);
+    expect(start[0]).toBeGreaterThan(400);
+    const end = d.road.at(d.road.length);
+    expect(end[0]).toBeLessThan(-200);
+    // The oasis pool lies in a bowl below its rim, with trees round it and none on the road.
+    const { centre, y, radius } = d.oasis;
+    expect(d.height.sample(centre[0], centre[1])).toBeLessThan(y);
+    // The road skirts the pool: never nearer than the rim.
+    expect(d.road.nearest(centre[0], centre[1]).distance).toBeGreaterThan(radius + 10);
+    expect(d.height.sample(centre[0] + radius + 20, centre[1])).toBeGreaterThan(y);
+    expect(d.trees.length).toBeGreaterThan(8);
+    for (const t of d.trees) {
+      expect(Math.hypot(t.x - centre[0], t.z - centre[1])).toBeGreaterThan(radius);
+      expect(d.road.nearest(t.x, t.z).distance).toBeGreaterThan(d.roadWidth / 2);
+    }
+    expect(d.points.map((p) => p.name)).toEqual(['oasis', 'road-mid', 'mesa']);
+    // Nothing in the snow slot; rock only on steep faces.
+    let snow = 0;
+    for (let i = 2; i < d.splat.length; i += 3) snow += d.splat[i]!;
+    expect(snow).toBe(0);
+  });
+
+  it('builds as a region with its own textures, environment and the pass portal', () => {
+    const level = buildTerrainLevel({
+      region: 'desert',
+      seed: 11,
+      width: 1024,
+      cell: 16,
+      chunkCells: 16,
+    });
+    expect(level.region).toBe('desert');
+    expect(level.terrainTextures.base).toBe('sand');
+    expect(level.environment.fogColor[0]).toBeGreaterThan(0.7);
+    expect(level.portals.map((p) => `${p.name}>${p.target.level}:${p.target.entry}`)).toEqual([
+      'pass>valley:pass',
+    ]);
+    expect(level.water.map((w) => w.name)).toEqual(['oasis']);
+    expect(level.chunks.length).toBe(4 * 4 * 3);
+    expect(level.trees.length).toBe(level.desert!.trees.length);
+    const valley = buildTerrainLevel({ seed: 7, width: 1024, cell: 16, chunkCells: 16 });
+    expect(valley.portals.map((p) => p.name)).toEqual(['cave', 'pass']);
+    expect(valley.terrainTextures.base).toBe('grass');
   });
 });

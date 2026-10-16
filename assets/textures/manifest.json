@@ -184,5 +184,31 @@
     "url": "https://polyhaven.com/a/forest_leaves_02",
     "metresPerTile": 1.5,
     "size": 256
+  },
+  "sand": {
+    "role": "sand",
+    "source": "polyhaven",
+    "id": "sand_01",
+    "name": "Sand 01",
+    "authors": [
+      "Rob Tuytel"
+    ],
+    "licence": "CC0 1.0",
+    "url": "https://polyhaven.com/a/sand_01",
+    "metresPerTile": 3,
+    "size": 256
+  },
+  "sandstone": {
+    "role": "sandstone",
+    "source": "polyhaven",
+    "id": "sandstone_cracks",
+    "name": "Sandstone Cracks",
+    "authors": [
+      "Rob Tuytel"
+    ],
+    "licence": "CC0 1.0",
+    "url": "https://polyhaven.com/a/sandstone_cracks",
+    "metresPerTile": 4,
+    "size": 256
   }
 }

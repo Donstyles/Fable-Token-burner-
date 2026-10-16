@@ -1,13 +1,20 @@
 /** Terrain geometry: the heightfield as a mesh with splat weights as vertex colours. */
 import { ROLE } from '../elements/roles';
 import type { MeshData } from '../core/mesh';
-import type { ValleyResult } from './valley';
+import type { Heightfield } from './heightfield';
+
+/** What every region's generator produces for the terrain geometry. */
+export interface TerrainBase {
+  height: Heightfield;
+  /** Per vertex: path, scree, snow weights (or the region's equivalents); base is the rest. */
+  splat: Float32Array;
+}
 
 export interface ColouredMeshData extends MeshData {
   colors: number[];
 }
 
-export function terrainMesh(v: ValleyResult): ColouredMeshData {
+export function terrainMesh(v: TerrainBase): ColouredMeshData {
   const hf = v.height;
   const n = hf.n;
   const positions: number[] = [];

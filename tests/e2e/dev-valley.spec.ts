@@ -64,7 +64,7 @@ test.describe('valley region', () => {
     expect(info.town).not.toBeNull();
     // The cave mouth at the ravine head leads into the dungeon (DESIGN 15.3).
     expect(info.cave).not.toBeNull();
-    expect(info.portals).toEqual(['cave>showcase:exit']);
+    expect(info.portals).toEqual(['cave>showcase:exit', 'pass>desert:pass']);
     expect(Math.hypot(info.town!.x - info.spawn.x, info.town!.z - info.spawn.z)).toBeLessThan(30);
     expect(info.outdoor).toBe(true);
     expect(info.trees).toBeGreaterThan(1000);

@@ -21,6 +21,8 @@ export const ROLE = {
   snow: 16,
   bark: 17,
   leaves: 18,
+  sand: 19,
+  sandstone: 20,
   /** Invisible collision geometry (ramps under stairs). Never rendered. */
   collider: 100,
 } as const;

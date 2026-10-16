@@ -79,7 +79,7 @@ async function buildTerrain(id: string, validate: boolean): Promise<boolean> {
   const report = checkReachability(
     nav.navMesh,
     level.spawn.position,
-    level.points.filter((p) => !['summit', 'ford'].includes(p.name)),
+    level.points.filter((p) => !level.unreachableOk.includes(p.name)),
     4,
   );
   nav.navMesh.destroy();
@@ -102,6 +102,9 @@ async function buildTerrain(id: string, validate: boolean): Promise<boolean> {
     name: id,
     version: 1,
     outdoor: true,
+    region: level.region,
+    terrainTextures: level.terrainTextures,
+    environment: level.environment,
     lod: { chunk: chunkMetres, distances: [chunkMetres * 2.2, chunkMetres * 5], forestFar: 700 },
     trees: level.trees.map((t) => [
       t.kind === 'pine' ? 0 : 1,
@@ -127,7 +130,7 @@ async function buildTerrain(id: string, validate: boolean): Promise<boolean> {
         .filter((c) => c.lod === 0)
         .reduce((n, c) => n + c.mesh.indices.length / 3, 0),
       trees: level.trees.length,
-      houses: level.town.houses.length,
+      houses: level.town?.houses.length ?? 0,
       portals: level.portals.length,
       waterfalls: level.waterfalls.length,
       visualTriangles: level.visual.indices.length / 3,
@@ -135,8 +138,8 @@ async function buildTerrain(id: string, validate: boolean): Promise<boolean> {
       colliderTriangles: level.collider.indices.length / 3,
       navTriangles: nav.debug.indices.length / 3,
       glbBytes: glb.byteLength,
-      heightMin: round(level.valley.height.min),
-      heightMax: round(level.valley.height.max),
+      heightMin: round(level.height.min),
+      heightMax: round(level.height.max),
     },
   };
   await mkdir(OUT, { recursive: true });
@@ -146,7 +149,7 @@ async function buildTerrain(id: string, validate: boolean): Promise<boolean> {
   console.info(
     [
       `${id}: ${sidecar.stats.triangles} terrain tris at full detail, ${level.trees.length} trees ` +
-        `(${sidecar.stats.forestTriangles} tris), ${level.town.houses.length} houses ` +
+        `(${sidecar.stats.forestTriangles} tris), ${sidecar.stats.houses} houses ` +
         `(${sidecar.stats.visualTriangles} tris), ${(glb.byteLength / 1024 / 1024).toFixed(1)} MB glb, ` +
         `${sidecar.stats.navTriangles} nav tris, heights ${sidecar.stats.heightMin} to ${sidecar.stats.heightMax} m`,
       `  generate ${ms(t0, t1)}, nav ${ms(t1, t2)}, glb ${ms(t2, t3)}`,

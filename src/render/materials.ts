@@ -167,12 +167,17 @@ void main(void) {
   }
   light = min(light + carried, vec3(1.6));
 #ifdef TERRAIN
-  // Grass under path, scree and snow weights carried per vertex (DESIGN.md 15).
+  // Grass under path, scree and snow weights carried per vertex (DESIGN.md 15). Scree, the
+  // texture of steep faces, is projected along the face's own horizontal axis where the
+  // ground tips past 35°, so cliffs do not smear the flat projection into streaks.
   vec3 w = clamp(vSplat, 0.0, 1.0);
   float g = max(0.0, 1.0 - w.r - w.g - w.b);
+  float steep = smoothstep(0.18, 0.45, 1.0 - abs(n.y));
+  vec2 wall = abs(n.x) > abs(n.z) ? vec2(vWorldPos.z, vWorldPos.y) : vec2(-vWorldPos.x, vWorldPos.y);
+  vec2 screeUV = mix(vUV, wall, steep) * splatScale.z;
   vec3 albedo = texture2D(diffuseSampler, vUV * splatScale.x).rgb * g +
     texture2D(pathSampler, vUV * splatScale.y).rgb * w.r +
-    texture2D(screeSampler, vUV * splatScale.z).rgb * w.g +
+    texture2D(screeSampler, screeUV).rgb * w.g +
     texture2D(snowSampler, vUV * splatScale.w).rgb * w.b;
 #else
   vec3 albedo = texture2D(diffuseSampler, vUV).rgb;

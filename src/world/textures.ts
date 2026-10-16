@@ -25,6 +25,8 @@ import screeUrl from '../../assets/textures/scree.png';
 import snowUrl from '../../assets/textures/snow.png';
 import barkUrl from '../../assets/textures/bark.png';
 import leavesUrl from '../../assets/textures/leaves.png';
+import sandUrl from '../../assets/textures/sand.png';
+import sandstoneUrl from '../../assets/textures/sandstone.png';
 
 export interface RoleTexture {
   texture: BaseTexture;
@@ -51,6 +53,8 @@ const FILES: Record<string, string> = {
   snow: snowUrl,
   bark: barkUrl,
   leaves: leavesUrl,
+  sand: sandUrl,
+  sandstone: sandstoneUrl,
 };
 
 function lampPane(scene: Scene): DynamicTexture {

@@ -28,7 +28,7 @@ import { PhysicsBody } from '@babylonjs/core/Physics/v2/physicsBody';
 import { PhysicsMotionType } from '@babylonjs/core/Physics/v2/IPhysicsEnginePlugin';
 import { parseGlb, type GlbNode, type GlbPrimitive } from './glb';
 import type { Portal } from './portals';
-import type { RoleTextures } from './textures';
+import type { RoleTexture, RoleTextures } from './textures';
 
 type V3 = [number, number, number];
 
@@ -67,6 +67,19 @@ export interface LevelSidecar {
   name: string;
   /** Outdoor region: sun-lit terrain chunks with detail levels, forests, sky (DESIGN.md 15). */
   outdoor?: boolean;
+  region?: string;
+  /** Role names for the terrain material's slots; the valley's when absent. */
+  terrainTextures?: { base: string; path: string; scree: string; snow: string };
+  /** The region's light, fog and sky. */
+  environment?: {
+    lightColor: V3;
+    ambientColor: V3;
+    fogColor: V3;
+    fogDensity: number;
+    skyZenith: V3;
+    skyHorizon: V3;
+    cloudAmount: number;
+  };
   lod?: { chunk: number; distances: [number, number]; forestFar: number };
   /** Trees as [kind (0 pine, 1 broadleaf), x, y, z, yaw, scale] in kernel space. */
   trees?: [number, number, number, number, number, number][];
@@ -212,10 +225,22 @@ export async function loadLevel(
     const tex = textures.get(role) ?? textures.get(1)!;
     const s = 1 / tex.metresPerTile;
     if (role === ROLE.terrain) {
-      const grass = textures.get(ROLE.grass)!;
-      const path = textures.get(ROLE.path)!;
-      const scree = textures.get(ROLE.scree)!;
-      const snow = textures.get(ROLE.snow)!;
+      const slots = sidecar.terrainTextures ?? {
+        base: 'grass',
+        path: 'path',
+        scree: 'scree',
+        snow: 'snow',
+      };
+      const roleTexture = (name: string): RoleTexture => {
+        const id = (ROLE as Record<string, number>)[name];
+        const t = id === undefined ? undefined : textures.get(id);
+        if (!t) throw new Error(`terrain texture role ${name} is not loaded`);
+        return t;
+      };
+      const grass = roleTexture(slots.base);
+      const path = roleTexture(slots.path);
+      const scree = roleTexture(slots.scree);
+      const snow = roleTexture(slots.snow);
       mat = materials.create({
         name: 'level-terrain',
         texture: grass.texture,

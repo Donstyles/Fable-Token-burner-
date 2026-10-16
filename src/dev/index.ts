@@ -115,15 +115,25 @@ export async function startDev(app: App): Promise<DevHandle> {
       `${level.meshes.length} meshes`,
   );
   if (level.sidecar.outdoor) {
-    // Outdoor look (DESIGN.md 15): a sun, a lit sky, fog that keeps the far ridges hazy.
+    // Outdoor look (DESIGN.md 15): a sun, a lit sky, fog that keeps the far ridges hazy; the
+    // region's sidecar carries its own colours.
     const space = level.spaces[0];
+    const env = level.sidecar.environment;
+    const c3 = (v: [number, number, number]): Color3 => new Color3(v[0], v[1], v[2]);
     app.materials.setEnvironment({
       ...ENVIRONMENTS['mm6-day'],
       lightDirection: new Vector3(-0.45, -0.8, 0.4).normalize(),
-      lightColor: new Color3(1.0, 0.92, 0.78),
-      ambientColor: new Color3(0.36, 0.4, 0.48),
+      lightColor: env ? c3(env.lightColor) : new Color3(1.0, 0.92, 0.78),
+      ambientColor: env ? c3(env.ambientColor) : new Color3(0.36, 0.4, 0.48),
       fogColor: space?.fog?.color ?? new Color3(0.62, 0.68, 0.78),
       fogDensity: space?.fog?.density ?? 0.0017,
+      ...(env
+        ? {
+            skyZenith: c3(env.skyZenith),
+            skyHorizon: c3(env.skyHorizon),
+            cloudAmount: env.cloudAmount,
+          }
+        : {}),
     });
     app.sky.apply(app.materials.env);
     app.sky.mesh.setEnabled(true);

@@ -5,8 +5,7 @@
  * at different detail levels never show the sky.
  */
 import { ROLE } from '../elements/roles';
-import type { ColouredMeshData } from './mesh';
-import type { ValleyResult } from './valley';
+import type { ColouredMeshData, TerrainBase } from './mesh';
 
 export interface TerrainChunk {
   /** `t:<ci>:<cj>:<lod>` */
@@ -19,7 +18,7 @@ export interface TerrainChunk {
 
 export const LOD_STEPS = [1, 2, 4] as const;
 
-export function terrainChunks(v: ValleyResult, chunkCells: number, skirt = 6): TerrainChunk[] {
+export function terrainChunks(v: TerrainBase, chunkCells: number, skirt = 6): TerrainChunk[] {
   const hf = v.height;
   if (hf.cells % chunkCells !== 0) throw new Error('chunkCells must divide the grid');
   const per = hf.cells / chunkCells;

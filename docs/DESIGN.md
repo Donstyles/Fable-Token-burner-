@@ -756,10 +756,32 @@ generated from a seed by `kernel/terrain/` and compiled by
   the gorge walls; a triplanar projection is the fix when the look pass
   comes.
 
-### 15.5 Plans
+### 15.5 The desert
 
-A desert region beyond the pass; far-mountain backdrop beyond the map
-edge; a triplanar terrain projection for steep faces.
+- A second region, 1.6 km square (`kernel/terrain/desert.ts`,
+  `levels/desert/terrain.ts`): dune fields as ridged noise elongated
+  north to south with slowly varying height, three flat-topped mesas with
+  steep sides, an escarpment rising to the eastern edge where the pass
+  from the valley arrives, and an oasis: a bowl in the dunes with a pool
+  in its floor and a ring of broadleaf trees. One road, allowed to descend,
+  runs from the pass down the escarpment, across the dunes past the oasis
+  and on to the mesas; its grade is capped at 20°.
+- Regions are a `region` field in the terrain spec; the build (`buildTerrainLevel`)
+  switches generators and every region carries its own terrain textures
+  (role names for the material's four slots: sand, dirt, sandstone, and
+  sand again in the unused snow slot) and its own environment (light,
+  ambient, fog, sky, clouds) in the sidecar, which the runtime applies.
+  Textures: Poly Haven `sand_01` and `sandstone_cracks`, CC0.
+- The pass joins the two regions: the valley's `pass` portal at the end
+  of its road leads to the desert's `pass` portal on its eastern edge and
+  back, each arriving on the road a few metres in, facing along it.
+- Not yet: creatures, ruins or a town in the desert; the oasis has no
+  interior; the sky stays the valley's dome shape with warmer colours.
+
+### 15.6 Plans
+
+Far-mountain backdrop beyond the map edge; a triplanar terrain projection
+for steep faces; a desert town and dungeon when Phase 6 content comes.
 
 ## 13. Decision log
 
@@ -1092,6 +1114,10 @@ edge; a triplanar terrain projection for steep faces.
   log, automap) over the rules layer with 47 model tests; wired into the
   dev build with a book shelf, pausing the world while open; the dev party
   is now four real character sheets.
+- 2026-10-16 – **The desert** (section 15.5): a second generated region
+  beyond the pass, joined to the valley by portals at both ends of the
+  pass; regions carry their own textures and environment in the sidecar.
+  Phase 5b steps 2 to 5 are in; the backdrop and the look pass remain.
 - 2026-10-15 – **Owner's look tuning becomes the default** (sent from the
   dev panel after playing the water build, "looks moody"): posterize filter
   on at 5 levels with dither 0.45 (cell 2), bloom off, vignette 0.6, contrast

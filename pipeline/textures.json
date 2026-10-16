@@ -71,6 +71,16 @@
       "source": "polyhaven",
       "id": "forest_leaves_02",
       "metresPerTile": 1.5
+    },
+    "sand": {
+      "source": "polyhaven",
+      "id": "sand_01",
+      "metresPerTile": 3
+    },
+    "sandstone": {
+      "source": "polyhaven",
+      "id": "sandstone_cracks",
+      "metresPerTile": 4
     }
   }
 }
