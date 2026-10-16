@@ -9,6 +9,7 @@ type Dev = {
   level: {
     sidecar: { outdoor?: boolean; trees?: unknown[]; stats: Record<string, number> };
     meshes: { name: string; isEnabled(): boolean }[];
+    collider: { getTotalVertices(): number };
   };
   positionOf(): { x: number; y: number; z: number };
   pointOf(name: string): { x: number; y: number; z: number } | null;
@@ -41,7 +42,7 @@ test.describe('valley region', () => {
         summit: d.pointOf('summit'),
         town: d.pointOf('town'),
         houses: d.level.sidecar.stats['houses'],
-        solids: names.includes('level-collider'),
+        solids: d.level.collider.getTotalVertices() > 0,
         spawn: d.positionOf(),
       };
     });
