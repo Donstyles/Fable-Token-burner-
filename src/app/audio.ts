@@ -27,6 +27,10 @@ let context: AudioContext | null = null;
 let engine: AudioEngineV2 | null = null;
 let enginePromise: Promise<AudioEngineV2 | null> | null = null;
 let beep: StaticSound | null = null;
+const impacts = new Map<ImpactKind, StaticSound>();
+
+/** Combat impacts (DESIGN.md 14.4): the blow that lands, the heavy one, the swing that misses. */
+export type ImpactKind = 'whack' | 'thud' | 'whoosh';
 
 function applySessionType(type: string): void {
   const nav = navigator as Navigator & { audioSession?: { type: string } };
@@ -79,6 +83,49 @@ function beepBuffer(ctx: BaseAudioContext): AudioBuffer {
   return buffer;
 }
 
+/** A tiny deterministic noise source, so every build sounds the same. */
+function noise(seed: number): () => number {
+  let a = seed >>> 0;
+  return () => {
+    a = (a + 0x6d2b79f5) >>> 0;
+    let t = a;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296 - 0.5;
+  };
+}
+
+/**
+ * Synthesised impacts until recordings land: a whack is a sharp noise crack over a short
+ * low thump; a thud is the same, lower and longer; a whoosh is low-passed noise that swells
+ * and dies in a tenth of a second.
+ */
+function impactBuffer(ctx: BaseAudioContext, kind: ImpactKind): AudioBuffer {
+  const rate = ctx.sampleRate;
+  const seconds = kind === 'thud' ? 0.32 : kind === 'whack' ? 0.18 : 0.16;
+  const buffer = ctx.createBuffer(1, Math.floor(rate * seconds), rate);
+  const data = buffer.getChannelData(0);
+  const rnd = noise(kind === 'whack' ? 11 : kind === 'thud' ? 23 : 37);
+  let low = 0;
+  for (let i = 0; i < data.length; i++) {
+    const t = i / rate;
+    let v: number;
+    if (kind === 'whoosh') {
+      // One-pole low-pass on noise, envelope rising then falling.
+      low += (rnd() - low) * 0.12;
+      const env = Math.sin(Math.min(1, t / seconds) * Math.PI);
+      v = low * 2.2 * env;
+    } else {
+      const crack = rnd() * Math.exp(-t / (kind === 'thud' ? 0.035 : 0.02));
+      const hz = (kind === 'thud' ? 70 : 120) * (1 + 1.6 * Math.exp(-t / 0.03));
+      const thump = Math.sin(2 * Math.PI * hz * t) * Math.exp(-t / (kind === 'thud' ? 0.12 : 0.06));
+      v = crack * 0.9 + thump * 0.8;
+    }
+    data[i] = Math.max(-1, Math.min(1, v));
+  }
+  return buffer;
+}
+
 /**
  * Creates the context and Babylon's engine once, at boot. Babylon resumes the context on
  * the first touch; the page pauses it while hidden so nothing plays when minimised.
@@ -108,6 +155,14 @@ export function installAudio(): Promise<AudioEngineV2 | null> {
       context.onstatechange = () => diag(`audio: ${context?.state ?? 'none'}`);
       engine = await CreateAudioEngineAsync({ audioContext: context, resumeOnInteraction: true });
       beep = await engine.createSoundAsync('test-beep', beepBuffer(context), { volume: 1 });
+      for (const kind of ['whack', 'thud', 'whoosh'] as const) {
+        impacts.set(
+          kind,
+          await engine.createSoundAsync(`impact-${kind}`, impactBuffer(context, kind), {
+            volume: kind === 'whoosh' ? 0.5 : 0.9,
+          }),
+        );
+      }
       diag(`audio engine: ready (${engine.state})`);
     } catch (e) {
       diag(`audio engine: unavailable (${String(e)})`);
@@ -143,6 +198,13 @@ export function installAudio(): Promise<AudioEngineV2 | null> {
 /** Puts the listener on a scene node, normally the camera. */
 export function attachListener(node: Node): void {
   engine?.listener.attach(node);
+}
+
+/** Play a combat impact; silent until the engine is ready or while the page is hidden. */
+export function playImpact(kind: ImpactKind): void {
+  const sound = impacts.get(kind);
+  if (!engine || !sound) return;
+  sound.play();
 }
 
 /** The dev build's "test sound": straight through Babylon's main bus, logged either way. */

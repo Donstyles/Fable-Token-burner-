@@ -132,6 +132,8 @@ uniform vec3 pointColor[${MAX_POINT_LIGHTS}];
 uniform float pointRange[${MAX_POINT_LIGHTS}];
 uniform float lightKnee;
 uniform float priorityLights;
+// Hit flash: 1 paints the surface white (DESIGN.md 14.4).
+uniform float flash;
 void main(void) {
   if (clipEnabled > 0.5 && vClip > 0.0) discard;
   vec3 n = normalize(vNormal);
@@ -175,7 +177,7 @@ void main(void) {
 #else
   vec3 albedo = texture2D(diffuseSampler, vUV).rgb;
 #endif
-  vec3 c = albedo * tint * light + emissive;
+  vec3 c = mix(albedo * tint * light + emissive, vec3(1.0), flash);
   gl_FragColor = vec4(mix(fogColor, c, vFog), 1.0);
 }
 `;
@@ -269,6 +271,7 @@ export class RetroMaterials {
         'priorityLights',
         'pointRange',
         'splatScale',
+        'flash',
       ],
       samplers: ['diffuseSampler', 'pathSampler', 'screeSampler', 'snowSampler'],
       defines,
@@ -285,6 +288,7 @@ export class RetroMaterials {
     mat.setFloat('bakedMix', this.bakedMix);
     mat.setFloat('lightKnee', this.lightKnee);
     mat.setFloat('priorityLights', 0);
+    mat.setFloat('flash', 0);
     mat.setVector4('clipPlane', Vector4.Zero());
     mat.setFloat('clipEnabled', 0);
     // Water render passes set scene.clipPlane around their draws; read it per bind so the
@@ -310,6 +314,11 @@ export class RetroMaterials {
     this.materials.add(mat);
     this.pushEnv(mat);
     return mat;
+  }
+
+  /** Paint a material white: 0 normal, 1 fully white (hit flash). */
+  setFlash(mat: ShaderMaterial, amount: number): void {
+    mat.setFloat('flash', amount);
   }
 
   /** Change a material's own ambient fill (see VertexLitOptions.ambient). */

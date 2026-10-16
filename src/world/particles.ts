@@ -62,6 +62,35 @@ export function spray(scene: Scene, o: SprayOptions): ParticleSystem {
   return ps;
 }
 
+/**
+ * Blood thrown in the direction of a blow (DESIGN.md 14.4): a one-shot system, started once
+ * and fired by setting `manualEmitCount` with the emitter and directions set per hit.
+ */
+export function hitBurst(scene: Scene): ParticleSystem {
+  const ps = new ParticleSystem('hit-burst', 200, scene);
+  ps.particleTexture = softSprite(scene);
+  ps.emitter = Vector3.Zero();
+  ps.minEmitBox = new Vector3(-0.15, -0.15, -0.15);
+  ps.maxEmitBox = new Vector3(0.15, 0.15, 0.15);
+  ps.direction1 = new Vector3(-1, 0.5, -1);
+  ps.direction2 = new Vector3(1, 2, 1);
+  ps.minEmitPower = 2.5;
+  ps.maxEmitPower = 5;
+  ps.gravity = new Vector3(0, -14, 0);
+  ps.minLifeTime = 0.22;
+  ps.maxLifeTime = 0.5;
+  ps.minSize = 0.07;
+  ps.maxSize = 0.2;
+  ps.color1 = new Color4(0.55, 0.07, 0.05, 1);
+  ps.color2 = new Color4(0.4, 0.04, 0.03, 0.9);
+  ps.colorDead = new Color4(0.25, 0.02, 0.02, 0);
+  ps.emitRate = 0;
+  ps.manualEmitCount = 0;
+  ps.blendMode = ParticleSystem.BLENDMODE_STANDARD;
+  ps.updateSpeed = 0.016;
+  return ps;
+}
+
 /** Slow drifting mist around a plunge pool. */
 export function mist(scene: Scene, at: Vector3, radius: number): ParticleSystem {
   const ps = new ParticleSystem('mist', 80, scene);

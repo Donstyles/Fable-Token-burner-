@@ -18,11 +18,14 @@ export interface PartyTarget {
   /** Feet position in scene space. */
   position: Vector3;
   /** The member this blow goes for, or null when nobody stands. */
-  pickTarget(rng: Rng): { name: string; armorClass: number; hit(damage: number): void } | null;
+  pickTarget(
+    rng: Rng,
+  ): { name: string; armorClass: number; hit(damage: number, from: Vector3): void } | null;
 }
 
 export interface MonsterEvent {
   monster: Monster;
+  kind: 'hit' | 'miss' | 'death';
   text: string;
 }
 
@@ -38,6 +41,7 @@ export class Monster {
   private swingDone = true;
   private nextSwingIn = 0;
   private moving: 'walk' | 'run' | null = null;
+  private push: { dir: Vector3; remaining: number } | null = null;
 
   constructor(
     readonly def: MonsterDef,
@@ -87,7 +91,7 @@ export class Monster {
       this.agent?.remove();
       this.agent = null;
       this.character.play('death');
-      this.events.push({ monster: this, text: `${this.def.name} falls` });
+      this.events.push({ monster: this, kind: 'death', text: `${this.def.name} falls` });
       return 'dead';
     }
     this.state = 'hit';
@@ -98,7 +102,25 @@ export class Monster {
     return 'hit';
   }
 
+  /** Shove the monster along `dir` (horizontal, normalised) over the next tenth of a second. */
+  knockback(dir: Vector3, metres: number): void {
+    this.push = { dir: dir.clone(), remaining: metres };
+  }
+
+  private applyPush(dt: number): void {
+    if (!this.push) return;
+    // Most of the shove in the first frames, the rest tapering off.
+    const step = Math.min(this.push.remaining, Math.max(this.push.remaining * 0.35, 4 * dt));
+    this.character.node.position.addInPlace(this.push.dir.scale(step));
+    this.push.remaining -= step;
+    if (this.push.remaining <= 0.005) {
+      this.push = null;
+      this.agent?.teleport(this.character.node.position);
+    }
+  }
+
   update(dt: number, party: PartyTarget, now: number): void {
+    this.applyPush(dt);
     if (this.state === 'dead') return;
     const d = this.distanceTo(party.position);
     switch (this.state) {
@@ -127,7 +149,7 @@ export class Monster {
         this.attack(dt, party, now, d);
         break;
     }
-    if (this.agent && this.state !== 'attack') {
+    if (this.agent && this.state !== 'attack' && !this.push) {
       this.character.node.position.copyFrom(this.agent.position);
       const v = this.agent.velocity;
       if (v.x * v.x + v.z * v.z > 0.01) this.character.yaw = Math.atan2(v.x, v.z);
@@ -181,13 +203,18 @@ export class Monster {
       if (target) {
         const r = resolveAttack(this.def.attackBonus, this.def.damage, target.armorClass, this.rng);
         if (r.hit) {
-          target.hit(r.damage);
+          target.hit(r.damage, this.position);
           this.events.push({
             monster: this,
+            kind: 'hit',
             text: `${this.def.name} hits ${target.name} for ${r.damage}`,
           });
         } else {
-          this.events.push({ monster: this, text: `${this.def.name} misses ${target.name}` });
+          this.events.push({
+            monster: this,
+            kind: 'miss',
+            text: `${this.def.name} misses ${target.name}`,
+          });
         }
       }
     }

@@ -20,6 +20,7 @@ import { LevelWaterfalls } from '../world/waterfall';
 import { AnimationStepper } from '../render/animation-step';
 import { DEFAULT_CHARACTER_FILL, loadCharacter, type Character } from '../world/character';
 import { Navigation } from '../world/navigation';
+import { CombatFeedback } from '../world/combat-feedback';
 import { Monster } from '../world/monster';
 import { MONSTERS } from '../game/monsters';
 import { Party, TEST_PARTY } from '../game/party';
@@ -72,6 +73,7 @@ export interface DevHandle {
   pointOf(name: string): { x: number; y: number; z: number } | null;
   /** Accumulated simulated seconds, so tests can measure speeds independent of frame rate. */
   simTime(): number;
+  feedback: CombatFeedback;
   pickAt(x: number, y: number): string | null;
   /** Pointer event counters and consumed taps, for diagnosing input on real devices. */
   events: { down: number; move: number; up: number; cancel: number; taps: number; types: string[] };
@@ -159,6 +161,7 @@ export async function startDev(app: App): Promise<DevHandle> {
   diag(`combat seed ${seed}`);
   const roster = new Party(TEST_PARTY);
   const strip = createPartyStrip(uiLayer, roster);
+  const feedback = new CombatFeedback(scene, stepper, uiLayer, {}, rng);
   const partyTarget = {
     get position() {
       return party.position;
@@ -170,7 +173,10 @@ export async function startDev(app: App): Promise<DevHandle> {
       return {
         name: member.def.name,
         armorClass: member.armorClass,
-        hit: (damage: number) => roster.takeDamage(index, damage),
+        hit: (damage: number) => {
+          roster.takeDamage(index, damage);
+          feedback.partyStruck();
+        },
       };
     },
   };
@@ -273,6 +279,7 @@ export async function startDev(app: App): Promise<DevHandle> {
       return p ? { x: p.x, y: p.y, z: p.z } : null;
     },
     simTime: () => simTime,
+    feedback,
   };
 
   void startCombat();
@@ -282,6 +289,8 @@ export async function startDev(app: App): Promise<DevHandle> {
     if (!monster.alive) return `${monster.def.name} is dead`;
     const a = roster.attack(monster, simTime, rng);
     if (!a) return 'nobody is ready';
+    if (a.result.hit) feedback.monsterStruck(monster, party.position, !monster.alive);
+    else feedback.monsterMissed();
     const line = a.result.hit
       ? `${a.member.def.name} hits ${monster.def.name} for ${a.result.damage}`
       : `${a.member.def.name} misses ${monster.def.name}`;
@@ -362,7 +371,8 @@ export async function startDev(app: App): Promise<DevHandle> {
   let simTime = 0;
   let lastDeepToast = -10;
   scene.onBeforeRenderObservable.add(() => {
-    const dt = Math.min(engine.getDeltaTime() / 1000, 0.05);
+    // Hit stop (DESIGN.md 14.4): the world's step is zero for a few frames after a blow.
+    const dt = feedback.update(Math.min(engine.getDeltaTime() / 1000, 0.05));
     simTime += dt;
     const input = zones.consume();
     if (fly) {
@@ -382,8 +392,12 @@ export async function startDev(app: App): Promise<DevHandle> {
     navigation?.update(dt);
     for (const m of handle.monsters) {
       m.update(dt, partyTarget, simTime);
-      for (const ev of m.takeEvents()) panel.toast(ev.text);
+      for (const ev of m.takeEvents()) {
+        panel.toast(ev.text);
+        if (ev.kind === 'miss') feedback.partyMissed();
+      }
     }
+    if (!fly) feedback.applyCamera(camera);
     strip.update(simTime);
     const eye = camera.globalPosition;
     const yaw = fly ? flyYaw : party.yaw;

@@ -383,8 +383,13 @@ saving, and approves each screen's layout on device.
 to play a game"). Rules in `src/game/` (stats, to-hit, damage, recovery,
 party selection) with unit tests; runtime navmesh on recast-navigation;
 monster state machine; the bandit chases, swings and falls to taps in the
-dev build with a party strip; e2e covers it. Steps 1 to 3 and 5 to 10 follow;
-the terrain system (DESIGN 15) is interleaved for the outdoor slice.
+dev build with a party strip; e2e covers it. The terrain system (DESIGN 15)
+is interleaved for the outdoor slice.
+
+**Status 2026-10-16, night:** the rules of steps 1 to 3 and 5 to 9 exist as
+`src/game/` (DESIGN 14.5, 192 tests in all) without screens; hit feedback
+(DESIGN 14.4) is in. Next: DOM screens for creation, inventory, spellbook,
+rest and services in the dev build, then the HUD (step 10).
 
 **Risks:** touch layout of dense screens (inventory grid, spellbook); solved
 by designing at device resolution from the start.

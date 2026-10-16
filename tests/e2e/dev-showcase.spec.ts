@@ -12,6 +12,7 @@ type Point = { x: number; y: number };
 type Dev = {
   ready: boolean;
   simTime(): number;
+  feedback: { frozen: boolean; flash: number };
   debug(): { move: number; velocity: [number, number, number]; waterDepth: number };
   water: { currentQuality: string; clock: number; setQuality(q: string): void };
   level: {
@@ -302,8 +303,16 @@ test.describe('dev build', () => {
     );
     // Taps attack with the ready member; the others wait out their recovery. He falls.
     const log: string[] = [];
+    let punchy = 0;
     for (let i = 0; i < 400; i++) {
-      const line = await page.evaluate(() => (window as unknown as W).ftb!.dev!.attack('bandit'));
+      // A landed blow freezes the game and flashes the bandit in the same frame (14.4).
+      const r = await page.evaluate(() => {
+        const d = (window as unknown as W).ftb!.dev!;
+        const line = d.attack('bandit');
+        return { line, frozen: d.feedback.frozen, flash: d.feedback.flash };
+      });
+      const line = r.line;
+      if (line && /hits Bandit/.test(line) && r.frozen && r.flash === 1) punchy++;
       if (line && line !== 'nobody is ready') log.push(line);
       const state = await page.evaluate(
         () => (window as unknown as W).ftb!.dev!.monsters[0]!.state,
@@ -312,6 +321,7 @@ test.describe('dev build', () => {
       await page.waitForTimeout(200);
     }
     expect(log.some((l) => /hits Bandit for \d+/.test(l))).toBe(true);
+    expect(punchy).toBe(log.filter((l) => /hits Bandit/.test(l)).length);
     expect(log.at(-1)).toMatch(/Bandit falls/);
     expect(await page.evaluate(() => (window as unknown as W).ftb!.dev!.monsters[0]!.hp)).toBe(0);
     expect(await page.evaluate(() => (window as unknown as W).ftb!.dev!.character!.clip)).toBe(

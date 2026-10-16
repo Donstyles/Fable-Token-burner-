@@ -579,6 +579,49 @@ whatever it did); dead (the death clip holds, the agent leaves the crowd,
 the body stays). Test data: the bandit, level 2, 25 hp, AC 8, attack 3,
 1d6+1.
 
+### 14.4 Hit feedback (2026-10-16)
+
+From the owner's reel on punchy hits, all five, for every landed blow
+(`src/world/combat-feedback.ts`, clocks in `feedback-timing.ts`):
+
+1. **Flash.** The struck monster is painted white for 0.08 s: a `flash`
+   uniform in the retro material mixes the lit colour to white, so it works
+   on every character material without a second shader.
+2. **Sound on the impact frame.** A whack (noise crack over a short low
+   thump) when a blow lands, a heavier thud when it kills or when the party
+   is struck, a whoosh for a miss; synthesised buffers played through
+   Babylon's audio engine until recordings land.
+3. **Particles in the blow's direction.** A one-shot blood burst (16
+   particles, 32 on a kill) from the monster's chest along the line from
+   the attacker, falling under gravity, dark red.
+4. **Knockback.** The monster is shoved 0.45 m (0.7 m on a kill) away from
+   the attacker over a few frames, then its crowd agent is teleported to
+   where it ended up.
+5. **Shake and freeze.** The game freezes for 0.07 s (0.14 s on a kill):
+   the world's step is zero and the animation stepper's time scale is zero,
+   so clips, monsters and water hold; the camera jitters 4.5 cm (9 cm when
+   the party is struck) resampled at 30 Hz, fading over 0.22 s, with a
+   little roll.
+
+The party being struck gets the thud, the shake and a red multiply flash
+over the view fading in 0.18 s, as MM6 tinted the screen. Misses get the
+whoosh only. Tuning values are in `DEFAULT_FEEDBACK`.
+
+### 14.5 Rules and data layer
+
+`src/game/` holds the MM6 rules as pure TypeScript with a test beside each
+module: skills and classes, conditions, items and the 14 × 9 inventory
+grid with equipment slots, the character sheet (HP, SP, attack, damage,
+armour, recovery from stats, skills and equipment), creation (class base
+stats plus a 50-point pool, two fixed and two picked skills), experience
+(1000 × L × (L − 1) / 2, levels at a trainer), spells and the spellbook
+(24 spells across the nine schools, Normal/Expert/Master tiers), the
+calendar clock and rest, town services (tavern, temple, guild, trainer,
+shop with Merchant), quests, the automap and versioned save files. Every
+rule followed and every simplification is tabled in `src/game/README.md`.
+The combat party (`party.ts`) is backed by a character sheet or, for test
+data, a plain definition. Screens for these come next.
+
 ## 15. Outdoor regions (generated terrain, 2026-10-16)
 
 Owner's ask: vast landscapes with ravines, serpentines, woods, passes, alpine
@@ -962,6 +1005,21 @@ beyond the pass; far-mountain backdrop beyond the map edge.
   terrain mode must not redeclare the attribute; and the navmesh climb must
   cover one cell's rise on the steepest walkable slope or hillsides break
   into islands.
+- 2026-10-16 – **The village and the road's start.** Seven generated
+  timber-framed houses round a well on a flattened square; the road now
+  begins at the well, so the party wakes in the village (section 15.2).
+  Houses are kernel geometry with real textures, solid in physics and in
+  the navmesh. Interiors wait for Phase 6.
+- 2026-10-16 – **MM6 rules layer merged** (section 14.5): a background
+  agent built `src/game/` (skills, classes, conditions, items, inventory,
+  character, creation, experience, spells, spellbook, time, rest,
+  services, quests, automap, save, state) with 71 tests; simplifications
+  are tabled in `src/game/README.md` for the owner to accept or change.
+- 2026-10-16 – **Hit feedback** after the owner's reel (section 14.4):
+  flash, whack on the impact frame, blood in the blow's direction,
+  knockback, shake and a few frames of freeze; the party struck gets a
+  red flash. Sounds are synthesised through Babylon's audio engine until
+  recordings land.
 - 2026-10-15 – **Owner's look tuning becomes the default** (sent from the
   dev panel after playing the water build, "looks moody"): posterize filter
   on at 5 levels with dither 0.45 (cell 2), bloom off, vignette 0.6, contrast

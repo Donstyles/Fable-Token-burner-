@@ -77,6 +77,13 @@ export class Character {
     }
   }
 
+  /** Paint the character white (hit flash): 0 normal, 1 white. */
+  setFlash(amount: number): void {
+    for (const mesh of this.meshes) {
+      this.materials.setFlash(mesh.material as ShaderMaterial, amount);
+    }
+  }
+
   get clip(): string | null {
     return this.current?.name ?? null;
   }

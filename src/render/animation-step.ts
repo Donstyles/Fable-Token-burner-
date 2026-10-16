@@ -39,6 +39,9 @@ export class AnimationStepper {
   private readonly entries = new Map<AnimationGroup, Entry>();
   private readonly observer: Observer<Scene>;
 
+  /** 0 freezes every clip (hit stop), 1 runs at the display's pace. */
+  timeScale = 1;
+
   constructor(
     private readonly scene: Scene,
     public stepFps = 10,
@@ -90,7 +93,7 @@ export class AnimationStepper {
   }
 
   private tick(): void {
-    const dt = this.scene.getEngine().getDeltaTime() / 1000;
+    const dt = (this.scene.getEngine().getDeltaTime() / 1000) * this.timeScale;
     for (const e of this.entries.values()) {
       e.elapsed += dt * e.speed;
       const frame = quantizeFrame(
