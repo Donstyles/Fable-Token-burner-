@@ -87,11 +87,14 @@ export class Character {
     return first?.runtimeAnimations[0]?.currentFrame ?? 0;
   }
 
-  play(name: string): void {
+  /** Play a clip by name; one-shot clips hold their last frame. Replaying restarts it. */
+  play(name: string, opts: { loop?: boolean; speed?: number } = {}): void {
     const group = this.groups.get(name);
     if (!group) throw new Error(`${this.node.name}: no clip ${name} (${this.clips.join(', ')})`);
+    const loop = opts.loop ?? !ONE_SHOT_CLIPS.has(name);
     if (this.current === group) {
-      this.stepper.restart(group);
+      this.stepper.remove(group);
+      this.stepper.add(group, { loop, speed: opts.speed ?? 1 });
       return;
     }
     if (this.current) {
@@ -99,7 +102,26 @@ export class Character {
       this.current.stop();
     }
     this.current = group;
-    this.stepper.add(group, { loop: !ONE_SHOT_CLIPS.has(name) });
+    this.stepper.add(group, { loop, speed: opts.speed ?? 1 });
+  }
+
+  /** True when the current clip is a one-shot that has played out (or nothing plays). */
+  get finished(): boolean {
+    return this.current ? this.stepper.finished(this.current) : true;
+  }
+
+  /** Seconds of the current clip at its authored rate, 0 when nothing plays. */
+  get clipDuration(): number {
+    return this.current ? this.stepper.duration(this.current) : 0;
+  }
+
+  /** Facing about Y, radians; 0 looks along +Z. */
+  get yaw(): number {
+    return this.node.rotation.y;
+  }
+
+  set yaw(value: number) {
+    this.node.rotation.y = value;
   }
 
   dispose(): void {

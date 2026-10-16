@@ -102,3 +102,49 @@
   white-space: pre-wrap;
   word-break: break-all;
 }
+
+/* Party strip: a stand-in for the HUD's portrait row. */
+.party-strip {
+  position: absolute;
+  left: 50%;
+  bottom: max(6px, env(safe-area-inset-bottom));
+  transform: translateX(-50%);
+  display: flex;
+  gap: 6px;
+  pointer-events: none;
+  font:
+    12px/1.2 ui-monospace,
+    Menlo,
+    monospace;
+  color: #e8dcc0;
+}
+.party-member {
+  width: 84px;
+  padding: 4px 6px;
+  background: rgba(20, 12, 8, 0.75);
+  border: 1px solid rgba(232, 220, 192, 0.35);
+  border-radius: 3px;
+}
+.party-member.selected {
+  border-color: #f0c050;
+  box-shadow: 0 0 0 1px #f0c050 inset;
+}
+.party-member.recovering {
+  opacity: 0.55;
+}
+.party-member.dead {
+  opacity: 0.35;
+  text-decoration: line-through;
+}
+.party-bar {
+  height: 5px;
+  margin: 3px 0;
+  background: rgba(0, 0, 0, 0.6);
+}
+.party-fill {
+  height: 100%;
+  background: #c03a2a;
+}
+.party-hp {
+  text-align: right;
+}

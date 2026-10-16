@@ -19,7 +19,13 @@ import { LevelWater, WATER_QUALITIES, type WaterQuality } from '../world/water';
 import { LevelWaterfalls } from '../world/waterfall';
 import { AnimationStepper } from '../render/animation-step';
 import { DEFAULT_CHARACTER_FILL, loadCharacter, type Character } from '../world/character';
+import { Navigation } from '../world/navigation';
+import { Monster } from '../world/monster';
+import { MONSTERS } from '../game/monsters';
+import { Party, TEST_PARTY } from '../game/party';
+import { mulberry32 } from '../game/rng';
 import { HUMANOID_CLIPS } from '../../kernel/characters/clips';
+import { createPartyStrip } from './party-strip';
 import banditUrl from '../../assets/characters/bandit/bandit.glb?url';
 import { Braziers, FogBySpace, Torch } from '../world/atmosphere';
 import { UnderwaterTint, isUnderwater, wadeSpeedFactor, waterDepthAt } from '../world/wading';
@@ -72,6 +78,11 @@ export interface DevHandle {
   /** The first Meshy character, placed ahead of the spawn; null until loaded. */
   character: Character | null;
   stepper: AnimationStepper;
+  /** Monsters in the level, for tests: state, hit points and a programmatic tap. */
+  monsters: Monster[];
+  roster: Party;
+  /** Attack a monster by name with the ready member, as a tap would; the log line or null. */
+  attack(name: string): string | null;
 }
 
 const DEG = Math.PI / 180;
@@ -123,26 +134,58 @@ export async function startDev(app: App): Promise<DevHandle> {
   const fog = new FogBySpace(app.materials, level.spaces);
   const underwater = new UnderwaterTint(uiLayer);
   diag(`water: ${level.water.length} bodies, ${level.waterfalls.length} falls`);
-  // The bandit (batch 001) walks on the spot four metres ahead of the spawn, facing the party;
-  // clips step at MM6's rate regardless of the display refresh.
+  // Combat test bed (PLAN Phase 5 step 4): the test party, a seeded die, the level's navmesh
+  // and one bandit six metres ahead of the spawn. Clips step at MM6's rate regardless of the
+  // display refresh. `?seed=<n>` makes a run repeatable.
   const stepper = new AnimationStepper(scene, 10);
+  const seed = Number(new URLSearchParams(location.search).get('seed')) || Date.now() % 100000;
+  const rng = mulberry32(seed);
+  diag(`combat seed ${seed}`);
+  const roster = new Party(TEST_PARTY);
+  const strip = createPartyStrip(uiLayer, roster);
+  const partyTarget = {
+    get position() {
+      return party.position;
+    },
+    pickTarget(r: () => number) {
+      const index = roster.randomLivingIndex(r);
+      const member = roster.members[index];
+      if (!member) return null;
+      return {
+        name: member.def.name,
+        armorClass: member.armorClass,
+        hit: (damage: number) => roster.takeDamage(index, damage),
+      };
+    },
+  };
   const ahead = new Vector3(
     Math.sin(level.spawnYawDeg * DEG),
     0,
     Math.cos(level.spawnYawDeg * DEG),
   );
-  void loadCharacter(scene, app.materials, stepper, banditUrl, {
-    name: 'bandit',
-    position: level.spawn.add(ahead.scale(4)),
-    yawDeg: level.spawnYawDeg + 180,
-    clip: 'walk',
-  }).then(
-    (c) => {
+  let navigation: Navigation | null = null;
+  const startCombat = async (): Promise<void> => {
+    let nav: Navigation | null = null;
+    try {
+      nav = await Navigation.load(`${base}levels/${LEVEL}.nav.bin`);
+      diag('navmesh: loaded');
+    } catch (e) {
+      diag(`navmesh failed: ${e instanceof Error ? e.message : String(e)}`);
+    }
+    try {
+      const c = await loadCharacter(scene, app.materials, stepper, banditUrl, {
+        name: 'bandit',
+        position: level.spawn.add(ahead.scale(6)),
+        yawDeg: level.spawnYawDeg + 180,
+      });
       handle.character = c;
-      diag(`bandit: ${c.clips.length} clips, playing ${c.clip}`);
-    },
-    (e: unknown) => diag(`bandit failed: ${e instanceof Error ? e.message : String(e)}`),
-  );
+      handle.monsters.push(new Monster(MONSTERS['bandit']!, c, nav, rng));
+      diag(`bandit: ${c.clips.length} clips, ${nav ? 'on the navmesh' : 'no navmesh'}`);
+    } catch (e) {
+      diag(`bandit failed: ${e instanceof Error ? e.message : String(e)}`);
+    }
+    navigation = nav;
+  };
 
   const zones = new InputZones({ width: canvas.clientWidth, height: canvas.clientHeight });
   bindInput(canvas, zones);
@@ -167,6 +210,12 @@ export async function startDev(app: App): Promise<DevHandle> {
     events,
     character: null,
     stepper,
+    monsters: [],
+    roster,
+    attack(name) {
+      const monster = handle.monsters.find((m) => m.name === name);
+      return monster ? attackMonster(monster) : null;
+    },
     screenPointOf(name) {
       const mesh = scene.getMeshByName(name);
       if (!mesh) return null;
@@ -210,6 +259,20 @@ export async function startDev(app: App): Promise<DevHandle> {
     simTime: () => simTime,
   };
 
+  void startCombat();
+
+  // A tap on a monster attacks it with the ready member (DESIGN 7.1); the log line is shown.
+  const attackMonster = (monster: Monster): string => {
+    if (!monster.alive) return `${monster.def.name} is dead`;
+    const a = roster.attack(monster, simTime, rng);
+    if (!a) return 'nobody is ready';
+    const line = a.result.hit
+      ? `${a.member.def.name} hits ${monster.def.name} for ${a.result.damage}`
+      : `${a.member.def.name} misses ${monster.def.name}`;
+    return monster.alive ? line : `${line}; ${monster.def.name} falls`;
+  };
+  let clipReview = false;
+
   // Tap feedback: outline the tapped mesh briefly.
   const flashing = new Map<Mesh, number>();
   const handleTap = (x: number, y: number): void => {
@@ -228,13 +291,18 @@ export async function startDev(app: App): Promise<DevHandle> {
       }, 250),
     );
     const d = pick?.distance ?? 0;
-    // Tapping a character steps to its next clip, so clips can be reviewed on the phone.
-    const character = handle.character;
-    if (character && mesh.name.startsWith(`${character.node.name}:`)) {
-      const clips = character.clips;
-      const next = clips[(clips.indexOf(character.clip ?? '') + 1) % clips.length] ?? 'idle';
-      character.play(next);
-      panel.toast(`${character.node.name}: ${next}`);
+    const monster = handle.monsters.find((m) => mesh.name.startsWith(`${m.name}:`));
+    if (monster) {
+      if (clipReview) {
+        // Clip review: each tap steps to the next clip, for judging animations on the phone.
+        const clips = monster.character.clips;
+        const next =
+          clips[(clips.indexOf(monster.character.clip ?? '') + 1) % clips.length] ?? 'idle';
+        monster.character.play(next);
+        panel.toast(`${monster.name}: ${next}`);
+      } else {
+        panel.toast(attackMonster(monster));
+      }
       return;
     }
     panel.toast(`tapped ${mesh.name} at ${d.toFixed(1)} m`);
@@ -294,6 +362,12 @@ export async function startDev(app: App): Promise<DevHandle> {
         panel.toast('deep water');
       }
     }
+    navigation?.update(dt);
+    for (const m of handle.monsters) {
+      m.update(dt, partyTarget, simTime);
+      for (const ev of m.takeEvents()) panel.toast(ev.text);
+    }
+    strip.update(simTime);
     const eye = camera.globalPosition;
     const yaw = fly ? flyYaw : party.yaw;
     underwater.set(isUnderwater(level.water, eye));
@@ -448,11 +522,21 @@ export async function startDev(app: App): Promise<DevHandle> {
         (v) => waterfalls.setSoundVolume(v),
       ),
       {
+        kind: 'toggle',
+        key: 'clipReview',
+        label: 'tap cycles clips',
+        get: () => clipReview,
+        set: (v) => {
+          clipReview = v;
+        },
+        persist: false,
+      },
+      {
         kind: 'select',
         key: 'banditClip',
         label: 'bandit clip',
         options: HUMANOID_CLIPS,
-        get: () => handle.character?.clip ?? 'walk',
+        get: () => handle.character?.clip ?? 'idle',
         set: (v) => handle.character?.play(v),
         persist: false,
       },

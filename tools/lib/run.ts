@@ -18,6 +18,7 @@ import {
   type HumanoidClip,
   type TaskRecord,
 } from './batch';
+import { readBudget, recordSpend, remaining } from './budget';
 import { CARD_DIR, INBOX_DIR } from './cards';
 import { readManifest, upsertAsset, writeManifest } from './manifest';
 import { MeshyClient, TERMINAL_STATES, type MeshyResource, type TaskOutcome } from './meshy';
@@ -119,8 +120,20 @@ export async function runBatch(number: number, opts: RunOptions = {}): Promise<R
   if (!found) throw new Error(`no batch ${number}`);
   const { batch } = found;
   const label = `batch ${pad(batch.number)} ${batch.name}`;
-  if (!batch.approved && !dryRun) {
-    throw new Error(`${label} is not approved; the owner approves it by number first`);
+  // A batch runs when the owner approved it by number, or within a standing credit grant
+  // (pipeline/budget.json) that covers its estimate; the grant is spent as runs report costs.
+  const budget = await readBudget();
+  const covered = budget !== null && remaining(budget) >= batch.estimatedCredits;
+  if (!batch.approved && !covered && !dryRun) {
+    throw new Error(
+      `${label} is not approved and no credit grant covers its ${batch.estimatedCredits} credits` +
+        (budget ? ` (${remaining(budget)} of ${budget.granted} left)` : ''),
+    );
+  }
+  if (!batch.approved && covered && !dryRun) {
+    log(
+      `${label}: running under the owner's grant (${remaining(budget!)} of ${budget!.granted} credits left)`,
+    );
   }
 
   let run = batch.runs.find((r) => !r.finished);
@@ -292,6 +305,7 @@ export async function runBatch(number: number, opts: RunOptions = {}): Promise<R
       : delta;
     run.finished = new Date().toISOString();
     await save();
+    if (budget && !batch.approved) await recordSpend(budget, batch.number, run.consumedCredits);
     const check = delta === run.consumedCredits ? '' : ` (balance moved by ${delta})`;
     log(
       `${label}: done, ${run.consumedCredits} credits consumed (balance ${after.balance})${check}`,

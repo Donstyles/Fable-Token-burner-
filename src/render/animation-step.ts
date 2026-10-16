@@ -71,6 +71,24 @@ export class AnimationStepper {
     if (e) e.elapsed = 0;
   }
 
+  /** Clip seconds played so far (speed applied), or null when the group is not driven. */
+  elapsed(group: AnimationGroup): number | null {
+    return this.entries.get(group)?.elapsed ?? null;
+  }
+
+  /** Length of the clip in seconds at its authored rate. */
+  duration(group: AnimationGroup): number {
+    const e = this.entries.get(group);
+    const clipFps = e?.clipFps ?? group.targetedAnimations[0]?.animation.framePerSecond ?? 30;
+    return (group.to - group.from) / clipFps;
+  }
+
+  /** A one-shot clip that has reached its last frame. */
+  finished(group: AnimationGroup): boolean {
+    const e = this.entries.get(group);
+    return !!e && !e.loop && e.elapsed >= this.duration(group);
+  }
+
   private tick(): void {
     const dt = this.scene.getEngine().getDeltaTime() / 1000;
     for (const e of this.entries.values()) {

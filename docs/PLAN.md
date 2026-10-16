@@ -379,6 +379,13 @@ level.
 **Acceptance:** owner plays through creation, a fight, resting, shopping and
 saving, and approves each screen's layout on device.
 
+**Status 2026-10-16:** started with step 4 ahead of the rest (owner: "I want
+to play a game"). Rules in `src/game/` (stats, to-hit, damage, recovery,
+party selection) with unit tests; runtime navmesh on recast-navigation;
+monster state machine; the bandit chases, swings and falls to taps in the
+dev build with a party strip; e2e covers it. Steps 1 to 3 and 5 to 10 follow;
+the terrain system (DESIGN 15) is interleaved for the outdoor slice.
+
 **Risks:** touch layout of dense screens (inventory grid, spellbook); solved
 by designing at device resolution from the start.
 

@@ -536,6 +536,49 @@ card starts with: palette, painterly late-90s fantasy look, lighting,
 forbidden elements. NPC and enemy concept images, portraits, dolls, overlays
 and icons all share it, so world and UI agree.
 
+## 14. Game rules (Phase 5)
+
+Data-driven, MM6 where the community documents it, recorded here where we
+deviate. Code: `src/game/`.
+
+### 14.1 Statistics
+
+The seven MM6 statistics: Might, Intellect, Personality, Endurance,
+Accuracy, Speed, Luck. The bonus table is the MM6 to MM8 one as the community
+documents it (11–12 is 0, then +1 per two points to 20, +1 per five to 40,
+wider steps above; 3 is −5, 0 is −6). Should the manual differ, the table in
+`src/game/stats.ts` changes and this entry records it.
+
+### 14.2 Combat resolution
+
+- Chance to hit: (15 + 2 × attack bonus) / (30 + 2 × attack bonus + armour
+  class), the documented MM6 formula. Melee attack bonus = Accuracy bonus +
+  weapon skill; armour class = Speed bonus + armour.
+- Damage: the weapon's dice plus bonuses, at least 1 on a hit.
+- Recovery: each member has a weapon recovery in seconds, shortened by
+  0.05 s per point of Speed bonus, never under 0.5 s. (MM6 counts recovery
+  in ticks; the mapping to seconds is ours until confirmed.)
+- Tapping a monster attacks with the selected member if ready, otherwise
+  the next ready one; the selection then advances to the next ready member
+  (DESIGN 7.1). A fallen member is skipped.
+- Monsters pick a living member uniformly for each blow. (MM6 favours the
+  front row; later.)
+
+### 14.3 Monsters
+
+A monster record holds level, hit points, armour class, attack bonus,
+damage dice, walk and run speeds, aggro and attack ranges, the pause
+between swings, experience and its character asset. In the world a monster
+is a Meshy character on a recast-navigation crowd agent over the level's
+Detour navmesh (the binary the compile step writes, imported as is; the
+WASM module loads once), with a state machine: idle until the party is
+within aggro range; chase (running from afar, walking near); attack when in
+reach (swings alternate between the two attack clips at 1.5× speed, the blow
+lands 40 % into the swing, then a pause); hit (the hit clip interrupts
+whatever it did); dead (the death clip holds, the agent leaves the crowd,
+the body stays). Test data: the bandit, level 2, 25 hp, AC 8, attack 3,
+1d6+1.
+
 ## 13. Decision log
 
 - 2026-10-11 – Platform, delivery (PWA), art direction, Meshy pipeline, key
@@ -819,6 +862,23 @@ and icons all share it, so world and UI agree.
   `pipeline/animation-catalog.md` for the owner to pick from; swapping clips
   is an animation request on the existing rig (3 credits per clip), no new
   mesh.
+- 2026-10-16 – **Overnight mandate.** Owner (going to bed): work through the
+  night on best judgement; a full vertical slice without placeholders is
+  wanted; up to **900 Meshy credits** may be spent without further approval
+  (`pipeline/budget.json`, honoured by `asset run`); free CC0 models and
+  textures from the internet are preferred over credits; agentic critics
+  are to review the work. The owner also asked when the vast landscapes
+  come (ravines, serpentines, woods, passes, ridges, peaks, valleys,
+  rivers): the outdoor terrain system starts tonight (section 15). The
+  session cannot switch its own model; the work continues on this one.
+- 2026-10-16 – **Phase 5 started with combat.** Owner: "What's next?" The
+  remaining Phase 4 pipelines (dolls, portraits, icons, audio, fonts) are
+  pulled in when a screen needs them; the game itself comes first. Built:
+  the rules in section 14 with unit tests, the navmesh runtime on
+  recast-navigation, the monster state machine, tap-to-attack with the test
+  party and a party strip in the dev build, an end-to-end test in which the
+  bandit closes in, swings and falls to taps. "Tap cycles clips" is a panel
+  toggle for reviewing animations.
 - 2026-10-15 – **Owner's look tuning becomes the default** (sent from the
   dev panel after playing the water build, "looks moody"): posterize filter
   on at 5 levels with dither 0.45 (cell 2), bloom off, vignette 0.6, contrast

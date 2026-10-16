@@ -38,6 +38,14 @@ type Dev = {
     frame: number;
     play(name: string): void;
   } | null;
+  monsters: {
+    name: string;
+    state: string;
+    hp: number;
+    position: { x: number; y: number; z: number };
+  }[];
+  roster: { members: { hp: number }[]; selected: number };
+  attack(name: string): string | null;
 };
 type W = Window & { ftb?: { dev?: Dev; setFilter(n: { mode: string }): void } };
 
@@ -251,16 +259,17 @@ test.describe('dev build', () => {
     expect(p.z).toBeLessThan(-12);
   });
 
-  test('shows the bandit walking four metres ahead of the spawn', async ({ page }) => {
-    await page.waitForFunction(() => (window as unknown as W).ftb!.dev!.character !== null, null, {
-      timeout: 30_000,
+  test('the bandit closes in, swings at the party, and falls to taps', async ({ page }) => {
+    test.setTimeout(240_000);
+    await page.goto('dev/?dev&lite&seed=11');
+    await page.waitForFunction(() => (window as unknown as W).ftb?.dev?.ready === true, null, {
+      timeout: 60_000,
     });
-    const first = await page.evaluate(() => {
-      const c = (window as unknown as W).ftb!.dev!.character!;
-      return { clip: c.clip, clips: c.clips, frame: c.frame };
+    await page.waitForFunction(() => (window as unknown as W).ftb!.dev!.monsters.length > 0, null, {
+      timeout: 60_000,
     });
-    expect(first.clip).toBe('walk');
-    expect(first.clips).toEqual([
+    const clips = await page.evaluate(() => (window as unknown as W).ftb!.dev!.character!.clips);
+    expect(clips).toEqual([
       'idle',
       'walk',
       'run',
@@ -272,26 +281,43 @@ test.describe('dev build', () => {
       'talk',
       'block',
     ]);
-    // The stepper advances the clip in discrete steps; after half a second it has moved on.
-    await page.waitForTimeout(600);
-    const later = await page.evaluate(() => (window as unknown as W).ftb!.dev!.character!.frame);
-    expect(later).not.toBe(first.frame);
-    // His feet project into the view from the spawn, which faces him.
-    const feet = await page.evaluate(() =>
-      (window as unknown as W).ftb!.dev!.screenPointOf('bandit:char1'),
+    // Six metres ahead is inside his aggro range: he comes at the party and stops in reach.
+    await page.waitForFunction(
+      () => (window as unknown as W).ftb!.dev!.monsters[0]!.state === 'attack',
+      null,
+      { timeout: 90_000 },
     );
-    expect(feet).not.toBeNull();
-    const size = page.viewportSize()!;
-    expect(feet!.x).toBeGreaterThan(size.width * 0.3);
-    expect(feet!.x).toBeLessThan(size.width * 0.7);
-    expect(feet!.y).toBeGreaterThan(size.height * 0.4);
-    expect(feet!.y).toBeLessThan(size.height);
-    await page.screenshot({ path: `test-results/bandit-${test.info().project.name}.png` });
-    // Switching clips takes effect at once.
-    await page.evaluate(() => (window as unknown as W).ftb!.dev!.character!.play('attack_1'));
+    const dist = await page.evaluate(() => {
+      const d = (window as unknown as W).ftb!.dev!;
+      const m = d.monsters[0]!;
+      const p = d.positionOf();
+      return Math.hypot(m.position.x - p.x, m.position.z - p.z);
+    });
+    expect(dist).toBeLessThan(2.6);
+    // He swings: an attack clip plays.
+    await page.waitForFunction(
+      () => /^attack_/.test((window as unknown as W).ftb!.dev!.character!.clip ?? ''),
+      null,
+      { timeout: 60_000 },
+    );
+    // Taps attack with the ready member; the others wait out their recovery. He falls.
+    const log: string[] = [];
+    for (let i = 0; i < 400; i++) {
+      const line = await page.evaluate(() => (window as unknown as W).ftb!.dev!.attack('bandit'));
+      if (line && line !== 'nobody is ready') log.push(line);
+      const state = await page.evaluate(
+        () => (window as unknown as W).ftb!.dev!.monsters[0]!.state,
+      );
+      if (state === 'dead') break;
+      await page.waitForTimeout(200);
+    }
+    expect(log.some((l) => /hits Bandit for \d+/.test(l))).toBe(true);
+    expect(log.at(-1)).toMatch(/Bandit falls/);
+    expect(await page.evaluate(() => (window as unknown as W).ftb!.dev!.monsters[0]!.hp)).toBe(0);
     expect(await page.evaluate(() => (window as unknown as W).ftb!.dev!.character!.clip)).toBe(
-      'attack_1',
+      'death',
     );
+    await page.screenshot({ path: `test-results/bandit-${test.info().project.name}.png` });
   });
 
   test('wades at half speed through the undercroft pool', async ({ page, browserName }) => {
