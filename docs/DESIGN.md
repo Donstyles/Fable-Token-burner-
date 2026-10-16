@@ -226,7 +226,7 @@ of billing again. Verified through the proxy: `balance` (4,790 credits on
    (Run 2), attack_1 97 (Left Slash), attack_2 240 (Thrust Slash), hit 178
    (Hit Reaction), death 188 (Fall Dead from Abdominal Injury), cast 125
    (Charged Spell Cast), talk 313 (Talk with Hands Open), block 138 (Block1).
-5. **Post-process (code).** gltf-transform (`tools/lib/postprocess.ts`): clips renamed to the standard names in request order, dedup, prune, textures scaled to 512 PNG. The mesh is never patched: `validate` measures open boundary loops and reports loops up to 30 cm as gaps between parts, which means regenerating from a cleaner reference (owner, 2026-10-15). `validate` checks triangles (at most 4,400, a
+5. **Post-process (code).** gltf-transform (`tools/lib/postprocess.ts`): clips renamed to the standard names in request order, dedup, prune, textures scaled to 512 PNG. The mesh is never patched: `validate` measures open boundary loops and notes loops up to 30 cm (with a ray test's guess whether something backs them) for the owner to judge in the viewer; a visible gap means regenerating from a cleaner reference (owner, 2026-10-15 and 2026-10-16). `validate` checks triangles (at most 4,400, a
    tenth over the 4,000 target), clip names and texture size. Quantisation
    and meshopt compression wait until file size matters (meshopt needs a
    decoder on the Babylon side).
@@ -800,6 +800,19 @@ and icons all share it, so world and UI agree.
   "how will you put a weapon in his hand?": weapons are separate props
   attached to the hand joint (10.1 step 7), not modelled into the
   character.
+- 2026-10-16 – **Batch 002: the clean render fixed it.** From the stylised
+  concept render the bandit came back with 4,074 triangles, no gaps at the
+  belt or collar (the only open loops are the hair piece's border and three
+  slivers on the head) and a straight stance (knees 4 cm outside the hips
+  instead of 10), so the walk is no longer bow-legged. Cost 50 credits again.
+  A ray test's "backed or open" verdict on small loops is not reliable
+  enough to fail a build, so `validate` prints small open loops as a note for
+  the owner's eye in the viewer instead of a problem. Also learnt: the CLI
+  journal refuses to reuse an operation id that was rejected (the first
+  attempt hit Meshy's 402 while the subscription had lapsed), so each
+  submission attempt gets its own id; and a run's cost is what its tasks
+  reported, with the balance delta as a cross-check, since monthly credits
+  changed under the run.
 - 2026-10-15 – **Owner's look tuning becomes the default** (sent from the
   dev panel after playing the water build, "looks moody"): posterize filter
   on at 5 levels with dither 0.45 (cell 2), bloom off, vignette 0.6, contrast
