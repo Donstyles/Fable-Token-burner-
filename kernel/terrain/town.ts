@@ -6,6 +6,7 @@
  */
 import { ROLE } from '../elements/roles';
 import type { MeshData } from '../core/mesh';
+import { box, nb, quad, transformInto, type V3 } from './solids';
 import type { P2 } from './spline';
 
 export interface HouseSpec {
@@ -29,133 +30,6 @@ export interface TownSpec {
   seed: number;
   /** Direction the road leaves the square, radians from +X toward +Z; that slot stays empty. */
   roadDirection?: number;
-}
-
-interface B {
-  positions: number[];
-  normals: number[];
-  uvs: number[];
-  indices: number[];
-  materials: number[];
-}
-
-const nb = (): B => ({ positions: [], normals: [], uvs: [], indices: [], materials: [] });
-
-type V3 = [number, number, number];
-
-/** A quad from four corners (counter-clockwise seen from the front), world-unit UVs. */
-function quad(b: B, p: [V3, V3, V3, V3], role: number, uvScale = 1): void {
-  const a = p[0];
-  const c = p[1];
-  const e = p[3];
-  const u = [c[0] - a[0], c[1] - a[1], c[2] - a[2]];
-  const v = [e[0] - a[0], e[1] - a[1], e[2] - a[2]];
-  const n = [
-    u[1]! * v[2]! - u[2]! * v[1]!,
-    u[2]! * v[0]! - u[0]! * v[2]!,
-    u[0]! * v[1]! - u[1]! * v[0]!,
-  ];
-  const len = Math.hypot(n[0]!, n[1]!, n[2]!) || 1;
-  const base = b.positions.length / 3;
-  const w = Math.hypot(u[0]!, u[1]!, u[2]!);
-  const h = Math.hypot(v[0]!, v[1]!, v[2]!);
-  const uvs = [
-    [0, 0],
-    [w, 0],
-    [w, h],
-    [0, h],
-  ];
-  p.forEach((q, i) => {
-    b.positions.push(q[0], q[1], q[2]);
-    b.normals.push(n[0]! / len, n[1]! / len, n[2]! / len);
-    b.uvs.push(uvs[i]![0]! * uvScale, uvs[i]![1]! * uvScale);
-  });
-  b.indices.push(base, base + 1, base + 2, base, base + 2, base + 3);
-  b.materials.push(role, role);
-}
-
-/** An axis-aligned box in local space, every face outward. */
-function box(b: B, min: V3, max: V3, role: number): void {
-  const [x0, y0, z0] = min;
-  const [x1, y1, z1] = max;
-  quad(
-    b,
-    [
-      [x0, y0, z1],
-      [x1, y0, z1],
-      [x1, y1, z1],
-      [x0, y1, z1],
-    ],
-    role,
-  ); // +Z
-  quad(
-    b,
-    [
-      [x1, y0, z0],
-      [x0, y0, z0],
-      [x0, y1, z0],
-      [x1, y1, z0],
-    ],
-    role,
-  ); // -Z
-  quad(
-    b,
-    [
-      [x1, y0, z1],
-      [x1, y0, z0],
-      [x1, y1, z0],
-      [x1, y1, z1],
-    ],
-    role,
-  ); // +X
-  quad(
-    b,
-    [
-      [x0, y0, z0],
-      [x0, y0, z1],
-      [x0, y1, z1],
-      [x0, y1, z0],
-    ],
-    role,
-  ); // -X
-  quad(
-    b,
-    [
-      [x0, y1, z1],
-      [x1, y1, z1],
-      [x1, y1, z0],
-      [x0, y1, z0],
-    ],
-    role,
-  ); // +Y
-  quad(
-    b,
-    [
-      [x0, y0, z0],
-      [x1, y0, z0],
-      [x1, y0, z1],
-      [x0, y0, z1],
-    ],
-    role,
-  ); // -Y
-}
-
-function transformInto(into: B, local: B, h: Pick<HouseSpec, 'x' | 'y' | 'z' | 'yaw'>): void {
-  const cos = Math.cos(h.yaw);
-  const sin = Math.sin(h.yaw);
-  const base = into.positions.length / 3;
-  for (let i = 0; i < local.positions.length; i += 3) {
-    const px = local.positions[i]!;
-    const py = local.positions[i + 1]!;
-    const pz = local.positions[i + 2]!;
-    into.positions.push(h.x + px * cos - pz * sin, h.y + py, h.z + px * sin + pz * cos);
-    const nx = local.normals[i]!;
-    const nz = local.normals[i + 2]!;
-    into.normals.push(nx * cos - nz * sin, local.normals[i + 1]!, nx * sin + nz * cos);
-  }
-  for (const v of local.uvs) into.uvs.push(v);
-  for (const idx of local.indices) into.indices.push(idx + base);
-  for (const m of local.materials) into.materials.push(m);
 }
 
 /** One house in local space: door on +Z, ridge along X. */
@@ -411,8 +285,8 @@ export function buildTown(spec: TownSpec): TownResult {
   const visual = nb();
   const collider = nb();
   const add = (m: { visual: MeshData; collider: MeshData }): void => {
-    transformInto(visual, m.visual as B, { x: 0, y: 0, z: 0, yaw: 0 });
-    transformInto(collider, m.collider as B, { x: 0, y: 0, z: 0, yaw: 0 });
+    transformInto(visual, m.visual, { x: 0, y: 0, z: 0, yaw: 0 });
+    transformInto(collider, m.collider, { x: 0, y: 0, z: 0, yaw: 0 });
   };
   for (const h of houses) add(houseMesh(h));
   add(wellMesh(spec.centre[0], spec.y, spec.centre[1]));

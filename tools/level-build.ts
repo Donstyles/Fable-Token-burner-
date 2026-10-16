@@ -12,7 +12,7 @@
 import { mkdir, readdir, writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { LevelBuilder, type LevelOutput } from '../kernel/plan/level';
+import { LevelBuilder, type LevelOutput, type PortalRecord } from '../kernel/plan/level';
 import type { MeshData } from '../kernel/core/mesh';
 import { ROLE } from '../kernel/elements/roles';
 import { bakeVertexLight } from '../kernel/light/bake';
@@ -33,6 +33,8 @@ export interface LevelBuildOptions {
 interface LevelModule {
   default: (plan: LevelBuilder) => void | Promise<void>;
   options?: Partial<LevelBuildOptions>;
+  /** Doors to other levels (DESIGN.md 15.3). */
+  portals?: PortalRecord[];
 }
 
 const DEFAULTS: LevelBuildOptions = { ambient: [0.1, 0.1, 0.13], bakeCell: 1, chunk: 12 };
@@ -77,7 +79,7 @@ async function buildTerrain(id: string, validate: boolean): Promise<boolean> {
   const report = checkReachability(
     nav.navMesh,
     level.spawn.position,
-    level.points.filter((p) => !['summit', 'ravine-head', 'ford'].includes(p.name)),
+    level.points.filter((p) => !['summit', 'ford'].includes(p.name)),
     4,
   );
   nav.navMesh.destroy();
@@ -111,7 +113,8 @@ async function buildTerrain(id: string, validate: boolean): Promise<boolean> {
     ]),
     spawn: level.spawn,
     points: level.points,
-    lights: [],
+    lights: level.lights,
+    portals: level.portals,
     spaces: level.spaces,
     water: level.water.map(({ mesh: _mesh, ...body }) => body),
     waterfalls: [],
@@ -125,6 +128,7 @@ async function buildTerrain(id: string, validate: boolean): Promise<boolean> {
         .reduce((n, c) => n + c.mesh.indices.length / 3, 0),
       trees: level.trees.length,
       houses: level.town.houses.length,
+      portals: level.portals.length,
       visualTriangles: level.visual.indices.length / 3,
       forestTriangles: level.forest.indices.length / 3,
       colliderTriangles: level.collider.indices.length / 3,
@@ -198,6 +202,7 @@ async function buildOne(id: string, validate: boolean): Promise<boolean> {
     spawn: level.spawn,
     points: level.points,
     lights: level.lights,
+    portals: mod.portals ?? [],
     spaces: level.spaces,
     water: level.water.map(({ mesh: _mesh, ...body }) => body),
     waterfalls: level.waterfalls.map(({ mesh: _mesh, ...fall }) => fall),

@@ -21,6 +21,7 @@ import { AnimationStepper } from '../render/animation-step';
 import { DEFAULT_CHARACTER_FILL, loadCharacter, type Character } from '../world/character';
 import { Navigation } from '../world/navigation';
 import { CombatFeedback } from '../world/combat-feedback';
+import { PortalWatcher, portalUrl, travel, type Portal } from '../world/portals';
 import { Monster } from '../world/monster';
 import { MONSTERS } from '../game/monsters';
 import { Party, TEST_PARTY } from '../game/party';
@@ -74,6 +75,7 @@ export interface DevHandle {
   /** Accumulated simulated seconds, so tests can measure speeds independent of frame rate. */
   simTime(): number;
   feedback: CombatFeedback;
+  portals: PortalWatcher;
   pickAt(x: number, y: number): string | null;
   /** Pointer event counters and consumed taps, for diagnosing input on real devices. */
   events: { down: number; move: number; up: number; cancel: number; taps: number; types: string[] };
@@ -88,7 +90,10 @@ export interface DevHandle {
 }
 
 const DEG = Math.PI / 180;
-const LEVEL = new URLSearchParams(location.search).get('level') ?? 'showcase';
+const QUERY = new URLSearchParams(location.search);
+const LEVEL = QUERY.get('level') ?? 'showcase';
+/** Arriving through a portal: the portal of this level to appear at (DESIGN.md 15.3). */
+const ENTRY = QUERY.get('entry');
 
 export async function startDev(app: App): Promise<DevHandle> {
   const { scene, engine, camera, canvas, uiLayer } = app;
@@ -220,7 +225,18 @@ export async function startDev(app: App): Promise<DevHandle> {
   canvas.addEventListener('pointermove', note('move'));
   canvas.addEventListener('pointerup', note('up'));
   canvas.addEventListener('pointercancel', note('cancel'));
-  const party = new PartyController(scene, camera, level.spawn, DEFAULT_TUNING, level.spawnYawDeg);
+  const entry = ENTRY ? level.portals.find((p) => p.name === ENTRY) : undefined;
+  const start = entry?.arrive ?? { position: level.spawn, yawDeg: level.spawnYawDeg };
+  const party = new PartyController(scene, camera, start.position, DEFAULT_TUNING, start.yawDeg);
+  if (ENTRY) diag(`arrived through ${entry ? ENTRY : `unknown portal ${ENTRY}, at the spawn`}`);
+  const portals = new PortalWatcher(level.portals, (p: Portal) => {
+    diag(`portal ${p.name} → ${p.target.level}`);
+    travel(
+      uiLayer,
+      p.target.level === 'showcase' ? 'Into the dark…' : 'Out into the light…',
+      portalUrl(location.href, p),
+    );
+  });
 
   const handle: DevHandle = {
     ready: false,
@@ -280,6 +296,7 @@ export async function startDev(app: App): Promise<DevHandle> {
     },
     simTime: () => simTime,
     feedback,
+    portals,
   };
 
   void startCombat();
@@ -389,6 +406,7 @@ export async function startDev(app: App): Promise<DevHandle> {
       }
     }
     level.update(camera.globalPosition);
+    if (!fly) portals.update(party.position);
     navigation?.update(dt);
     for (const m of handle.monsters) {
       m.update(dt, partyTarget, simTime);

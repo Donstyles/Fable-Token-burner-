@@ -688,10 +688,36 @@ generated from a seed by `kernel/terrain/` and compiled by
   check.
 - Interiors come with Phase 6 (doors are drawn, not openable yet).
 
-### 15.3 Plans
+### 15.3 The cave mouth and portals
 
-A cave mouth at the ravine head into the dungeon (scene transition);
-cascades in the ravine stream with Phase 3's waterfalls; a desert region
+- At the ravine head (25 m from its end, facing down the gorge) a rock
+  knoll sits on the hillside with an arched hole: a stone-shored tunnel
+  6.4 m wide, 4.4 m high and 16 m long with a dirt floor, a 7 m threshold
+  slab outside, and a warm glow inside (`kernel/terrain/cave.ts`). The
+  ravine floor climbs gently enough to walk, so the gorge is the way to
+  it. The terrain under the tunnel is cut 6 m down and 6 m past the back
+  wall so the rising hill never pokes through the floor at 5 m cells; the
+  threshold in front is levelled over 16 m.
+- Portals (`PortalRecord`): a trigger disc with a target level and entry
+  name, and an arrival point for the party coming the other way. The
+  valley's `cave` portal lies 4.5 m before the tunnel's back wall (clear
+  of a navmesh cell's erosion) and leads to the showcase dungeon's `exit`;
+  the showcase's `exit` portal at its spawn leads back to the valley's
+  `cave`, arriving on the threshold facing out. A portal arms only once
+  the party has stood 1.5 m clear of it, so arriving through it does not
+  bounce the party straight back.
+- The transition is a fade to black with a line of text and a fresh load
+  of the page on the target level (`?level=<id>&entry=<portal>`); MM6 had
+  a loading screen between maps too, and a reload keeps the level code
+  simple. Party state does not yet survive it (the dev party is test
+  data); the save module will carry it once screens exist.
+- Build: the cave's visual and collider ride with the village's, the
+  portal is a point in the reachability check, and `levels/<id>/level.ts`
+  exports `portals` for dungeons.
+
+### 15.4 Plans
+
+Cascades in the ravine stream with Phase 3's waterfalls; a desert region
 beyond the pass; far-mountain backdrop beyond the map edge.
 
 ## 13. Decision log

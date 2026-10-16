@@ -27,6 +27,7 @@ import {
 import { PhysicsBody } from '@babylonjs/core/Physics/v2/physicsBody';
 import { PhysicsMotionType } from '@babylonjs/core/Physics/v2/IPhysicsEnginePlugin';
 import { parseGlb, type GlbNode, type GlbPrimitive } from './glb';
+import type { Portal } from './portals';
 import type { RoleTextures } from './textures';
 
 type V3 = [number, number, number];
@@ -54,6 +55,14 @@ export interface SidecarSpace {
   fog?: { density: number; color: V3 };
 }
 
+export interface SidecarPortal {
+  name: string;
+  position: V3;
+  radius: number;
+  target: { level: string; entry: string };
+  arrive: { position: V3; yawDeg: number };
+}
+
 export interface LevelSidecar {
   name: string;
   /** Outdoor region: sun-lit terrain chunks with detail levels, forests, sky (DESIGN.md 15). */
@@ -63,6 +72,8 @@ export interface LevelSidecar {
   trees?: [number, number, number, number, number, number][];
   spawn: { position: V3; yawDeg: number };
   points: { name: string; position: V3; kind: string }[];
+  /** Doors to other levels (DESIGN.md 15.3). */
+  portals?: SidecarPortal[];
   lights: {
     position: V3;
     color: V3;
@@ -124,6 +135,7 @@ export interface LoadedLevel {
   spawn: Vector3;
   spawnYawDeg: number;
   points: Map<string, Vector3>;
+  portals: Portal[];
   /** The level's static lights in Babylon space; baked into the vertices, not registered. */
   lights: LevelLight[];
   /** 1 shows the baked light, 0 the environment's key and ambient light instead. */
@@ -511,6 +523,13 @@ export async function loadLevel(
     spawn: toBabylon(sidecar.spawn.position),
     spawnYawDeg: sidecar.spawn.yawDeg,
     points: new Map(sidecar.points.map((p) => [p.name, toBabylon(p.position)])),
+    portals: (sidecar.portals ?? []).map((p) => ({
+      name: p.name,
+      position: toBabylon(p.position),
+      radius: p.radius,
+      target: p.target,
+      arrive: { position: toBabylon(p.arrive.position), yawDeg: p.arrive.yawDeg },
+    })),
     lights,
     setBakedMix: (v) => materials.setBakedMix(v),
     setWireframe(on) {

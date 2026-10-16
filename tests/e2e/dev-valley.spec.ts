@@ -15,6 +15,10 @@ type Dev = {
   pointOf(name: string): { x: number; y: number; z: number } | null;
   teleport(x: number, y: number, z: number, yaw: number): void;
   monsters: { state: string }[];
+  portals: {
+    portals: { name: string; target: { level: string; entry: string } }[];
+    isArmed(name: string): boolean;
+  };
 };
 type W = Window & { ftb?: { dev?: Dev } };
 
@@ -41,6 +45,8 @@ test.describe('valley region', () => {
         pass: d.pointOf('pass'),
         summit: d.pointOf('summit'),
         town: d.pointOf('town'),
+        cave: d.pointOf('cave'),
+        portals: d.portals.portals.map((p) => `${p.name}>${p.target.level}:${p.target.entry}`),
         houses: d.level.sidecar.stats['houses'],
         solids: d.level.collider.getTotalVertices() > 0,
         spawn: d.positionOf(),
@@ -50,6 +56,9 @@ test.describe('valley region', () => {
     expect(info.houses).toBe(7);
     expect(info.solids).toBe(true);
     expect(info.town).not.toBeNull();
+    // The cave mouth at the ravine head leads into the dungeon (DESIGN 15.3).
+    expect(info.cave).not.toBeNull();
+    expect(info.portals).toEqual(['cave>showcase:exit']);
     expect(Math.hypot(info.town!.x - info.spawn.x, info.town!.z - info.spawn.z)).toBeLessThan(30);
     expect(info.outdoor).toBe(true);
     expect(info.trees).toBeGreaterThan(1000);
@@ -79,5 +88,58 @@ test.describe('valley region', () => {
       const p = await page.evaluate(() => (window as unknown as W).ftb!.dev!.positionOf());
       expect(Math.abs(p.y - q.y)).toBeLessThan(3);
     }
+  });
+
+  test('walking into the cave leads into the dungeon, and its door leads back out', async ({
+    page,
+  }) => {
+    // Teleport to the cave's threshold: the portal arms once the party stands clear of it.
+    const cave = await page.evaluate(() => {
+      const d = (window as unknown as W).ftb!.dev!;
+      const c = d.pointOf('cave')!;
+      return c;
+    });
+    await page.evaluate((c) => {
+      const d = (window as unknown as W).ftb!.dev!;
+      d.teleport(c.x, c.y + 0.5, c.z + 12, 0);
+    }, cave);
+    await page.waitForTimeout(600);
+    expect(
+      await page.evaluate(() => (window as unknown as W).ftb!.dev!.portals.isArmed('cave')),
+    ).toBe(true);
+    // Step into the portal: the page travels to the dungeon and arrives at its exit door.
+    await page.evaluate((c) => {
+      const d = (window as unknown as W).ftb!.dev!;
+      d.teleport(c.x, c.y + 0.5, c.z, 0);
+    }, cave);
+    await page.waitForURL(/level=showcase.*entry=exit/, { timeout: 20_000 });
+    await page.waitForFunction(() => (window as unknown as W).ftb?.dev?.ready === true, null, {
+      timeout: 120_000,
+    });
+    const arrived = await page.evaluate(() => {
+      const d = (window as unknown as W).ftb!.dev!;
+      return { p: d.positionOf(), portals: d.portals.portals.map((x) => x.name) };
+    });
+    expect(arrived.portals).toEqual(['exit']);
+    // The showcase's exit door is at its spawn; the party arrives just inside it.
+    // Kernel (-3, 0, -2) is Babylon (3, 0, -2): X is mirrored.
+    expect(Math.hypot(arrived.p.x - 3, arrived.p.z + 2)).toBeLessThan(1.5);
+    // Step away to arm the door, then back through it: out onto the cave's threshold.
+    await page.evaluate(() => (window as unknown as W).ftb!.dev!.teleport(3, 0.5, 4, 180));
+    await page.waitForTimeout(600);
+    await page.evaluate(() => (window as unknown as W).ftb!.dev!.teleport(3, 0.5, -4.5, 180));
+    await page.waitForURL(/level=valley.*entry=cave/, { timeout: 20_000 });
+    await page.waitForFunction(() => (window as unknown as W).ftb?.dev?.ready === true, null, {
+      timeout: 120_000,
+    });
+    await page.waitForTimeout(1500);
+    const back = await page.evaluate(() => {
+      const d = (window as unknown as W).ftb!.dev!;
+      return { p: d.positionOf(), cave: d.pointOf('cave')! };
+    });
+    const d = Math.hypot(back.p.x - back.cave.x, back.p.z - back.cave.z);
+    expect(d).toBeGreaterThan(10);
+    expect(d).toBeLessThan(20);
+    expect(Math.abs(back.p.y - back.cave.y)).toBeLessThan(2);
   });
 });

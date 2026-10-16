@@ -1,4 +1,4 @@
-import type { LevelBuilder } from '../../kernel/plan/level';
+import type { LevelBuilder, PortalRecord } from '../../kernel/plan/level';
 import { ROLE } from '../../kernel/elements/roles';
 
 /**
@@ -9,6 +9,17 @@ import { ROLE } from '../../kernel/elements/roles';
  * Heading convention for spawn: 0 faces north (+Z), 90 faces west (−X).
  */
 export const options = { ambient: [0.1, 0.1, 0.13] as [number, number, number], bakeCell: 1 };
+
+/** The way out: the spawn is the door back to the valley's cave mouth (DESIGN.md 15.3). */
+export const portals: PortalRecord[] = [
+  {
+    name: 'exit',
+    position: [-3, 0, -4.5],
+    radius: 1.5,
+    target: { level: 'valley', entry: 'cave' },
+    arrive: { position: [-3, 0, -2], yawDeg: 0 },
+  },
+];
 
 export default function showcase(plan: LevelBuilder): void {
   const W = 18;

@@ -5,6 +5,7 @@ import { terrainMesh } from './mesh';
 import { fbm, ridged } from './noise';
 import { riverSurface } from './river';
 import { GroundPath, smoothPath } from './spline';
+import { CAVE, caveLocalOf, caveMouth } from './cave';
 import { buildTown } from './town';
 import { forestMeshes, placeTrees, treeMesh } from './trees';
 import { generateValley, WATER_LEVEL } from './valley';
@@ -174,5 +175,56 @@ describe('village', () => {
     for (const t of placeTrees(v)) {
       expect(Math.hypot(t.x - centre[0], t.z - centre[1])).toBeGreaterThan(radius + 10);
     }
+  });
+});
+
+describe('cave mouth', () => {
+  it('is a solid tunnel into the hill with the portal at its back', () => {
+    const yaw = Math.PI / 3;
+    const cave = caveMouth({ x: 50, y: 20, z: -10, yaw });
+    expect(cave.visual.indices.length / 3).toBeGreaterThan(60);
+    expect(cave.collider.indices.length).toBe(cave.visual.indices.length);
+    // The portal lies CAVE.length - 4.5 m into the hill along local +Z, at floor height.
+    const portal = caveLocalOf({ x: 50, y: 20, z: -10, yaw }, cave.portal[0], cave.portal[2]);
+    expect(portal.x).toBeCloseTo(0);
+    expect(portal.z).toBeCloseTo(CAVE.length - 4.5);
+    expect(cave.portal[1]).toBe(20);
+    // The arrival point is outside the mouth, on the threshold.
+    const arrive = caveLocalOf({ x: 50, y: 20, z: -10, yaw }, cave.arrive[0], cave.arrive[2]);
+    expect(arrive.z).toBeLessThan(0);
+    expect(arrive.z).toBeGreaterThan(-CAVE.threshold);
+    // Every visual vertex is within the knoll's reach of the mouth.
+    for (let i = 0; i < cave.visual.positions.length; i += 3) {
+      const l = caveLocalOf(
+        { x: 50, y: 20, z: -10, yaw },
+        cave.visual.positions[i]!,
+        cave.visual.positions[i + 2]!,
+      );
+      expect(Math.abs(l.x)).toBeLessThanOrEqual(CAVE.width / 2 + CAVE.skirt + 0.01);
+      expect(l.z).toBeGreaterThanOrEqual(-CAVE.threshold - 0.01);
+      expect(l.z).toBeLessThanOrEqual(CAVE.length + CAVE.skirt + 0.01);
+    }
+  });
+
+  it('sits at the ravine head with the ground cut under the tunnel and level in front', () => {
+    const v = generateValley({ seed: 7, width: 1024, cell: 16 });
+    const c = v.cave;
+    const hit = v.ravine.nearest(c.x, c.z);
+    expect(hit.distance).toBeLessThan(1);
+    expect(hit.along).toBeCloseTo(v.ravine.length - 25, 0);
+    // Under the tunnel the terrain is below the floor; in front it is near floor height.
+    const cos = Math.cos(c.yaw);
+    const sin = Math.sin(c.yaw);
+    const at = (lx: number, lz: number): number =>
+      v.height.sample(c.x + lx * cos - lz * sin, c.z + lx * sin + lz * cos);
+    expect(at(0, CAVE.length / 2)).toBeLessThan(c.y - 1);
+    // Coarse 16 m test cells blur the cut into the apron; the real level uses 5 m cells.
+    expect(Math.abs(at(0, -CAVE.threshold - 2) - c.y)).toBeLessThan(6);
+    // The ravine is a walkable gorge: its floor climbs gently toward the head.
+    const a = v.height.sample(...v.ravine.at(v.ravine.length * 0.3));
+    const b = v.height.sample(...v.ravine.at(v.ravine.length * 0.6));
+    const rise = (b - a) / (v.ravine.length * 0.3);
+    expect(rise).toBeGreaterThan(0);
+    expect(rise).toBeLessThan(Math.tan((20 * Math.PI) / 180));
   });
 });

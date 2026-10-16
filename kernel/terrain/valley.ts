@@ -5,6 +5,7 @@
  */
 import type { Vec3 } from '../core/math';
 import type { NamedPoint } from '../plan/level';
+import { CAVE, caveLocalOf, type CaveSpec } from './cave';
 import { Heightfield } from './heightfield';
 import { fbm, lerp, ridged, smoothstep } from './noise';
 import { GroundPath, smoothPath, type P2 } from './spline';
@@ -32,6 +33,8 @@ export interface ValleyResult {
   ravine: GroundPath;
   /** The village square: flattened ground round the well where the road begins. */
   town: { centre: P2; y: number; radius: number; roadDirection: number };
+  /** The cave mouth at the ravine head: its placement for `caveMouth`. */
+  cave: CaveSpec;
   spawn: { position: Vec3; yawDeg: number };
   points: NamedPoint[];
   peaks: { x: number; z: number; height: number }[];
@@ -149,6 +152,37 @@ export function generateValley(spec: ValleySpec): ValleyResult {
     }
   }
 
+  // The cave mouth at the ravine head, facing down the ravine: the ground under the tunnel
+  // is cut away so it never pokes through the floor, and the threshold in front is levelled.
+  const caveAt = ravine.at(ravine.length - 25);
+  const caveDir = ravine.nearest(caveAt[0], caveAt[1]).tangent;
+  const cave: CaveSpec = {
+    x: caveAt[0],
+    y: hf.sample(caveAt[0], caveAt[1]),
+    z: caveAt[1],
+    yaw: Math.atan2(-caveDir[0], caveDir[1]),
+  };
+  const caveReach = CAVE.length + CAVE.skirt + 20;
+  for (let j = 0; j < n; j++) {
+    for (let i = 0; i < n; i++) {
+      const x = hf.x(i);
+      const z = hf.z(j);
+      if (Math.hypot(x - cave.x, z - cave.z) > caveReach) continue;
+      const l = caveLocalOf(cave, x, z);
+      const hw = CAVE.width / 2 + 1.5;
+      if (
+        Math.abs(l.x) <= hw + 0.3 &&
+        l.z >= -CAVE.threshold &&
+        l.z <= CAVE.length + CAVE.cutBehind
+      ) {
+        hf.set(i, j, Math.min(hf.get(i, j), cave.y - CAVE.cutDepth));
+      } else if (l.z < -CAVE.threshold && l.z > -CAVE.threshold - 16 && Math.abs(l.x) < hw + 6) {
+        const w = 1 - smoothstep(CAVE.threshold, CAVE.threshold + 16, -l.z);
+        hf.set(i, j, lerp(hf.get(i, j), cave.y, w));
+      }
+    }
+  }
+
   // The road's own height profile: the land under it, smoothed and never dropping.
   const samples = Math.ceil(road.length / 4);
   const profile: number[] = [];
@@ -245,7 +279,7 @@ export function generateValley(spec: ValleySpec): ValleyResult {
     { name: 'town', position: at3(road.at(8)), kind: 'poi' },
     { name: 'pass', position: at3(road.at(road.length - 40)), kind: 'poi' },
     { name: 'road-mid', position: at3(road.at(road.length / 2)), kind: 'poi' },
-    { name: 'ravine-head', position: at3(ravine.at(ravine.length - 30)), kind: 'poi' },
+    { name: 'ravine-head', position: at3(ravine.at(ravine.length - 45)), kind: 'poi' },
     { name: 'ford', position: at3(river.at(river.length * 0.55)), kind: 'poi' },
     { name: 'summit', position: [hf.x(top.i), top.h, hf.z(top.j)], kind: 'poi' },
   ];
@@ -260,6 +294,7 @@ export function generateValley(spec: ValleySpec): ValleyResult {
     road,
     roadWidth: ROAD_WIDTH,
     ravine,
+    cave,
     town: {
       centre: townCentre,
       y: townY,

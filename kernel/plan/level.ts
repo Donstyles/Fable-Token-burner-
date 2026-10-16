@@ -142,6 +142,18 @@ export interface NamedPoint {
   kind: 'spawn' | 'door' | 'loot' | 'trigger' | 'poi';
 }
 
+/**
+ * A portal (DESIGN.md 15.3): stepping within `radius` of `position` leaves for `target`;
+ * entering this level through the portal named `name` puts the party at `arrive`.
+ */
+export interface PortalRecord {
+  name: string;
+  position: Vec3;
+  radius: number;
+  target: { level: string; entry: string };
+  arrive: { position: Vec3; yawDeg: number };
+}
+
 export interface LevelOutput {
   name: string;
   /** Everything rendered. */

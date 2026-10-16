@@ -411,7 +411,9 @@ waterfalls and deserts, walkable end to end.
    **Done 2026-10-16** (DESIGN 15.2): seven timber-framed houses round the
    well, the road starts at the well, the party wakes in the square.
 3. Cave mouth at the ravine head and a scene transition into the dungeon;
-   the dungeon's exit back to the valley.
+   the dungeon's exit back to the valley. **Done 2026-10-16** (DESIGN 15.3):
+   portals with arrival points, a fade and reload between levels, e2e both
+   ways.
 4. Cascades in the ravine stream (Phase 3 waterfalls on terrain).
 5. Desert region beyond the pass with its own textures and a transition.
 6. Far-mountain backdrop; day sky tuning; performance pass on device.
