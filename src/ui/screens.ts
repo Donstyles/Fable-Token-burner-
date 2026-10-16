@@ -7,6 +7,7 @@
  * from a pure `*-model.ts` module, tested without a DOM.
  */
 import './ui.css';
+import './screens.css';
 import { mulberry32 } from '../game/rng';
 import type { GameState } from '../game/state';
 import {
@@ -20,6 +21,7 @@ import {
 import { button, createFrame, el } from './dom';
 import { renderInventory } from './inventory';
 import { renderRest } from './rest';
+import { renderService, type ServiceRef } from './services';
 import { renderSheet } from './sheet';
 import { renderSpellbook } from './spellbook';
 
@@ -116,7 +118,8 @@ export function installScreens(
   return {
     open,
     openService(kind, house) {
-      mount(kind, house.name, (ctx) => renderSheet(ctx));
+      const ref = { kind, house } as ServiceRef;
+      mount(kind, house.name, (ctx) => renderService(ctx, ref));
     },
     close,
     current() {
