@@ -1,10 +1,24 @@
 /**
  * The party in combat (DESIGN.md 14.2): four members, one selected; tapping a monster attacks
  * with the selected member if ready, then the selection advances to the next ready member,
- * MM6-style. Recovery is per member. Creation, levels and equipment come with later steps;
- * `TEST_PARTY` stands in until then.
+ * MM6-style. Recovery is per member. A member is backed either by a full `Character` sheet
+ * (creation, levels, equipment and conditions drive its numbers and its hit points live on the
+ * sheet) or, for test data, by a plain `MemberDef`; `TEST_PARTY` uses the latter.
  */
+import {
+  armorClass as characterArmor,
+  attackBonus as characterAttack,
+  canActNow,
+  type Character,
+  damageCharacter,
+  damageDice,
+  isCharacter,
+  isConscious,
+  maxHp,
+  recoverySec as characterRecovery,
+} from './character';
 import { resolveAttack, type AttackResult } from './combat';
+import { failChance } from './conditions';
 import type { Dice, Rng } from './rng';
 import { statBonus, stats, type Stats } from './stats';
 
@@ -21,39 +35,115 @@ export interface MemberDef {
   armor: number;
 }
 
+export type MemberSource = MemberDef | Character;
+
 export interface Target {
   armorClass: number;
   takeDamage(amount: number): void;
 }
 
+/** A `MemberDef` view over a character sheet; its fields follow the sheet live. */
+function characterView(c: Character): MemberDef {
+  return {
+    get name() {
+      return c.name;
+    },
+    get stats() {
+      return c.stats;
+    },
+    get maxHp() {
+      return maxHp(c);
+    },
+    get meleeSkill() {
+      return characterAttack(c) - statBonus(c.stats.accuracy);
+    },
+    get weapon() {
+      return damageDice(c) ?? { count: 1, sides: 3 };
+    },
+    get recoverySec() {
+      return characterRecovery(c);
+    },
+    get armor() {
+      return characterArmor(c) - statBonus(c.stats.speed);
+    },
+  };
+}
+
 export class PartyMember {
-  hp: number;
   /** Simulated time at which the member can act again. */
   readyAt = 0;
+  readonly def: MemberDef;
+  readonly character: Character | null;
+  private legacyHp: number;
 
-  constructor(readonly def: MemberDef) {
-    this.hp = def.maxHp;
+  constructor(source: MemberSource) {
+    if (isCharacter(source)) {
+      this.character = source;
+      this.def = characterView(source);
+      this.legacyHp = 0;
+    } else {
+      this.character = null;
+      this.def = source;
+      this.legacyHp = source.maxHp;
+    }
   }
 
+  get name(): string {
+    return this.def.name;
+  }
+
+  get hp(): number {
+    return this.character ? this.character.hp : this.legacyHp;
+  }
+
+  set hp(value: number) {
+    if (this.character) this.character.hp = value;
+    else this.legacyHp = value;
+  }
+
+  get maxHp(): number {
+    return this.def.maxHp;
+  }
+
+  /** Up and targetable: hit points above zero and not dead, stoned or eradicated. */
   get alive(): boolean {
-    return this.hp > 0;
+    return this.character ? isConscious(this.character) : this.hp > 0;
   }
 
   get attackBonus(): number {
+    if (this.character) return characterAttack(this.character);
     return statBonus(this.def.stats.accuracy) + this.def.meleeSkill;
   }
 
   get armorClass(): number {
+    if (this.character) return characterArmor(this.character);
     return Math.max(0, statBonus(this.def.stats.speed) + this.def.armor);
+  }
+
+  get damage(): Dice {
+    return this.def.weapon;
   }
 
   /** Recovery shortens with speed; never under half a second. */
   get recoverySec(): number {
+    if (this.character) return characterRecovery(this.character);
     return Math.max(0.5, this.def.recoverySec - 0.05 * statBonus(this.def.stats.speed));
   }
 
+  /** The chance an action fails before it starts (Cursed). */
+  get failChance(): number {
+    return this.character ? failChance(this.character.conditions) : 0;
+  }
+
   isReady(now: number): boolean {
-    return this.alive && now >= this.readyAt;
+    if (!this.alive || now < this.readyAt) return false;
+    return this.character ? canActNow(this.character) : true;
+  }
+
+  /** Damage at game minute `gameMinute`; a character sheet handles falling and dying. */
+  takeDamage(amount: number, gameMinute = 0): void {
+    if (this.character) damageCharacter(this.character, amount, gameMinute);
+    else this.legacyHp = Math.max(0, this.legacyHp - amount);
   }
 }
 
@@ -66,8 +156,8 @@ export class Party {
   readonly members: PartyMember[];
   selected = 0;
 
-  constructor(defs: readonly MemberDef[]) {
-    this.members = defs.map((d) => new PartyMember(d));
+  constructor(sources: readonly MemberSource[]) {
+    this.members = sources.map((s) => new PartyMember(s));
   }
 
   get alive(): boolean {
@@ -88,7 +178,11 @@ export class Party {
     const index = this.readyIndex(now);
     if (index < 0) return null;
     const member = this.members[index]!;
-    const result = resolveAttack(member.attackBonus, member.def.weapon, target.armorClass, rng);
+    const chance = member.failChance;
+    const result: AttackResult =
+      chance > 0 && rng() < chance
+        ? { hit: false, damage: 0, chance: 0 }
+        : resolveAttack(member.attackBonus, member.damage, target.armorClass, rng);
     if (result.hit) target.takeDamage(result.damage);
     member.readyAt = now + member.recoverySec;
     this.advance(now, index);
@@ -115,10 +209,10 @@ export class Party {
   }
 
   /** Damage to one member; the selection leaves a member who drops. */
-  takeDamage(index: number, amount: number): void {
+  takeDamage(index: number, amount: number, gameMinute = 0): void {
     const m = this.members[index];
     if (!m) return;
-    m.hp = Math.max(0, m.hp - amount);
+    m.takeDamage(amount, gameMinute);
     if (!m.alive && this.selected === index) this.advance(0, index);
   }
 
