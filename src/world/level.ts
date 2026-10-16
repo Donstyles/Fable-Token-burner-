@@ -322,6 +322,19 @@ export async function loadLevel(
       lods[0]!.setEnabled(true);
     }
   }
+  // The backdrop ring: far mountains with the terrain material, always drawn, never solid.
+  for (const child of find('backdrop')?.children ?? []) {
+    const p = child.primitives[0];
+    if (!p) continue;
+    const mesh = new Mesh('backdrop', scene);
+    toVertexData(p).applyToMesh(mesh, false);
+    mesh.material = materialFor(ROLE.terrain, false);
+    mesh.parent = root;
+    mesh.freezeWorldMatrix();
+    mesh.doNotSyncBoundingInfo = true;
+    mesh.isPickable = false;
+    meshes.push(mesh);
+  }
   // Forests: two prototype trees drawn as thin instances, in regions so distant ones can
   // be switched off; trunks collide as one static body of cylinders.
   const physicsBodies: PhysicsBody[] = [];

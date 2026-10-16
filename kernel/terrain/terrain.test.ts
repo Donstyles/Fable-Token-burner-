@@ -5,6 +5,7 @@ import { terrainMesh } from './mesh';
 import { fbm, ridged } from './noise';
 import { riverSurface } from './river';
 import { GroundPath, smoothPath } from './spline';
+import { backdropMesh } from './backdrop';
 import { buildTerrainLevel } from './build';
 import { CAVE, caveLocalOf, caveMouth } from './cave';
 import { generateDesert } from './desert';
@@ -318,5 +319,37 @@ describe('desert', () => {
     const valley = buildTerrainLevel({ seed: 7, width: 1024, cell: 16, chunkCells: 16 });
     expect(valley.portals.map((p) => p.name)).toEqual(['cave', 'pass']);
     expect(valley.terrainTextures.base).toBe('grass');
+  });
+});
+
+describe('backdrop', () => {
+  it('rings the map, joins its edge heights and climbs into peaks outward', () => {
+    const edge = (x: number, z: number): number => 50 + x * 0.01 + z * 0.02;
+    const b = backdropMesh({
+      seed: 3,
+      half: 512,
+      reach: 2000,
+      rings: 6,
+      segments: 48,
+      peak: 800,
+      snowLine: 300,
+      edgeHeight: edge,
+    });
+    expect(b.positions.length / 3).toBe(7 * 48);
+    expect(b.indices.length / 3).toBe(6 * 48 * 2);
+    expect(b.colors.length).toBe(b.positions.length);
+    for (const v of b.positions) expect(Number.isFinite(v)).toBe(true);
+    // The inner ring sits at the edge height (within the noise), the outer well above it.
+    let innerDiff = 0;
+    let outer = 0;
+    for (let k = 0; k < 48; k++) {
+      const i = k * 3;
+      innerDiff += Math.abs(b.positions[i + 1]! - edge(b.positions[i]!, b.positions[i + 2]!));
+      outer += b.positions[(6 * 48 + k) * 3 + 1]!;
+    }
+    expect(innerDiff / 48).toBeLessThan(1);
+    expect(outer / 48).toBeGreaterThan(300);
+    // Snow only high up: the lowest ring carries none.
+    for (let k = 0; k < 48; k++) expect(b.colors[k * 3 + 2]).toBe(0);
   });
 });

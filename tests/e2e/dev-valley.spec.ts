@@ -43,6 +43,8 @@ test.describe('valley region', () => {
         terrain: names.filter((n) => n.startsWith('t:')).length,
         terrainOn: d.level.meshes.filter((m) => m.name.startsWith('t:') && m.isEnabled()).length,
         forest: names.filter((n) => n.startsWith('forest:')).length,
+        backdrop: d.level.meshes.filter((m) => m.name === 'backdrop' && m.isEnabled()).length,
+        backdropTriangles: d.level.sidecar.stats['backdropTriangles'],
         pass: d.pointOf('pass'),
         summit: d.pointOf('summit'),
         town: d.pointOf('town'),
@@ -72,6 +74,9 @@ test.describe('valley region', () => {
     expect(info.terrain).toBe(300);
     expect(info.terrainOn).toBe(100);
     expect(info.forest).toBeGreaterThan(8);
+    // The ring of far mountains beyond the edge is drawn.
+    expect(info.backdrop).toBe(1);
+    expect(info.backdropTriangles).toBeGreaterThan(1000);
     expect(info.pass).not.toBeNull();
     expect(info.summit!.y).toBeGreaterThan(300);
     // The party stands on the road near the valley floor, not fallen through the terrain.

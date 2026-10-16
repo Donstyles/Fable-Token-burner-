@@ -9,6 +9,7 @@ import type {
   Waterfall,
   WaterSurface,
 } from '../plan/level';
+import { backdropMesh } from './backdrop';
 import { caveMouth } from './cave';
 import { terrainChunks, type TerrainChunk } from './chunks';
 import { generateDesert, oasisSurface, type DesertResult } from './desert';
@@ -58,6 +59,8 @@ export interface TerrainLevel {
   valley?: ValleyResult;
   desert?: DesertResult;
   chunks: TerrainChunk[];
+  /** The ring of far mountains beyond the map edge; drawn, never collided with. */
+  backdrop: ColouredMeshData;
   /** Structures: houses, the well, the cave; chunked by the exporter's centroid grouping. */
   visual: MeshData;
   town?: TownResult;
@@ -106,11 +109,18 @@ function navCollider(base: { height: Heightfield; splat: Float32Array }, ...soli
   };
 }
 
+/** The map's height clamped to its edge, for the backdrop's join. */
+function edgeSampler(height: Heightfield, half: number): (x: number, z: number) => number {
+  const c = (v: number): number => Math.max(-half + 6, Math.min(half - 6, v));
+  return (x, z) => height.sample(c(x), c(z));
+}
+
 const VALLEY_ENV: RegionEnvironment = {
   lightColor: [1.0, 0.92, 0.78],
   ambientColor: [0.36, 0.4, 0.48],
   fogColor: [0.62, 0.68, 0.78],
-  fogDensity: 0.0017,
+  // Thin enough that the backdrop ridges two kilometres out still show through the haze.
+  fogDensity: 0.0009,
   skyZenith: [0.15, 0.3, 0.7],
   skyHorizon: [0.6, 0.7, 0.85],
   cloudAmount: 0.4,
@@ -120,7 +130,7 @@ const DESERT_ENV: RegionEnvironment = {
   lightColor: [1.0, 0.9, 0.72],
   ambientColor: [0.44, 0.41, 0.38],
   fogColor: [0.82, 0.74, 0.6],
-  fogDensity: 0.0014,
+  fogDensity: 0.0008,
   skyZenith: [0.3, 0.5, 0.82],
   skyHorizon: [0.86, 0.8, 0.68],
   cloudAmount: 0.15,
@@ -162,6 +172,16 @@ function buildValleyLevel(spec: TerrainSpec): TerrainLevel {
     height: valley.height,
     valley,
     chunks,
+    backdrop: backdropMesh({
+      seed: spec.seed + 99,
+      half,
+      reach: 2600,
+      rings: 14,
+      segments: 192,
+      peak: 950,
+      snowLine: 280,
+      edgeHeight: edgeSampler(valley.height, half),
+    }),
     visual,
     town,
     forest: forest.visual,
@@ -232,6 +252,16 @@ function buildDesertLevel(spec: TerrainSpec): TerrainLevel {
     height: desert.height,
     desert,
     chunks,
+    backdrop: backdropMesh({
+      seed: spec.seed + 99,
+      half,
+      reach: 2600,
+      rings: 12,
+      segments: 160,
+      peak: 260,
+      snowLine: 1e9,
+      edgeHeight: edgeSampler(desert.height, half),
+    }),
     visual: empty(),
     forest: forest.visual,
     trees: desert.trees,

@@ -93,7 +93,10 @@ async function buildTerrain(id: string, validate: boolean): Promise<boolean> {
       collider: level.solids,
       water: level.water,
       waterfalls: level.waterfalls,
-      nodes: [{ name: 'terrain', children: level.chunks }],
+      nodes: [
+        { name: 'terrain', children: level.chunks },
+        { name: 'backdrop', children: [{ name: 'backdrop', mesh: level.backdrop }] },
+      ],
     },
     { chunk: chunkMetres, quantize: true },
   );
@@ -133,6 +136,7 @@ async function buildTerrain(id: string, validate: boolean): Promise<boolean> {
       houses: level.town?.houses.length ?? 0,
       portals: level.portals.length,
       waterfalls: level.waterfalls.length,
+      backdropTriangles: level.backdrop.indices.length / 3,
       visualTriangles: level.visual.indices.length / 3,
       forestTriangles: level.forest.indices.length / 3,
       colliderTriangles: level.collider.indices.length / 3,

@@ -422,6 +422,8 @@ waterfalls and deserts, walkable end to end.
    **Done 2026-10-16** (DESIGN 15.5): dunes, mesas, an oasis, the road from
    the pass, portals both ways.
 6. Far-mountain backdrop; day sky tuning; performance pass on device.
+   **Backdrop done 2026-10-16** (DESIGN 15.6); the device pass waits for
+   the owner's phone.
 
 ## Phase 6 – Slice content
 
