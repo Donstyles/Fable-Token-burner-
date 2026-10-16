@@ -813,6 +813,12 @@ and icons all share it, so world and UI agree.
   submission attempt gets its own id; and a run's cost is what its tasks
   reported, with the balance delta as a cross-check, since monthly credits
   changed under the run.
+- 2026-10-16 – **Bandit v2 accepted as passable; clips to be re-picked.**
+  Owner: "I don't like the animations you have chosen but it works and
+  looks passable in game." The full Meshy catalog with preview GIFs is in
+  `pipeline/animation-catalog.md` for the owner to pick from; swapping clips
+  is an animation request on the existing rig (3 credits per clip), no new
+  mesh.
 - 2026-10-15 – **Owner's look tuning becomes the default** (sent from the
   dev panel after playing the water build, "looks moody"): posterize filter
   on at 5 levels with dither 0.45 (cell 2), bloom off, vignette 0.6, contrast
