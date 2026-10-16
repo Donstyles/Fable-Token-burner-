@@ -577,7 +577,10 @@ reach (swings alternate between the two attack clips at 1.5× speed, the blow
 lands 40 % into the swing, then a pause); hit (the hit clip interrupts
 whatever it did); dead (the death clip holds, the agent leaves the crowd,
 the body stays). Test data: the bandit, level 2, 25 hp, AC 8, attack 3,
-1d6+1.
+1d6+1. Regions carry `spawns` in their sidecar (kind, position, facing):
+the valley places eight bandits on the road above the village, along the
+gorge banks, at the cave and by the river; the desert four along its
+road. The showcase keeps the test bed's one bandit six metres ahead.
 
 ### 14.4 Hit feedback (2026-10-16)
 

@@ -34,6 +34,8 @@ test.describe('valley region', () => {
   test('loads the outdoor level with terrain chunks, forests and the road points', async ({
     page,
   }) => {
+    // Software GL in CI renders at a frame a second; eight bandits take a while to arrive.
+    test.setTimeout(300_000);
     const info = await page.evaluate(() => {
       const d = (window as unknown as W).ftb!.dev!;
       const names = d.level.meshes.map((m) => m.name);
@@ -64,6 +66,16 @@ test.describe('valley region', () => {
     expect(info.water).toBe(info.waterfalls! + 2);
     expect(info.solids).toBe(true);
     expect(info.town).not.toBeNull();
+    // Bandits stand about the region, idle until the party comes near.
+    await page.waitForFunction(
+      () => (window as unknown as W).ftb!.dev!.monsters.length >= 8,
+      null,
+      { timeout: 90_000 },
+    );
+    const states = await page.evaluate(() =>
+      (window as unknown as W).ftb!.dev!.monsters.map((m) => m.state),
+    );
+    expect(states.every((s) => s === 'idle')).toBe(true);
     // The cave mouth at the ravine head leads into the dungeon (DESIGN 15.3).
     expect(info.cave).not.toBeNull();
     expect(info.portals).toEqual(['cave>showcase:exit', 'pass>desert:pass']);

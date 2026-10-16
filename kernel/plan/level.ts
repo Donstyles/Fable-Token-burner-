@@ -143,6 +143,13 @@ export interface NamedPoint {
   kind: 'spawn' | 'door' | 'loot' | 'trigger' | 'poi';
 }
 
+/** Where a monster stands when the level loads (DESIGN.md 14.3). */
+export interface SpawnRecord {
+  kind: string;
+  position: Vec3;
+  yawDeg: number;
+}
+
 /**
  * A portal (DESIGN.md 15.3): stepping within `radius` of `position` leaves for `target`;
  * entering this level through the portal named `name` puts the party at `arrive`.

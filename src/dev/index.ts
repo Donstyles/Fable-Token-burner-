@@ -254,18 +254,36 @@ export async function startDev(app: App): Promise<DevHandle> {
     } catch (e) {
       diag(`navmesh failed: ${e instanceof Error ? e.message : String(e)}`);
     }
-    try {
-      const c = await loadCharacter(scene, app.materials, stepper, banditUrl, {
-        name: 'bandit',
-        position: level.spawn.add(ahead.scale(6)),
-        yawDeg: level.spawnYawDeg + 180,
-      });
-      handle.character = c;
-      handle.monsters.push(new Monster(MONSTERS['bandit']!, c, nav, rng));
-      diag(`bandit: ${c.clips.length} clips, ${nav ? 'on the navmesh' : 'no navmesh'}`);
-    } catch (e) {
-      diag(`bandit failed: ${e instanceof Error ? e.message : String(e)}`);
+    // The level's spawns (regions), or the test bed's one bandit six metres ahead.
+    const placements = level.spawns.length
+      ? level.spawns.map((s, i) => ({ ...s, name: i === 0 ? 'bandit' : `bandit-${i + 1}` }))
+      : [
+          {
+            kind: 'bandit',
+            name: 'bandit',
+            position: level.spawn.add(ahead.scale(6)),
+            yawDeg: level.spawnYawDeg + 180,
+          },
+        ];
+    for (const p of placements) {
+      const def = MONSTERS[p.kind];
+      if (!def) {
+        diag(`no such monster: ${p.kind}`);
+        continue;
+      }
+      try {
+        const c = await loadCharacter(scene, app.materials, stepper, banditUrl, {
+          name: p.name,
+          position: p.position,
+          yawDeg: p.yawDeg,
+        });
+        handle.character ??= c;
+        handle.monsters.push(new Monster(def, c, nav, rng));
+      } catch (e) {
+        diag(`${p.name} failed: ${e instanceof Error ? e.message : String(e)}`);
+      }
     }
+    diag(`${handle.monsters.length} monsters, ${nav ? 'on the navmesh' : 'no navmesh'}`);
     navigation = nav;
   };
 

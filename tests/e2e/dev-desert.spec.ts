@@ -17,6 +17,7 @@ type Dev = {
   pointOf(name: string): { x: number; y: number; z: number } | null;
   teleport(x: number, y: number, z: number, yaw: number): void;
   portals: { portals: { name: string; target: { level: string; entry: string } }[] };
+  monsters: { state: string }[];
 };
 type W = Window & { ftb?: { dev?: Dev } };
 
@@ -31,6 +32,8 @@ test.describe('desert region', () => {
   test('loads the desert with its sand, the oasis and the pass back to the valley', async ({
     page,
   }) => {
+    // Software GL in CI renders at a frame a second; eight bandits take a while to arrive.
+    test.setTimeout(300_000);
     const info = await page.evaluate(() => {
       const d = (window as unknown as W).ftb!.dev!;
       return {
@@ -52,6 +55,11 @@ test.describe('desert region', () => {
     expect(info.portals).toEqual(['pass>valley:pass']);
     expect(info.oasis).not.toBeNull();
     expect(info.mesa).not.toBeNull();
+    await page.waitForFunction(
+      () => (window as unknown as W).ftb!.dev!.monsters.length >= 4,
+      null,
+      { timeout: 90_000 },
+    );
     await page.waitForTimeout(1500);
     await page.screenshot({ path: `test-results/desert-${test.info().project.name}.png` });
     // Stands at the oasis and at the mesas after teleporting.

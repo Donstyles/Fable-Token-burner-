@@ -87,6 +87,8 @@ export interface LevelSidecar {
   points: { name: string; position: V3; kind: string }[];
   /** Doors to other levels (DESIGN.md 15.3). */
   portals?: SidecarPortal[];
+  /** Monsters standing about when the level loads. */
+  spawns?: { kind: string; position: V3; yawDeg: number }[];
   lights: {
     position: V3;
     color: V3;
@@ -149,6 +151,7 @@ export interface LoadedLevel {
   spawnYawDeg: number;
   points: Map<string, Vector3>;
   portals: Portal[];
+  spawns: { kind: string; position: Vector3; yawDeg: number }[];
   /** The level's static lights in Babylon space; baked into the vertices, not registered. */
   lights: LevelLight[];
   /** 1 shows the baked light, 0 the environment's key and ambient light instead. */
@@ -561,6 +564,11 @@ export async function loadLevel(
     spawn: toBabylon(sidecar.spawn.position),
     spawnYawDeg: sidecar.spawn.yawDeg,
     points: new Map(sidecar.points.map((p) => [p.name, toBabylon(p.position)])),
+    spawns: (sidecar.spawns ?? []).map((s) => ({
+      kind: s.kind,
+      position: toBabylon(s.position),
+      yawDeg: s.yawDeg,
+    })),
     portals: (sidecar.portals ?? []).map((p) => ({
       name: p.name,
       position: toBabylon(p.position),

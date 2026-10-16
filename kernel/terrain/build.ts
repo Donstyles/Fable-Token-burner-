@@ -6,9 +6,11 @@ import type {
   NamedPoint,
   PortalRecord,
   SpaceRecord,
+  SpawnRecord,
   Waterfall,
   WaterSurface,
 } from '../plan/level';
+import type { GroundPath } from './spline';
 import { backdropMesh } from './backdrop';
 import { caveMouth } from './cave';
 import { terrainChunks, type TerrainChunk } from './chunks';
@@ -73,6 +75,8 @@ export interface TerrainLevel {
   solids: MeshData;
   lights: LightPlacement[];
   portals: PortalRecord[];
+  /** Monsters standing about when the level loads. */
+  spawns: SpawnRecord[];
   water: WaterSurface[];
   waterfalls: Waterfall[];
   points: NamedPoint[];
@@ -113,6 +117,25 @@ function navCollider(base: { height: Heightfield; splat: Float32Array }, ...soli
 function edgeSampler(height: Heightfield, half: number): (x: number, z: number) => number {
   const c = (v: number): number => Math.max(-half + 6, Math.min(half - 6, v));
   return (x, z) => height.sample(c(x), c(z));
+}
+
+/** A monster beside a path: offset to one side, facing along it. */
+function besidePath(
+  height: Heightfield,
+  path: GroundPath,
+  along: number,
+  side: number,
+  kind = 'bandit',
+): SpawnRecord {
+  const p = path.at(along);
+  const t = path.nearest(p[0], p[1]).tangent;
+  const x = p[0] - t[1] * side;
+  const z = p[1] + t[0] * side;
+  return {
+    kind,
+    position: [x, height.sample(x, z), z],
+    yawDeg: (Math.atan2(-t[0], -t[1]) * 180) / Math.PI,
+  };
 }
 
 const VALLEY_ENV: RegionEnvironment = {
@@ -211,6 +234,17 @@ function buildValleyLevel(spec: TerrainSpec): TerrainLevel {
         },
       },
     ],
+    // Bandits: on the road above the village, along the gorge banks and at the cave.
+    spawns: [
+      besidePath(valley.height, road, 140, 4),
+      besidePath(valley.height, road, 300, -4),
+      besidePath(valley.height, road, 520, 4),
+      besidePath(valley.height, road, road.length * 0.75, -4),
+      besidePath(valley.height, valley.ravine, 140, 10),
+      besidePath(valley.height, valley.ravine, 330, -10),
+      besidePath(valley.height, valley.ravine, valley.ravine.length - 75, 9),
+      besidePath(valley.height, valley.river, valley.river.length * 0.4, 22),
+    ],
     water: [riverSurface(valley), ...streamSurfaces(valley.ravine, valley.stream)],
     waterfalls: streamFalls(valley.ravine, valley.stream),
     // The cave's portal is a point too, so the build checks the tunnel is reachable.
@@ -279,6 +313,12 @@ function buildDesertLevel(spec: TerrainSpec): TerrainLevel {
           yawDeg: (Math.atan2(inward[0], inward[1]) * 180) / Math.PI,
         },
       },
+    ],
+    spawns: [
+      besidePath(desert.height, road, road.length * 0.25, 5),
+      besidePath(desert.height, road, road.length * 0.45, -5),
+      besidePath(desert.height, road, road.length * 0.62, 5),
+      besidePath(desert.height, road, road.length * 0.85, -5),
     ],
     water: [oasisSurface(desert)],
     waterfalls: [],
