@@ -58,9 +58,21 @@
   "runs": [
     {
       "started": "2026-10-16T20:20:38.951Z",
-      "taskIds": [],
-      "tasks": {},
-      "balanceBefore": 1890
+      "taskIds": ["01a14672-da80-760a-979a-2052d3d884ba"],
+      "tasks": {
+        "bandit": {
+          "image-to-3d": {
+            "taskId": "01a14672-da80-760a-979a-2052d3d884ba",
+            "status": "PENDING",
+            "consumedCredits": null,
+            "operationId": "b002-bandit-image-to-3d-r1-a1"
+          }
+        }
+      },
+      "balanceBefore": 1890,
+      "attempts": {
+        "bandit/image-to-3d": 1
+      }
     }
   ]
 }
