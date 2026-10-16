@@ -2,7 +2,7 @@
   "number": 2,
   "name": "bandit-v2",
   "created": "2026-10-16",
-  "approved": false,
+  "approved": true,
   "items": [
     {
       "assetId": "bandit",
