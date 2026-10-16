@@ -55,5 +55,12 @@
     }
   ],
   "estimatedCredits": 50,
-  "runs": []
+  "runs": [
+    {
+      "started": "2026-10-16T20:20:38.951Z",
+      "taskIds": [],
+      "tasks": {},
+      "balanceBefore": 1890
+    }
+  ]
 }
