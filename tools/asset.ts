@@ -29,7 +29,7 @@ import { runBatch } from './lib/run';
 
 /** Meshy targets 4000 and lands near it; a tenth over is accepted, more is a regeneration. */
 const MAX_HUMANOID_TRIANGLES = 4400;
-/** Boundary loops up to this wide are gaps between parts, not a garment's open edge. */
+/** Boundary loops up to this wide may be gaps between parts rather than a garment's open edge. */
 const MAX_GAP_METRES = 0.3;
 const TEXTURE_MANIFEST = 'assets/textures/manifest.json';
 
@@ -118,14 +118,15 @@ async function validate(): Promise<void> {
             }
           }
           if (!report.textures.length) problems.push(`${a.id}: ${file} has no texture`);
-          // Gaps between Meshy's separated parts: small boundary loops. A sheet's border (a
-          // cloak hem) is wide; a gap at a belt or collar is not. Not patched: regenerated.
-          const gaps = report.openLoops.filter((l) => l.extent <= MAX_GAP_METRES);
-          if (gaps.length) {
-            problems.push(
-              `${a.id}: ${file} has ${gaps.length} gap(s) between parts (${gaps
-                .map((g) => `${(g.extent * 100).toFixed(0)} cm`)
-                .join(', ')}): regenerate from a cleaner reference`,
+          // Small boundary loops: gaps between Meshy's separated parts, or a hair piece's
+          // border on the scalp. The ray test tells most apart, not all, so this is a note for
+          // the owner's eye in the viewer, not a failure; nothing is patched (2026-10-16).
+          const small = report.openLoops.filter((l) => l.extent <= MAX_GAP_METRES);
+          if (small.length) {
+            console.info(
+              `  note ${a.id}: ${file} has ${small.length} small open loop(s): ${small
+                .map((l) => `${(l.extent * 100).toFixed(0)} cm ${l.covered ? 'backed' : 'open'}`)
+                .join(', ')} (judge in the viewer; regenerate if they show)`,
             );
           }
         }

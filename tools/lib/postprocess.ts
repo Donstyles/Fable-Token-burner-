@@ -18,8 +18,11 @@ export interface GlbReport {
   clips: string[];
   textures: { name: string; width: number; height: number }[];
   bytes: number;
-  /** Boundary loops (open edges) per size class: a cloak hem is expected, a chest hole is not. */
-  openLoops: { vertices: number; extent: number }[];
+  /**
+   * Boundary loops (open edges). A loop backed by geometry within a few centimetres (a hair
+   * piece over the scalp) is covered; an uncovered small loop is a see-through gap.
+   */
+  openLoops: { vertices: number; extent: number; covered: boolean }[];
 }
 
 function io(): NodeIO {
@@ -51,8 +54,8 @@ export function report(doc: Document, bytes: number): GlbReport {
       const indices = prim.getIndices();
       if (!position || !indices || prim.getMode() !== Primitive.Mode.TRIANGLES) continue;
       const positions = position.getArray() as Float32Array;
-      for (const loop of findOpenLoops(positions, indices.getArray() as Uint16Array | Uint32Array)
-        .loops) {
+      const indexArray = indices.getArray() as Uint16Array | Uint32Array;
+      for (const loop of findOpenLoops(positions, indexArray).loops) {
         const min = [Infinity, Infinity, Infinity];
         const max = [-Infinity, -Infinity, -Infinity];
         for (const v of loop.verts) {
@@ -64,6 +67,7 @@ export function report(doc: Document, bytes: number): GlbReport {
         openLoops.push({
           vertices: loop.verts.size,
           extent: Math.max(max[0]! - min[0]!, max[1]! - min[1]!, max[2]! - min[2]!),
+          covered: loopIsCovered(positions, indexArray, loop),
         });
       }
     }
@@ -184,4 +188,127 @@ export function findOpenLoops(
     loops.push({ edges, verts });
   }
   return { directed: open, loops };
+}
+
+/**
+ * Whether an open loop is backed by other geometry. Points just inside the rim are tested
+ * along the loop's plane normal, both ways, for a surface within `depth` metres: a hair
+ * piece's border lies on the scalp and a cuff on the wrist (covered); a gap between a belt
+ * and the body shows the inside of the mesh, far away (not covered). Rim triangles are
+ * skipped by the ray test.
+ */
+export function loopIsCovered(
+  positions: Float32Array,
+  indices: Uint16Array | Uint32Array,
+  loop: { edges: [number, number][]; verts: Set<number> },
+  depth = 0.08,
+): boolean {
+  const centre = [0, 0, 0];
+  for (const v of loop.verts) {
+    for (let k = 0; k < 3; k++) centre[k]! += positions[v * 3 + k]! / loop.verts.size;
+  }
+  const rim = new Set<number>();
+  const edgeSet = new Set(loop.edges.map(([a, b]) => `${a}_${b}`));
+  for (let t = 0; t < indices.length; t += 3) {
+    const tri = [indices[t]!, indices[t + 1]!, indices[t + 2]!];
+    for (let e = 0; e < 3; e++) {
+      if (edgeSet.has(`${tri[e]}_${tri[(e + 1) % 3]}`)) rim.add(t / 3);
+    }
+  }
+  // The loop's plane normal by Newell's method over the chained rim.
+  const next = new Map<number, number>();
+  for (const [a, b] of loop.edges) next.set(a, b);
+  const start = loop.edges[0]?.[0];
+  if (start === undefined) return false;
+  const chain: number[] = [];
+  const visited = new Set<number>();
+  for (let v: number | undefined = start; v !== undefined && !visited.has(v); v = next.get(v)) {
+    visited.add(v);
+    chain.push(v);
+  }
+  let nx = 0;
+  let ny = 0;
+  let nz = 0;
+  for (let i = 0; i < chain.length; i++) {
+    const a = chain[i]! * 3;
+    const b = chain[(i + 1) % chain.length]! * 3;
+    nx += (positions[a + 1]! - positions[b + 1]!) * (positions[a + 2]! + positions[b + 2]!);
+    ny += (positions[a + 2]! - positions[b + 2]!) * (positions[a]! + positions[b]!);
+    nz += (positions[a]! - positions[b]!) * (positions[a + 1]! + positions[b + 1]!);
+  }
+  const len = Math.hypot(nx, ny, nz);
+  if (len === 0) return false;
+  const dir = [nx / len, ny / len, nz / len];
+  let hits = 0;
+  for (const v of chain) {
+    // A little inside the rim, so the ray starts on the opening rather than on the edge.
+    const p = [0, 1, 2].map(
+      (k) => positions[v * 3 + k]! + 0.15 * (centre[k]! - positions[v * 3 + k]!),
+    );
+    const backed =
+      rayHitsMesh(positions, indices, p, dir, depth, rim) ||
+      rayHitsMesh(
+        positions,
+        indices,
+        p,
+        dir.map((d) => -d),
+        depth,
+        rim,
+      );
+    if (backed) hits++;
+  }
+  return hits >= chain.length * 0.8;
+}
+
+/** Möller–Trumbore over every triangle not in `skip`; true when a hit lies within `maxT`. */
+function rayHitsMesh(
+  positions: Float32Array,
+  indices: Uint16Array | Uint32Array,
+  origin: number[],
+  dir: number[],
+  maxT: number,
+  skip: Set<number>,
+): boolean {
+  const EPS = 1e-7;
+  for (let t = 0; t < indices.length; t += 3) {
+    if (skip.has(t / 3)) continue;
+    const a = indices[t]! * 3;
+    const b = indices[t + 1]! * 3;
+    const c = indices[t + 2]! * 3;
+    const e1 = [
+      positions[b]! - positions[a]!,
+      positions[b + 1]! - positions[a + 1]!,
+      positions[b + 2]! - positions[a + 2]!,
+    ];
+    const e2 = [
+      positions[c]! - positions[a]!,
+      positions[c + 1]! - positions[a + 1]!,
+      positions[c + 2]! - positions[a + 2]!,
+    ];
+    const p = [
+      dir[1]! * e2[2]! - dir[2]! * e2[1]!,
+      dir[2]! * e2[0]! - dir[0]! * e2[2]!,
+      dir[0]! * e2[1]! - dir[1]! * e2[0]!,
+    ];
+    const det = e1[0]! * p[0]! + e1[1]! * p[1]! + e1[2]! * p[2]!;
+    if (Math.abs(det) < EPS) continue;
+    const inv = 1 / det;
+    const s = [
+      origin[0]! - positions[a]!,
+      origin[1]! - positions[a + 1]!,
+      origin[2]! - positions[a + 2]!,
+    ];
+    const u = (s[0]! * p[0]! + s[1]! * p[1]! + s[2]! * p[2]!) * inv;
+    if (u < 0 || u > 1) continue;
+    const q = [
+      s[1]! * e1[2]! - s[2]! * e1[1]!,
+      s[2]! * e1[0]! - s[0]! * e1[2]!,
+      s[0]! * e1[1]! - s[1]! * e1[0]!,
+    ];
+    const v = (dir[0]! * q[0]! + dir[1]! * q[1]! + dir[2]! * q[2]!) * inv;
+    if (v < 0 || u + v > 1) continue;
+    const hitT = (e2[0]! * q[0]! + e2[1]! * q[1]! + e2[2]! * q[2]!) * inv;
+    if (hitT > 1e-4 && hitT <= maxT) return true;
+  }
+  return false;
 }
