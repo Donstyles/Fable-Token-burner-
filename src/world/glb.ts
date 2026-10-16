@@ -25,6 +25,8 @@ interface Accessor {
   bufferView: number;
   byteOffset?: number;
   componentType: number;
+  /** Integer attributes map to [0, 1] or [-1, 1] (KHR_mesh_quantization). */
+  normalized?: boolean;
   count: number;
   type: 'SCALAR' | 'VEC2' | 'VEC3' | 'VEC4';
 }
@@ -42,7 +44,14 @@ interface Gltf {
     primitives: { attributes: Record<string, number>; indices?: number; material?: number }[];
   }[];
   materials?: { name?: string }[];
-  nodes: { name?: string; mesh?: number; children?: number[] }[];
+  nodes: {
+    name?: string;
+    mesh?: number;
+    children?: number[];
+    /** Dequantization transform written by the exporter's quantize step. */
+    translation?: number[];
+    scale?: number[];
+  }[];
   scenes: { nodes: number[] }[];
   scene?: number;
 }
@@ -67,16 +76,41 @@ export function parseGlb(buffer: ArrayBuffer): GlbNode[] {
   const gltf = json;
   const data = bin;
 
+  // Floats, or quantized integers (KHR_mesh_quantization) mapped back to floats.
   const readFloats = (index: number): Float32Array => {
     const acc = gltf.accessors[index]!;
     const bv = gltf.bufferViews[acc.bufferView]!;
     const n = COMPONENTS[acc.type];
     const out = new Float32Array(acc.count * n);
-    const stride = bv.byteStride ?? n * 4;
+    const size =
+      acc.componentType === 5126
+        ? 4
+        : acc.componentType === 5122 || acc.componentType === 5123
+          ? 2
+          : 1;
+    const stride = bv.byteStride ?? n * size;
     const base = (bv.byteOffset ?? 0) + (acc.byteOffset ?? 0);
     const dv = new DataView(data);
+    const read = (at: number): number => {
+      switch (acc.componentType) {
+        case 5126:
+          return dv.getFloat32(at, true);
+        case 5120:
+          return acc.normalized ? Math.max(-1, dv.getInt8(at) / 127) : dv.getInt8(at);
+        case 5121:
+          return acc.normalized ? dv.getUint8(at) / 255 : dv.getUint8(at);
+        case 5122:
+          return acc.normalized
+            ? Math.max(-1, dv.getInt16(at, true) / 32767)
+            : dv.getInt16(at, true);
+        case 5123:
+          return acc.normalized ? dv.getUint16(at, true) / 65535 : dv.getUint16(at, true);
+        default:
+          throw new Error(`unsupported accessor component type ${acc.componentType}`);
+      }
+    };
     for (let i = 0; i < acc.count; i++) {
-      for (let c = 0; c < n; c++) out[i * n + c] = dv.getFloat32(base + i * stride + c * 4, true);
+      for (let c = 0; c < n; c++) out[i * n + c] = read(base + i * stride + c * size);
     }
     return out;
   };
@@ -102,8 +136,23 @@ export function parseGlb(buffer: ArrayBuffer): GlbNode[] {
     if (node.mesh !== undefined) {
       for (const p of gltf.meshes[node.mesh]!.primitives) {
         const colorAcc = p.attributes['COLOR_0'];
+        const positions = readFloats(p.attributes['POSITION']!);
+        // The node's own transform, which quantization uses to dequantize positions.
+        if (node.scale || node.translation) {
+          const sx = node.scale?.[0] ?? 1;
+          const sy = node.scale?.[1] ?? 1;
+          const sz = node.scale?.[2] ?? 1;
+          const tx = node.translation?.[0] ?? 0;
+          const ty = node.translation?.[1] ?? 0;
+          const tz = node.translation?.[2] ?? 0;
+          for (let i = 0; i < positions.length; i += 3) {
+            positions[i] = positions[i]! * sx + tx;
+            positions[i + 1] = positions[i + 1]! * sy + ty;
+            positions[i + 2] = positions[i + 2]! * sz + tz;
+          }
+        }
         primitives.push({
-          positions: readFloats(p.attributes['POSITION']!),
+          positions,
           normals: p.attributes['NORMAL'] !== undefined ? readFloats(p.attributes['NORMAL']) : null,
           uvs:
             p.attributes['TEXCOORD_0'] !== undefined

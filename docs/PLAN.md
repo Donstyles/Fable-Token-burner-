@@ -391,6 +391,24 @@ by designing at device resolution from the start.
 
 ---
 
+## Phase 5b – Outdoor world (added 2026-10-16)
+
+**Goal:** the sprawling world the owner asked for: generated regions at
+near-real scale with forests, rivers, roads, passes, peaks, towns, caves,
+waterfalls and deserts, walkable end to end.
+
+**Steps**
+
+1. Terrain kernel: valley generator, splat, forests, river, road, LOD chunks,
+   quantized export, runtime terrain material and instancing. **Done
+   2026-10-16** (DESIGN 15.1).
+2. Village of generated houses on the valley floor, solid, with a well.
+3. Cave mouth at the ravine head and a scene transition into the dungeon;
+   the dungeon's exit back to the valley.
+4. Cascades in the ravine stream (Phase 3 waterfalls on terrain).
+5. Desert region beyond the pass with its own textures and a transition.
+6. Far-mountain backdrop; day sky tuning; performance pass on device.
+
 ## Phase 6 – Slice content
 
 **Goal:** the first town, one dungeon and one quest, fully assetised.

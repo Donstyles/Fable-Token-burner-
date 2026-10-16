@@ -2,13 +2,75 @@
   "$comment": "Material roles (kernel/elements/roles.ts) mapped to Poly Haven CC0 textures. `npm run textures` fetches the 1k diffuse map and writes a 256 px PNG per role to assets/textures/. Edit, re-run, commit the outputs.",
   "size": 256,
   "roles": {
-    "ashlar": { "source": "polyhaven", "id": "large_sandstone_blocks_01", "metresPerTile": 2 },
-    "flagstone": { "source": "polyhaven", "id": "monastery_stone_floor", "metresPerTile": 2 },
-    "plank": { "source": "polyhaven", "id": "brown_planks_09", "metresPerTile": 2 },
-    "iron": { "source": "polyhaven", "id": "metal_plate_02", "metresPerTile": 1 },
-    "plaster": { "source": "polyhaven", "id": "beige_wall_001", "metresPerTile": 2 },
-    "rock": { "source": "polyhaven", "id": "cliff_side", "metresPerTile": 4 },
-    "marble": { "source": "polyhaven", "id": "marble_01", "metresPerTile": 2 },
-    "trim": { "source": "polyhaven", "id": "stone_brick_wall_001", "metresPerTile": 1 }
+    "ashlar": {
+      "source": "polyhaven",
+      "id": "large_sandstone_blocks_01",
+      "metresPerTile": 2
+    },
+    "flagstone": {
+      "source": "polyhaven",
+      "id": "monastery_stone_floor",
+      "metresPerTile": 2
+    },
+    "plank": {
+      "source": "polyhaven",
+      "id": "brown_planks_09",
+      "metresPerTile": 2
+    },
+    "iron": {
+      "source": "polyhaven",
+      "id": "metal_plate_02",
+      "metresPerTile": 1
+    },
+    "plaster": {
+      "source": "polyhaven",
+      "id": "beige_wall_001",
+      "metresPerTile": 2
+    },
+    "rock": {
+      "source": "polyhaven",
+      "id": "cliff_side",
+      "metresPerTile": 4
+    },
+    "marble": {
+      "source": "polyhaven",
+      "id": "marble_01",
+      "metresPerTile": 2
+    },
+    "trim": {
+      "source": "polyhaven",
+      "id": "stone_brick_wall_001",
+      "metresPerTile": 1
+    },
+    "grass": {
+      "source": "polyhaven",
+      "id": "leafy_grass",
+      "metresPerTile": 3
+    },
+    "path": {
+      "source": "polyhaven",
+      "id": "dirt_floor",
+      "metresPerTile": 3
+    },
+    "scree": {
+      "source": "polyhaven",
+      "id": "rocky_terrain",
+      "metresPerTile": 4
+    },
+    "snow": {
+      "source": "polyhaven",
+      "id": "snow_02",
+      "metresPerTile": 4
+    },
+    "bark": {
+      "source": "polyhaven",
+      "id": "pine_bark",
+      "metresPerTile": 1
+    },
+    "leaves": {
+      "source": "polyhaven",
+      "id": "forest_leaves_02",
+      "metresPerTile": 1.5
+    }
   }
 }

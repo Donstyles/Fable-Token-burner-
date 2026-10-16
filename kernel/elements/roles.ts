@@ -13,6 +13,14 @@ export const ROLE = {
   water: 10,
   /** Waterfall ribbon; scrolling foam material at runtime. */
   waterfall: 11,
+  /** Outdoor terrain: four textures blended by vertex weights (grass, path, scree, snow). */
+  terrain: 12,
+  grass: 13,
+  path: 14,
+  scree: 15,
+  snow: 16,
+  bark: 17,
+  leaves: 18,
   /** Invisible collision geometry (ramps under stairs). Never rendered. */
   collider: 100,
 } as const;

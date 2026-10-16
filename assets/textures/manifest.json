@@ -106,5 +106,83 @@
     "url": "https://polyhaven.com/a/stone_brick_wall_001",
     "metresPerTile": 1,
     "size": 256
+  },
+  "grass": {
+    "role": "grass",
+    "source": "polyhaven",
+    "id": "leafy_grass",
+    "name": "Leafy Grass",
+    "authors": [
+      "Charlotte Baglioni"
+    ],
+    "licence": "CC0 1.0",
+    "url": "https://polyhaven.com/a/leafy_grass",
+    "metresPerTile": 3,
+    "size": 256
+  },
+  "path": {
+    "role": "path",
+    "source": "polyhaven",
+    "id": "dirt_floor",
+    "name": "Dirt Floor",
+    "authors": [
+      "eye-candy.xyz"
+    ],
+    "licence": "CC0 1.0",
+    "url": "https://polyhaven.com/a/dirt_floor",
+    "metresPerTile": 3,
+    "size": 256
+  },
+  "scree": {
+    "role": "scree",
+    "source": "polyhaven",
+    "id": "rocky_terrain",
+    "name": "Rocky Terrain",
+    "authors": [
+      "Amal Kumar"
+    ],
+    "licence": "CC0 1.0",
+    "url": "https://polyhaven.com/a/rocky_terrain",
+    "metresPerTile": 4,
+    "size": 256
+  },
+  "snow": {
+    "role": "snow",
+    "source": "polyhaven",
+    "id": "snow_02",
+    "name": "Snow 02",
+    "authors": [
+      "Rob Tuytel"
+    ],
+    "licence": "CC0 1.0",
+    "url": "https://polyhaven.com/a/snow_02",
+    "metresPerTile": 4,
+    "size": 256
+  },
+  "bark": {
+    "role": "bark",
+    "source": "polyhaven",
+    "id": "pine_bark",
+    "name": "Pine Bark",
+    "authors": [
+      "Dimitrios Savva"
+    ],
+    "licence": "CC0 1.0",
+    "url": "https://polyhaven.com/a/pine_bark",
+    "metresPerTile": 1,
+    "size": 256
+  },
+  "leaves": {
+    "role": "leaves",
+    "source": "polyhaven",
+    "id": "forest_leaves_02",
+    "name": "Forest Leaves 02",
+    "authors": [
+      "Rob Tuytel"
+    ],
+    "licence": "CC0 1.0",
+    "url": "https://polyhaven.com/a/forest_leaves_02",
+    "metresPerTile": 1.5,
+    "size": 256
   }
 }

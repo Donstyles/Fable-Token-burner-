@@ -1,5 +1,6 @@
 import { Document, NodeIO, type Mesh, type Primitive } from '@gltf-transform/core';
-import { weld } from '@gltf-transform/functions';
+import { KHRMeshQuantization } from '@gltf-transform/extensions';
+import { quantize, weld } from '@gltf-transform/functions';
 import type { MeshData } from '../core/mesh';
 import type { LitMeshData } from '../light/bake';
 
@@ -19,6 +20,11 @@ import type { LitMeshData } from '../light/bake';
 export interface GlbOptions {
   /** Chunk size in metres for frustum culling and local light selection. */
   chunk: number;
+  /**
+   * Store positions as 16-bit, normals and colours as 8-bit integers (KHR_mesh_quantization):
+   * a third of the bytes. The runtime parser dequantizes.
+   */
+  quantize?: boolean;
 }
 
 interface Group {
@@ -27,6 +33,8 @@ interface Group {
   uvs: number[];
   colors: number[];
   indices: number[];
+  /** Source vertex index → index within the group, so vertices are shared. */
+  remap: Map<number, number>;
 }
 
 function groupTriangles(
@@ -50,10 +58,17 @@ function groupTriangles(
     const key = keyOf(t, c);
     let g = groups.get(key);
     if (!g) {
-      g = { positions: [], normals: [], uvs: [], colors: [], indices: [] };
+      g = { positions: [], normals: [], uvs: [], colors: [], indices: [], remap: new Map() };
       groups.set(key, g);
     }
     for (const i of ids) {
+      // Shared within a group: a forest or a terrain chunk would otherwise triple its vertices.
+      const seen = g.remap.get(i);
+      if (seen !== undefined) {
+        g.indices.push(seen);
+        continue;
+      }
+      g.remap.set(i, g.positions.length / 3);
       g.indices.push(g.positions.length / 3);
       g.positions.push(
         mesh.positions[i * 3] ?? 0,
@@ -74,9 +89,15 @@ function groupTriangles(
 
 export interface GlbLevel {
   visual: MeshData | LitMeshData;
-  collider: MeshData;
+  /** Omitted for outdoor regions, whose collision comes from the terrain chunks at runtime. */
+  collider?: MeshData;
   water: { name: string; mesh: MeshData }[];
   waterfalls: { name: string; mesh: MeshData }[];
+  /**
+   * Pre-split meshes under named nodes (terrain chunks with their detail levels); each child
+   * becomes a node with one primitive per material role, coloured when the mesh carries colours.
+   */
+  nodes?: { name: string; children: { name: string; mesh: MeshData | LitMeshData }[] }[];
 }
 
 export async function buildLevelGlb(level: GlbLevel, opts: GlbOptions): Promise<Uint8Array> {
@@ -117,10 +138,12 @@ export async function buildLevelGlb(level: GlbLevel, opts: GlbOptions): Promise<
           .setArray(new Float32Array(g.normals))
           .setBuffer(buffer),
       );
-      prim.setAttribute(
-        'TEXCOORD_0',
-        doc.createAccessor().setType('VEC2').setArray(new Float32Array(g.uvs)).setBuffer(buffer),
-      );
+      if (g.uvs.length) {
+        prim.setAttribute(
+          'TEXCOORD_0',
+          doc.createAccessor().setType('VEC2').setArray(new Float32Array(g.uvs)).setBuffer(buffer),
+        );
+      }
     }
     if (lit && g.colors.length) {
       prim.setAttribute(
@@ -165,9 +188,24 @@ export async function buildLevelGlb(level: GlbLevel, opts: GlbOptions): Promise<
     visualNode.addChild(node);
   }
 
+  // Pre-split nodes: no regrouping by centroid, one primitive per role.
+  for (const group of level.nodes ?? []) {
+    const parent = doc.createNode(group.name);
+    scene.addChild(parent);
+    for (const child of group.children) {
+      const mesh = doc.createMesh(child.name);
+      const coloured = 'colors' in child.mesh && child.mesh.colors.length > 0;
+      const byRole = groupTriangles(child.mesh, (t) => String(child.mesh.materials[t] ?? 0));
+      for (const [role, g] of byRole) addPrimitive(mesh, g, Number(role), coloured);
+      parent.addChild(doc.createNode(child.name).setMesh(mesh));
+    }
+  }
+
   // Collider: one primitive, positions and indices only.
   const colliderMesh = doc.createMesh('collider');
-  const colliderGroups = groupTriangles(level.collider, () => 'all');
+  const colliderGroups = level.collider
+    ? groupTriangles(level.collider, () => 'all')
+    : new Map<string, Group>();
   for (const g of colliderGroups.values()) {
     g.normals = [];
     g.uvs = [];
@@ -194,5 +232,17 @@ export async function buildLevelGlb(level: GlbLevel, opts: GlbOptions): Promise<
   scene.addChild(doc.createNode('waterfalls').setMesh(fallMesh));
 
   await doc.transform(weld());
-  return new NodeIO().writeBinary(doc);
+  if (opts.quantize) {
+    await doc.transform(
+      quantize({
+        pattern: /^(POSITION|NORMAL|COLOR_0)$/,
+        quantizePosition: 16,
+        quantizeNormal: 8,
+        quantizeColor: 8,
+        quantizeTexcoord: 16,
+        quantizeGeneric: 16,
+      }),
+    );
+  }
+  return new NodeIO().registerExtensions([KHRMeshQuantization]).writeBinary(doc);
 }

@@ -579,6 +579,58 @@ whatever it did); dead (the death clip holds, the agent leaves the crowd,
 the body stays). Test data: the bandit, level 2, 25 hp, AC 8, attack 3,
 1d6+1.
 
+## 15. Outdoor regions (generated terrain, 2026-10-16)
+
+Owner's ask: vast landscapes with ravines, serpentines, woods, passes, alpine
+ridges, peaks, valleys and rivers, at near-real scale, with sprawling forests
+of low-polygon trees; towns, caves, tunnels, waterfalls and deserts to
+follow. Like the dungeons (section 11), nothing is hand-modelled: a region is
+generated from a seed by `kernel/terrain/` and compiled by
+`npm run level:build <id>` from `levels/<id>/terrain.ts`.
+
+### 15.1 The valley
+
+- A heightfield 1.6 km square at 5 m cells (`generateValley`): a river
+  meandering south to north on a flat floor (bed −1.6 m, water at 0.7 m,
+  banks at 2.5 m), convex slopes rising to crags and four peaks (ridged
+  multifractal noise), a V-shaped ravine cut into the eastern slope, a
+  serpentine road of nine control points climbing the western slope to a
+  pass (a Gaussian saddle in the ridge; the road's grade is capped at 22°,
+  never drops, and the land is cut or filled to match it within 22 m).
+- Splat weights per vertex: path (within the road), scree (slopes over
+  32°, full at 46°), snow (above 235 m, full at 268 m, thinning on steep
+  faces), grass as the remainder. The material blends four Poly Haven
+  textures (`leafy_grass`, `dirt_floor`, `rocky_terrain`, `snow_02`) by
+  those weights, UVs in world metres from the shader.
+- Forests: a jittered 8 m grid over a mask (slope under 30°, between the
+  floor and 205 m, clear of road, river and ravine, noise over 0.1), half
+  the candidates kept; pines above 110 m and a third of the rest, broadleaf
+  otherwise. Trees are generated low-polygon models (about 110 triangles: a
+  lathed trunk with `pine_bark`, cones or an ellipsoid with
+  `forest_leaves_02`) carried in the sidecar as instances and drawn as thin
+  instances in sixteen regions, switched off beyond 700 m; a cylinder per
+  trunk in one static physics body.
+- Chunks: 32 cells per side, three detail levels (every vertex, every
+  second, every fourth) with 6 m skirts so cracks between levels never show
+  the sky; the loader enables one level per chunk by distance (2.2 and 5
+  chunk widths). Quantized GLB (16-bit positions, 8-bit normals and
+  colours), no stored UVs: 2.8 MB for the region, 230k triangles at full
+  detail but under 100k on screen.
+- Collision: the full-detail chunks as static mesh shapes. Navmesh: recast
+  at 1.5 m cells, 1.8 m climb (one cell's rise on a 48° slope), agent 0.45
+  m; the road is checked walkable from the spawn to the pass at build time.
+- Light: a sun (direction, warm colour), a sky ambient, exponential fog
+  thin enough to see 600 m with the far ridges fading; the sky dome from
+  the `mm6-day` preset. No shadows, as in MM6.
+
+### 15.2 Plans
+
+Village of generated timber-framed houses round a well on the valley floor
+(`kernel/terrain/town.ts`); a cave mouth at the ravine head into the
+dungeon (scene transition); cascades in the ravine stream with Phase 3's
+waterfalls; a desert region beyond the pass; far-mountain backdrop beyond
+the map edge.
+
 ## 13. Decision log
 
 - 2026-10-11 – Platform, delivery (PWA), art direction, Meshy pipeline, key
@@ -879,6 +931,17 @@ the body stays). Test data: the bandit, level 2, 25 hp, AC 8, attack 3,
   party and a party strip in the dev build, an end-to-end test in which the
   bandit closes in, swings and falls to taps. "Tap cycles clips" is a panel
   toggle for reviewing animations.
+- 2026-10-16 – **The valley: first outdoor region** (section 15). Built
+  overnight from the owner's ask for vast landscapes: 1.6 km generated
+  terrain with forests, river, serpentine road, pass, ravine and snow,
+  distance detail levels and thin-instanced trees, 2.8 MB. The GLB exporter
+  now shares vertices within groups and can quantize; the runtime parser
+  reads quantized attributes; the retro shader gained a terrain mode (four
+  textures by vertex weights, world-metre UVs) and instancing. Found on the
+  way: Babylon defines VERTEXCOLOR itself for any mesh with colours, so the
+  terrain mode must not redeclare the attribute; and the navmesh climb must
+  cover one cell's rise on the steepest walkable slope or hillsides break
+  into islands.
 - 2026-10-15 – **Owner's look tuning becomes the default** (sent from the
   dev panel after playing the water build, "looks moody"): posterize filter
   on at 5 levels with dither 0.45 (cell 2), bloom off, vignette 0.6, contrast

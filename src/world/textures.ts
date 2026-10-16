@@ -19,6 +19,12 @@ import plasterUrl from '../../assets/textures/plaster.png';
 import rockUrl from '../../assets/textures/rock.png';
 import marbleUrl from '../../assets/textures/marble.png';
 import trimUrl from '../../assets/textures/trim.png';
+import grassUrl from '../../assets/textures/grass.png';
+import pathUrl from '../../assets/textures/path.png';
+import screeUrl from '../../assets/textures/scree.png';
+import snowUrl from '../../assets/textures/snow.png';
+import barkUrl from '../../assets/textures/bark.png';
+import leavesUrl from '../../assets/textures/leaves.png';
 
 export interface RoleTexture {
   texture: BaseTexture;
@@ -39,6 +45,12 @@ const FILES: Record<string, string> = {
   rock: rockUrl,
   marble: marbleUrl,
   trim: trimUrl,
+  grass: grassUrl,
+  path: pathUrl,
+  scree: screeUrl,
+  snow: snowUrl,
+  bark: barkUrl,
+  leaves: leavesUrl,
 };
 
 function lampPane(scene: Scene): DynamicTexture {

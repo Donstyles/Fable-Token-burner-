@@ -1,0 +1,245 @@
+/**
+ * An alpine valley (DESIGN.md 15): a river on a flat floor, convex slopes rising to crags and
+ * peaks, a side ravine, a serpentine road climbing to a pass through the western ridge, and
+ * forests on the gentler slopes. Everything derives from one seed.
+ */
+import type { Vec3 } from '../core/math';
+import type { NamedPoint } from '../plan/level';
+import { Heightfield } from './heightfield';
+import { fbm, lerp, ridged, smoothstep } from './noise';
+import { GroundPath, smoothPath, type P2 } from './spline';
+
+export interface ValleySpec {
+  seed: number;
+  /** Map width in metres, square. */
+  width: number;
+  /** Grid cell in metres. */
+  cell: number;
+}
+
+export interface ValleyResult {
+  spec: ValleySpec;
+  height: Heightfield;
+  /** Per vertex: path, scree, snow weights; grass is the remainder. */
+  splat: Float32Array;
+  /** Per vertex: 1 where a tree may stand. */
+  forest: Uint8Array;
+  river: GroundPath;
+  riverWidth: number;
+  waterLevel: number;
+  road: GroundPath;
+  roadWidth: number;
+  ravine: GroundPath;
+  spawn: { position: Vec3; yawDeg: number };
+  points: NamedPoint[];
+  peaks: { x: number; z: number; height: number }[];
+}
+
+const FLOOR = 2.5;
+const BED = -1.6;
+const RIVER_BED_HALF = 9;
+export const WATER_LEVEL = 0.7;
+
+export function generateValley(spec: ValleySpec): ValleyResult {
+  const { seed, width, cell } = spec;
+  const half = width / 2;
+  const cells = Math.round(width / cell);
+  const hf = new Heightfield(cells, cell);
+  const n = hf.n;
+
+  // The river meanders from south to north through the middle; it flows south.
+  const k0 = half / 512;
+  const river = new GroundPath(
+    smoothPath(
+      [
+        [40 * k0, -half - 20],
+        [-30 * k0, -half * 0.62],
+        [70 * k0, -half * 0.25],
+        [-60 * k0, half * 0.1],
+        [30 * k0, half * 0.45],
+        [-20 * k0, half + 20],
+      ],
+      10,
+    ),
+  );
+  // A ravine cuts into the eastern slope from the river bank up toward the ridge.
+  const ravine = new GroundPath(
+    smoothPath(
+      [
+        [60 * k0, half * 0.05],
+        [150 * k0, half * 0.12],
+        [250 * k0, half * 0.1],
+        [340 * k0, half * 0.2],
+        [430 * k0, half * 0.26],
+      ],
+      8,
+    ),
+  );
+  // The serpentine road: from the western bank, switchbacks up the slope to the pass. Laid
+  // out in fractions of the map so a small test map keeps the same shape.
+  const k = half / 512;
+  const roadControls: P2[] = [
+    [-55 * k, -half * 0.3],
+    [-95 * k, -half * 0.18],
+    [-150 * k, -half * 0.32],
+    [-205 * k, -half * 0.12],
+    [-260 * k, -half * 0.3],
+    [-315 * k, -half * 0.08],
+    [-370 * k, -half * 0.26],
+    [-425 * k, -half * 0.06],
+    [-half + 12, -half * 0.14],
+  ];
+  const road = new GroundPath(smoothPath(roadControls, 10));
+  const pass: P2 = road.at(road.length - 1);
+  const peaks = [
+    { x: -half * 0.72, z: half * 0.7, height: 95, r: 150 },
+    { x: half * 0.7, z: half * 0.78, height: 130, r: 130 },
+    { x: half * 0.75, z: -half * 0.72, height: 80, r: 170 },
+    { x: -half * 0.8, z: -half * 0.74, height: 60, r: 140 },
+  ];
+
+  // Pass 1: the land without the road.
+  const base = (x: number, z: number): number => {
+    const dv = river.nearest(x, z).distance;
+    const t = smoothstep(55 * k0, 500 * k0, dv);
+    let h = FLOOR + 230 * Math.pow(t, 1.45);
+    h += (fbm(x, z, 260, seed) * 0.5 + 0.5) * 60 * smoothstep(20 * k0, 200 * k0, dv);
+    h += ridged(x, z, 180, seed + 7) * 110 * smoothstep(200 * k0, 520 * k0, dv);
+    h += fbm(x, z, 40, seed + 3) * 4;
+    for (const p of peaks) {
+      const d2 = ((x - p.x) * (x - p.x) + (z - p.z) * (z - p.z)) / (p.r * p.r);
+      h += p.height * Math.exp(-d2);
+    }
+    // The pass: a saddle in the western ridge where the road arrives.
+    const sx = (x - pass[0]) / 170;
+    const sz = (z - pass[1]) / 95;
+    h -= 150 * Math.exp(-(sx * sx + sz * sz));
+    // River bed.
+    if (dv < RIVER_BED_HALF) {
+      const u = dv / RIVER_BED_HALF;
+      h = Math.min(h, BED + (FLOOR - BED) * u * u);
+    }
+    // Ravine: a V cut whose floor climbs with the slope.
+    const r = ravine.nearest(x, z);
+    const rw = 48 * k0;
+    if (r.distance < rw) {
+      const floor = 3 + (r.along / k0) * 0.24;
+      const u = r.distance / rw;
+      h = Math.min(h, floor + 75 * u * u);
+    }
+    return h;
+  };
+  for (let j = 0; j < n; j++) {
+    for (let i = 0; i < n; i++) hf.set(i, j, base(hf.x(i), hf.z(j)));
+  }
+
+  // The road's own height profile: the land under it, smoothed and never dropping.
+  const samples = Math.ceil(road.length / 4);
+  const profile: number[] = [];
+  for (let s = 0; s <= samples; s++) {
+    const p = road.at((s / samples) * road.length);
+    profile.push(hf.sample(p[0], p[1]));
+  }
+  for (let pass_ = 0; pass_ < 3; pass_++) {
+    for (let s = 1; s < profile.length - 1; s++) {
+      profile[s] = (profile[s - 1]! + profile[s]! * 2 + profile[s + 1]!) / 4;
+    }
+  }
+  // Never dropping, and never steeper than a cart road: the land is cut to match.
+  const maxRise = Math.tan((22 * Math.PI) / 180) * (road.length / samples);
+  for (let s = 1; s < profile.length; s++) {
+    profile[s] = Math.min(Math.max(profile[s]!, profile[s - 1]!), profile[s - 1]! + maxRise);
+  }
+  const roadHeight = (along: number): number => {
+    const f = (along / road.length) * samples;
+    const a = Math.min(samples, Math.max(0, Math.floor(f)));
+    const b = Math.min(samples, a + 1);
+    return lerp(profile[a]!, profile[b]!, f - a);
+  };
+
+  // Pass 2: flatten under the road with a shoulder.
+  const ROAD_WIDTH = 10;
+  for (let j = 0; j < n; j++) {
+    for (let i = 0; i < n; i++) {
+      const x = hf.x(i);
+      const z = hf.z(j);
+      const hit = road.nearest(x, z);
+      if (hit.distance > 22) continue;
+      const w = 1 - smoothstep(ROAD_WIDTH / 2 + 2, 22, hit.distance);
+      hf.set(i, j, lerp(hf.get(i, j), roadHeight(hit.along), w));
+    }
+  }
+
+  // Splat weights and the forest mask.
+  const splat = new Float32Array(n * n * 3);
+  const forest = new Uint8Array(n * n);
+  for (let j = 0; j < n; j++) {
+    for (let i = 0; i < n; i++) {
+      const x = hf.x(i);
+      const z = hf.z(j);
+      const h = hf.get(i, j);
+      const s = hf.slopeDeg(i, j);
+      const dRoad = road.nearest(x, z).distance;
+      const dRiver = river.nearest(x, z).distance;
+      const dRavine = ravine.nearest(x, z).distance;
+      let path = 1 - smoothstep(ROAD_WIDTH / 2, ROAD_WIDTH / 2 + 3, dRoad);
+      let scree =
+        smoothstep(32, 46, s) + 0.6 * smoothstep(6, 2, dRiver) * (h < FLOOR + 0.5 ? 1 : 0);
+      let snow = smoothstep(235, 268, h) * (1 - smoothstep(35, 50, s));
+      const total = path + scree + snow;
+      if (total > 1) {
+        path /= total;
+        scree /= total;
+        snow /= total;
+      }
+      const k = (j * n + i) * 3;
+      splat[k] = path;
+      splat[k + 1] = scree;
+      splat[k + 2] = snow;
+      forest[j * n + i] =
+        s < 30 &&
+        h > FLOOR + 1.5 &&
+        h < 205 &&
+        dRoad > 9 &&
+        dRiver > 20 &&
+        dRavine > 30 &&
+        fbm(x, z, 140, seed + 11) > 0.1
+          ? 1
+          : 0;
+    }
+  }
+
+  const start = road.at(18);
+  const tangent = road.nearest(start[0], start[1]).tangent;
+  const yawDeg = (Math.atan2(tangent[0], tangent[1]) * 180) / Math.PI;
+  const at3 = (p: P2): Vec3 => [p[0], hf.sample(p[0], p[1]), p[1]];
+  let top = { i: 0, j: 0, h: -Infinity };
+  for (let j = 0; j < n; j++) {
+    for (let i = 0; i < n; i++) {
+      const h = hf.get(i, j);
+      if (h > top.h) top = { i, j, h };
+    }
+  }
+  const points: NamedPoint[] = [
+    { name: 'pass', position: at3(road.at(road.length - 40)), kind: 'poi' },
+    { name: 'road-mid', position: at3(road.at(road.length / 2)), kind: 'poi' },
+    { name: 'ravine-head', position: at3(ravine.at(ravine.length - 30)), kind: 'poi' },
+    { name: 'ford', position: at3(river.at(river.length * 0.55)), kind: 'poi' },
+    { name: 'summit', position: [hf.x(top.i), top.h, hf.z(top.j)], kind: 'poi' },
+  ];
+  return {
+    spec,
+    height: hf,
+    splat,
+    forest,
+    river,
+    riverWidth: 2 * RIVER_BED_HALF * 0.85,
+    waterLevel: WATER_LEVEL,
+    road,
+    roadWidth: ROAD_WIDTH,
+    ravine,
+    spawn: { position: at3(start), yawDeg },
+    points,
+    peaks: peaks.map((p) => ({ x: p.x, z: p.z, height: hf.sample(p.x, p.z) })),
+  };
+}

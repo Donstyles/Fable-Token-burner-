@@ -1,7 +1,9 @@
 import { ShaderMaterial } from '@babylonjs/core/Materials/shaderMaterial';
-// Side-effect imports: register the skinning includes used by the vertex shader.
+// Side-effect imports: register the skinning and instancing includes used by the vertex shader.
 import '@babylonjs/core/Shaders/ShadersInclude/bonesDeclaration';
 import '@babylonjs/core/Shaders/ShadersInclude/bonesVertex';
+import '@babylonjs/core/Shaders/ShadersInclude/instancesDeclaration';
+import '@babylonjs/core/Shaders/ShadersInclude/instancesVertex';
 import { ShaderStore } from '@babylonjs/core/Engines/shaderStore';
 import { Constants } from '@babylonjs/core/Engines/constants';
 import { Color3 } from '@babylonjs/core/Maths/math.color';
@@ -43,14 +45,15 @@ ShaderStore.ShadersStore[`${SHADER}VertexShader`] = /* glsl */ `
 precision highp float;
 attribute vec3 position;
 attribute vec3 normal;
-attribute vec2 uv;
-#if defined(VERTEXCOLOR) || defined(BAKED)
+// Babylon defines VERTEXCOLOR itself whenever the mesh carries colours.
+#if defined(VERTEXCOLOR) || defined(BAKED) || defined(TERRAIN)
 attribute vec4 color;
 #endif
 // Skinned characters: Babylon adds the bone attributes, defines and uniforms when the mesh
 // has a skeleton; for everything else NUM_BONE_INFLUENCERS is 0 and these are empty.
 #include<bonesDeclaration>
-uniform mat4 world;
+// world: a uniform, or four per-instance attributes for thin instances (forests).
+#include<instancesDeclaration>
 uniform mat4 viewProjection;
 uniform vec3 cameraPosition;
 uniform vec3 lightDirection;
@@ -66,8 +69,13 @@ varying vec3 vLight;
 varying vec3 vWorldPos;
 varying vec3 vNormal;
 varying float vFog;
+#ifdef TERRAIN
+varying vec3 vSplat;
+#else
+attribute vec2 uv;
+#endif
 void main(void) {
-  mat4 finalWorld = world;
+#include<instancesVertex>
 #include<bonesVertex>
   vec4 wp = finalWorld * vec4(position, 1.0);
   vec3 n = normalize(mat3(finalWorld) * normal);
@@ -76,11 +84,19 @@ void main(void) {
 #ifdef BAKED
   // Baked per-vertex light replaces the environment's key and ambient light.
   light = mix(light, color.rgb, bakedMix);
+#elif defined(TERRAIN)
+  // Terrain colours are texture weights, not light.
 #elif defined(VERTEXCOLOR)
   light *= color.rgb;
 #endif
   vLight = light;
+#ifdef TERRAIN
+  vSplat = color.rgb;
+  // Terrain textures tile in world metres; X is mirrored in scene space, hence -x.
+  vUV = vec2(-wp.x, wp.z) * uvScale;
+#else
   vUV = uv * uvScale;
+#endif
   vWorldPos = wp.xyz;
   vNormal = n;
   float d = distance(wp.xyz, cameraPosition) * fogDensity;
@@ -101,6 +117,13 @@ uniform float clipEnabled;
 varying vec3 vNormal;
 varying float vFog;
 uniform sampler2D diffuseSampler;
+#ifdef TERRAIN
+uniform sampler2D pathSampler;
+uniform sampler2D screeSampler;
+uniform sampler2D snowSampler;
+uniform vec4 splatScale;
+varying vec3 vSplat;
+#endif
 uniform vec3 fogColor;
 uniform vec3 tint;
 uniform vec3 emissive;
@@ -141,7 +164,18 @@ void main(void) {
     light *= (lightKnee + over / (1.0 + 2.0 * over)) / peak;
   }
   light = min(light + carried, vec3(1.6));
-  vec3 c = texture2D(diffuseSampler, vUV).rgb * tint * light + emissive;
+#ifdef TERRAIN
+  // Grass under path, scree and snow weights carried per vertex (DESIGN.md 15).
+  vec3 w = clamp(vSplat, 0.0, 1.0);
+  float g = max(0.0, 1.0 - w.r - w.g - w.b);
+  vec3 albedo = texture2D(diffuseSampler, vUV * splatScale.x).rgb * g +
+    texture2D(pathSampler, vUV * splatScale.y).rgb * w.r +
+    texture2D(screeSampler, vUV * splatScale.z).rgb * w.g +
+    texture2D(snowSampler, vUV * splatScale.w).rgb * w.b;
+#else
+  vec3 albedo = texture2D(diffuseSampler, vUV).rgb;
+#endif
+  vec3 c = albedo * tint * light + emissive;
   gl_FragColor = vec4(mix(fogColor, c, vFog), 1.0);
 }
 `;
@@ -163,6 +197,16 @@ export interface VertexLitOptions {
    * they never go black between lamps, like MM6's minimum sprite brightness.
    */
   ambient?: Color3;
+  /**
+   * Terrain: three more textures blended over `texture` (grass) by the vertex colour's
+   * weights, each with its own metres per tile; UVs are world metres.
+   */
+  splat?: {
+    path: BaseTexture;
+    scree: BaseTexture;
+    snow: BaseTexture;
+    metresPerTile: [number, number, number, number];
+  };
 }
 
 /**
@@ -195,7 +239,13 @@ export class RetroMaterials {
         ? ['#define VERTEXCOLOR']
         : [];
     if (opts.doubleSided) defines.push('#define TWOSIDED');
-    const attributes = ['position', 'normal', 'uv', ...(useColor ? ['color'] : [])];
+    if (opts.splat) defines.push('#define TERRAIN');
+    const attributes = [
+      'position',
+      'normal',
+      ...(opts.splat ? [] : ['uv']),
+      ...(useColor || opts.splat ? ['color'] : []),
+    ];
     const mat = new ShaderMaterial(opts.name, this.scene, SHADER, {
       attributes,
       uniforms: [
@@ -218,11 +268,19 @@ export class RetroMaterials {
         'lightKnee',
         'priorityLights',
         'pointRange',
+        'splatScale',
       ],
-      samplers: ['diffuseSampler'],
+      samplers: ['diffuseSampler', 'pathSampler', 'screeSampler', 'snowSampler'],
       defines,
     });
     mat.setTexture('diffuseSampler', opts.texture);
+    if (opts.splat) {
+      mat.setTexture('pathSampler', opts.splat.path);
+      mat.setTexture('screeSampler', opts.splat.scree);
+      mat.setTexture('snowSampler', opts.splat.snow);
+      const m = opts.splat.metresPerTile;
+      mat.setVector4('splatScale', new Vector4(1 / m[0], 1 / m[1], 1 / m[2], 1 / m[3]));
+    }
     mat.setVector2('uvScale', new Vector2(...(opts.uvScale ?? [1, 1])));
     mat.setFloat('bakedMix', this.bakedMix);
     mat.setFloat('lightKnee', this.lightKnee);

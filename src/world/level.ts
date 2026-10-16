@@ -17,6 +17,15 @@ import { Vector2, Vector3 } from '@babylonjs/core/Maths/math.vector';
 import type { ShaderMaterial } from '@babylonjs/core/Materials/shaderMaterial';
 import type { Scene } from '@babylonjs/core/scene';
 import type { PointLightDesc, RetroMaterials } from '../render/materials';
+import { ROLE } from '../../kernel/elements/roles';
+import { treeMesh } from '../../kernel/terrain/trees';
+import { Matrix, Quaternion } from '@babylonjs/core/Maths/math.vector';
+import {
+  PhysicsShapeContainer,
+  PhysicsShapeCylinder,
+} from '@babylonjs/core/Physics/v2/physicsShape';
+import { PhysicsBody } from '@babylonjs/core/Physics/v2/physicsBody';
+import { PhysicsMotionType } from '@babylonjs/core/Physics/v2/IPhysicsEnginePlugin';
 import { parseGlb, type GlbNode, type GlbPrimitive } from './glb';
 import type { RoleTextures } from './textures';
 
@@ -47,6 +56,11 @@ export interface SidecarSpace {
 
 export interface LevelSidecar {
   name: string;
+  /** Outdoor region: sun-lit terrain chunks with detail levels, forests, sky (DESIGN.md 15). */
+  outdoor?: boolean;
+  lod?: { chunk: number; distances: [number, number]; forestFar: number };
+  /** Trees as [kind (0 pine, 1 broadleaf), x, y, z, yaw, scale] in kernel space. */
+  trees?: [number, number, number, number, number, number][];
   spawn: { position: V3; yawDeg: number };
   points: { name: string; position: V3; kind: string }[];
   lights: {
@@ -118,6 +132,8 @@ export interface LoadedLevel {
   setNavMeshVisible(on: boolean): void;
   /** Register the static lights as live per-pixel lights too (comparison only). */
   setLiveLights(on: boolean, scale?: number): void;
+  /** Outdoor levels: pick terrain detail and forest visibility by distance from the eye. */
+  update(eye: Vector3): void;
   dispose(): void;
 }
 
@@ -183,6 +199,30 @@ export async function loadLevel(
     if (mat) return mat;
     const tex = textures.get(role) ?? textures.get(1)!;
     const s = 1 / tex.metresPerTile;
+    if (role === ROLE.terrain) {
+      const grass = textures.get(ROLE.grass)!;
+      const path = textures.get(ROLE.path)!;
+      const scree = textures.get(ROLE.scree)!;
+      const snow = textures.get(ROLE.snow)!;
+      mat = materials.create({
+        name: 'level-terrain',
+        texture: grass.texture,
+        uvScale: [1, 1],
+        splat: {
+          path: path.texture,
+          scree: scree.texture,
+          snow: snow.texture,
+          metresPerTile: [
+            grass.metresPerTile,
+            path.metresPerTile,
+            scree.metresPerTile,
+            snow.metresPerTile,
+          ],
+        },
+      });
+      byRole.set(role, mat);
+      return mat;
+    }
     mat = materials.create({
       name: `level-role-${role}`,
       texture: tex.texture,
@@ -197,17 +237,155 @@ export async function loadLevel(
 
   const find = (name: string): GlbNode | undefined => nodes.find((n) => n.name === name);
   const visual = find('visual');
+  // Outdoor forests are env-lit; their vertex colours, if any, are not baked light.
+  const bakedVisual = !sidecar.outdoor;
+  const forestChunks: { meshes: Mesh[]; centre: Vector3 }[] = [];
   for (const chunk of visual?.children ?? []) {
+    const group: Mesh[] = [];
     chunk.primitives.forEach((p, i) => {
       const mesh = new Mesh(`${chunk.name}:${i}`, scene);
       toVertexData(p).applyToMesh(mesh, false);
-      mesh.material = materialFor(roleOf(p.material), p.colors !== null);
+      mesh.material = materialFor(roleOf(p.material), bakedVisual && p.colors !== null);
       mesh.parent = root;
       mesh.freezeWorldMatrix();
       mesh.doNotSyncBoundingInfo = true;
       meshes.push(mesh);
+      group.push(mesh);
     });
+    if (sidecar.outdoor && group.length) {
+      const b = group[0]!.getBoundingInfo().boundingBox;
+      forestChunks.push({ meshes: group, centre: b.centerWorld.clone() });
+    }
   }
+  // Terrain chunks: one mesh per detail level; `update` enables the one for the distance.
+  const terrainChunks: { lods: Mesh[]; centre: Vector3 }[] = [];
+  const terrainNode = find('terrain');
+  if (terrainNode) {
+    const byChunk = new Map<string, Mesh[]>();
+    for (const child of terrainNode.children) {
+      const m = /^t:(\d+):(\d+):(\d+)$/.exec(child.name);
+      const p = child.primitives[0];
+      if (!m || !p) continue;
+      const mesh = new Mesh(child.name, scene);
+      toVertexData(p).applyToMesh(mesh, false);
+      mesh.material = materialFor(ROLE.terrain, false);
+      mesh.parent = root;
+      mesh.freezeWorldMatrix();
+      mesh.doNotSyncBoundingInfo = true;
+      mesh.setEnabled(false);
+      meshes.push(mesh);
+      const key = `${m[1]}:${m[2]}`;
+      const list = byChunk.get(key) ?? [];
+      list[Number(m[3])] = mesh;
+      byChunk.set(key, list);
+    }
+    for (const lods of byChunk.values()) {
+      const b = lods[0]!.getBoundingInfo().boundingBox;
+      terrainChunks.push({ lods, centre: b.centerWorld.clone() });
+      lods[0]!.setEnabled(true);
+    }
+  }
+  // Forests: two prototype trees drawn as thin instances, in regions so distant ones can
+  // be switched off; trunks collide as one static body of cylinders.
+  const physicsBodies: PhysicsBody[] = [];
+  if (sidecar.outdoor && sidecar.trees?.length) {
+    const half = Math.max(
+      Math.abs(sidecar.bounds.min[0]),
+      Math.abs(sidecar.bounds.max[0]),
+      Math.abs(sidecar.bounds.min[2]),
+      Math.abs(sidecar.bounds.max[2]),
+    );
+    const regions = 4;
+    const regionSize = (2 * half) / regions;
+    const kinds = ['pine', 'broadleaf'] as const;
+    const buckets = new Map<string, Matrix[]>();
+    const trunkRoot = new TransformNode('level-trunks', scene);
+    trunkRoot.parent = root;
+    const container = new PhysicsShapeContainer(scene);
+    for (const [kind, kx, ky, kz, yaw, scale] of sidecar.trees) {
+      const rx = Math.min(regions - 1, Math.floor((kx + half) / regionSize));
+      const rz = Math.min(regions - 1, Math.floor((kz + half) / regionSize));
+      const key = `${kind}:${rx}:${rz}`;
+      // Kernel space is mirrored on X: position and yaw flip with it.
+      const m = Matrix.Compose(
+        new Vector3(scale, scale, scale),
+        Quaternion.RotationAxis(Vector3.Up(), -yaw),
+        new Vector3(-kx, ky, kz),
+      );
+      (buckets.get(key) ?? buckets.set(key, []).get(key)!).push(m);
+      const trunkTop = ky + 3.6 * scale;
+      const shape = new PhysicsShapeCylinder(
+        new Vector3(-kx, ky, kz),
+        new Vector3(-kx, trunkTop, kz),
+        0.32 * scale,
+        scene,
+      );
+      container.addChildFromParent(trunkRoot, shape, trunkRoot);
+    }
+    const trunkBody = new PhysicsBody(trunkRoot, PhysicsMotionType.STATIC, false, scene);
+    trunkBody.shape = container;
+    physicsBodies.push(trunkBody);
+    const protoData = kinds.map((kind) => {
+      const data = treeMesh(kind);
+      // One Babylon mesh per material role of the prototype.
+      const byRole = new Map<
+        number,
+        { positions: number[]; normals: number[]; uvs: number[]; indices: number[] }
+      >();
+      for (let t = 0; t < data.materials.length; t++) {
+        const role = data.materials[t]!;
+        const g = byRole.get(role) ?? { positions: [], normals: [], uvs: [], indices: [] };
+        byRole.set(role, g);
+        for (let k = 0; k < 3; k++) {
+          const vi = data.indices[t * 3 + k]!;
+          g.indices.push(g.positions.length / 3);
+          g.positions.push(
+            -data.positions[vi * 3]!,
+            data.positions[vi * 3 + 1]!,
+            data.positions[vi * 3 + 2]!,
+          );
+          g.normals.push(
+            -data.normals[vi * 3]!,
+            data.normals[vi * 3 + 1]!,
+            data.normals[vi * 3 + 2]!,
+          );
+          g.uvs.push(data.uvs[vi * 2]!, data.uvs[vi * 2 + 1]!);
+        }
+      }
+      return byRole;
+    });
+    for (const [key, matrices] of buckets) {
+      const [kindIndex, rx, rz] = key.split(':').map(Number) as [number, number, number];
+      const group: Mesh[] = [];
+      for (const [role, g] of protoData[kindIndex]!) {
+        const mesh = new Mesh(`forest:${key}:${role}`, scene);
+        const vd = new VertexData();
+        vd.positions = new Float32Array(g.positions);
+        vd.normals = new Float32Array(g.normals);
+        vd.uvs = new Float32Array(g.uvs);
+        vd.indices = new Uint32Array(g.indices);
+        vd.applyToMesh(mesh, false);
+        const buffer = new Float32Array(matrices.length * 16);
+        matrices.forEach((m, i) => m.copyToArray(buffer, i * 16));
+        mesh.thinInstanceSetBuffer('matrix', buffer, 16, true);
+        mesh.thinInstanceRefreshBoundingInfo(false);
+        mesh.material = materialFor(role, false);
+        mesh.parent = root;
+        mesh.isPickable = false;
+        meshes.push(mesh);
+        group.push(mesh);
+      }
+      const centre = new Vector3(
+        -(-half + (rx + 0.5) * regionSize),
+        0,
+        -half + (rz + 0.5) * regionSize,
+      );
+      forestChunks.push({ meshes: group, centre });
+    }
+  }
+  const lodDistances = sidecar.lod?.distances ?? [300, 700];
+  const forestFar = sidecar.lod?.forestFar ?? 700;
+  let lastEye: Vector3 | null = null;
   // Water bodies and waterfalls keep their own meshes; LevelWater gives them materials.
   const named = (prefix: string, material: string | null): string =>
     material?.startsWith(prefix) ? material.slice(prefix.length) : '';
@@ -266,20 +444,37 @@ export async function loadLevel(
     };
   });
 
-  // Collider: invisible static mesh shape.
+  // Collider: an invisible static mesh shape, or outdoors the full-detail terrain chunks.
   const collider = new Mesh('level-collider', scene);
   const cp = find('collider')?.primitives[0];
-  if (!cp) throw new Error('level has no collider');
-  toVertexData(cp).applyToMesh(collider, false);
-  collider.isVisible = false;
-  collider.isPickable = false;
-  collider.parent = root;
-  const aggregate = new PhysicsAggregate(
-    collider,
-    PhysicsShapeType.MESH,
-    { mass: 0, friction: 0.8, restitution: 0 },
-    scene,
-  );
+  const aggregates: PhysicsAggregate[] = [];
+  if (cp && cp.positions.length) {
+    toVertexData(cp).applyToMesh(collider, false);
+    collider.isVisible = false;
+    collider.isPickable = false;
+    collider.parent = root;
+    aggregates.push(
+      new PhysicsAggregate(
+        collider,
+        PhysicsShapeType.MESH,
+        { mass: 0, friction: 0.8, restitution: 0 },
+        scene,
+      ),
+    );
+  } else if (terrainChunks.length) {
+    for (const c of terrainChunks) {
+      aggregates.push(
+        new PhysicsAggregate(
+          c.lods[0]!,
+          PhysicsShapeType.MESH,
+          { mass: 0, friction: 0.8, restitution: 0 },
+          scene,
+        ),
+      );
+    }
+  } else {
+    throw new Error('level has no collider');
+  }
 
   // Navmesh overlay, built lazily.
   let navMesh: Mesh | null = null;
@@ -335,6 +530,23 @@ export async function loadLevel(
       if (!on && !navMesh) return;
       navOverlay().setEnabled(on);
     },
+    update(eye) {
+      if (!sidecar.outdoor) return;
+      if (lastEye && Vector3.DistanceSquared(lastEye, eye) < 4) return;
+      lastEye = eye.clone();
+      for (const c of terrainChunks) {
+        const dx = c.centre.x - eye.x;
+        const dz = c.centre.z - eye.z;
+        const d = Math.hypot(dx, dz);
+        const want = d < lodDistances[0] ? 0 : d < lodDistances[1] ? 1 : 2;
+        c.lods.forEach((m, i) => m.setEnabled(i === want));
+      }
+      for (const f of forestChunks) {
+        const d = Math.hypot(f.centre.x - eye.x, f.centre.z - eye.z);
+        const on = d < forestFar;
+        for (const m of f.meshes) m.setEnabled(on);
+      }
+    },
     setLiveLights(on, scale = 1) {
       for (const l of live) materials.removeLight(l);
       live = [];
@@ -345,7 +557,8 @@ export async function loadLevel(
     },
     dispose() {
       for (const l of live) materials.removeLight(l);
-      aggregate.dispose();
+      for (const a of aggregates) a.dispose();
+      for (const b of physicsBodies) b.dispose();
       navMesh?.material?.dispose();
       root.dispose(false, true);
     },

@@ -32,7 +32,7 @@ import { UnderwaterTint, isUnderwater, wadeSpeedFactor, waterDepthAt } from '../
 import { ROLE } from '../../kernel/elements/roles';
 import { FILTER_MODES, type FilterMode } from '../render/filter';
 import { RENDER_PRESETS, type RenderPreset } from '../render/resolution';
-import { ENVIRONMENT_PRESETS, type EnvironmentPreset } from '../render/environment';
+import { ENVIRONMENTS, ENVIRONMENT_PRESETS, type EnvironmentPreset } from '../render/environment';
 import { UPSCALE_MODES, type UpscaleMode } from '../app/settings';
 import { createDevPanel, type Field } from './panel';
 import { diag, diagText } from '../app/diag';
@@ -100,14 +100,30 @@ export async function startDev(app: App): Promise<DevHandle> {
     `level ${level.sidecar.name}: ${level.sidecar.stats['triangles']} tris, ` +
       `${level.meshes.length} meshes`,
   );
-  // Dungeon look: no sky light, dark fog close in.
-  app.materials.setEnvironment({
-    ambientColor: new Color3(0.05, 0.05, 0.07),
-    lightColor: new Color3(0, 0, 0),
-    fogColor: new Color3(0.01, 0.01, 0.015),
-    fogDensity: 0.016,
-  });
-  app.sky.mesh.setEnabled(false);
+  if (level.sidecar.outdoor) {
+    // Outdoor look (DESIGN.md 15): a sun, a lit sky, fog that keeps the far ridges hazy.
+    const space = level.spaces[0];
+    app.materials.setEnvironment({
+      ...ENVIRONMENTS['mm6-day'],
+      lightDirection: new Vector3(-0.45, -0.8, 0.4).normalize(),
+      lightColor: new Color3(1.0, 0.92, 0.78),
+      ambientColor: new Color3(0.36, 0.4, 0.48),
+      fogColor: space?.fog?.color ?? new Color3(0.62, 0.68, 0.78),
+      fogDensity: space?.fog?.density ?? 0.0017,
+    });
+    app.sky.apply(app.materials.env);
+    app.sky.mesh.setEnabled(true);
+    camera.maxZ = 6000;
+  } else {
+    // Dungeon look: no sky light, dark fog close in.
+    app.materials.setEnvironment({
+      ambientColor: new Color3(0.05, 0.05, 0.07),
+      lightColor: new Color3(0, 0, 0),
+      fogColor: new Color3(0.01, 0.01, 0.015),
+      fogDensity: 0.016,
+    });
+    app.sky.mesh.setEnabled(false);
+  }
   // Real water: reflection and refraction at a fraction of the world resolution.
   const stillWater = textures.get(ROLE.water)!;
   const water = new LevelWater(
@@ -362,6 +378,7 @@ export async function startDev(app: App): Promise<DevHandle> {
         panel.toast('deep water');
       }
     }
+    level.update(camera.globalPosition);
     navigation?.update(dt);
     for (const m of handle.monsters) {
       m.update(dt, partyTarget, simTime);

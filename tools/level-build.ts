@@ -18,6 +18,8 @@ import { ROLE } from '../kernel/elements/roles';
 import { bakeVertexLight } from '../kernel/light/bake';
 import { buildNavMesh, checkReachability } from '../kernel/nav/navmesh';
 import { buildLevelGlb } from '../kernel/export/glb';
+import { buildTerrainLevel, type TerrainSpec } from '../kernel/terrain/build';
+import { existsSync } from 'node:fs';
 
 export interface LevelBuildOptions {
   /** Light reaching every vertex. */
@@ -53,8 +55,106 @@ function withoutRole(mesh: MeshData, role: number): MeshData {
 const OUT = 'public/levels';
 
 const round = (v: number): number => Math.round(v * 1000) / 1000;
+const ms = (a: number, b: number): string => `${(b - a).toFixed(0)} ms`;
+
+/** Outdoor regions: levels/<id>/terrain.ts exports a TerrainSpec instead of a level script. */
+async function buildTerrain(id: string, validate: boolean): Promise<boolean> {
+  const t0 = performance.now();
+  const url = pathToFileURL(resolve('levels', id, 'terrain.ts')).href;
+  const mod = (await import(url)) as { default: TerrainSpec };
+  const level = buildTerrainLevel(mod.default);
+  const t1 = performance.now();
+  // Coarse voxels for a region kilometres wide; the climb must cover one cell's rise on the
+  // steepest walkable slope (1.5 m × tan 48° ≈ 1.7 m) or every hillside breaks into islands.
+  const nav = await buildNavMesh(level.collider, {
+    cellSize: 1.5,
+    cellHeight: 0.3,
+    agentRadius: 0.45,
+    agentMaxClimb: 1.8,
+    agentMaxSlopeDeg: 48,
+  });
+  const t2 = performance.now();
+  const report = checkReachability(
+    nav.navMesh,
+    level.spawn.position,
+    level.points.filter((p) => !['summit', 'ravine-head', 'ford'].includes(p.name)),
+    4,
+  );
+  nav.navMesh.destroy();
+  const chunkMetres = mod.default.chunkCells * mod.default.cell;
+  // Trees travel as instances in the sidecar (a few bytes each) and are drawn as thin
+  // instances of two prototypes; collision is the terrain chunks plus a cylinder per trunk.
+  const empty = { positions: [], normals: [], uvs: [], indices: [], materials: [] };
+  const glb = await buildLevelGlb(
+    {
+      visual: empty,
+      water: level.water,
+      waterfalls: [],
+      nodes: [{ name: 'terrain', children: level.chunks }],
+    },
+    { chunk: chunkMetres, quantize: true },
+  );
+  const t3 = performance.now();
+  const sidecar = {
+    name: id,
+    version: 1,
+    outdoor: true,
+    lod: { chunk: chunkMetres, distances: [chunkMetres * 2.2, chunkMetres * 5], forestFar: 700 },
+    trees: level.trees.map((t) => [
+      t.kind === 'pine' ? 0 : 1,
+      round(t.x),
+      round(t.y),
+      round(t.z),
+      round(t.yaw),
+      round(t.scale),
+    ]),
+    spawn: level.spawn,
+    points: level.points,
+    lights: [],
+    spaces: level.spaces,
+    water: level.water.map(({ mesh: _mesh, ...body }) => body),
+    waterfalls: [],
+    bounds: level.bounds,
+    // No debug navmesh for a region: it would be megabytes of JSON for an overlay.
+    nav: { positions: [], indices: [] },
+    reachability: report.results,
+    stats: {
+      triangles: level.chunks
+        .filter((c) => c.lod === 0)
+        .reduce((n, c) => n + c.mesh.indices.length / 3, 0),
+      trees: level.trees.length,
+      forestTriangles: level.forest.indices.length / 3,
+      colliderTriangles: level.collider.indices.length / 3,
+      navTriangles: nav.debug.indices.length / 3,
+      glbBytes: glb.byteLength,
+      heightMin: round(level.valley.height.min),
+      heightMax: round(level.valley.height.max),
+    },
+  };
+  await mkdir(OUT, { recursive: true });
+  await writeFile(resolve(OUT, `${id}.glb`), glb);
+  await writeFile(resolve(OUT, `${id}.json`), JSON.stringify(sidecar));
+  await writeFile(resolve(OUT, `${id}.nav.bin`), nav.bytes);
+  console.info(
+    [
+      `${id}: ${sidecar.stats.triangles} terrain tris at full detail, ${level.trees.length} trees ` +
+        `(${sidecar.stats.forestTriangles} tris), ${(glb.byteLength / 1024 / 1024).toFixed(1)} MB glb, ` +
+        `${sidecar.stats.navTriangles} nav tris, heights ${sidecar.stats.heightMin} to ${sidecar.stats.heightMax} m`,
+      `  generate ${ms(t0, t1)}, nav ${ms(t1, t2)}, glb ${ms(t2, t3)}`,
+    ].join('\n'),
+  );
+  for (const r of report.results) {
+    if (!r.reachable) console.error(`  ${r.name}: unreachable (${r.reason})`);
+  }
+  if (!report.ok) {
+    console.error(`${id}: unreachable points${validate ? '' : ' (ignored, --no-validate)'}`);
+    return !validate;
+  }
+  return true;
+}
 
 async function buildOne(id: string, validate: boolean): Promise<boolean> {
+  if (existsSync(resolve('levels', id, 'terrain.ts'))) return buildTerrain(id, validate);
   const t0 = performance.now();
   const url = pathToFileURL(resolve('levels', id, 'level.ts')).href;
   const mod = (await import(url)) as LevelModule;
