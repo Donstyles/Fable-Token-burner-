@@ -1139,6 +1139,14 @@ Phase 6 content comes; creatures per region.
   beyond the pass, joined to the valley by portals at both ends of the
   pass; regions carry their own textures and environment in the sidecar.
   Phase 5b steps 2 to 5 are in; the backdrop and the look pass remain.
+- 2026-10-16 – **Backdrop and bandits** (sections 15.6, 14.3): a ring of
+  far mountains beyond each region with thinner fog to show it; spawn
+  records in the sidecar put eight bandits about the valley and four in
+  the desert. Known rough edges for the morning: the backdrop's inner
+  facets show from a summit; the scree texture stretches on the gorge
+  walls (rock now uses a wall projection, the other slots do not yet);
+  the mute button overlaps screen titles; the cave tunnel is sunlit
+  inside (no shadows); party state resets on a portal reload.
 - 2026-10-15 – **Owner's look tuning becomes the default** (sent from the
   dev panel after playing the water build, "looks moody"): posterize filter
   on at 5 levels with dither 0.45 (cell 2), bloom off, vignette 0.6, contrast

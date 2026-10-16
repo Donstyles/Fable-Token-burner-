@@ -425,6 +425,19 @@ waterfalls and deserts, walkable end to end.
    **Backdrop done 2026-10-16** (DESIGN 15.6); the device pass waits for
    the owner's phone.
 
+**Status, night of 2026-10-16 (owner asleep, best judgement):** steps 1 to 6
+are in: the valley (village, road, pass, gorge with eight cascades, cave
+mouth), the showcase dungeon reached through the cave and left through
+its door, the desert beyond the pass, far backdrops, bandits about both
+regions, hit feedback, the rules layer and its screens. Live at
+`/dev/?level=valley` (the showcase is the default level, `?level=desert`
+the desert). Not done: performance on the owner's phone (untested; the
+valley carries 300 chunk meshes, 2500 thin-instanced trees, 9 water
+bodies and 8 falls), party state across a portal reload, NPC dialogue,
+a desert town, Meshy spends (none of the 900 credits used: generated
+houses, trees and the cave looked acceptable, and a second creature
+unattended risked another broken rig).
+
 ## Phase 6 – Slice content
 
 **Goal:** the first town, one dungeon and one quest, fully assetised.
