@@ -58,21 +58,42 @@
   "runs": [
     {
       "started": "2026-10-16T20:20:38.951Z",
-      "taskIds": ["01a14672-da80-760a-979a-2052d3d884ba"],
+      "taskIds": [
+        "01a14672-da80-760a-979a-2052d3d884ba",
+        "01a14674-84e5-7509-a337-6d79a3c12873",
+        "01a14674-bfb0-737c-8fe6-eb330f2a96ea"
+      ],
       "tasks": {
         "bandit": {
           "image-to-3d": {
             "taskId": "01a14672-da80-760a-979a-2052d3d884ba",
-            "status": "PENDING",
-            "consumedCredits": null,
+            "status": "SUCCEEDED",
+            "consumedCredits": 15,
             "operationId": "b002-bandit-image-to-3d-r1-a1"
+          },
+          "rig": {
+            "taskId": "01a14674-84e5-7509-a337-6d79a3c12873",
+            "status": "SUCCEEDED",
+            "consumedCredits": 5,
+            "operationId": "b002-bandit-rig-r1-a1"
+          },
+          "animate": {
+            "taskId": "01a14674-bfb0-737c-8fe6-eb330f2a96ea",
+            "status": "SUCCEEDED",
+            "consumedCredits": 30,
+            "operationId": "b002-bandit-animate-r1-a1"
           }
         }
       },
-      "balanceBefore": 1890,
+      "balanceBefore": 2890,
       "attempts": {
-        "bandit/image-to-3d": 1
-      }
+        "bandit/image-to-3d": 1,
+        "bandit/rig": 1,
+        "bandit/animate": 1
+      },
+      "balanceAfter": 2840,
+      "consumedCredits": 50,
+      "finished": "2026-10-16T20:44:03.129Z"
     }
   ]
 }

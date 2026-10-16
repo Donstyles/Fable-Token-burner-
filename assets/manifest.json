@@ -4,12 +4,12 @@
       "id": "bandit",
       "kind": "character",
       "source": "Meshy image-to-3D (smart topology) from the owner's concept image pipeline/inbox/bandit.png",
-      "prompt": "Plain photograph of a historical reenactment costume worn by a real person, muted natural colours, real wear, dirt and mended cloth, no fantasy polish, no idealised face, no smile, no dramatic lighting, no text, no watermark, no signature. A lean unshaven man in his thirties dressed as a highway bandit: a dark hooded wool cloak thrown back over the shoulders, a stained quilted gambeson under a scuffed leather jerkin, patched wool hose, worn leather boots, a plain belt with a sheathed knife and a short sword in a scabbard at the left hip, a hard wary face. Full body, standing in a relaxed A-pose with the arms held slightly away from the body, straight front view facing the camera squarely, feet fully visible, nothing cropped, single subject centred, neutral mid-grey background, flat even lighting with no shadow on the background.",
+      "prompt": "Clean full-body character concept for a low-polygon video game, rendered like a studio turnaround model: simple solid shapes, clothing fitted to the body, no cape, cloak, skirt or loose straps, nothing dangling or thin, no fur, no transparent cloth, muted natural colours, flat even lighting, no text, no watermark, no signature. A lean unshaven man in his thirties as a highway bandit: a fitted padded gambeson under a short sleeveless leather jerkin, a plain belt with a sheathed knife, a short sword in a scabbard at the left hip, fitted wool hose, short leather boots, a hard wary face. Full body, standing upright in an A-pose with the arms held slightly away from the body, the legs straight and the feet a hand's width apart, straight front view facing the camera squarely, feet fully visible, nothing cropped, single subject centred, neutral mid-grey background, flat even lighting with no shadow on the background.",
       "meshy": {
         "taskIds": [
-          "01a14158-74eb-7218-b8b3-a8133a9afd6b",
-          "01a1415a-42b5-769a-a390-4706a7810043",
-          "01a1415a-7b47-74d5-8064-b6945c01ed11"
+          "01a14672-da80-760a-979a-2052d3d884ba",
+          "01a14674-84e5-7509-a337-6d79a3c12873",
+          "01a14674-bfb0-737c-8fe6-eb330f2a96ea"
         ],
         "params": {
           "imageTo3d": {
@@ -47,8 +47,8 @@
       },
       "licence": "Meshy output (paid plan): owner holds full rights",
       "files": ["assets/characters/bandit/bandit.glb"],
-      "date": "2026-10-15",
-      "notes": "batch 001; 3641 triangles, 10 clips"
+      "date": "2026-10-16",
+      "notes": "batch 002; 4074 triangles, 10 clips"
     }
   ]
 }

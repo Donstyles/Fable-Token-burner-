@@ -150,7 +150,10 @@ export async function runBatch(number: number, opts: RunOptions = {}): Promise<R
       `not enough credits for the estimate (${before.balance} < ${batch.estimatedCredits})`,
     );
   }
-  if (run.balanceBefore === undefined) run.balanceBefore = before.balance;
+  // A run that has not submitted anything yet takes the current balance as its start, so a
+  // plan change between a refused attempt and this one does not show up as credits.
+  if (run.balanceBefore === undefined || run.taskIds.length === 0)
+    run.balanceBefore = before.balance;
   await save();
   if (dryRun) log('dry run: commands are printed, nothing is submitted');
 
@@ -278,10 +281,21 @@ export async function runBatch(number: number, opts: RunOptions = {}): Promise<R
   const after = await client.balance();
   if (!dryRun) {
     run.balanceAfter = after.balance;
-    run.consumedCredits = (run.balanceBefore ?? after.balance) - after.balance;
+    // What the tasks reported is the cost; the balance delta is the cross-check (monthly
+    // credits can change under a run), and the fallback when a task did not report.
+    const reported = Object.values(run.tasks)
+      .flatMap((steps) => Object.values(steps))
+      .map((t) => t.consumedCredits);
+    const delta = (run.balanceBefore ?? after.balance) - after.balance;
+    run.consumedCredits = reported.every((c): c is number => c !== null)
+      ? reported.reduce((a, b) => a + b, 0)
+      : delta;
     run.finished = new Date().toISOString();
     await save();
-    log(`${label}: done, ${run.consumedCredits} credits consumed (balance ${after.balance})`);
+    const check = delta === run.consumedCredits ? '' : ` (balance moved by ${delta})`;
+    log(
+      `${label}: done, ${run.consumedCredits} credits consumed (balance ${after.balance})${check}`,
+    );
   } else {
     log(`${label}: dry run complete, balance still ${after.balance}`);
   }
