@@ -67,7 +67,6 @@ export class CombatFeedback {
       background: '#b01818',
       opacity: '0',
       pointerEvents: 'none',
-      mixBlendMode: 'multiply',
     } satisfies Partial<CSSStyleDeclaration>);
     uiLayer.appendChild(this.redFlash);
   }
@@ -142,7 +141,7 @@ export class CombatFeedback {
     this.shake.update(dt);
     if (this.redLevel > 0) {
       this.redLevel = Math.max(0, this.redLevel - dt / 0.18);
-      this.redFlash.style.opacity = (this.redLevel * 0.55).toFixed(3);
+      this.redFlash.style.opacity = (this.redLevel * 0.35).toFixed(3);
     }
     return simDt;
   }

@@ -9,7 +9,7 @@ import { Heightfield } from './heightfield';
 import type { TerrainBase } from './mesh';
 import { fbm, ridged, smoothstep } from './noise';
 import { layRoad } from './road';
-import { GroundPath, smoothPath, type P2 } from './spline';
+import { GroundPath, headingDeg, smoothPath, type P2 } from './spline';
 import type { TreeInstance } from './trees';
 
 export interface DesertSpec {
@@ -170,7 +170,7 @@ export function generateDesert(spec: DesertSpec): DesertResult {
     roadWidth: ROAD_WIDTH,
     oasis: { centre: oasisCentre, y: oasisY - 0.6, radius: OASIS_R },
     trees,
-    spawn: { position: at3(start), yawDeg: (Math.atan2(tangent[0], tangent[1]) * 180) / Math.PI },
+    spawn: { position: at3(start), yawDeg: headingDeg(tangent[0], tangent[1]) },
     points,
   };
 }

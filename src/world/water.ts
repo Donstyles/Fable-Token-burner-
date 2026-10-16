@@ -8,7 +8,7 @@ import { WaterMaterial } from '@babylonjs/materials/water/waterMaterial';
 import { HemisphericLight } from '@babylonjs/core/Lights/hemisphericLight';
 import { DynamicTexture } from '@babylonjs/core/Materials/Textures/dynamicTexture';
 import { Texture } from '@babylonjs/core/Materials/Textures/texture';
-import { Color3 } from '@babylonjs/core/Maths/math.color';
+import { Color3, Color4 } from '@babylonjs/core/Maths/math.color';
 import { Vector2, Vector3 } from '@babylonjs/core/Maths/math.vector';
 import { Scene } from '@babylonjs/core/scene';
 import type { BaseTexture } from '@babylonjs/core/Materials/Textures/baseTexture';
@@ -168,6 +168,8 @@ export class LevelWater {
     private readonly materials: RetroMaterials,
     private readonly fallback: () => Material,
     quality: WaterQuality = 'quarter',
+    /** Meshes every body reflects regardless of distance: the sky dome, the backdrop. */
+    private readonly always: Mesh[] = [],
     look: WaterLook = DEFAULT_WATER_LOOK,
   ) {
     this.bump = rippleBump(scene);
@@ -269,6 +271,13 @@ export class LevelWater {
         return Math.hypot(dx, dz) < REFLECT_DISTANCE;
       });
       for (const m of near) mat.addToRenderList(m);
+      // The sky (and outdoors the far ridges) in every mirror, and the passes clear to the
+      // fog colour, so a body never reflects the black of an empty render target.
+      for (const m of this.always) mat.addToRenderList(m);
+      const fog = this.materials.env.fogColor;
+      const clear = new Color4(fog.r, fog.g, fog.b, 1);
+      if (mat.reflectionTexture) mat.reflectionTexture.clearColor = clear;
+      if (mat.refractionTexture) mat.refractionTexture.clearColor = clear;
       s.body.mesh.material = mat;
       s.material = mat;
     }

@@ -9,7 +9,7 @@ import { CAVE, caveLocalOf, type CaveSpec } from './cave';
 import { Heightfield } from './heightfield';
 import { layRoad } from './road';
 import { fbm, lerp, ridged, smoothstep } from './noise';
-import { GroundPath, smoothPath, type P2 } from './spline';
+import { GroundPath, headingDeg, smoothPath, type P2 } from './spline';
 import type { StreamLayout } from './stream';
 
 export interface ValleySpec {
@@ -127,7 +127,7 @@ export function generateValley(spec: ValleySpec): ValleyResult {
   const stream: StreamLayout = {
     terraces,
     pool: { centre: poolCentre, y: poolY, radius: POOL_R },
-    halfWidth: 3.5,
+    halfWidth: 6.5,
   };
   const peaks = [
     { x: -half * 0.72, z: half * 0.7, height: 95, r: 150 },
@@ -270,7 +270,7 @@ export function generateValley(spec: ValleySpec): ValleyResult {
 
   const start = road.at(18);
   const tangent = road.nearest(start[0], start[1]).tangent;
-  const yawDeg = (Math.atan2(tangent[0], tangent[1]) * 180) / Math.PI;
+  const yawDeg = headingDeg(tangent[0], tangent[1]);
   const at3 = (p: P2): Vec3 => [p[0], hf.sample(p[0], p[1]), p[1]];
   let top = { i: 0, j: 0, h: -Infinity };
   for (let j = 0; j < n; j++) {

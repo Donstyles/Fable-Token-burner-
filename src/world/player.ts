@@ -177,7 +177,12 @@ export class PartyController {
   }
 
   update(dt: number, input: FrameInput): void {
-    if (dt <= 0) return;
+    if (dt <= 0) {
+      // A frozen frame (hit stop, an open screen) still places the camera, so anything
+      // added to it afterwards (the shake) starts from the true position every frame.
+      this.syncCamera();
+      return;
+    }
     const t = this.tuning;
 
     // Orientation. Right drag turns while moving and looks while stationary.

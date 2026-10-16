@@ -2,6 +2,14 @@
 
 export type P2 = [number, number];
 
+/**
+ * Heading in degrees for a kernel (right-handed) direction: 0 faces north (+Z), 90 faces
+ * west (-X). The runtime mirrors X, so this is also the Babylon yaw to use unchanged.
+ */
+export function headingDeg(dx: number, dz: number): number {
+  return (Math.atan2(-dx, dz) * 180) / Math.PI;
+}
+
 /** Catmull-Rom through the control points, `perSegment` points per span, ends clamped. */
 export function smoothPath(points: readonly P2[], perSegment = 8): P2[] {
   if (points.length < 2) return [...points];

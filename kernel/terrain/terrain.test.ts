@@ -9,6 +9,7 @@ import { backdropMesh } from './backdrop';
 import { buildTerrainLevel } from './build';
 import { CAVE, caveLocalOf, caveMouth } from './cave';
 import { generateDesert } from './desert';
+import { headingDeg } from './spline';
 import { streamFalls, streamSurfaces } from './stream';
 import { buildTown } from './town';
 import { forestMeshes, placeTrees, treeMesh } from './trees';
@@ -351,5 +352,42 @@ describe('backdrop', () => {
     expect(outer / 48).toBeGreaterThan(300);
     // Snow only high up: the lowest ring carries none.
     for (let k = 0; k < 48; k++) expect(b.colors[k * 3 + 2]).toBe(0);
+  });
+});
+
+describe('headings', () => {
+  const forward = (deg: number): [number, number] => {
+    // Kernel direction of a heading: 0 north (+Z), 90 west (-X).
+    const r = (deg * Math.PI) / 180;
+    return [-Math.sin(r), Math.cos(r)];
+  };
+  it('names the compass directions as the dungeons do', () => {
+    expect(headingDeg(0, 1)).toBeCloseTo(0);
+    expect(headingDeg(-1, 0)).toBeCloseTo(90);
+    expect(Math.abs(headingDeg(0, -1))).toBeCloseTo(180);
+  });
+  it('wakes the party facing along the road in both regions', () => {
+    const v = generateValley({ seed: 7, width: 1024, cell: 16 });
+    const vt = v.road.nearest(v.spawn.position[0], v.spawn.position[2]).tangent;
+    const vf = forward(v.spawn.yawDeg);
+    expect(vf[0] * vt[0] + vf[1] * vt[1]).toBeGreaterThan(0.99);
+    const d = generateDesert({ seed: 11, width: 1024, cell: 16 });
+    const dt = d.road.nearest(d.spawn.position[0], d.spawn.position[2]).tangent;
+    const df = forward(d.spawn.yawDeg);
+    expect(df[0] * dt[0] + df[1] * dt[1]).toBeGreaterThan(0.99);
+  });
+  it('arrives through the pass facing along the road, and spawns face back down it', () => {
+    const level = buildTerrainLevel({ seed: 7, width: 1024, cell: 16, chunkCells: 16 });
+    const pass = level.portals.find((p) => p.name === 'pass')!;
+    const road = level.valley!.road;
+    const at = pass.arrive.position;
+    const t = road.nearest(at[0], at[2]).tangent;
+    const f = forward(pass.arrive.yawDeg);
+    // Arriving from the desert the party looks back down the road: against its tangent.
+    expect(f[0] * t[0] + f[1] * t[1]).toBeLessThan(-0.99);
+    const s = level.spawns[0]!;
+    const st = road.nearest(s.position[0], s.position[2]).tangent;
+    const sf = forward(s.yawDeg);
+    expect(sf[0] * st[0] + sf[1] * st[1]).toBeLessThan(-0.99);
   });
 });

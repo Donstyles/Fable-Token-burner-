@@ -28,6 +28,7 @@ import { Party } from '../game/party';
 import { healCharacter, type Character as CharacterSheet } from '../game/character';
 import { testCharacters } from '../game/fixtures';
 import { newGame, type GameState } from '../game/state';
+import { automapLevel, revealAt } from '../game/automap';
 import { createCreationScreen } from '../ui/creation';
 import { installScreens, type Screens } from '../ui/screens';
 import { mulberry32 } from '../game/rng';
@@ -164,6 +165,8 @@ export async function startDev(app: App): Promise<DevHandle> {
         ...(stillWater.tint ? { tint: stillWater.tint } : {}),
       }),
     'quarter',
+    // Every body mirrors the sky; outdoors the far ridges too.
+    [app.sky.mesh, ...level.meshes.filter((m) => m.name === 'backdrop')],
   );
   const waterfalls = new LevelWaterfalls(scene, level.waterfalls, app.materials);
   // Babylon's listener rides the camera; sounds place themselves in scene space.
@@ -193,6 +196,17 @@ export async function startDev(app: App): Promise<DevHandle> {
   const game = newGame(sheets, { seed, level: { id: LEVEL, x: 0, y: 0, z: 0, yawDeg: 0 } });
   if (!game.ok) throw new Error(`new game: ${game.reason}`);
   const state = game.state;
+  // The automap of this level: 8 m cells over the level's bounds (Babylon space), revealed
+  // round the party as it walks; the journal reads state.level for the party's mark.
+  const mapCell = level.sidecar.outdoor ? 8 : 2;
+  const mapLevel = automapLevel(state.automap, LEVEL, {
+    width: Math.ceil((level.sidecar.bounds.max[0] - level.sidecar.bounds.min[0]) / mapCell),
+    height: Math.ceil((level.sidecar.bounds.max[2] - level.sidecar.bounds.min[2]) / mapCell),
+    cellSize: mapCell,
+    originX: -level.sidecar.bounds.max[0],
+    originZ: level.sidecar.bounds.min[2],
+  });
+  let mapTimer = 0;
   const roster = new Party(state.party);
   const strip = createPartyStrip(uiLayer, roster);
   const feedback = new CombatFeedback(scene, stepper, uiLayer, {}, rng);
@@ -484,6 +498,13 @@ export async function startDev(app: App): Promise<DevHandle> {
     }
     level.update(camera.globalPosition);
     if (!fly) portals.update(party.position);
+    mapTimer += dt;
+    if (mapTimer > 0.5) {
+      mapTimer = 0;
+      const p = party.position;
+      revealAt(mapLevel, p.x, p.z, level.sidecar.outdoor ? 40 : 6);
+      state.level = { id: LEVEL, x: p.x, y: p.y, z: p.z, yawDeg: (party.yaw * 180) / Math.PI };
+    }
     navigation?.update(dt);
     for (const m of handle.monsters) {
       m.update(dt, partyTarget, simTime);

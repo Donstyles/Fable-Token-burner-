@@ -108,12 +108,13 @@ export class Monster {
   }
 
   private applyPush(dt: number): void {
-    if (!this.push) return;
-    // Most of the shove in the first frames, the rest tapering off.
-    const step = Math.min(this.push.remaining, Math.max(this.push.remaining * 0.35, 4 * dt));
+    if (!this.push || dt <= 0) return;
+    // An exponential ease over about a tenth of a second, by time so a frozen or slow frame
+    // moves the monster no further than a fast one.
+    const step = Math.min(this.push.remaining, this.push.remaining * Math.min(1, dt / 0.06));
     this.character.node.position.addInPlace(this.push.dir.scale(step));
     this.push.remaining -= step;
-    if (this.push.remaining <= 0.005) {
+    if (this.push.remaining <= 0.02) {
       this.push = null;
       this.agent?.teleport(this.character.node.position);
     }

@@ -606,8 +606,9 @@ From the owner's reel on punchy hits, all five, for every landed blow
    the party is struck) resampled at 30 Hz, fading over 0.22 s, with a
    little roll.
 
-The party being struck gets the thud, the shake and a red multiply flash
-over the view fading in 0.18 s, as MM6 tinted the screen. Misses get the
+The party being struck gets the thud, the shake and a red wash over the
+view (35 % at most, fading in 0.18 s), as MM6 tinted the screen; a blend
+mode cannot reach the canvas from the UI layer, so it is a plain wash. Misses get the
 whoosh only. Tuning values are in `DEFAULT_FEEDBACK`.
 
 ### 14.5 Rules and data layer
@@ -793,7 +794,9 @@ generated from a seed by `kernel/terrain/` and compiled by
   valley, 260 m low hills in the desert, no snow there).
 - The fog is thinned to let it show: valley 0.0009, desert 0.0008 (from
   0.0017), so the far ridges two kilometres out read through the haze and
-  the map's edge never shows as a cut.
+  the map's edge never shows as a cut. The fog colour is the sky's own
+  horizon colour, so haze and dome meet without a band; the ambient is
+  lifted (valley 0.46, 0.48, 0.54) so walls in shade still read.
 - From a summit near the rim the inner ring's 34 m facets are visible as
   facets; a finer inner ring or a second detail level is the fix if that
   bothers on device.
@@ -1147,6 +1150,22 @@ Phase 6 content comes; creatures per region.
   walls (rock now uses a wall projection, the other slots do not yet);
   the mute button overlaps screen titles; the cave tunnel is sunlit
   inside (no shadows); party state resets on a portal reload.
+- 2026-10-17 – **Critic review acted on.** An independent agent reviewed
+  35 screenshots and the night's diffs. Fixed: outdoor water reflected an
+  empty render target (black pools); the sky and the backdrop now sit in
+  every mirror's render list and the passes clear to the fog colour. The
+  spawn and portal-arrival headings were mirrored (the party woke facing
+  a house wall); one `headingDeg` helper now maps kernel directions to
+  headings, with tests that the party faces along the road. The camera
+  shake accumulated during the hit stop (the controller now places the
+  camera on a zero step); knockback moved per frame, now per second; the
+  red flash used a blend mode that cannot reach the canvas; waterfalls
+  ran particles and sound at any distance (now within 160 m); the brook's
+  ribbon was narrower than its trough, so dry trough counted as wading;
+  the automap was never fed; fog colour matched the sky. Left as design
+  work: the brook reads as a trench, the cave knoll as a bunker, the
+  village walls as plain boxes, the scree smear on gorge walls, salmon
+  tint on paths under the palette filter, inventory label truncation.
 - 2026-10-15 – **Owner's look tuning becomes the default** (sent from the
   dev panel after playing the water build, "looks moody"): posterize filter
   on at 5 levels with dither 0.45 (cell 2), bloom off, vignette 0.6, contrast

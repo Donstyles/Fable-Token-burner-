@@ -10,7 +10,7 @@ import type {
   Waterfall,
   WaterSurface,
 } from '../plan/level';
-import type { GroundPath } from './spline';
+import { headingDeg, type GroundPath } from './spline';
 import { backdropMesh } from './backdrop';
 import { caveMouth } from './cave';
 import { terrainChunks, type TerrainChunk } from './chunks';
@@ -134,14 +134,16 @@ function besidePath(
   return {
     kind,
     position: [x, height.sample(x, z), z],
-    yawDeg: (Math.atan2(-t[0], -t[1]) * 180) / Math.PI,
+    yawDeg: headingDeg(-t[0], -t[1]),
   };
 }
 
 const VALLEY_ENV: RegionEnvironment = {
   lightColor: [1.0, 0.92, 0.78],
-  ambientColor: [0.36, 0.4, 0.48],
-  fogColor: [0.62, 0.68, 0.78],
+  // Ambient lifted so walls in shade still read (MM6 lit outdoors flat and bright); the fog
+  // is the sky's own horizon colour so the haze and the dome meet without a band.
+  ambientColor: [0.46, 0.48, 0.54],
+  fogColor: [0.6, 0.7, 0.85],
   // Thin enough that the backdrop ridges two kilometres out still show through the haze.
   fogDensity: 0.0009,
   skyZenith: [0.15, 0.3, 0.7],
@@ -151,8 +153,8 @@ const VALLEY_ENV: RegionEnvironment = {
 
 const DESERT_ENV: RegionEnvironment = {
   lightColor: [1.0, 0.9, 0.72],
-  ambientColor: [0.44, 0.41, 0.38],
-  fogColor: [0.82, 0.74, 0.6],
+  ambientColor: [0.5, 0.47, 0.44],
+  fogColor: [0.86, 0.8, 0.68],
   fogDensity: 0.0008,
   skyZenith: [0.3, 0.5, 0.82],
   skyHorizon: [0.86, 0.8, 0.68],
@@ -230,7 +232,7 @@ function buildValleyLevel(spec: TerrainSpec): TerrainLevel {
         // Arriving from the desert: on the road just inside the pass, facing back down it.
         arrive: {
           position: at3(road.length - 12),
-          yawDeg: (Math.atan2(-back[0], -back[1]) * 180) / Math.PI,
+          yawDeg: headingDeg(-back[0], -back[1]),
         },
       },
     ],
@@ -310,7 +312,7 @@ function buildDesertLevel(spec: TerrainSpec): TerrainLevel {
         target: { level: 'valley', entry: 'pass' },
         arrive: {
           position: at3(10),
-          yawDeg: (Math.atan2(inward[0], inward[1]) * 180) / Math.PI,
+          yawDeg: headingDeg(inward[0], inward[1]),
         },
       },
     ],

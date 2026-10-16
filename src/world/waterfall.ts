@@ -117,7 +117,12 @@ interface FallState {
   material: ShaderMaterial;
   systems: ParticleSystem[];
   sound: WaterfallSound;
+  /** Within earshot: particles and sound run only for falls near the listener. */
+  near: boolean;
 }
+
+/** Falls beyond this many metres run neither particles nor sound. */
+export const FALL_ACTIVE_DISTANCE = 160;
 
 export class LevelWaterfalls {
   private readonly foam: DynamicTexture;
@@ -176,6 +181,7 @@ export class LevelWaterfalls {
         material,
         systems,
         sound: new WaterfallSound(fall.lip, foot, Math.min(1, 0.6 + drop / 60)),
+        near: true,
       });
     }
     this.setSoundVolume(this.soundVolume);
@@ -195,7 +201,7 @@ export class LevelWaterfalls {
     this.particlesOn = on;
     for (const s of this.states) {
       for (const ps of s.systems) {
-        if (on && !ps.isStarted()) ps.start();
+        if (on && s.near && !ps.isStarted()) ps.start();
         if (!on && ps.isStarted()) ps.stop();
       }
     }
@@ -211,7 +217,7 @@ export class LevelWaterfalls {
 
   setSound(on: boolean): void {
     this.soundOnValue = on;
-    for (const s of this.states) s.sound.setEnabled(on);
+    for (const s of this.states) s.sound.setEnabled(on && s.near);
   }
 
   update(dt: number, listener: Vector3): void {
@@ -222,7 +228,16 @@ export class LevelWaterfalls {
       s.material.setVector3('cameraPosition', listener);
       s.material.setFloat('fogDensity', env.fogDensity);
       s.material.setColor3('fogColor', env.fogColor);
-      s.sound.update(listener);
+      const near = Vector3.Distance(listener, s.fall.plunge) < FALL_ACTIVE_DISTANCE;
+      if (near !== s.near) {
+        s.near = near;
+        for (const ps of s.systems) {
+          if (near && this.particlesOn && !ps.isStarted()) ps.start();
+          if (!near && ps.isStarted()) ps.stop();
+        }
+        s.sound.setEnabled(near && this.soundOnValue);
+      }
+      if (near) s.sound.update(listener);
     }
   }
 
