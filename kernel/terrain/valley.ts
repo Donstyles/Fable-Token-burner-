@@ -9,6 +9,7 @@ import { CAVE, caveLocalOf, type CaveSpec } from './cave';
 import { Heightfield } from './heightfield';
 import { fbm, lerp, ridged, smoothstep } from './noise';
 import { GroundPath, smoothPath, type P2 } from './spline';
+import type { StreamLayout } from './stream';
 
 export interface ValleySpec {
   seed: number;
@@ -35,6 +36,8 @@ export interface ValleyResult {
   town: { centre: P2; y: number; radius: number; roadDirection: number };
   /** The cave mouth at the ravine head: its placement for `caveMouth`. */
   cave: CaveSpec;
+  /** The terraced brook down the ravine. */
+  stream: StreamLayout;
   spawn: { position: Vec3; yawDeg: number };
   points: NamedPoint[];
   peaks: { x: number; z: number; height: number }[];
@@ -98,6 +101,33 @@ export function generateValley(spec: ValleySpec): ValleyResult {
   ];
   const road = new GroundPath(smoothPath(roadControls, 10));
   const pass: P2 = road.at(road.length - 1);
+
+  // The ravine floor climbs toward the head; the brook steps down it in terraces. Each pool
+  // lies level with the banks at its foot, so the water spills over the lip there, and sits
+  // in a trough that deepens toward its head, where the fall from the terrace above lands.
+  const ravineFloor = (along: number): number => 3 + (along / k0) * 0.24;
+  const STREAM_FROM = 60;
+  const TERRACE = 60;
+  const streamTo = ravine.length - 60;
+  const terraceCount = Math.max(1, Math.floor((streamTo - STREAM_FROM) / TERRACE));
+  const terraces = Array.from({ length: terraceCount }, (_, i) => {
+    const from = STREAM_FROM + i * TERRACE;
+    const to = i === terraceCount - 1 ? streamTo : from + TERRACE;
+    return { from, to, y: ravineFloor(from) - 0.3 };
+  });
+  const terraceAt = (along: number): (typeof terraces)[number] | null => {
+    if (along < STREAM_FROM || along > streamTo) return null;
+    const i = Math.min(terraceCount - 1, Math.floor((along - STREAM_FROM) / TERRACE));
+    return terraces[i]!;
+  };
+  const poolCentre = ravine.at(STREAM_FROM - 10);
+  const POOL_R = 10;
+  const poolY = ravineFloor(STREAM_FROM - 10) - 4;
+  const stream: StreamLayout = {
+    terraces,
+    pool: { centre: poolCentre, y: poolY, radius: POOL_R },
+    halfWidth: 3.5,
+  };
   const peaks = [
     { x: -half * 0.72, z: half * 0.7, height: 95, r: 150 },
     { x: half * 0.7, z: half * 0.78, height: 130, r: 130 },
@@ -126,13 +156,19 @@ export function generateValley(spec: ValleySpec): ValleyResult {
       const u = dv / RIVER_BED_HALF;
       h = Math.min(h, BED + (FLOOR - BED) * u * u);
     }
-    // Ravine: a V cut whose floor climbs with the slope.
+    // Ravine: a flat-bottomed gorge whose floor climbs with the slope, with the brook's
+    // trough down its middle and the plunge pool's bowl at its foot.
     const r = ravine.nearest(x, z);
     const rw = 48 * k0;
     if (r.distance < rw) {
-      const floor = 3 + (r.along / k0) * 0.24;
-      const u = r.distance / rw;
-      h = Math.min(h, floor + 75 * u * u);
+      const bottom = ravineFloor(r.along);
+      const u = Math.max(0, r.distance - 13) / rw;
+      h = Math.min(h, bottom + 75 * u * u);
+      const t = terraceAt(r.along);
+      // Deep enough that the surface between 5 m vertices never rises through the water.
+      if (t && r.distance < 7) h = Math.min(h, t.y - 2.5);
+      const dp = Math.hypot(x - poolCentre[0], z - poolCentre[1]);
+      if (dp < POOL_R) h = Math.min(h, poolY - 1.6 + 1.6 * (dp / POOL_R) * (dp / POOL_R));
     }
     return h;
   };
@@ -295,6 +331,7 @@ export function generateValley(spec: ValleySpec): ValleyResult {
     roadWidth: ROAD_WIDTH,
     ravine,
     cave,
+    stream,
     town: {
       centre: townCentre,
       y: townY,

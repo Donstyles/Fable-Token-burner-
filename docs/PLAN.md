@@ -414,7 +414,8 @@ waterfalls and deserts, walkable end to end.
    the dungeon's exit back to the valley. **Done 2026-10-16** (DESIGN 15.3):
    portals with arrival points, a fade and reload between levels, e2e both
    ways.
-4. Cascades in the ravine stream (Phase 3 waterfalls on terrain).
+4. Cascades in the ravine stream (Phase 3 waterfalls on terrain). **Done
+   2026-10-16** (DESIGN 15.4): a terraced brook, eight falls, a plunge pool.
 5. Desert region beyond the pass with its own textures and a transition.
 6. Far-mountain backdrop; day sky tuning; performance pass on device.
 

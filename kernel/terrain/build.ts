@@ -6,12 +6,14 @@ import type {
   NamedPoint,
   PortalRecord,
   SpaceRecord,
+  Waterfall,
   WaterSurface,
 } from '../plan/level';
 import { caveMouth } from './cave';
 import { terrainChunks, type TerrainChunk } from './chunks';
 import { appendMesh, terrainMesh, type ColouredMeshData } from './mesh';
 import { riverSurface } from './river';
+import { streamFalls, streamSurfaces } from './stream';
 import { buildTown, type TownResult } from './town';
 import { forestMeshes, placeTrees, type ForestOptions, type TreeInstance } from './trees';
 import { generateValley, type ValleyResult } from './valley';
@@ -41,6 +43,7 @@ export interface TerrainLevel {
   lights: LightPlacement[];
   portals: PortalRecord[];
   water: WaterSurface[];
+  waterfalls: Waterfall[];
   points: NamedPoint[];
   spaces: SpaceRecord[];
   spawn: ValleyResult['spawn'];
@@ -115,7 +118,8 @@ export function buildTerrainLevel(spec: TerrainSpec): TerrainLevel {
         },
       },
     ],
-    water: [riverSurface(valley)],
+    water: [riverSurface(valley), ...streamSurfaces(valley.ravine, valley.stream)],
+    waterfalls: streamFalls(valley.ravine, valley.stream),
     // The cave's portal is a point too, so the build checks the tunnel is reachable.
     points: [...valley.points, { name: 'cave', position: cave.portal, kind: 'door' }],
     spaces: [

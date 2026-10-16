@@ -715,10 +715,33 @@ generated from a seed by `kernel/terrain/` and compiled by
   portal is a point in the reachability check, and `levels/<id>/level.ts`
   exports `portals` for dungeons.
 
-### 15.4 Plans
+### 15.4 The ravine brook and its cascades
 
-Cascades in the ravine stream with Phase 3's waterfalls; a desert region
-beyond the pass; far-mountain backdrop beyond the map edge.
+- The ravine is a flat-bottomed gorge (26 m floor, walls rising
+  parabolically to 75 m out) whose floor climbs 0.15 m per metre toward
+  the head. A brook runs down its middle in terraces 60 m long
+  (`kernel/terrain/stream.ts`): each terrace is a level pool 7 m wide in a
+  trough cut 2.5 m under the water, the water at the height of the banks
+  at the terrace's foot, so it spills over the lip there, and sitting ever
+  deeper below the banks toward its head, where the fall from the terrace
+  above lands. A
+  waterfall sheet (Phase 3's ribbon, shared with the dungeons through
+  `kernel/elements/waterfall.ts`) joins each terrace to the one below,
+  about 9 m high, and the lowest drops 5 m into a plunge pool 20 m across
+  cut into the ravine floor near the valley. Eight cascades in the valley.
+- Each pool is a water body with the Phase 3 material (reflection and
+  refraction passes switch on only within the active distance), with flow
+  down the gorge; each fall has spray, mist and its sound. The banks on
+  both sides stay walkable, so the gorge is the road to the cave.
+- Known limits: the 5 m heightfield makes the trough a V groove rather
+  than a channel, and the planar texture projection stretches the scree on
+  the gorge walls; a triplanar projection is the fix when the look pass
+  comes.
+
+### 15.5 Plans
+
+A desert region beyond the pass; far-mountain backdrop beyond the map
+edge; a triplanar terrain projection for steep faces.
 
 ## 13. Decision log
 

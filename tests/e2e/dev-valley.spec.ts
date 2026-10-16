@@ -10,6 +10,7 @@ type Dev = {
     sidecar: { outdoor?: boolean; trees?: unknown[]; stats: Record<string, number> };
     meshes: { name: string; isEnabled(): boolean }[];
     collider: { getTotalVertices(): number };
+    water: unknown[];
   };
   positionOf(): { x: number; y: number; z: number };
   pointOf(name: string): { x: number; y: number; z: number } | null;
@@ -48,12 +49,17 @@ test.describe('valley region', () => {
         cave: d.pointOf('cave'),
         portals: d.portals.portals.map((p) => `${p.name}>${p.target.level}:${p.target.entry}`),
         houses: d.level.sidecar.stats['houses'],
+        waterfalls: d.level.sidecar.stats['waterfalls'],
+        water: d.level.water.length,
         solids: d.level.collider.getTotalVertices() > 0,
         spawn: d.positionOf(),
       };
     });
     // The village: seven houses and the well round a square the party wakes up in, solid.
     expect(info.houses).toBe(7);
+    // The brook steps down the ravine: a waterfall per terrace, pools plus the river.
+    expect(info.waterfalls).toBeGreaterThanOrEqual(5);
+    expect(info.water).toBe(info.waterfalls! + 2);
     expect(info.solids).toBe(true);
     expect(info.town).not.toBeNull();
     // The cave mouth at the ravine head leads into the dungeon (DESIGN 15.3).

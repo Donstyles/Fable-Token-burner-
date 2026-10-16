@@ -6,6 +6,7 @@ import { fbm, ridged } from './noise';
 import { riverSurface } from './river';
 import { GroundPath, smoothPath } from './spline';
 import { CAVE, caveLocalOf, caveMouth } from './cave';
+import { streamFalls, streamSurfaces } from './stream';
 import { buildTown } from './town';
 import { forestMeshes, placeTrees, treeMesh } from './trees';
 import { generateValley, WATER_LEVEL } from './valley';
@@ -226,5 +227,43 @@ describe('cave mouth', () => {
     const rise = (b - a) / (v.ravine.length * 0.3);
     expect(rise).toBeGreaterThan(0);
     expect(rise).toBeLessThan(Math.tan((20 * Math.PI) / 180));
+  });
+});
+
+describe('ravine stream', () => {
+  it('steps down the gorge in terraces, a waterfall at each, into the plunge pool', () => {
+    // 8 m cells: the 7 m trough needs a vertex on the centreline, as the 5 m level has.
+    const v = generateValley({ seed: 7, width: 1024, cell: 8 });
+    const { terraces, pool } = v.stream;
+    expect(terraces.length).toBeGreaterThanOrEqual(3);
+    for (let i = 1; i < terraces.length; i++) {
+      expect(terraces[i]!.from).toBe(terraces[i - 1]!.to);
+      expect(terraces[i]!.y).toBeGreaterThan(terraces[i - 1]!.y + 3);
+    }
+    expect(terraces[0]!.y).toBeGreaterThan(pool.y + 3);
+    // The trough under each pool is below its water; the banks beside it are above.
+    for (const t of terraces) {
+      const mid = (t.from + t.to) / 2;
+      const p = v.ravine.at(mid);
+      const tan = v.ravine.nearest(p[0], p[1]).tangent;
+      expect(v.height.sample(p[0], p[1])).toBeLessThan(t.y);
+      const bank = v.height.sample(p[0] - tan[1] * 11, p[1] + tan[0] * 11);
+      expect(bank).toBeGreaterThan(v.height.sample(p[0], p[1]));
+      // No floating water: at the foot of the terrace the bank is at (or just above) the pool.
+      const foot = v.ravine.at(t.from + 4);
+      const ft = v.ravine.nearest(foot[0], foot[1]).tangent;
+      const footBank = v.height.sample(foot[0] - ft[1] * 11, foot[1] + ft[0] * 11);
+      expect(footBank).toBeGreaterThan(t.y - 0.6);
+      expect(footBank).toBeLessThan(t.y + 5); // coarse 16 m test cells
+    }
+    const falls = streamFalls(v.ravine, v.stream);
+    expect(falls).toHaveLength(terraces.length);
+    for (const f of falls) {
+      expect(f.lip[1] - f.plunge[1]).toBeGreaterThan(3);
+      expect(f.mesh.indices.length).toBeGreaterThan(0);
+    }
+    const water = streamSurfaces(v.ravine, v.stream);
+    expect(water).toHaveLength(terraces.length + 1);
+    expect(water.at(-1)!.kind).toBe('pool');
   });
 });
