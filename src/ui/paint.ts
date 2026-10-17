@@ -11,7 +11,7 @@
  * right; a recess has them the other way about. The critics of 2026-10-17 read our earlier
  * CSS hairlines and gradients as "bordered boxes with a filter"; this is the answer.
  */
-import { type Tone, canvas, dab, die, posterise, px, stroke } from '../render/brush';
+import { type Tone, canvas, dab, die, posterise, px, ramp, stroke } from '../render/brush';
 import { PX } from './pixel-text';
 
 /** The one gold of the shell, darkest to lightest. */
@@ -224,6 +224,57 @@ function paintWood(w: number, h: number, seed: number): HTMLCanvasElement {
   return c;
 }
 
+/**
+ * Mahogany for the talk panel (DESIGN.md 16.15): one seamless slab, long slow grain in eight
+ * reds and browns with the broad figure of the wood under it; no boards, no seams.
+ */
+function paintMahogany(w: number, h: number, seed: number): HTMLCanvasElement {
+  const r = die(seed);
+  const [c, g] = canvas(w, h);
+  g.fillStyle = '#808080';
+  g.fillRect(0, 0, w, h);
+  const grey = (t: number): string => `rgb(${Math.round(t)},${Math.round(t)},${Math.round(t)})`;
+  for (let i = 0; i < 14; i++) {
+    dab(
+      g,
+      w,
+      h,
+      r() * w,
+      r() * h,
+      10 + r() * 22,
+      50 + r() * 90,
+      (r() - 0.5) * 0.2,
+      r() < 0.5 ? 100 : 160,
+      0.35,
+    );
+  }
+  for (let i = 0; i < 46; i++) {
+    const xb = r() * w;
+    const amp = 2 + r() * 6;
+    const period = 40 + r() * 90;
+    const phase = r() * 10;
+    const tone = r() < 0.6 ? 70 + r() * 40 : 150 + r() * 40;
+    const pts: [number, number][] = [];
+    for (let y = 0; y <= h; y += 3) {
+      pts.push([xb + amp * Math.sin(y / period + phase) + Math.sin(y / 9 + phase * 2), y]);
+    }
+    stroke(g, w, h, pts, grey(tone), r() < 0.3 ? 2 : 1);
+  }
+  for (let i = 0; i < 1400; i++) {
+    dab(g, w, h, r() * w, r() * h, 0.8, 0.8, 0, 128 + (r() - 0.5) * 60, 0.5);
+  }
+  posterise(
+    g,
+    w,
+    h,
+    ramp('#1c0a06', '#2e120a', '#42190e', '#562414', '#6a2e1a', '#7e3a22', '#944a2c', '#aa5c38'),
+    null,
+    40,
+    215,
+  );
+  return c;
+}
+
 /** Hide, as MM6's cordovan: dark, a faint large mottle, a fine directional grain. */
 function paintLeather(w: number, h: number, seed: number): HTMLCanvasElement {
   const r = die(seed);
@@ -303,6 +354,7 @@ export interface Surfaces {
   wood: HTMLCanvasElement;
   leather: HTMLCanvasElement;
   parchment: HTMLCanvasElement;
+  mahogany: HTMLCanvasElement;
 }
 
 let surfaces: Surfaces | null = null;
@@ -316,6 +368,7 @@ export function installPaint(): Surfaces {
     wood: paintWood(256, 168, 11),
     leather: paintLeather(192, 192, 5),
     parchment: paintParchment(256, 256, 3),
+    mahogany: paintMahogany(256, 256, 17),
   };
   const root = document.documentElement.style;
   const set = (name: string, c: HTMLCanvasElement): void => {
@@ -327,6 +380,7 @@ export function installPaint(): Surfaces {
   set('--wood', surfaces.wood);
   set('--leather', surfaces.leather);
   set('--parchment', surfaces.parchment);
+  set('--mahogany', surfaces.mahogany);
   root.setProperty('--px', `${PX}px`);
   return surfaces;
 }
@@ -551,19 +605,25 @@ export function paintSpine(w: number, h: number): HTMLCanvasElement {
 export function paintTube(w: number, h: number, kind: 'empty' | 'hp' | 'sp'): HTMLCanvasElement {
   const [c, g] = canvas(w, h);
   if (kind === 'empty') {
-    g.fillStyle = '#12141c';
+    // The trough: near black, a shadow two deep under its top, a thread of light at the
+    // right; a brass foot of four courses with a lit upper edge (DESIGN.md 16.15).
+    g.fillStyle = '#0e1016';
     g.fillRect(0, 0, w, h);
-    g.fillStyle = '#04060a';
+    g.fillStyle = '#020304';
     g.fillRect(0, 0, w, 2);
     g.fillRect(0, 0, 1, h);
-    g.fillStyle = '#3a4050';
+    g.fillStyle = '#2a3040';
     g.fillRect(w - 1, 0, 1, h);
     g.fillStyle = GOLD.dark;
-    g.fillRect(0, h - 3, w, 3);
+    g.fillRect(0, h - 4, w, 4);
     g.fillStyle = GOLD.body;
-    g.fillRect(0, h - 3, w, 1);
+    g.fillRect(0, h - 4, w, 1);
     g.fillStyle = GOLD.highlight;
-    g.fillRect(0, h - 3, 1, 1);
+    g.fillRect(0, h - 4, Math.max(1, Math.floor(w / 2)), 1);
+    g.fillStyle = GOLD.shadow;
+    g.fillRect(0, h - 2, w, 1);
+    g.fillStyle = GOLD.line;
+    g.fillRect(0, h - 1, w, 1);
     return c;
   }
   const [hi, core, dark, cap] =
@@ -600,8 +660,8 @@ export function paintGem(w: number, h: number, kind: string): HTMLCanvasElement 
       else if (!inOval(x, y, w, h, 1.5)) tone = r[0]!;
       else {
         const l = litness(x, y, w, h);
-        const d = Math.hypot(x + 0.5 - w * 0.38, y + 0.5 - h * 0.38);
-        tone = d < 0.8 ? '#ffffff' : l > 0.2 ? r[2]! : l > -0.5 ? r[1]! : r[0]!;
+        const d = Math.hypot(x + 0.5 - w * 0.36, y + 0.5 - h * 0.36);
+        tone = d < (w >= 8 ? 1.3 : 0.8) ? '#ffffff' : l > 0.2 ? r[2]! : l > -0.5 ? r[1]! : r[0]!;
       }
       px(g, x, y, tone);
     }
@@ -702,24 +762,39 @@ export function paintCapital(
     }
   }
   if (ring === 'below') {
-    // The volutes: a curl at each corner of the bell, a leaf between them.
+    // Acanthus (DESIGN.md 16.15): three leaf lobes across the bell under the abacus, each a
+    // pale ridge with a rounded tip curled dark, lit along its left, a dark seam between
+    // them and a vein down the middle; each row kept within the bell's own width.
     const bell = h - collar;
-    const curl = (cx: number, dir: number): void => {
-      g.strokeStyle = 'rgba(30,24,20,0.7)';
-      g.lineWidth = 1;
-      g.beginPath();
-      g.arc(cx, 6, 2.5, Math.PI * 0.5, Math.PI * 2.1);
-      g.stroke();
-      g.strokeStyle = 'rgba(255,250,240,0.6)';
-      g.beginPath();
-      g.arc(cx + dir * 0.5, 5.5, 1.5, Math.PI * 0.6, Math.PI * 1.9);
-      g.stroke();
-    };
-    curl(4, 1);
-    curl(w - 5, -1);
-    g.fillStyle = 'rgba(30,24,20,0.6)';
-    g.fillRect(Math.floor(w / 2), 4, 1, bell - 5);
-    g.fillRect(Math.floor(w / 2) - 1, bell - 3, 3, 1);
+    const lobes = 3;
+    const y0 = 3;
+    const y1 = bell - 1;
+    for (let i = 0; i < lobes; i++) {
+      const x0 = Math.round((i * w) / lobes) + 1;
+      const x1 = Math.round(((i + 1) * w) / lobes) - 1;
+      const lw = x1 - x0;
+      if (lw < 2) continue;
+      for (let y = y0; y < y1; y++) {
+        const k = y - y0;
+        const inset = k >= 3 ? 0 : [Math.ceil(lw / 2) - 1, 1, 0][k]!;
+        const [ri, rwid] = rows[y]!;
+        const xs = Math.max(x0 + inset, ri);
+        const xe = Math.min(x1 - inset, ri + rwid);
+        if (xe <= xs) continue;
+        g.fillStyle = k < 2 ? '#2a2420' : '#d8d0c4';
+        g.fillRect(xs, y, xe - xs, 1);
+        if (k >= 2) {
+          g.fillStyle = '#f4f0e8';
+          g.fillRect(xs, y, 1, 1);
+          g.fillStyle = '#8a8278';
+          g.fillRect(xe - 1, y, 1, 1);
+        }
+      }
+      g.fillStyle = '#2a2420';
+      g.fillRect(x1, y0 + 2, 1, Math.max(1, y1 - y0 - 2));
+      g.fillStyle = 'rgba(42,36,32,0.5)';
+      g.fillRect(x0 + Math.floor(lw / 2), y0 + 3, 1, Math.max(1, y1 - y0 - 4));
+    }
   }
   const [rx, rw] = rows[ring === 'below' ? h - 1 : 0]!;
   const y0 = ring === 'below' ? h - collar : 0;
@@ -931,6 +1006,16 @@ export function paintBook(w: number, h: number, parchment: HTMLCanvasElement): H
   g.fillStyle = '#1a0c06';
   g.fillRect(1, h - 2, w - 2, 1);
   g.fillRect(w - 2, 1, 1, h - 2);
+  // The cover's thickness (DESIGN.md 16.15): a raised ridge four pixels in, the leather
+  // inside it a shade darker, so the boards read as boards and not a flat.
+  g.fillStyle = '#2e1a0a';
+  g.fillRect(5, 5, w - 10, h - 10);
+  g.fillStyle = '#7a5030';
+  g.fillRect(5, 5, w - 10, 1);
+  g.fillRect(5, 5, 1, h - 10);
+  g.fillStyle = '#140804';
+  g.fillRect(5, h - 6, w - 10, 1);
+  g.fillRect(w - 6, 5, 1, h - 10);
   const top = 30;
   const left = 7;
   const right = w - 16;
@@ -945,33 +1030,6 @@ export function paintBook(w: number, h: number, parchment: HTMLCanvasElement): H
   g.clip();
   for (let y = top; y < bottom; y += parchment.height) {
     for (let x = left; x < right; x += parchment.width) g.drawImage(parchment, x, y);
-  }
-  // The watermark: an engraving of a rose compass, faint, across the right page.
-  const r = die(9);
-  const cx = Math.floor((left + right) * 0.72);
-  const cy = Math.floor((top + bottom) / 2);
-  const rad = Math.min(right - left, bottom - top) * 0.3;
-  g.strokeStyle = 'rgba(120,96,60,0.16)';
-  g.lineWidth = 1;
-  for (let k = 0; k < 16; k++) {
-    const a = (k / 16) * Math.PI * 2;
-    const len = k % 4 === 0 ? rad : k % 2 === 0 ? rad * 0.7 : rad * 0.45;
-    g.beginPath();
-    g.moveTo(cx, cy);
-    g.lineTo(cx + Math.cos(a) * len, cy + Math.sin(a) * len);
-    g.stroke();
-  }
-  for (const rr of [rad * 0.35, rad * 0.6, rad * 0.95]) {
-    g.beginPath();
-    g.arc(cx, cy, rr, 0, Math.PI * 2);
-    g.stroke();
-  }
-  for (let i = 0; i < 30; i++) {
-    const a = r() * Math.PI * 2;
-    const d = rad * (0.4 + r() * 0.6);
-    g.beginPath();
-    g.arc(cx + Math.cos(a) * d, cy + Math.sin(a) * d, 1 + r() * 3, 0, Math.PI * 2);
-    g.stroke();
   }
   // The gutter: the pages curve down into the spine.
   const gx = Math.floor((left + right) / 2);
@@ -1000,26 +1058,36 @@ export function paintBook(w: number, h: number, parchment: HTMLCanvasElement): H
   g.fillRect(left, top, 1, bottom - top);
   g.fillRect(right - 1, top, 1, bottom - top);
   g.restore();
-  // Cloth tabs down the right edge of the cover.
+  // Cloth tabs down the right edge of the cover, full size, each a shade darker at its
+  // lower edge and lit along its top.
   const tabs = ['#8a2a24', '#2a5a3a', '#2a3a7a', '#7a5a18'];
   tabs.forEach((tone, i) => {
-    const ty = top + 10 + i * 18;
+    const ty = top + 6 + i * 26;
     g.fillStyle = '#1a0c06';
-    g.fillRect(right + 8, ty, 7, 13);
+    g.fillRect(right + 6, ty, 9, 22);
     g.fillStyle = tone;
-    g.fillRect(right + 9, ty + 1, 5, 11);
+    g.fillRect(right + 7, ty + 1, 7, 20);
     g.fillStyle = 'rgba(255,250,240,0.4)';
-    g.fillRect(right + 9, ty + 1, 5, 1);
+    g.fillRect(right + 7, ty + 1, 7, 1);
+    g.fillStyle = 'rgba(0,0,0,0.35)';
+    g.fillRect(right + 7, ty + 20, 7, 1);
+    g.fillRect(right + 13, ty + 1, 1, 20);
   });
+  // Corner ornaments: a gold angle with a stepped inner edge and a boss at the corner.
   const corner = (x: number, y: number, sx: number, sy: number): void => {
     g.fillStyle = GOLD.line;
-    g.fillRect(x, y, 8 * sx, 3 * sy);
-    g.fillRect(x, y, 3 * sx, 8 * sy);
+    g.fillRect(x, y, 12 * sx, 4 * sy);
+    g.fillRect(x, y, 4 * sx, 12 * sy);
+    g.fillRect(x + 4 * sx, y + 4 * sy, 3 * sx, 2 * sy);
+    g.fillRect(x + 4 * sx, y + 4 * sy, 2 * sx, 3 * sy);
     g.fillStyle = GOLD.body;
-    g.fillRect(x + sx, y + sy, 6 * sx, sy);
-    g.fillRect(x + sx, y + sy, sx, 6 * sy);
+    g.fillRect(x + sx, y + sy, 10 * sx, 2 * sy);
+    g.fillRect(x + sx, y + sy, 2 * sx, 10 * sy);
     g.fillStyle = GOLD.highlight;
-    g.fillRect(x + sx, y + sy, sx, sy);
+    g.fillRect(x + sx, y + sy, 9 * sx, sy);
+    g.fillRect(x + sx, y + sy, sx, 9 * sy);
+    g.fillStyle = GOLD.glint;
+    g.fillRect(x + 2 * sx, y + 2 * sy, sx, sy);
   };
   corner(2, 2, 1, 1);
   corner(w - 3, 2, -1, 1);
@@ -1089,6 +1157,79 @@ export function paintBar(w: number, h: number, kind: 'hp' | 'sp'): HTMLCanvasEle
 
 const buttonCache = new Map<string, string>();
 
+/**
+ * The band's one sunk trough (DESIGN.md 16.15): a dark umber floor with a faint mottle, a
+ * shadow two deep under its upper edge and along its left, a lit lip below and right.
+ */
+export function paintTrough(w: number, h: number): HTMLCanvasElement {
+  const [c, g] = canvas(w, h);
+  const r = die(w * 7 + h);
+  g.fillStyle = '#26190f';
+  g.fillRect(0, 0, w, h);
+  for (let i = 0; i < Math.round((w * h) / 40); i++) {
+    g.fillStyle = r() < 0.5 ? '#2c1e12' : '#20150c';
+    g.fillRect(Math.floor(r() * w), Math.floor(r() * h), 1 + Math.floor(r() * 3), 1);
+  }
+  g.fillStyle = '#080503';
+  g.fillRect(0, 0, w, 1);
+  g.fillRect(0, 0, 1, h);
+  g.fillStyle = '#140d07';
+  g.fillRect(1, 1, w - 2, 1);
+  g.fillRect(1, 1, 1, h - 2);
+  g.fillStyle = '#4a3a2a';
+  g.fillRect(0, h - 1, w, 1);
+  g.fillRect(w - 1, 0, 1, h);
+  return c;
+}
+
+/**
+ * A pilaster dividing the band: a marble shaft lit along its left edge and in shade along
+ * its right, a cap and a base of three courses each.
+ */
+export function paintPilaster(w: number, h: number, marble: HTMLCanvasElement): HTMLCanvasElement {
+  const [c, g] = canvas(w, h);
+  for (let y = 0; y < h; y += marble.height) {
+    const rows = Math.min(marble.height, h - y);
+    g.drawImage(marble, 90, 20, w, rows, 0, y, w, rows);
+  }
+  g.fillStyle = 'rgba(255,250,240,0.6)';
+  g.fillRect(0, 0, 1, h);
+  g.fillStyle = 'rgba(255,250,240,0.25)';
+  g.fillRect(1, 0, 1, h);
+  g.fillStyle = 'rgba(10,8,6,0.55)';
+  g.fillRect(w - 1, 0, 1, h);
+  g.fillStyle = 'rgba(10,8,6,0.25)';
+  g.fillRect(w - 2, 0, 1, h);
+  for (const y of [0, h - 3]) {
+    g.fillStyle = y === 0 ? '#f0ece4' : '#d8d2c8';
+    g.fillRect(0, y, w, 1);
+    g.fillStyle = '#b8b0a4';
+    g.fillRect(0, y + 1, w, 1);
+    g.fillStyle = '#4a4440';
+    g.fillRect(0, y + 2, w, 1);
+  }
+  return c;
+}
+
+/** The clock's stone tablet: marble with a bevel, lit above and left, in shade below and right. */
+export function paintTablet(w: number, h: number, marble: HTMLCanvasElement): HTMLCanvasElement {
+  const [c, g] = canvas(w, h);
+  g.drawImage(marble, 30, 100, w, h, 0, 0, w, h);
+  g.fillStyle = 'rgba(255,250,240,0.7)';
+  g.fillRect(0, 0, w, 1);
+  g.fillRect(0, 0, 1, h);
+  g.fillStyle = 'rgba(255,250,240,0.3)';
+  g.fillRect(1, 1, w - 2, 1);
+  g.fillRect(1, 1, 1, h - 2);
+  g.fillStyle = 'rgba(10,8,6,0.6)';
+  g.fillRect(0, h - 1, w, 1);
+  g.fillRect(w - 1, 0, 1, h);
+  g.fillStyle = 'rgba(10,8,6,0.3)';
+  g.fillRect(1, h - 2, w - 2, 1);
+  g.fillRect(w - 2, 1, 1, h - 2);
+  return c;
+}
+
 function buttonUrl(w: number, h: number, pressed: boolean, slab: boolean): string {
   const k = `${w}x${h}${pressed ? 'd' : 'u'}${slab ? 's' : 'o'}`;
   let url = buttonCache.get(k);
@@ -1125,6 +1266,9 @@ function pieceUrl(kind: string, w: number, h: number): string | null {
   else if (kind === 'plate') c = paintPlate(w, h);
   else if (kind === 'slot') c = paintSlot(w, h);
   else if (kind === 'recess') c = paintRecess(w, h, s.marble);
+  else if (kind === 'trough') c = paintTrough(w, h);
+  else if (kind === 'pilaster') c = paintPilaster(w, h, s.marble);
+  else if (kind === 'tablet') c = paintTablet(w, h, s.marble);
   else if (kind === 'spine') c = paintSpine(w, h);
   else if (kind === 'gold') c = paintCartouche(w, h, false);
   else if (kind === 'frame') c = paintFrame(w, h);

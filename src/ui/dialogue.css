@@ -12,9 +12,12 @@
   max-height: calc(100% - var(--sat) - var(--sab) - 150px);
   z-index: 40;
   display: flex;
-  /* A dark edge and a lit sliver inside it, as MM6's panel: no gold border. */
+  /* A dark edge and a two-tone bevel tight on the wood, lit above and left, in shade below
+     and right, as MM6's panel: no gold border. */
   border: 1.5px solid #120a04;
-  box-shadow: inset 0 0 0 1.5px #5a3c22;
+  box-shadow:
+    inset 1.5px 1.5px 0 #9a5a34,
+    inset -1.5px -1.5px 0 #1a0a04;
   color: var(--ink-pale);
   font: var(--serif-italic);
 }
@@ -27,7 +30,7 @@
   grid-template-rows: 124px auto;
   gap: 6px 10px;
   padding: 8px;
-  background: var(--wood) 0 0 / var(--wood-size);
+  background: var(--mahogany) 0 0 / var(--mahogany-size);
   image-rendering: pixelated;
   /* The window is a hole in the planks: the mask keeps everything but it. */
   -webkit-mask-image: linear-gradient(#000 0 0), linear-gradient(#000 0 0);
@@ -85,13 +88,6 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-}
-.dlg-role {
-  font:
-    italic 18px/1.2 'Tinos',
-    Georgia,
-    serif;
-  color: var(--ink-yellow);
 }
 
 .dlg-side {

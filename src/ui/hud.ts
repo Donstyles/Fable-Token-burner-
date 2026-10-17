@@ -25,6 +25,8 @@ export interface Hud {
 export interface HudHooks {
   /** A tap on an already selected member. */
   onOpenSheet(index: number): void;
+  /** A tap that selects a member: the open screen, if any, turns to them (DESIGN.md 16.15). */
+  onSelect?(index: number): void;
 }
 
 /** Gold line-art sigils, one per class, 24-unit boxes. */
@@ -77,23 +79,28 @@ export function createHud(parent: HTMLElement, party: Party, hooks: HudHooks): H
   rail.dataset['paint'] = 'rail';
   root.append(el('div', 'hud-shadow'), rail);
   const clock = el('div', 'hud-clock');
-  clock.dataset['paint'] = 'slot';
+  clock.dataset['paint'] = 'tablet';
   const clockTime = el('div', 'hud-clock-time');
   const clockDate = el('div', 'hud-clock-date');
   clock.append(clockTime, clockDate);
   root.appendChild(clock);
+  // One sunk trough across the band, as MM6's, the members divided by marble pilasters.
   const band = el('div', 'hud-band');
+  band.dataset['paint'] = 'trough';
+  const pilaster = (): HTMLElement => {
+    const p = el('div', 'hud-pilaster');
+    p.dataset['paint'] = 'pilaster';
+    return p;
+  };
+  band.appendChild(pilaster());
   const cells = party.members.map((m, i) => {
     const cell = el('button', 'hud-cell');
     cell.type = 'button';
-    cell.dataset['paint'] = 'recess';
     const frame = el('div', 'hud-frame');
     frame.dataset['paint'] = 'ring';
     const cameo = el('div', 'hud-cameo');
     cameo.innerHTML = m.character ? sigil(m.character.classId) : sigil('knight');
     frame.appendChild(cameo);
-    const plate = el('div', 'hud-plate', m.name);
-    plate.dataset['paint'] = 'slot';
     const bars = el('div', 'hud-bars');
     const gem = el('div', 'hud-gem good');
     gem.dataset['paint'] = 'gem-good';
@@ -108,15 +115,18 @@ export function createHud(parent: HTMLElement, party: Party, hooks: HudHooks): H
     spFill.dataset['paint'] = 'tube-sp';
     sp.appendChild(spFill);
     bars.append(gem, hp, sp);
-    const left = el('div', 'hud-left');
-    left.append(frame, plate);
-    cell.append(left, bars);
+    // No name plate: MM6 named nobody in the band; the sheet carries the name.
+    cell.append(frame, bars);
+    cell.title = m.name;
     cell.addEventListener('click', (e) => {
       e.preventDefault();
       if (party.selected === i) hooks.onOpenSheet(i);
-      else party.selected = i;
+      else {
+        party.selected = i;
+        hooks.onSelect?.(i);
+      }
     });
-    band.appendChild(cell);
+    band.append(cell, pilaster());
     return { cell, frame, hpFill, spFill, gem };
   });
   root.appendChild(band);
@@ -147,6 +157,7 @@ export function createHud(parent: HTMLElement, party: Party, hooks: HudHooks): H
         x.cell.classList.toggle('recovering', m.alive && !m.isReady(now));
         x.cell.classList.toggle('dead', !m.alive);
         x.cell.title = `${m.name}: ${cond}`;
+        x.cell.setAttribute('aria-label', m.name);
       });
     },
     setClock(minutes) {

@@ -7,7 +7,7 @@
 import type { Character } from '../game/character';
 import type { EquipSlot } from '../game/inventory';
 import type { ScreenContext } from './context';
-import { button, el, heading, kv, memberTabs } from './dom';
+import { button, el, heading, kv } from './dom';
 import { itemGlyph } from './glyphs';
 import {
   actions,
@@ -74,7 +74,7 @@ function slotList(c: Character, sel: InvSelection, onTap: (slot: EquipSlot) => v
 
 export function renderInventory(ctx: ScreenContext): void {
   const { state, frame, hooks } = ctx;
-  let active = state.selected;
+  const active = state.selected;
   let sel: InvSelection = null;
 
   const apply = (r: TapOutcome): void => {
@@ -131,14 +131,6 @@ export function renderInventory(ctx: ScreenContext): void {
   };
 
   const draw = (): void => {
-    frame.tabs.replaceChildren(
-      memberTabs(state.party, active, (i) => {
-        active = i;
-        sel = null;
-        frame.message('');
-        draw();
-      }),
-    );
     const c = state.party[active];
     if (!c) return;
     const side = el('div', 'ui-col inv-side');

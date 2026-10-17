@@ -5,7 +5,7 @@
  */
 import type { SkillId } from '../game/skills';
 import type { ScreenContext } from './context';
-import { button, el, kv, memberTabs, note } from './dom';
+import { button, el, kv, note } from './dom';
 import { raise, raiseMessage, type SheetView, sheetView, signed } from './sheet-model';
 
 function identityColumn(v: SheetView): HTMLElement {
@@ -83,15 +83,9 @@ function skillsColumn(v: SheetView, onRaise: (id: SkillId) => void): HTMLElement
 
 export function renderSheet(ctx: ScreenContext): void {
   const { state, frame } = ctx;
-  let active = state.selected;
+  // The member is picked by their portrait in the band (DESIGN.md 16.15), not a tab strip.
+  const active = state.selected;
   const draw = (): void => {
-    frame.tabs.replaceChildren(
-      memberTabs(state.party, active, (i) => {
-        active = i;
-        frame.message('');
-        draw();
-      }),
-    );
     const c = state.party[active];
     if (!c) return;
     const v = sheetView(c);

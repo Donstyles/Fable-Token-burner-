@@ -104,7 +104,8 @@ export function createDialogue(
     const window_ = el('div', 'dlg-window');
     frame.appendChild(window_);
     const plate = el('div', 'dlg-plate');
-    plate.append(el('h2', 'dlg-name', view.name), el('div', 'dlg-role', view.role));
+    // The name alone under the window, as MM6 set it; the calling is for the talk itself.
+    plate.append(el('h2', 'dlg-name', view.name));
     const side = el('div', 'dlg-side');
     const text = el('div', 'dlg-text');
     const topics = el('div', 'dlg-topics');

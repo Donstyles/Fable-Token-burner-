@@ -315,7 +315,15 @@ export async function startDev(app: App): Promise<DevHandle> {
   const roster = new Party(state.party);
   // The HUD band (DESIGN 9): a tap selects a member, a second tap opens their sheet. The
   // status line above it names what is tapped and tells the fight, as MM6's did.
-  const strip = createHud(uiLayer, roster, { onOpenSheet: () => screens.open('sheet') });
+  const strip = createHud(uiLayer, roster, {
+    onOpenSheet: () => screens.open('sheet'),
+    onSelect: (i) => {
+      // The sheet, the inventory and the spellbook follow the portrait tapped (DESIGN.md 16.15).
+      state.selected = i;
+      const cur = screens.current();
+      if (cur === 'sheet' || cur === 'items' || cur === 'spells') screens.open(cur);
+    },
+  });
   strip.setClock(state.clock.minutes);
   const status = createStatusLine(uiLayer);
   const feedback = new CombatFeedback(scene, stepper, uiLayer, {}, rng);

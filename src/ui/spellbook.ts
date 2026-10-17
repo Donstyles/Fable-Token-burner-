@@ -8,7 +8,7 @@ import { type Character, maxSp } from '../game/character';
 import type { MagicSchool } from '../game/skills';
 import type { SpellId } from '../game/spells';
 import type { ScreenContext } from './context';
-import { button, el, heading, kv, memberTabs, note, tabRow } from './dom';
+import { button, el, heading, kv, note, tabRow } from './dom';
 import { cast, castMessage, type SchoolTab, schoolTabs, spellRows } from './spellbook-model';
 
 function schoolColumn(
@@ -35,7 +35,7 @@ function schoolColumn(
 
 export function renderSpellbook(ctx: ScreenContext): void {
   const { state, frame, hooks, rng } = ctx;
-  let active = state.selected;
+  const active = state.selected;
   let school: MagicSchool | null = null;
   let target = active;
 
@@ -81,15 +81,6 @@ export function renderSpellbook(ctx: ScreenContext): void {
   };
 
   const draw = (): void => {
-    frame.tabs.replaceChildren(
-      memberTabs(state.party, active, (i) => {
-        active = i;
-        target = i;
-        school = null;
-        frame.message('');
-        draw();
-      }),
-    );
     const c = state.party[active];
     if (!c) return;
     const tabs = schoolTabs(c);

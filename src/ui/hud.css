@@ -37,11 +37,13 @@
   pointer-events: none;
 }
 .hud-clock {
+  /* A stone tablet with the hour engraved in it (paint.ts `tablet`, pixel-text `--engrave`). */
+  --engrave: 1;
   position: absolute;
   left: calc(var(--sal) + 5px);
-  top: 14px;
+  top: 16px;
   width: 76px;
-  padding: 4px 0 3px;
+  padding: 6px 0 5px;
   text-align: center;
   pointer-events: none;
   background: var(--paint) center / 100% 100% no-repeat;
@@ -52,32 +54,45 @@
     19.5px/1.1 'Tinos',
     Georgia,
     serif;
-  color: #f0c838;
+  color: #2a2418;
 }
 .hud-clock-date {
   font:
     italic 18px/1.1 'Tinos',
     Georgia,
     serif;
-  color: #e8d08a;
+  color: #3a3024;
 }
 .hud-band {
+  /* One sunk trough (paint.ts `trough`) holding the four members, a pilaster between each;
+     sized to fit the phone's safe areas with the clock at the left and the shelf at the right. */
   display: flex;
   justify-content: center;
-  gap: 8px;
+  align-items: stretch;
+  gap: 0;
   height: 100px;
-  padding: 7.5px 300px 0 88px;
+  margin: 6px 280px 0 88px;
+  padding: 0;
+  background: var(--paint) center / 100% 100% no-repeat;
+  image-rendering: pixelated;
+}
+.hud-pilaster {
+  flex: 0 0 12px;
+  width: 12px;
+  margin: 3px 0;
+  background: var(--paint) center / 100% 100% no-repeat;
+  image-rendering: pixelated;
 }
 .hud-cell {
   position: relative;
   pointer-events: auto;
   display: flex;
   align-items: flex-start;
-  gap: 6px;
-  width: 130px;
-  padding: 3px 4px;
-  background: var(--paint) center / 100% 100% no-repeat;
-  image-rendering: pixelated;
+  gap: 4px;
+  width: 92px;
+  flex: 0 0 92px;
+  padding: 8px 4px 0;
+  background: none;
   border: 0;
   border-radius: 0;
   box-shadow: none;
@@ -97,18 +112,12 @@
 .hud-cell.dead .hud-frame {
   filter: grayscale(1) brightness(0.6);
 }
-.hud-left {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 3px;
-}
 .hud-frame {
   position: relative;
   box-sizing: border-box;
-  width: 48px;
-  height: 57px;
-  padding: 9px 7.5px;
+  width: 54px;
+  height: 72px;
+  padding: 12px 9px;
   background: var(--paint) center / 100% 100% no-repeat;
   image-rendering: pixelated;
 }
@@ -122,45 +131,29 @@
   justify-content: center;
 }
 .hud-cameo svg {
-  width: 24px;
-  height: 24px;
+  width: 27px;
+  height: 27px;
   /* Pixels, not anti-aliased strokes. */
   shape-rendering: crispEdges;
-}
-.hud-plate {
-  min-width: 64px;
-  max-width: 84px;
-  height: 25.5px;
-  padding: 0 6px;
-  font:
-    italic 18px/25.5px 'Tinos',
-    Georgia,
-    serif;
-  color: #f0c838;
-  text-align: center;
-  white-space: nowrap;
-  overflow: hidden;
-  background: var(--paint) center / 100% 100% no-repeat;
-  image-rendering: pixelated;
 }
 .hud-bars {
   display: grid;
   grid-template-columns: 10.5px 10.5px;
-  grid-template-rows: 10.5px 58.5px;
+  grid-template-rows: 13.5px 54px;
   gap: 4.5px 4.5px;
-  margin-top: 3px;
+  margin-top: 0;
 }
 .hud-gem {
   grid-column: 1 / span 2;
-  width: 10.5px;
-  height: 10.5px;
+  width: 13.5px;
+  height: 13.5px;
   margin: 0 auto;
   background: var(--paint) center / 100% 100% no-repeat;
   image-rendering: pixelated;
 }
 .hud-bar {
   position: relative;
-  height: 58.5px;
+  height: 54px;
   background: var(--paint) center / 100% 100% no-repeat;
   image-rendering: pixelated;
 }
@@ -168,7 +161,7 @@
   position: absolute;
   left: 1.5px;
   right: 1.5px;
-  bottom: 4.5px;
+  bottom: 6px;
   height: 0;
   background: var(--paint) center / 100% 100% no-repeat;
   image-rendering: pixelated;
@@ -238,7 +231,7 @@
   position: absolute;
   left: -4.5px;
   right: -4.5px;
-  height: 21px;
+  height: 27px;
   background: var(--paint) center / 100% 100% no-repeat;
   image-rendering: pixelated;
 }

@@ -1340,6 +1340,9 @@ billboards, baked building faces, screens laid out to fit without
 scrolling and without tabs. Those are the owner's call: they are days of
 pixel art or purchased sprite sets, not another pass of the brushes here.
 The loop is paused at this build for that decision.
+The owner answered the same day with free rein over anything, the brief
+"looks just like MM6": round 5 is the world (16.14) and the shell
+(16.15).
 
 ### 16.13 Painted textures (2026-10-17)
 
@@ -1369,8 +1372,109 @@ The role's metres per tile stay as the manifest had them. The CC0 files
 remain in `assets/textures` for the pipeline's record but nothing loads
 them; a later cleanup can drop them.
 
+### 16.14 The world as sprites and bitmaps (owner, 2026-10-17)
+
+Round 5 of the critic loop, under the owner's free rein. The outdoor
+critic's list was the renderer's, not the painter's: a smooth-shaded 3D
+world under a filter is not a 1998 one however its tiles are painted.
+MM6 drew trees as sprites, lit its ground flat, painted its sky once on a
+strip, and skinned its models in a few hundred texels. So:
+
+- **Tree and bush sprites** (`spriteOf` in `src/world/props.ts`). Each
+  Meshy tree is drawn once from the side, orthographic, into 128 pixels
+  under its own light (a key from the picture's upper left over a grey
+  fill, no fog, no wind, no lanterns), quantised to ten tones a channel,
+  and a quad cropped to the painted pixels stands in for every instance:
+  the vertex shader's `BILLBOARD` path turns the quad about its foot to
+  face the eye, `ALPHATEST` cuts the air away. The scene's light and fog
+  then fall on the finished sprite as on anything else. The forest's
+  thousands of trees cost two triangles each and the model's own picture
+  is the art; no far models (`far: null`).
+- **Bitmap skins** (`src/render/bitmap.ts`). Every loaded albedo (houses,
+  props, characters) is read back from the GPU's own mip level nearest
+  the target (512 pixels for a building, 256 for a character, 192 for a
+  prop), posterised to ten tones a channel and re-uploaded as a
+  nearest-sampled bitmap, once per source file. The texels show and the
+  shading steps as a painter's did.
+- **A painted sky strip** (`paintSkyStrip` in `src/render/brush.ts`). The
+  sky is one bitmap, 4096 by 512, wrapped round the horizon and sampled
+  by azimuth and height: sixty long strokes at every height, ragged along
+  their tops, a few small cumulus; the red channel the cloud's density
+  (cut at a threshold the weather sets), the green its tone, lit top,
+  body, shaded underside. The far backdrop ring is off; the sky's bands
+  and the fog colour meet the hills.
+- **Light in steps**. Every material quantises its light into five tones
+  (`toon`), so a face is lit or in shade with no gradient for the
+  posteriser to smear; the terrain is lit nearly flat (`ndl` mixed 35 %
+  toward 0.8), as MM6's ground was, the slope showing only a little.
+- **Hard pixel grain** (`grain` in `brush.ts`). The ground tiles are no
+  longer soft dabs: clods a tone up or down, then single pixels and short
+  dashes in every tone of the ramp, snapped to the ramp, ten metres to a
+  128-pixel tile for grass and dirt. The ground samplers take a mip bias
+  of -1 so the grain shows down the road, at the price of a little
+  shimmer far off, as in 1998.
+- The posteriser at 12 levels (was 8), to keep the ramps' tones apart.
+
+Two bugs found on the way, both of which had hidden the painted world
+since 16.13: a dynamic texture clamps at its edges unless told to wrap,
+so every painted tile had shown one corner texel over the whole ground
+(the smooth brown wash the critics saw); and the sprite read-back had not
+been awaited, so every sprite was built from an empty buffer and the
+quads, scaled by the catalogue's normalising factor a second time, were
+268 metres wide and filled the frame with invisible fragments (3.3 s a
+frame in software, "0 fps" on the overlay). A sprite is now measured in
+the catalogue's metres and cropped to its painted pixels.
+
+### 16.15 The shell as MM6 built it (owner, 2026-10-17)
+
+Round 5's shell pass, the HUD critic's and the screens critic's lists
+taken as read against the MM6 shots rather than argued with:
+
+- **One sunk band.** The four cells and their name plates are gone. The
+  band is one dark umber trough (`trough` in `src/ui/paint.ts`) across
+  the marble, a marble pilaster between each member and at the ends
+  (`pilaster`), as MM6's. The frames grow to 36 by 48 pixels; MM6 named
+  nobody in the band and neither do we, the name is on the sheet and in
+  the cell's label for a screen reader.
+- **Tubes in a trough with a brass foot.** The point tubes stand in a
+  near-black well with a four-course brass foot; the gem above them is
+  nine pixels with a two-pixel spark.
+- **The clock on a stone tablet**, the hour engraved into the marble
+  (pixel-text's `--engrave`), not gold on black.
+- **Acanthus capitals.** The pillars' capitals carry three leaf lobes,
+  each a pale tongue with a dark edge, a vein and a shaded half, in place
+  of the volutes.
+- **Emblems in solid gold with an outline**: the shelf's glyphs filled,
+  stroked gold, the same strokes wider and dark beneath.
+- **Members by portrait.** The sheet, the inventory and the spellbook have
+  no tab strip: a tap on a portrait in the band selects that member and
+  the open screen turns to them (`onSelect` on the HUD's hooks, wired in
+  `src/dev/index.ts`). Town services keep their member tabs, since a
+  service screen belongs to a house, not a member.
+- **Close as a glyph**: a cross in dark ink on the gold oval, labelled
+  for a screen reader, no word.
+- **Books with boards**: the cover's thickness drawn as a raised ridge
+  four pixels in, the cloth tabs full size, the corner ornaments a
+  stepped gold angle with a boss; the rose-compass watermark gone.
+- **The talk panel on one slab of mahogany** (`--mahogany`): long slow
+  grain in eight reds and browns, no boards, no seams; the frame a
+  two-tone bevel tight on the wood; the name alone under the window.
+
+Not done, and said so: portraits painted by hand, item sprites spanning
+cells and a paper doll remain artwork the owner commissions; the rest
+screen's landscape inset and hourglass wait on that art too.
+
 ## 13. Decision log
 
+- 2026-10-17 – Round 5, the shell (16.15): one sunk band with pilasters
+  and no name plates, tubes in a trough with a brass foot, the clock on a
+  stone tablet, acanthus capitals, outlined gold emblems, members picked
+  by portrait with no tab strip, a glyph for Close, books with boards, the
+  talk panel on seamless mahogany with the name alone.
+- 2026-10-17 – Round 5, the world (16.14): trees as sprites drawn from
+  the models, model skins as bitmaps, the sky a painted strip, light in
+  five steps and the ground lit flat, hard pixel grain on the tiles; the
+  clamped painted tiles and the empty sprites fixed.
 - 2026-10-17 – The critic loop (16.12): three critics score each round
   against the MM6 shots; round 1 scored 2.5 to 3 and set the gold ramp,
   the warm marble, the slots, the recessed cells and tubes, the alcove

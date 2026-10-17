@@ -89,17 +89,21 @@
   stroke-linecap: round;
   stroke-linejoin: round;
 }
-/* The emblems gilded in relief: gold over the same strokes a pixel down in dark bronze, a
-   thinner cream edge above. */
+/* The emblems solid gold with a dark outline (DESIGN.md 16.15): the shapes filled, their
+   strokes gold, the same strokes wider and dark beneath for the outline, a thin cream edge
+   above and to the left for the relief. */
 .ui-shelf-btn svg .gilt {
-  stroke: #c8a040;
+  stroke: #e0c060;
+  fill: #b08a30;
 }
 .ui-shelf-btn svg .shade {
-  stroke: #2a1a06;
+  stroke: #1a0e04;
+  stroke-width: 4;
+  fill: #1a0e04;
 }
 .ui-shelf-btn svg .sheen {
-  stroke: #fff0b0;
-  stroke-width: 0.8;
+  stroke: #fff4c0;
+  stroke-width: 0.9;
 }
 .ui-shelf-btn.rest {
   width: 42px;
@@ -226,7 +230,24 @@
   touch-action: pan-x;
 }
 .ui-close {
-  min-height: 34px;
+  width: 45px;
+  min-height: 33px;
+  padding: 0;
+}
+.ui-close svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: #2a1a04;
+  stroke-width: 3;
+  stroke-linecap: round;
+}
+/* The sheet, the inventory and the spellbook follow the portrait tapped in the band: no
+   tab strip (16.15). */
+.screen-sheet .ui-head-tabs,
+.screen-items .ui-head-tabs,
+.screen-spells .ui-head-tabs {
+  display: none;
 }
 .ui-body {
   flex: 1;

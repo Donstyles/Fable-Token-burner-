@@ -481,7 +481,14 @@ waterfalls and deserts, walkable end to end.
     is paused for the owner's decision (DESIGN 16.12): what remains is
     hand-made art (portraits, item sprites, a paper doll, embossed
     emblems, a cut bitmap face, tree billboards, baked building faces)
-    and fixed non-scrolling layouts.
+    and fixed non-scrolling layouts. **Round 5, world, done 2026-10-17**
+    under the owner's free rein (DESIGN 16.14): tree sprites, bitmap
+    skins, a painted sky strip, stepped and flat light, hard pixel grain;
+    the clamped tiles and the empty sprites fixed. **Round 5, shell, done
+    2026-10-17** (DESIGN 16.15): one sunk band with pilasters, tubes in a
+    trough, the clock on a tablet, acanthus capitals, outlined emblems,
+    members by portrait, a glyph for Close, books with boards, mahogany
+    talk panel. The round-5 scoring follows.
 18. Remaining, in order: lasting buffs and Jump; weather states (rain, a
     sandstorm); music; the smith's hammer and the temple bell.
 
