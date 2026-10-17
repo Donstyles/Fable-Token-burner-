@@ -30,8 +30,8 @@ export const CREDITS = {
   imageTo3d: { credits: 15, basis: 'reported by Meshy for batch 001 (2026-10-15)' },
   rig: { credits: 5, basis: 'reported by Meshy for batch 001 (2026-10-15)' },
   animatePerAction: { credits: 3, basis: 'documented (DESIGN.md 10.0), confirmed by batch 001' },
-  textTo3dPreview: { credits: 20, basis: '`meshy make --dry-run` estimate (2026-10-17)' },
-  textTo3dRefine: { credits: 10, basis: '`meshy make --dry-run` estimate (2026-10-17)' },
+  textTo3dPreview: { credits: 5, basis: 'measured, batch 003 (2026-10-17)' },
+  textTo3dRefine: { credits: 10, basis: 'measured, batch 003 (2026-10-17)' },
 } as const;
 
 export type BatchStep =

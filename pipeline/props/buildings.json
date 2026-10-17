@@ -1,0 +1,112 @@
+[
+  {
+    "id": "building-inn",
+    "prompt": "A village inn of a Black Forest mountain village: two storeys, a half-timbered upper floor of cream plaster between dark oak beams over a cut-stone ground floor, a steep wooden-shingle roof with two small dormers and a stone chimney, a wide front door under a little porch roof, a wrought-iron sign bracket beside the door, small leaded windows with shutters. Low-polygon game building in the style of a late-1990s first-person RPG: one single building standing alone, no ground plane, no base, no surroundings, no people, no interior, simple blocky massing with clean edges, walls and roof as plain solid surfaces with the detail painted on, flat even lighting, muted natural colours, upright, the front door facing the viewer.",
+    "polycount": 2000
+  },
+  {
+    "id": "building-temple",
+    "prompt": "A small stone temple of a medieval mountain village: thick cut-stone walls, a tall round-arched doorway in the front gable with a round window above it, a short square bell tower with an open belfry and a pointed slate roof rising at the back, a steep slate roof, buttresses along the sides. Low-polygon game building in the style of a late-1990s first-person RPG: one single building standing alone, no ground plane, no base, no surroundings, no people, no interior, simple blocky massing with clean edges, walls and roof as plain solid surfaces with the detail painted on, flat even lighting, muted natural colours, upright, the front door facing the viewer.",
+    "polycount": 2000
+  },
+  {
+    "id": "building-store",
+    "prompt": "A trader's shop of a Black Forest village: one and a half storeys, half-timbered cream plaster walls with dark beams on a stone plinth, a shopfront with a wide window of small panes and a wooden awning over the door, barrels and crates under the awning, a steep wooden-shingle roof with a chimney. Low-polygon game building in the style of a late-1990s first-person RPG: one single building standing alone, no ground plane, no base, no surroundings, no people, no interior, simple blocky massing with clean edges, walls and roof as plain solid surfaces with the detail painted on, flat even lighting, muted natural colours, upright, the front door facing the viewer.",
+    "polycount": 1500
+  },
+  {
+    "id": "building-smithy",
+    "prompt": "A village blacksmith's forge: a low building of rough stone with a big round-arched opening across the front showing a dark interior with a glowing hearth, a tall stone chimney, a lean-to roof on wooden posts along one side sheltering an anvil on a log and a water trough, a slate roof. Low-polygon game building in the style of a late-1990s first-person RPG: one single building standing alone, no ground plane, no base, no surroundings, no people, no interior, simple blocky massing with clean edges, walls and roof as plain solid surfaces with the detail painted on, flat even lighting, muted natural colours, upright, the front door facing the viewer.",
+    "polycount": 1500
+  },
+  {
+    "id": "building-stables",
+    "prompt": "A long low timber stable of a mountain village: dark weathered plank walls, a shingle roof with wide eaves, three stall openings along the front with wooden half-doors, a hayloft hatch in the gable with a little hoist beam, a horse trough by the wall. Low-polygon game building in the style of a late-1990s first-person RPG: one single building standing alone, no ground plane, no base, no surroundings, no people, no interior, simple blocky massing with clean edges, walls and roof as plain solid surfaces with the detail painted on, flat even lighting, muted natural colours, upright, the front door facing the viewer.",
+    "polycount": 1500
+  },
+  {
+    "id": "building-barn",
+    "prompt": "A large timber barn: dark weathered vertical planks on a stone footing, a steep wooden-shingle roof, tall double doors on the gable end with a small loft door above them, a lean-to shed along one side. Low-polygon game building in the style of a late-1990s first-person RPG: one single building standing alone, no ground plane, no base, no surroundings, no people, no interior, simple blocky massing with clean edges, walls and roof as plain solid surfaces with the detail painted on, flat even lighting, muted natural colours, upright, the front door facing the viewer.",
+    "polycount": 1200
+  },
+  {
+    "id": "building-cottage-01",
+    "prompt": "A small half-timbered cottage of a Black Forest village: cream plaster between dark oak beams on a stone plinth, a steep wooden-shingle roof with wide eaves, a front door with a small shuttered window either side, a stone chimney, a woodpile stacked under the eave. Low-polygon game building in the style of a late-1990s first-person RPG: one single building standing alone, no ground plane, no base, no surroundings, no people, no interior, simple blocky massing with clean edges, walls and roof as plain solid surfaces with the detail painted on, flat even lighting, muted natural colours, upright, the front door facing the viewer.",
+    "polycount": 1000
+  },
+  {
+    "id": "building-cottage-02",
+    "prompt": "A small single-storey peasant cottage: whitewashed plaster walls with dark timber framing, a steep thatched roof with hipped ends, a plank door with a wooden lintel and one small window beside it, a brick chimney, a small lean-to against the back. Low-polygon game building in the style of a late-1990s first-person RPG: one single building standing alone, no ground plane, no base, no surroundings, no people, no interior, simple blocky massing with clean edges, walls and roof as plain solid surfaces with the detail painted on, flat even lighting, muted natural colours, upright, the front door facing the viewer.",
+    "polycount": 1000
+  },
+  {
+    "id": "building-cottage-03",
+    "prompt": "A two-storey townhouse of a mountain village: a stone ground floor, a half-timbered upper floor jettied out over it on carved beams, a steep wooden-shingle roof, a front door with steps, a small wooden balcony with a rail under the upper window, window boxes with flowers. Low-polygon game building in the style of a late-1990s first-person RPG: one single building standing alone, no ground plane, no base, no surroundings, no people, no interior, simple blocky massing with clean edges, walls and roof as plain solid surfaces with the detail painted on, flat even lighting, muted natural colours, upright, the front door facing the viewer.",
+    "polycount": 1200
+  },
+  {
+    "id": "building-farmhouse",
+    "prompt": "A long Black Forest farmhouse: one huge sweeping half-hipped roof of wooden shingles reaching down almost to the ground, the living end with small shuttered windows, a door and a wooden balcony under the gable, the barn end with a wide wagon door, a stone chimney. Low-polygon game building in the style of a late-1990s first-person RPG: one single building standing alone, no ground plane, no base, no surroundings, no people, no interior, simple blocky massing with clean edges, walls and roof as plain solid surfaces with the detail painted on, flat even lighting, muted natural colours, upright, the front door facing the viewer.",
+    "polycount": 1500
+  },
+  {
+    "id": "prop-well",
+    "prompt": "A village well: a round waist-high wall of fitted grey stones, two wooden posts holding a small pitched roof of wooden shingles, a windlass with a crank handle, a rope and a wooden bucket. Low-polygon game prop in the style of a late-1990s first-person RPG: one single object standing alone, no ground plane, no base, no surroundings, no people, simple solid shapes with the detail painted on, flat even lighting, muted natural colours, upright.",
+    "polycount": 500
+  },
+  {
+    "id": "prop-shrine",
+    "prompt": "A wayside shrine: a square stone pillar at chest height with a roofed niche at the top holding a small carved figure, a little pitched roof of wooden shingles, a stone step at the foot. Low-polygon game prop in the style of a late-1990s first-person RPG: one single object standing alone, no ground plane, no base, no surroundings, no people, simple solid shapes with the detail painted on, flat even lighting, muted natural colours, upright.",
+    "polycount": 400
+  },
+  {
+    "id": "prop-cart",
+    "prompt": "A wooden farm cart: a plank bed with low sides on two large spoked wheels, two long shafts at the front resting on the ground, weathered grey-brown wood, empty. Low-polygon game prop in the style of a late-1990s first-person RPG: one single object standing alone, no ground plane, no base, no surroundings, no people, simple solid shapes with the detail painted on, flat even lighting, muted natural colours, upright.",
+    "polycount": 500
+  },
+  {
+    "id": "prop-market-stall",
+    "prompt": "A market stall: a sturdy wooden table under a red and cream striped canvas awning on four posts, baskets of apples and sacks of grain on the table, a crate underneath. Low-polygon game prop in the style of a late-1990s first-person RPG: one single object standing alone, no ground plane, no base, no surroundings, no people, simple solid shapes with the detail painted on, flat even lighting, muted natural colours, upright.",
+    "polycount": 600
+  },
+  {
+    "id": "prop-haystack",
+    "prompt": "A rounded haystack of dry golden hay built up around a wooden pole, taller than a man, slightly lumpy sides. Low-polygon game prop in the style of a late-1990s first-person RPG: one single object standing alone, no ground plane, no base, no surroundings, no people, simple solid shapes with the detail painted on, flat even lighting, muted natural colours, upright.",
+    "polycount": 300
+  },
+  {
+    "id": "prop-lantern-post",
+    "prompt": "A wooden lantern post: a square oak post with a bracket arm at the top holding a hanging iron lantern with glass panes, a stone footing. Low-polygon game prop in the style of a late-1990s first-person RPG: one single object standing alone, no ground plane, no base, no surroundings, no people, simple solid shapes with the detail painted on, flat even lighting, muted natural colours, upright.",
+    "polycount": 300
+  },
+  {
+    "id": "prop-fence",
+    "prompt": "A rustic wooden fence section three metres long: three square posts with two horizontal split rails between them, weathered grey wood. Low-polygon game prop in the style of a late-1990s first-person RPG: one single object standing alone, no ground plane, no base, no surroundings, no people, simple solid shapes with the detail painted on, flat even lighting, muted natural colours, upright.",
+    "polycount": 200
+  },
+  {
+    "id": "prop-woodpile",
+    "prompt": "A stack of split firewood logs piled neatly between two posts, pale cut ends showing at the front, dark bark at the sides. Low-polygon game prop in the style of a late-1990s first-person RPG: one single object standing alone, no ground plane, no base, no surroundings, no people, simple solid shapes with the detail painted on, flat even lighting, muted natural colours, upright.",
+    "polycount": 300
+  },
+  {
+    "id": "rock-boulder-01",
+    "prompt": "A large rounded granite boulder, grey with patches of green moss on top, lying half sunk in the ground, three metres across. Low-polygon game prop in the style of a late-1990s first-person RPG: one single object standing alone, no ground plane, no base, no surroundings, no people, simple solid shapes with the detail painted on, flat even lighting, muted natural colours, upright.",
+    "polycount": 300
+  },
+  {
+    "id": "rock-boulder-02",
+    "prompt": "An angular grey limestone boulder with cracked faces and a flat top, moss in the cracks, two metres across. Low-polygon game prop in the style of a late-1990s first-person RPG: one single object standing alone, no ground plane, no base, no surroundings, no people, simple solid shapes with the detail painted on, flat even lighting, muted natural colours, upright.",
+    "polycount": 300
+  },
+  {
+    "id": "rock-outcrop-01",
+    "prompt": "A jagged outcrop of layered grey-brown rock rising from the ground in tilted slabs, five metres across, lichen on the faces. Low-polygon game prop in the style of a late-1990s first-person RPG: one single object standing alone, no ground plane, no base, no surroundings, no people, simple solid shapes with the detail painted on, flat even lighting, muted natural colours, upright.",
+    "polycount": 500
+  },
+  {
+    "id": "rock-cluster-01",
+    "prompt": "A cluster of five small grey stones of different sizes lying together, mossy, each under a metre. Low-polygon game prop in the style of a late-1990s first-person RPG: one single object standing alone, no ground plane, no base, no surroundings, no people, simple solid shapes with the detail painted on, flat even lighting, muted natural colours, upright.",
+    "polycount": 300
+  }
+]

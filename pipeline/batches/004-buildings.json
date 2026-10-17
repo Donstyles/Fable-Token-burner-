@@ -1,0 +1,1014 @@
+{
+  "number": 4,
+  "name": "buildings",
+  "created": "2026-10-17",
+  "approved": true,
+  "items": [
+    {
+      "assetId": "building-inn",
+      "step": "text-to-3d-preview",
+      "params": {
+        "mode": "preview",
+        "prompt": "A village inn of a Black Forest mountain village: two storeys, a half-timbered upper floor of cream plaster between dark oak beams over a cut-stone ground floor, a steep wooden-shingle roof with two small dormers and a stone chimney, a wide front door under a little porch roof, a wrought-iron sign bracket beside the door, small leaded windows with shutters. Low-polygon game building in the style of a late-1990s first-person RPG: one single building standing alone, no ground plane, no base, no surroundings, no people, no interior, simple blocky massing with clean edges, walls and roof as plain solid surfaces with the detail painted on, flat even lighting, muted natural colours, upright, the front door facing the viewer.",
+        "model_type": "smart-topology",
+        "ai_model": "meshy-t2.5",
+        "target_polycount": 2000,
+        "pose_mode": "auto",
+        "target_formats": ["glb"]
+      },
+      "estimatedCredits": 5,
+      "estimateBasis": "measured, batch 003 (2026-10-17)"
+    },
+    {
+      "assetId": "building-inn",
+      "step": "text-to-3d-refine",
+      "params": {
+        "mode": "refine",
+        "enable_pbr": false,
+        "texture_resolution": "2k",
+        "target_formats": ["glb"]
+      },
+      "estimatedCredits": 10,
+      "estimateBasis": "measured, batch 003 (2026-10-17)"
+    },
+    {
+      "assetId": "building-temple",
+      "step": "text-to-3d-preview",
+      "params": {
+        "mode": "preview",
+        "prompt": "A small stone temple of a medieval mountain village: thick cut-stone walls, a tall round-arched doorway in the front gable with a round window above it, a short square bell tower with an open belfry and a pointed slate roof rising at the back, a steep slate roof, buttresses along the sides. Low-polygon game building in the style of a late-1990s first-person RPG: one single building standing alone, no ground plane, no base, no surroundings, no people, no interior, simple blocky massing with clean edges, walls and roof as plain solid surfaces with the detail painted on, flat even lighting, muted natural colours, upright, the front door facing the viewer.",
+        "model_type": "smart-topology",
+        "ai_model": "meshy-t2.5",
+        "target_polycount": 2000,
+        "pose_mode": "auto",
+        "target_formats": ["glb"]
+      },
+      "estimatedCredits": 5,
+      "estimateBasis": "measured, batch 003 (2026-10-17)"
+    },
+    {
+      "assetId": "building-temple",
+      "step": "text-to-3d-refine",
+      "params": {
+        "mode": "refine",
+        "enable_pbr": false,
+        "texture_resolution": "2k",
+        "target_formats": ["glb"]
+      },
+      "estimatedCredits": 10,
+      "estimateBasis": "measured, batch 003 (2026-10-17)"
+    },
+    {
+      "assetId": "building-store",
+      "step": "text-to-3d-preview",
+      "params": {
+        "mode": "preview",
+        "prompt": "A trader's shop of a Black Forest village: one and a half storeys, half-timbered cream plaster walls with dark beams on a stone plinth, a shopfront with a wide window of small panes and a wooden awning over the door, barrels and crates under the awning, a steep wooden-shingle roof with a chimney. Low-polygon game building in the style of a late-1990s first-person RPG: one single building standing alone, no ground plane, no base, no surroundings, no people, no interior, simple blocky massing with clean edges, walls and roof as plain solid surfaces with the detail painted on, flat even lighting, muted natural colours, upright, the front door facing the viewer.",
+        "model_type": "smart-topology",
+        "ai_model": "meshy-t2.5",
+        "target_polycount": 1500,
+        "pose_mode": "auto",
+        "target_formats": ["glb"]
+      },
+      "estimatedCredits": 5,
+      "estimateBasis": "measured, batch 003 (2026-10-17)"
+    },
+    {
+      "assetId": "building-store",
+      "step": "text-to-3d-refine",
+      "params": {
+        "mode": "refine",
+        "enable_pbr": false,
+        "texture_resolution": "2k",
+        "target_formats": ["glb"]
+      },
+      "estimatedCredits": 10,
+      "estimateBasis": "measured, batch 003 (2026-10-17)"
+    },
+    {
+      "assetId": "building-smithy",
+      "step": "text-to-3d-preview",
+      "params": {
+        "mode": "preview",
+        "prompt": "A village blacksmith's forge: a low building of rough stone with a big round-arched opening across the front showing a dark interior with a glowing hearth, a tall stone chimney, a lean-to roof on wooden posts along one side sheltering an anvil on a log and a water trough, a slate roof. Low-polygon game building in the style of a late-1990s first-person RPG: one single building standing alone, no ground plane, no base, no surroundings, no people, no interior, simple blocky massing with clean edges, walls and roof as plain solid surfaces with the detail painted on, flat even lighting, muted natural colours, upright, the front door facing the viewer.",
+        "model_type": "smart-topology",
+        "ai_model": "meshy-t2.5",
+        "target_polycount": 1500,
+        "pose_mode": "auto",
+        "target_formats": ["glb"]
+      },
+      "estimatedCredits": 5,
+      "estimateBasis": "measured, batch 003 (2026-10-17)"
+    },
+    {
+      "assetId": "building-smithy",
+      "step": "text-to-3d-refine",
+      "params": {
+        "mode": "refine",
+        "enable_pbr": false,
+        "texture_resolution": "2k",
+        "target_formats": ["glb"]
+      },
+      "estimatedCredits": 10,
+      "estimateBasis": "measured, batch 003 (2026-10-17)"
+    },
+    {
+      "assetId": "building-stables",
+      "step": "text-to-3d-preview",
+      "params": {
+        "mode": "preview",
+        "prompt": "A long low timber stable of a mountain village: dark weathered plank walls, a shingle roof with wide eaves, three stall openings along the front with wooden half-doors, a hayloft hatch in the gable with a little hoist beam, a horse trough by the wall. Low-polygon game building in the style of a late-1990s first-person RPG: one single building standing alone, no ground plane, no base, no surroundings, no people, no interior, simple blocky massing with clean edges, walls and roof as plain solid surfaces with the detail painted on, flat even lighting, muted natural colours, upright, the front door facing the viewer.",
+        "model_type": "smart-topology",
+        "ai_model": "meshy-t2.5",
+        "target_polycount": 1500,
+        "pose_mode": "auto",
+        "target_formats": ["glb"]
+      },
+      "estimatedCredits": 5,
+      "estimateBasis": "measured, batch 003 (2026-10-17)"
+    },
+    {
+      "assetId": "building-stables",
+      "step": "text-to-3d-refine",
+      "params": {
+        "mode": "refine",
+        "enable_pbr": false,
+        "texture_resolution": "2k",
+        "target_formats": ["glb"]
+      },
+      "estimatedCredits": 10,
+      "estimateBasis": "measured, batch 003 (2026-10-17)"
+    },
+    {
+      "assetId": "building-barn",
+      "step": "text-to-3d-preview",
+      "params": {
+        "mode": "preview",
+        "prompt": "A large timber barn: dark weathered vertical planks on a stone footing, a steep wooden-shingle roof, tall double doors on the gable end with a small loft door above them, a lean-to shed along one side. Low-polygon game building in the style of a late-1990s first-person RPG: one single building standing alone, no ground plane, no base, no surroundings, no people, no interior, simple blocky massing with clean edges, walls and roof as plain solid surfaces with the detail painted on, flat even lighting, muted natural colours, upright, the front door facing the viewer.",
+        "model_type": "smart-topology",
+        "ai_model": "meshy-t2.5",
+        "target_polycount": 1200,
+        "pose_mode": "auto",
+        "target_formats": ["glb"]
+      },
+      "estimatedCredits": 5,
+      "estimateBasis": "measured, batch 003 (2026-10-17)"
+    },
+    {
+      "assetId": "building-barn",
+      "step": "text-to-3d-refine",
+      "params": {
+        "mode": "refine",
+        "enable_pbr": false,
+        "texture_resolution": "2k",
+        "target_formats": ["glb"]
+      },
+      "estimatedCredits": 10,
+      "estimateBasis": "measured, batch 003 (2026-10-17)"
+    },
+    {
+      "assetId": "building-cottage-01",
+      "step": "text-to-3d-preview",
+      "params": {
+        "mode": "preview",
+        "prompt": "A small half-timbered cottage of a Black Forest village: cream plaster between dark oak beams on a stone plinth, a steep wooden-shingle roof with wide eaves, a front door with a small shuttered window either side, a stone chimney, a woodpile stacked under the eave. Low-polygon game building in the style of a late-1990s first-person RPG: one single building standing alone, no ground plane, no base, no surroundings, no people, no interior, simple blocky massing with clean edges, walls and roof as plain solid surfaces with the detail painted on, flat even lighting, muted natural colours, upright, the front door facing the viewer.",
+        "model_type": "smart-topology",
+        "ai_model": "meshy-t2.5",
+        "target_polycount": 1000,
+        "pose_mode": "auto",
+        "target_formats": ["glb"]
+      },
+      "estimatedCredits": 5,
+      "estimateBasis": "measured, batch 003 (2026-10-17)"
+    },
+    {
+      "assetId": "building-cottage-01",
+      "step": "text-to-3d-refine",
+      "params": {
+        "mode": "refine",
+        "enable_pbr": false,
+        "texture_resolution": "2k",
+        "target_formats": ["glb"]
+      },
+      "estimatedCredits": 10,
+      "estimateBasis": "measured, batch 003 (2026-10-17)"
+    },
+    {
+      "assetId": "building-cottage-02",
+      "step": "text-to-3d-preview",
+      "params": {
+        "mode": "preview",
+        "prompt": "A small single-storey peasant cottage: whitewashed plaster walls with dark timber framing, a steep thatched roof with hipped ends, a plank door with a wooden lintel and one small window beside it, a brick chimney, a small lean-to against the back. Low-polygon game building in the style of a late-1990s first-person RPG: one single building standing alone, no ground plane, no base, no surroundings, no people, no interior, simple blocky massing with clean edges, walls and roof as plain solid surfaces with the detail painted on, flat even lighting, muted natural colours, upright, the front door facing the viewer.",
+        "model_type": "smart-topology",
+        "ai_model": "meshy-t2.5",
+        "target_polycount": 1000,
+        "pose_mode": "auto",
+        "target_formats": ["glb"]
+      },
+      "estimatedCredits": 5,
+      "estimateBasis": "measured, batch 003 (2026-10-17)"
+    },
+    {
+      "assetId": "building-cottage-02",
+      "step": "text-to-3d-refine",
+      "params": {
+        "mode": "refine",
+        "enable_pbr": false,
+        "texture_resolution": "2k",
+        "target_formats": ["glb"]
+      },
+      "estimatedCredits": 10,
+      "estimateBasis": "measured, batch 003 (2026-10-17)"
+    },
+    {
+      "assetId": "building-cottage-03",
+      "step": "text-to-3d-preview",
+      "params": {
+        "mode": "preview",
+        "prompt": "A two-storey townhouse of a mountain village: a stone ground floor, a half-timbered upper floor jettied out over it on carved beams, a steep wooden-shingle roof, a front door with steps, a small wooden balcony with a rail under the upper window, window boxes with flowers. Low-polygon game building in the style of a late-1990s first-person RPG: one single building standing alone, no ground plane, no base, no surroundings, no people, no interior, simple blocky massing with clean edges, walls and roof as plain solid surfaces with the detail painted on, flat even lighting, muted natural colours, upright, the front door facing the viewer.",
+        "model_type": "smart-topology",
+        "ai_model": "meshy-t2.5",
+        "target_polycount": 1200,
+        "pose_mode": "auto",
+        "target_formats": ["glb"]
+      },
+      "estimatedCredits": 5,
+      "estimateBasis": "measured, batch 003 (2026-10-17)"
+    },
+    {
+      "assetId": "building-cottage-03",
+      "step": "text-to-3d-refine",
+      "params": {
+        "mode": "refine",
+        "enable_pbr": false,
+        "texture_resolution": "2k",
+        "target_formats": ["glb"]
+      },
+      "estimatedCredits": 10,
+      "estimateBasis": "measured, batch 003 (2026-10-17)"
+    },
+    {
+      "assetId": "building-farmhouse",
+      "step": "text-to-3d-preview",
+      "params": {
+        "mode": "preview",
+        "prompt": "A long Black Forest farmhouse: one huge sweeping half-hipped roof of wooden shingles reaching down almost to the ground, the living end with small shuttered windows, a door and a wooden balcony under the gable, the barn end with a wide wagon door, a stone chimney. Low-polygon game building in the style of a late-1990s first-person RPG: one single building standing alone, no ground plane, no base, no surroundings, no people, no interior, simple blocky massing with clean edges, walls and roof as plain solid surfaces with the detail painted on, flat even lighting, muted natural colours, upright, the front door facing the viewer.",
+        "model_type": "smart-topology",
+        "ai_model": "meshy-t2.5",
+        "target_polycount": 1500,
+        "pose_mode": "auto",
+        "target_formats": ["glb"]
+      },
+      "estimatedCredits": 5,
+      "estimateBasis": "measured, batch 003 (2026-10-17)"
+    },
+    {
+      "assetId": "building-farmhouse",
+      "step": "text-to-3d-refine",
+      "params": {
+        "mode": "refine",
+        "enable_pbr": false,
+        "texture_resolution": "2k",
+        "target_formats": ["glb"]
+      },
+      "estimatedCredits": 10,
+      "estimateBasis": "measured, batch 003 (2026-10-17)"
+    },
+    {
+      "assetId": "prop-well",
+      "step": "text-to-3d-preview",
+      "params": {
+        "mode": "preview",
+        "prompt": "A village well: a round waist-high wall of fitted grey stones, two wooden posts holding a small pitched roof of wooden shingles, a windlass with a crank handle, a rope and a wooden bucket. Low-polygon game prop in the style of a late-1990s first-person RPG: one single object standing alone, no ground plane, no base, no surroundings, no people, simple solid shapes with the detail painted on, flat even lighting, muted natural colours, upright.",
+        "model_type": "smart-topology",
+        "ai_model": "meshy-t2.5",
+        "target_polycount": 500,
+        "pose_mode": "auto",
+        "target_formats": ["glb"]
+      },
+      "estimatedCredits": 5,
+      "estimateBasis": "measured, batch 003 (2026-10-17)"
+    },
+    {
+      "assetId": "prop-well",
+      "step": "text-to-3d-refine",
+      "params": {
+        "mode": "refine",
+        "enable_pbr": false,
+        "texture_resolution": "2k",
+        "target_formats": ["glb"]
+      },
+      "estimatedCredits": 10,
+      "estimateBasis": "measured, batch 003 (2026-10-17)"
+    },
+    {
+      "assetId": "prop-shrine",
+      "step": "text-to-3d-preview",
+      "params": {
+        "mode": "preview",
+        "prompt": "A wayside shrine: a square stone pillar at chest height with a roofed niche at the top holding a small carved figure, a little pitched roof of wooden shingles, a stone step at the foot. Low-polygon game prop in the style of a late-1990s first-person RPG: one single object standing alone, no ground plane, no base, no surroundings, no people, simple solid shapes with the detail painted on, flat even lighting, muted natural colours, upright.",
+        "model_type": "smart-topology",
+        "ai_model": "meshy-t2.5",
+        "target_polycount": 400,
+        "pose_mode": "auto",
+        "target_formats": ["glb"]
+      },
+      "estimatedCredits": 5,
+      "estimateBasis": "measured, batch 003 (2026-10-17)"
+    },
+    {
+      "assetId": "prop-shrine",
+      "step": "text-to-3d-refine",
+      "params": {
+        "mode": "refine",
+        "enable_pbr": false,
+        "texture_resolution": "2k",
+        "target_formats": ["glb"]
+      },
+      "estimatedCredits": 10,
+      "estimateBasis": "measured, batch 003 (2026-10-17)"
+    },
+    {
+      "assetId": "prop-cart",
+      "step": "text-to-3d-preview",
+      "params": {
+        "mode": "preview",
+        "prompt": "A wooden farm cart: a plank bed with low sides on two large spoked wheels, two long shafts at the front resting on the ground, weathered grey-brown wood, empty. Low-polygon game prop in the style of a late-1990s first-person RPG: one single object standing alone, no ground plane, no base, no surroundings, no people, simple solid shapes with the detail painted on, flat even lighting, muted natural colours, upright.",
+        "model_type": "smart-topology",
+        "ai_model": "meshy-t2.5",
+        "target_polycount": 500,
+        "pose_mode": "auto",
+        "target_formats": ["glb"]
+      },
+      "estimatedCredits": 5,
+      "estimateBasis": "measured, batch 003 (2026-10-17)"
+    },
+    {
+      "assetId": "prop-cart",
+      "step": "text-to-3d-refine",
+      "params": {
+        "mode": "refine",
+        "enable_pbr": false,
+        "texture_resolution": "2k",
+        "target_formats": ["glb"]
+      },
+      "estimatedCredits": 10,
+      "estimateBasis": "measured, batch 003 (2026-10-17)"
+    },
+    {
+      "assetId": "prop-market-stall",
+      "step": "text-to-3d-preview",
+      "params": {
+        "mode": "preview",
+        "prompt": "A market stall: a sturdy wooden table under a red and cream striped canvas awning on four posts, baskets of apples and sacks of grain on the table, a crate underneath. Low-polygon game prop in the style of a late-1990s first-person RPG: one single object standing alone, no ground plane, no base, no surroundings, no people, simple solid shapes with the detail painted on, flat even lighting, muted natural colours, upright.",
+        "model_type": "smart-topology",
+        "ai_model": "meshy-t2.5",
+        "target_polycount": 600,
+        "pose_mode": "auto",
+        "target_formats": ["glb"]
+      },
+      "estimatedCredits": 5,
+      "estimateBasis": "measured, batch 003 (2026-10-17)"
+    },
+    {
+      "assetId": "prop-market-stall",
+      "step": "text-to-3d-refine",
+      "params": {
+        "mode": "refine",
+        "enable_pbr": false,
+        "texture_resolution": "2k",
+        "target_formats": ["glb"]
+      },
+      "estimatedCredits": 10,
+      "estimateBasis": "measured, batch 003 (2026-10-17)"
+    },
+    {
+      "assetId": "prop-haystack",
+      "step": "text-to-3d-preview",
+      "params": {
+        "mode": "preview",
+        "prompt": "A rounded haystack of dry golden hay built up around a wooden pole, taller than a man, slightly lumpy sides. Low-polygon game prop in the style of a late-1990s first-person RPG: one single object standing alone, no ground plane, no base, no surroundings, no people, simple solid shapes with the detail painted on, flat even lighting, muted natural colours, upright.",
+        "model_type": "smart-topology",
+        "ai_model": "meshy-t2.5",
+        "target_polycount": 300,
+        "pose_mode": "auto",
+        "target_formats": ["glb"]
+      },
+      "estimatedCredits": 5,
+      "estimateBasis": "measured, batch 003 (2026-10-17)"
+    },
+    {
+      "assetId": "prop-haystack",
+      "step": "text-to-3d-refine",
+      "params": {
+        "mode": "refine",
+        "enable_pbr": false,
+        "texture_resolution": "2k",
+        "target_formats": ["glb"]
+      },
+      "estimatedCredits": 10,
+      "estimateBasis": "measured, batch 003 (2026-10-17)"
+    },
+    {
+      "assetId": "prop-lantern-post",
+      "step": "text-to-3d-preview",
+      "params": {
+        "mode": "preview",
+        "prompt": "A wooden lantern post: a square oak post with a bracket arm at the top holding a hanging iron lantern with glass panes, a stone footing. Low-polygon game prop in the style of a late-1990s first-person RPG: one single object standing alone, no ground plane, no base, no surroundings, no people, simple solid shapes with the detail painted on, flat even lighting, muted natural colours, upright.",
+        "model_type": "smart-topology",
+        "ai_model": "meshy-t2.5",
+        "target_polycount": 300,
+        "pose_mode": "auto",
+        "target_formats": ["glb"]
+      },
+      "estimatedCredits": 5,
+      "estimateBasis": "measured, batch 003 (2026-10-17)"
+    },
+    {
+      "assetId": "prop-lantern-post",
+      "step": "text-to-3d-refine",
+      "params": {
+        "mode": "refine",
+        "enable_pbr": false,
+        "texture_resolution": "2k",
+        "target_formats": ["glb"]
+      },
+      "estimatedCredits": 10,
+      "estimateBasis": "measured, batch 003 (2026-10-17)"
+    },
+    {
+      "assetId": "prop-fence",
+      "step": "text-to-3d-preview",
+      "params": {
+        "mode": "preview",
+        "prompt": "A rustic wooden fence section three metres long: three square posts with two horizontal split rails between them, weathered grey wood. Low-polygon game prop in the style of a late-1990s first-person RPG: one single object standing alone, no ground plane, no base, no surroundings, no people, simple solid shapes with the detail painted on, flat even lighting, muted natural colours, upright.",
+        "model_type": "smart-topology",
+        "ai_model": "meshy-t2.5",
+        "target_polycount": 200,
+        "pose_mode": "auto",
+        "target_formats": ["glb"]
+      },
+      "estimatedCredits": 5,
+      "estimateBasis": "measured, batch 003 (2026-10-17)"
+    },
+    {
+      "assetId": "prop-fence",
+      "step": "text-to-3d-refine",
+      "params": {
+        "mode": "refine",
+        "enable_pbr": false,
+        "texture_resolution": "2k",
+        "target_formats": ["glb"]
+      },
+      "estimatedCredits": 10,
+      "estimateBasis": "measured, batch 003 (2026-10-17)"
+    },
+    {
+      "assetId": "prop-woodpile",
+      "step": "text-to-3d-preview",
+      "params": {
+        "mode": "preview",
+        "prompt": "A stack of split firewood logs piled neatly between two posts, pale cut ends showing at the front, dark bark at the sides. Low-polygon game prop in the style of a late-1990s first-person RPG: one single object standing alone, no ground plane, no base, no surroundings, no people, simple solid shapes with the detail painted on, flat even lighting, muted natural colours, upright.",
+        "model_type": "smart-topology",
+        "ai_model": "meshy-t2.5",
+        "target_polycount": 300,
+        "pose_mode": "auto",
+        "target_formats": ["glb"]
+      },
+      "estimatedCredits": 5,
+      "estimateBasis": "measured, batch 003 (2026-10-17)"
+    },
+    {
+      "assetId": "prop-woodpile",
+      "step": "text-to-3d-refine",
+      "params": {
+        "mode": "refine",
+        "enable_pbr": false,
+        "texture_resolution": "2k",
+        "target_formats": ["glb"]
+      },
+      "estimatedCredits": 10,
+      "estimateBasis": "measured, batch 003 (2026-10-17)"
+    },
+    {
+      "assetId": "rock-boulder-01",
+      "step": "text-to-3d-preview",
+      "params": {
+        "mode": "preview",
+        "prompt": "A large rounded granite boulder, grey with patches of green moss on top, lying half sunk in the ground, three metres across. Low-polygon game prop in the style of a late-1990s first-person RPG: one single object standing alone, no ground plane, no base, no surroundings, no people, simple solid shapes with the detail painted on, flat even lighting, muted natural colours, upright.",
+        "model_type": "smart-topology",
+        "ai_model": "meshy-t2.5",
+        "target_polycount": 300,
+        "pose_mode": "auto",
+        "target_formats": ["glb"]
+      },
+      "estimatedCredits": 5,
+      "estimateBasis": "measured, batch 003 (2026-10-17)"
+    },
+    {
+      "assetId": "rock-boulder-01",
+      "step": "text-to-3d-refine",
+      "params": {
+        "mode": "refine",
+        "enable_pbr": false,
+        "texture_resolution": "2k",
+        "target_formats": ["glb"]
+      },
+      "estimatedCredits": 10,
+      "estimateBasis": "measured, batch 003 (2026-10-17)"
+    },
+    {
+      "assetId": "rock-boulder-02",
+      "step": "text-to-3d-preview",
+      "params": {
+        "mode": "preview",
+        "prompt": "An angular grey limestone boulder with cracked faces and a flat top, moss in the cracks, two metres across. Low-polygon game prop in the style of a late-1990s first-person RPG: one single object standing alone, no ground plane, no base, no surroundings, no people, simple solid shapes with the detail painted on, flat even lighting, muted natural colours, upright.",
+        "model_type": "smart-topology",
+        "ai_model": "meshy-t2.5",
+        "target_polycount": 300,
+        "pose_mode": "auto",
+        "target_formats": ["glb"]
+      },
+      "estimatedCredits": 5,
+      "estimateBasis": "measured, batch 003 (2026-10-17)"
+    },
+    {
+      "assetId": "rock-boulder-02",
+      "step": "text-to-3d-refine",
+      "params": {
+        "mode": "refine",
+        "enable_pbr": false,
+        "texture_resolution": "2k",
+        "target_formats": ["glb"]
+      },
+      "estimatedCredits": 10,
+      "estimateBasis": "measured, batch 003 (2026-10-17)"
+    },
+    {
+      "assetId": "rock-outcrop-01",
+      "step": "text-to-3d-preview",
+      "params": {
+        "mode": "preview",
+        "prompt": "A jagged outcrop of layered grey-brown rock rising from the ground in tilted slabs, five metres across, lichen on the faces. Low-polygon game prop in the style of a late-1990s first-person RPG: one single object standing alone, no ground plane, no base, no surroundings, no people, simple solid shapes with the detail painted on, flat even lighting, muted natural colours, upright.",
+        "model_type": "smart-topology",
+        "ai_model": "meshy-t2.5",
+        "target_polycount": 500,
+        "pose_mode": "auto",
+        "target_formats": ["glb"]
+      },
+      "estimatedCredits": 5,
+      "estimateBasis": "measured, batch 003 (2026-10-17)"
+    },
+    {
+      "assetId": "rock-outcrop-01",
+      "step": "text-to-3d-refine",
+      "params": {
+        "mode": "refine",
+        "enable_pbr": false,
+        "texture_resolution": "2k",
+        "target_formats": ["glb"]
+      },
+      "estimatedCredits": 10,
+      "estimateBasis": "measured, batch 003 (2026-10-17)"
+    },
+    {
+      "assetId": "rock-cluster-01",
+      "step": "text-to-3d-preview",
+      "params": {
+        "mode": "preview",
+        "prompt": "A cluster of five small grey stones of different sizes lying together, mossy, each under a metre. Low-polygon game prop in the style of a late-1990s first-person RPG: one single object standing alone, no ground plane, no base, no surroundings, no people, simple solid shapes with the detail painted on, flat even lighting, muted natural colours, upright.",
+        "model_type": "smart-topology",
+        "ai_model": "meshy-t2.5",
+        "target_polycount": 300,
+        "pose_mode": "auto",
+        "target_formats": ["glb"]
+      },
+      "estimatedCredits": 5,
+      "estimateBasis": "measured, batch 003 (2026-10-17)"
+    },
+    {
+      "assetId": "rock-cluster-01",
+      "step": "text-to-3d-refine",
+      "params": {
+        "mode": "refine",
+        "enable_pbr": false,
+        "texture_resolution": "2k",
+        "target_formats": ["glb"]
+      },
+      "estimatedCredits": 10,
+      "estimateBasis": "measured, batch 003 (2026-10-17)"
+    }
+  ],
+  "estimatedCredits": 330,
+  "runs": [
+    {
+      "started": "2026-10-17T10:03:49.192Z",
+      "taskIds": [
+        "01a14951-5a6f-7764-8d1d-f0c7103cdfdb",
+        "01a14951-62a9-7198-b74e-821c5648215c",
+        "01a14951-6b93-708d-8d0d-6a84e35d6105",
+        "01a14951-7410-7603-9f3a-bd5eb6adc78a",
+        "01a14951-7d90-7641-83f0-47c959b99bb6",
+        "01a14951-862c-7518-a894-2eb1e18047b8",
+        "01a14951-8e7c-77f6-bd03-c098892d918e",
+        "01a14951-97d5-74b5-88fc-b8523b1d5450",
+        "01a14951-a0b8-75e0-90fb-a7a337944fa7",
+        "01a14951-a923-7537-a5ab-cd1e7013df4b",
+        "01a14951-fbf9-7066-b1c9-2421f6aabd7e",
+        "01a14951-fe8d-7252-a168-b621d009618e",
+        "01a14952-1ee9-7268-978b-b88da707552d",
+        "01a14952-2142-774f-a43b-1cb3b8eb63a8",
+        "01a14952-2ad6-760c-a476-44b15af5043b",
+        "01a14952-3639-774e-8012-1f51c1511780",
+        "01a14952-3fe0-7030-a647-5f2b81020efd",
+        "01a14952-4a16-7404-a26c-59eb5c419059",
+        "01a14952-52dc-76d6-8100-1e6cdfe71126",
+        "01a14952-5b88-76d8-b9df-b3e88eceaa2c",
+        "01a14952-8552-7655-95d2-b5f9e5afa532",
+        "01a14952-87e7-73ec-9768-cc441dfabb8c",
+        "01a14953-ca50-7394-ba20-d003e975340c",
+        "01a14953-cc93-7040-ada3-461519461238",
+        "01a14953-cef5-73f1-8851-0962366e1e50",
+        "01a14953-d12f-744f-8c12-c20081eb0b19",
+        "01a14953-d363-7072-a337-ca8279846042",
+        "01a14953-d57d-75e2-8c3d-04554e268acc",
+        "01a14953-d7d7-742b-9f6c-636297fc0c53",
+        "01a14953-d9ee-70f8-94ed-72908b904973",
+        "01a14953-dbec-71a3-b9d3-565fe47ee78a",
+        "01a14953-de17-7036-abdb-ad5a990b0671",
+        "01a14954-5282-76f6-96d4-f620dedb2f39",
+        "01a14954-8a86-744d-9729-874aad762ac5",
+        "01a14954-8cc3-7514-87a5-4b54be21a6b8",
+        "01a14954-8f0a-76ce-8211-3d136b25182e",
+        "01a14954-9154-7613-a014-c415afe14481",
+        "01a14954-938b-737a-8a44-cf36288f77ab",
+        "01a14954-d79a-771a-8238-81e20f035acb",
+        "01a14954-d9d5-7142-a84b-600ce74a0f1c",
+        "01a14954-dbf4-73be-9471-b4ddb0a94252",
+        "01a14954-de2a-747c-a2c8-bbedf9869d42",
+        "01a14954-f966-72fc-8428-f806af58213e",
+        "01a14955-39e1-7544-807f-03ec90400e48"
+      ],
+      "tasks": {
+        "building-inn": {
+          "text-to-3d-preview": {
+            "taskId": "01a14951-5a6f-7764-8d1d-f0c7103cdfdb",
+            "status": "SUCCEEDED",
+            "consumedCredits": 5,
+            "operationId": "b004-building-inn-text-to-3d-preview-r1-a1"
+          },
+          "text-to-3d-refine": {
+            "taskId": "01a14953-ca50-7394-ba20-d003e975340c",
+            "status": "SUCCEEDED",
+            "consumedCredits": 10,
+            "operationId": "b004-building-inn-text-to-3d-refine-r1-a1"
+          }
+        },
+        "building-temple": {
+          "text-to-3d-preview": {
+            "taskId": "01a14951-62a9-7198-b74e-821c5648215c",
+            "status": "SUCCEEDED",
+            "consumedCredits": 5,
+            "operationId": "b004-building-temple-text-to-3d-preview-r1-a1"
+          },
+          "text-to-3d-refine": {
+            "taskId": "01a14953-cc93-7040-ada3-461519461238",
+            "status": "SUCCEEDED",
+            "consumedCredits": 10,
+            "operationId": "b004-building-temple-text-to-3d-refine-r1-a1"
+          }
+        },
+        "building-store": {
+          "text-to-3d-preview": {
+            "taskId": "01a14951-6b93-708d-8d0d-6a84e35d6105",
+            "status": "SUCCEEDED",
+            "consumedCredits": 5,
+            "operationId": "b004-building-store-text-to-3d-preview-r1-a1"
+          },
+          "text-to-3d-refine": {
+            "taskId": "01a14953-cef5-73f1-8851-0962366e1e50",
+            "status": "SUCCEEDED",
+            "consumedCredits": 10,
+            "operationId": "b004-building-store-text-to-3d-refine-r1-a1"
+          }
+        },
+        "building-smithy": {
+          "text-to-3d-preview": {
+            "taskId": "01a14951-7410-7603-9f3a-bd5eb6adc78a",
+            "status": "SUCCEEDED",
+            "consumedCredits": 5,
+            "operationId": "b004-building-smithy-text-to-3d-preview-r1-a1"
+          },
+          "text-to-3d-refine": {
+            "taskId": "01a14953-d12f-744f-8c12-c20081eb0b19",
+            "status": "SUCCEEDED",
+            "consumedCredits": 10,
+            "operationId": "b004-building-smithy-text-to-3d-refine-r1-a1"
+          }
+        },
+        "building-stables": {
+          "text-to-3d-preview": {
+            "taskId": "01a14951-7d90-7641-83f0-47c959b99bb6",
+            "status": "SUCCEEDED",
+            "consumedCredits": 5,
+            "operationId": "b004-building-stables-text-to-3d-preview-r1-a1"
+          },
+          "text-to-3d-refine": {
+            "taskId": "01a14953-d363-7072-a337-ca8279846042",
+            "status": "SUCCEEDED",
+            "consumedCredits": 10,
+            "operationId": "b004-building-stables-text-to-3d-refine-r1-a1"
+          }
+        },
+        "building-barn": {
+          "text-to-3d-preview": {
+            "taskId": "01a14951-862c-7518-a894-2eb1e18047b8",
+            "status": "SUCCEEDED",
+            "consumedCredits": 5,
+            "operationId": "b004-building-barn-text-to-3d-preview-r1-a1"
+          },
+          "text-to-3d-refine": {
+            "taskId": "01a14953-d57d-75e2-8c3d-04554e268acc",
+            "status": "SUCCEEDED",
+            "consumedCredits": 10,
+            "operationId": "b004-building-barn-text-to-3d-refine-r1-a1"
+          }
+        },
+        "building-cottage-01": {
+          "text-to-3d-preview": {
+            "taskId": "01a14951-8e7c-77f6-bd03-c098892d918e",
+            "status": "SUCCEEDED",
+            "consumedCredits": 5,
+            "operationId": "b004-building-cottage-01-text-to-3d-preview-r1-a1"
+          },
+          "text-to-3d-refine": {
+            "taskId": "01a14953-d7d7-742b-9f6c-636297fc0c53",
+            "status": "SUCCEEDED",
+            "consumedCredits": 10,
+            "operationId": "b004-building-cottage-01-text-to-3d-refine-r1-a1"
+          }
+        },
+        "building-cottage-02": {
+          "text-to-3d-preview": {
+            "taskId": "01a14951-97d5-74b5-88fc-b8523b1d5450",
+            "status": "SUCCEEDED",
+            "consumedCredits": 5,
+            "operationId": "b004-building-cottage-02-text-to-3d-preview-r1-a1"
+          },
+          "text-to-3d-refine": {
+            "taskId": "01a14953-d9ee-70f8-94ed-72908b904973",
+            "status": "SUCCEEDED",
+            "consumedCredits": 10,
+            "operationId": "b004-building-cottage-02-text-to-3d-refine-r1-a1"
+          }
+        },
+        "building-cottage-03": {
+          "text-to-3d-preview": {
+            "taskId": "01a14951-a0b8-75e0-90fb-a7a337944fa7",
+            "status": "SUCCEEDED",
+            "consumedCredits": 5,
+            "operationId": "b004-building-cottage-03-text-to-3d-preview-r1-a1"
+          },
+          "text-to-3d-refine": {
+            "taskId": "01a14953-dbec-71a3-b9d3-565fe47ee78a",
+            "status": "SUCCEEDED",
+            "consumedCredits": 10,
+            "operationId": "b004-building-cottage-03-text-to-3d-refine-r1-a1"
+          }
+        },
+        "building-farmhouse": {
+          "text-to-3d-preview": {
+            "taskId": "01a14951-a923-7537-a5ab-cd1e7013df4b",
+            "status": "SUCCEEDED",
+            "consumedCredits": 5,
+            "operationId": "b004-building-farmhouse-text-to-3d-preview-r1-a1"
+          },
+          "text-to-3d-refine": {
+            "taskId": "01a14953-de17-7036-abdb-ad5a990b0671",
+            "status": "SUCCEEDED",
+            "consumedCredits": 10,
+            "operationId": "b004-building-farmhouse-text-to-3d-refine-r1-a1"
+          }
+        },
+        "prop-well": {
+          "text-to-3d-preview": {
+            "taskId": "01a14951-fbf9-7066-b1c9-2421f6aabd7e",
+            "status": "SUCCEEDED",
+            "consumedCredits": 5,
+            "operationId": "b004-prop-well-text-to-3d-preview-r1-a2"
+          },
+          "text-to-3d-refine": {
+            "taskId": "01a14954-5282-76f6-96d4-f620dedb2f39",
+            "status": "SUCCEEDED",
+            "consumedCredits": 10,
+            "operationId": "b004-prop-well-text-to-3d-refine-r1-a2"
+          }
+        },
+        "prop-shrine": {
+          "text-to-3d-preview": {
+            "taskId": "01a14951-fe8d-7252-a168-b621d009618e",
+            "status": "SUCCEEDED",
+            "consumedCredits": 5,
+            "operationId": "b004-prop-shrine-text-to-3d-preview-r1-a1"
+          },
+          "text-to-3d-refine": {
+            "taskId": "01a14954-8a86-744d-9729-874aad762ac5",
+            "status": "SUCCEEDED",
+            "consumedCredits": 10,
+            "operationId": "b004-prop-shrine-text-to-3d-refine-r1-a2"
+          }
+        },
+        "prop-cart": {
+          "text-to-3d-preview": {
+            "taskId": "01a14952-1ee9-7268-978b-b88da707552d",
+            "status": "SUCCEEDED",
+            "consumedCredits": 5,
+            "operationId": "b004-prop-cart-text-to-3d-preview-r1-a3"
+          },
+          "text-to-3d-refine": {
+            "taskId": "01a14954-8cc3-7514-87a5-4b54be21a6b8",
+            "status": "SUCCEEDED",
+            "consumedCredits": 10,
+            "operationId": "b004-prop-cart-text-to-3d-refine-r1-a1"
+          }
+        },
+        "prop-market-stall": {
+          "text-to-3d-preview": {
+            "taskId": "01a14952-2142-774f-a43b-1cb3b8eb63a8",
+            "status": "SUCCEEDED",
+            "consumedCredits": 5,
+            "operationId": "b004-prop-market-stall-text-to-3d-preview-r1-a1"
+          },
+          "text-to-3d-refine": {
+            "taskId": "01a14954-8f0a-76ce-8211-3d136b25182e",
+            "status": "SUCCEEDED",
+            "consumedCredits": 10,
+            "operationId": "b004-prop-market-stall-text-to-3d-refine-r1-a1"
+          }
+        },
+        "prop-haystack": {
+          "text-to-3d-preview": {
+            "taskId": "01a14952-2ad6-760c-a476-44b15af5043b",
+            "status": "SUCCEEDED",
+            "consumedCredits": 5,
+            "operationId": "b004-prop-haystack-text-to-3d-preview-r1-a1"
+          },
+          "text-to-3d-refine": {
+            "taskId": "01a14954-9154-7613-a014-c415afe14481",
+            "status": "SUCCEEDED",
+            "consumedCredits": 10,
+            "operationId": "b004-prop-haystack-text-to-3d-refine-r1-a1"
+          }
+        },
+        "prop-lantern-post": {
+          "text-to-3d-preview": {
+            "taskId": "01a14952-3639-774e-8012-1f51c1511780",
+            "status": "SUCCEEDED",
+            "consumedCredits": 5,
+            "operationId": "b004-prop-lantern-post-text-to-3d-preview-r1-a1"
+          },
+          "text-to-3d-refine": {
+            "taskId": "01a14954-938b-737a-8a44-cf36288f77ab",
+            "status": "SUCCEEDED",
+            "consumedCredits": 10,
+            "operationId": "b004-prop-lantern-post-text-to-3d-refine-r1-a1"
+          }
+        },
+        "prop-fence": {
+          "text-to-3d-preview": {
+            "taskId": "01a14952-3fe0-7030-a647-5f2b81020efd",
+            "status": "SUCCEEDED",
+            "consumedCredits": 5,
+            "operationId": "b004-prop-fence-text-to-3d-preview-r1-a1"
+          },
+          "text-to-3d-refine": {
+            "taskId": "01a14954-d79a-771a-8238-81e20f035acb",
+            "status": "SUCCEEDED",
+            "consumedCredits": 10,
+            "operationId": "b004-prop-fence-text-to-3d-refine-r1-a2"
+          }
+        },
+        "prop-woodpile": {
+          "text-to-3d-preview": {
+            "taskId": "01a14952-4a16-7404-a26c-59eb5c419059",
+            "status": "SUCCEEDED",
+            "consumedCredits": 5,
+            "operationId": "b004-prop-woodpile-text-to-3d-preview-r1-a1"
+          },
+          "text-to-3d-refine": {
+            "taskId": "01a14954-d9d5-7142-a84b-600ce74a0f1c",
+            "status": "SUCCEEDED",
+            "consumedCredits": 10,
+            "operationId": "b004-prop-woodpile-text-to-3d-refine-r1-a1"
+          }
+        },
+        "rock-boulder-01": {
+          "text-to-3d-preview": {
+            "taskId": "01a14952-52dc-76d6-8100-1e6cdfe71126",
+            "status": "SUCCEEDED",
+            "consumedCredits": 5,
+            "operationId": "b004-rock-boulder-01-text-to-3d-preview-r1-a1"
+          },
+          "text-to-3d-refine": {
+            "taskId": "01a14954-dbf4-73be-9471-b4ddb0a94252",
+            "status": "SUCCEEDED",
+            "consumedCredits": 10,
+            "operationId": "b004-rock-boulder-01-text-to-3d-refine-r1-a1"
+          }
+        },
+        "rock-boulder-02": {
+          "text-to-3d-preview": {
+            "taskId": "01a14952-5b88-76d8-b9df-b3e88eceaa2c",
+            "status": "SUCCEEDED",
+            "consumedCredits": 5,
+            "operationId": "b004-rock-boulder-02-text-to-3d-preview-r1-a1"
+          },
+          "text-to-3d-refine": {
+            "taskId": "01a14954-de2a-747c-a2c8-bbedf9869d42",
+            "status": "SUCCEEDED",
+            "consumedCredits": 10,
+            "operationId": "b004-rock-boulder-02-text-to-3d-refine-r1-a1"
+          }
+        },
+        "rock-outcrop-01": {
+          "text-to-3d-preview": {
+            "taskId": "01a14952-8552-7655-95d2-b5f9e5afa532",
+            "status": "SUCCEEDED",
+            "consumedCredits": 5,
+            "operationId": "b004-rock-outcrop-01-text-to-3d-preview-r1-a7"
+          },
+          "text-to-3d-refine": {
+            "taskId": "01a14954-f966-72fc-8428-f806af58213e",
+            "status": "SUCCEEDED",
+            "consumedCredits": 10,
+            "operationId": "b004-rock-outcrop-01-text-to-3d-refine-r1-a7"
+          }
+        },
+        "rock-cluster-01": {
+          "text-to-3d-preview": {
+            "taskId": "01a14952-87e7-73ec-9768-cc441dfabb8c",
+            "status": "SUCCEEDED",
+            "consumedCredits": 5,
+            "operationId": "b004-rock-cluster-01-text-to-3d-preview-r1-a1"
+          },
+          "text-to-3d-refine": {
+            "taskId": "01a14955-39e1-7544-807f-03ec90400e48",
+            "status": "SUCCEEDED",
+            "consumedCredits": 10,
+            "operationId": "b004-rock-cluster-01-text-to-3d-refine-r1-a4"
+          }
+        }
+      },
+      "balanceBefore": 2540,
+      "attempts": {
+        "building-inn/text-to-3d-preview": 1,
+        "building-temple/text-to-3d-preview": 1,
+        "building-store/text-to-3d-preview": 1,
+        "building-smithy/text-to-3d-preview": 1,
+        "building-stables/text-to-3d-preview": 1,
+        "building-barn/text-to-3d-preview": 1,
+        "building-cottage-01/text-to-3d-preview": 1,
+        "building-cottage-02/text-to-3d-preview": 1,
+        "building-cottage-03/text-to-3d-preview": 1,
+        "building-farmhouse/text-to-3d-preview": 1,
+        "prop-well/text-to-3d-preview": 2,
+        "prop-shrine/text-to-3d-preview": 1,
+        "prop-cart/text-to-3d-preview": 3,
+        "prop-market-stall/text-to-3d-preview": 1,
+        "prop-haystack/text-to-3d-preview": 1,
+        "prop-lantern-post/text-to-3d-preview": 1,
+        "prop-fence/text-to-3d-preview": 1,
+        "prop-woodpile/text-to-3d-preview": 1,
+        "rock-boulder-01/text-to-3d-preview": 1,
+        "rock-boulder-02/text-to-3d-preview": 1,
+        "rock-outcrop-01/text-to-3d-preview": 7,
+        "rock-cluster-01/text-to-3d-preview": 1,
+        "building-inn/text-to-3d-refine": 1,
+        "building-temple/text-to-3d-refine": 1,
+        "building-store/text-to-3d-refine": 1,
+        "building-smithy/text-to-3d-refine": 1,
+        "building-stables/text-to-3d-refine": 1,
+        "building-barn/text-to-3d-refine": 1,
+        "building-cottage-01/text-to-3d-refine": 1,
+        "building-cottage-02/text-to-3d-refine": 1,
+        "building-cottage-03/text-to-3d-refine": 1,
+        "building-farmhouse/text-to-3d-refine": 1,
+        "prop-well/text-to-3d-refine": 2,
+        "prop-shrine/text-to-3d-refine": 2,
+        "prop-cart/text-to-3d-refine": 1,
+        "prop-market-stall/text-to-3d-refine": 1,
+        "prop-haystack/text-to-3d-refine": 1,
+        "prop-lantern-post/text-to-3d-refine": 1,
+        "prop-fence/text-to-3d-refine": 2,
+        "prop-woodpile/text-to-3d-refine": 1,
+        "rock-boulder-01/text-to-3d-refine": 1,
+        "rock-boulder-02/text-to-3d-refine": 1,
+        "rock-outcrop-01/text-to-3d-refine": 7,
+        "rock-cluster-01/text-to-3d-refine": 4
+      },
+      "balanceAfter": 2210,
+      "consumedCredits": 330,
+      "finished": "2026-10-17T10:09:15.684Z"
+    }
+  ]
+}
