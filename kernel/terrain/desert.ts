@@ -120,7 +120,7 @@ export function generateDesert(spec: DesertSpec): DesertResult {
     }
   }
 
-  // Trees round the oasis: a ring of broadleaf, none elsewhere.
+  // The oasis grove: palms in two rings round the pool, none elsewhere.
   let a = (seed * 7919 + 101) >>> 0;
   const rng = (): number => {
     a = (a + 0x6d2b79f5) >>> 0;
@@ -130,20 +130,25 @@ export function generateDesert(spec: DesertSpec): DesertResult {
     return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
   };
   const trees: TreeInstance[] = [];
-  for (let i = 0; i < 14; i++) {
-    const angle = (i / 14) * Math.PI * 2 + (rng() - 0.5) * 0.3;
-    const dist = OASIS_R + 4 + rng() * 14;
-    const x = oasisCentre[0] + Math.cos(angle) * dist;
-    const z = oasisCentre[1] + Math.sin(angle) * dist;
-    if (road.nearest(x, z).distance < ROAD_WIDTH / 2 + 3) continue;
-    trees.push({
-      kind: 'broadleaf',
-      x,
-      y: hf.sample(x, z),
-      z,
-      yaw: rng() * Math.PI * 2,
-      scale: 0.9 + rng() * 0.4,
-    });
+  for (const [count, from, spread] of [
+    [18, 3, 8],
+    [22, 14, 16],
+  ] as const) {
+    for (let i = 0; i < count; i++) {
+      const angle = (i / count) * Math.PI * 2 + (rng() - 0.5) * 0.4;
+      const dist = OASIS_R + from + rng() * spread;
+      const x = oasisCentre[0] + Math.cos(angle) * dist;
+      const z = oasisCentre[1] + Math.sin(angle) * dist;
+      if (road.nearest(x, z).distance < ROAD_WIDTH / 2 + 3) continue;
+      trees.push({
+        kind: 'palm',
+        x,
+        y: hf.sample(x, z),
+        z,
+        yaw: rng() * Math.PI * 2,
+        scale: 0.8 + rng() * 0.4,
+      });
+    }
   }
 
   const at3 = (p: P2): Vec3 => [p[0], hf.sample(p[0], p[1]), p[1]];

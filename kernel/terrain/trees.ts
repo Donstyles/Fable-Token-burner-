@@ -9,7 +9,7 @@ import type { MeshData } from '../core/mesh';
 import type { ValleyResult } from './valley';
 
 /** Kinds in sidecar order: a tree's kind travels as its index here. */
-export const TREE_KINDS = ['pine', 'broadleaf', 'spruce', 'oak'] as const;
+export const TREE_KINDS = ['pine', 'broadleaf', 'spruce', 'oak', 'palm'] as const;
 export type TreeKind = (typeof TREE_KINDS)[number];
 
 export interface TreeInstance {
@@ -72,7 +72,8 @@ export function placeTrees(v: ValleyResult, o: ForestOptions = {}): TreeInstance
         : rng() < 0.6
           ? 'broadleaf'
           : 'oak';
-      trees.push({ kind, x: jx, y, z: jz, yaw: rng() * Math.PI * 2, scale: 0.9 + rng() * 0.7 });
+      // Models stand at their catalogue height; the scale is only a little variety.
+      trees.push({ kind, x: jx, y, z: jz, yaw: rng() * Math.PI * 2, scale: 0.85 + rng() * 0.3 });
     }
   }
   return trees;

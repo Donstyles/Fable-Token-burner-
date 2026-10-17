@@ -11,6 +11,7 @@ import { layRoad } from './road';
 import { fbm, lerp, ridged, smoothstep } from './noise';
 import { GroundPath, headingDeg, smoothPath, type P2 } from './spline';
 import type { StreamLayout } from './stream';
+import { laneDistance, layoutVillage, rectDistance, type VillageLayout } from './village';
 
 export interface ValleySpec {
   seed: number;
@@ -33,8 +34,9 @@ export interface ValleyResult {
   road: GroundPath;
   roadWidth: number;
   ravine: GroundPath;
-  /** The village square: flattened ground round the well where the road begins. */
+  /** The village: its floor height and extent, for clearing the forest round it. */
   town: { centre: P2; y: number; radius: number; roadDirection: number };
+  village: VillageLayout;
   /** The cave mouth at the ravine head: its placement for `caveMouth`. */
   cave: CaveSpec;
   /** The terraced brook down the ravine. */
@@ -45,6 +47,7 @@ export interface ValleyResult {
 }
 
 const FLOOR = 2.5;
+const ROAD_WIDTH = 10;
 const BED = -1.6;
 const RIVER_BED_HALF = 9;
 export const WATER_LEVEL = 0.7;
@@ -89,9 +92,19 @@ export function generateValley(spec: ValleySpec): ValleyResult {
   // shape.
   const k = half / 512;
   const townCentre: P2 = [-55 * k, -half * 0.3];
+  // The road is the village's main street: it starts beyond the farm at the river end,
+  // crosses the square and climbs toward the pass.
+  const firstLeg: P2 = [-95 * k, -half * 0.18];
+  const streetLen = Math.hypot(firstLeg[0] - townCentre[0], firstLeg[1] - townCentre[1]);
+  const streetDir: P2 = [
+    (firstLeg[0] - townCentre[0]) / streetLen,
+    (firstLeg[1] - townCentre[1]) / streetLen,
+  ];
+  const streetStart: P2 = [townCentre[0] - streetDir[0] * 110, townCentre[1] - streetDir[1] * 110];
   const roadControls: P2[] = [
+    streetStart,
     townCentre,
-    [-95 * k, -half * 0.18],
+    firstLeg,
     [-150 * k, -half * 0.32],
     [-205 * k, -half * 0.12],
     [-260 * k, -half * 0.3],
@@ -181,18 +194,6 @@ export function generateValley(spec: ValleySpec): ValleyResult {
     for (let i = 0; i < n; i++) hf.set(i, j, base(hf.x(i), hf.z(j)));
   }
 
-  // The village square: level ground round the well, blending into the slope beyond.
-  const TOWN_RADIUS = 40;
-  const townY = Math.max(FLOOR + 3, hf.sample(townCentre[0], townCentre[1]));
-  const dTown = (x: number, z: number): number => Math.hypot(x - townCentre[0], z - townCentre[1]);
-  for (let j = 0; j < n; j++) {
-    for (let i = 0; i < n; i++) {
-      const d = dTown(hf.x(i), hf.z(j));
-      if (d > TOWN_RADIUS + 40) continue;
-      hf.set(i, j, lerp(townY, hf.get(i, j), smoothstep(TOWN_RADIUS, TOWN_RADIUS + 40, d)));
-    }
-  }
-
   // The cave mouth at the ravine head, facing down the ravine: the ground under the tunnel
   // is cut away so it never pokes through the floor, and the threshold in front is levelled.
   const caveAt = ravine.at(ravine.length - 25);
@@ -226,8 +227,45 @@ export function generateValley(spec: ValleySpec): ValleyResult {
 
   // The road: smoothed, never dropping, never steeper than a cart road; the land is cut to
   // match it within a shoulder.
-  const ROAD_WIDTH = 10;
   layRoad(hf, road, { width: ROAD_WIDTH, cutTo: 22, maxGradeDeg: 22 });
+
+  // The village (DESIGN.md 15.2), after the road is laid so its cut cannot undo this: the
+  // floor levelled along the street with a soft edge, a dead-level pad under every building
+  // and the temple's knoll rising from the floor; the street through it lies on the floor.
+  const townY = Math.max(FLOOR + 3, hf.sample(townCentre[0], townCentre[1]));
+  const streetAlong = road.nearest(townCentre[0], townCentre[1]).tangent;
+  const village = layoutVillage({
+    centre: townCentre,
+    along: streetAlong,
+    y: townY,
+    roadHalf: ROAD_WIDTH / 2,
+  });
+  const villageRect = {
+    x: townCentre[0],
+    z: townCentre[1],
+    halfA: village.extent.halfA,
+    halfB: village.extent.halfB,
+    yaw: Math.atan2(-streetAlong[0], streetAlong[1]),
+  };
+  const TOWN_RADIUS = Math.hypot(village.extent.halfA, village.extent.halfB);
+  const dTown = (x: number, z: number): number => Math.hypot(x - townCentre[0], z - townCentre[1]);
+  for (let j = 0; j < n; j++) {
+    for (let i = 0; i < n; i++) {
+      const x = hf.x(i);
+      const z = hf.z(j);
+      if (dTown(x, z) > TOWN_RADIUS + 45) continue;
+      const edge = rectDistance(x, z, villageRect);
+      let h = lerp(townY, hf.get(i, j), smoothstep(0, 40, edge));
+      for (const pad of village.pads) {
+        const d = rectDistance(x, z, pad);
+        if (d > 8) continue;
+        // The pad is dead level; the knoll's rise fades over eight metres round it.
+        const target = townY + pad.rise;
+        h = d <= 0 ? target : lerp(target, h, smoothstep(0, pad.rise > 0 ? 8 : 3, d));
+      }
+      hf.set(i, j, h);
+    }
+  }
 
   // Splat weights and the forest mask.
   const splat = new Float32Array(n * n * 3);
@@ -241,10 +279,21 @@ export function generateValley(spec: ValleySpec): ValleyResult {
       const dRoad = road.nearest(x, z).distance;
       const dRiver = river.nearest(x, z).distance;
       const dRavine = ravine.nearest(x, z).distance;
-      let path = Math.max(
-        1 - smoothstep(ROAD_WIDTH / 2, ROAD_WIDTH / 2 + 3, dRoad),
-        1 - smoothstep(TOWN_RADIUS * 0.6, TOWN_RADIUS * 0.85, dTown(x, z)),
-      );
+      // Dirt: the road, the village square, its lanes and an apron before each door; the
+      // ground between the houses stays grass.
+      let path = 1 - smoothstep(ROAD_WIDTH / 2, ROAD_WIDTH / 2 + 3, dRoad);
+      if (dTown(x, z) < TOWN_RADIUS + 10) {
+        path = Math.max(path, 1 - smoothstep(0, 4, rectDistance(x, z, village.square)));
+        for (const lane of village.lanes) {
+          path = Math.max(
+            path,
+            1 - smoothstep(lane.halfWidth, lane.halfWidth + 2, laneDistance(x, z, lane)),
+          );
+        }
+        for (const pad of village.pads) {
+          path = Math.max(path, 0.7 * (1 - smoothstep(-1, 2.5, rectDistance(x, z, pad))));
+        }
+      }
       let scree =
         smoothstep(32, 46, s) + 0.6 * smoothstep(6, 2, dRiver) * (h < FLOOR + 0.5 ? 1 : 0);
       let snow = smoothstep(235, 268, h) * (1 - smoothstep(35, 50, s));
@@ -265,7 +314,7 @@ export function generateValley(spec: ValleySpec): ValleyResult {
         dRoad > 9 &&
         dRiver > 20 &&
         dRavine > 30 &&
-        dTown(x, z) > TOWN_RADIUS + 20 &&
+        rectDistance(x, z, villageRect) > 18 &&
         fbm(x, z, 140, seed + 11) > 0.1
           ? 1
           : 0;
@@ -274,7 +323,8 @@ export function generateValley(spec: ValleySpec): ValleyResult {
 
   // The party wakes on the road's first metres looking back at the square: the well, the
   // houses and the forested slope beyond are the first thing seen, not an empty field.
-  const start = road.at(18);
+  const centreAlong = road.nearest(townCentre[0], townCentre[1]).along;
+  const start = road.at(centreAlong + 12);
   const tangent = road.nearest(start[0], start[1]).tangent;
   const yawDeg = headingDeg(-tangent[0], -tangent[1]);
   const at3 = (p: P2): Vec3 => [p[0], hf.sample(p[0], p[1]), p[1]];
@@ -287,7 +337,11 @@ export function generateValley(spec: ValleySpec): ValleyResult {
   }
   const exit = road.nearest(townCentre[0], townCentre[1]).tangent;
   const points: NamedPoint[] = [
-    { name: 'town', position: at3(road.at(8)), kind: 'poi' },
+    { name: 'town', position: at3(road.at(centreAlong)), kind: 'poi' },
+    ...village.points.map((p) => ({
+      ...p,
+      position: [p.position[0], hf.sample(p.position[0], p.position[2]), p.position[2]] as Vec3,
+    })),
     { name: 'pass', position: at3(road.at(road.length - 40)), kind: 'poi' },
     { name: 'road-mid', position: at3(road.at(road.length / 2)), kind: 'poi' },
     { name: 'ravine-head', position: at3(ravine.at(ravine.length - 45)), kind: 'poi' },
@@ -308,6 +362,7 @@ export function generateValley(spec: ValleySpec): ValleyResult {
     ravine,
     cave,
     stream,
+    village,
     town: {
       centre: townCentre,
       y: townY,

@@ -7,7 +7,13 @@ import { expect, test } from '@playwright/test';
 type Dev = {
   ready: boolean;
   level: {
-    sidecar: { outdoor?: boolean; trees?: unknown[]; stats: Record<string, number> };
+    sidecar: {
+      outdoor?: boolean;
+      trees?: unknown[];
+      props?: unknown[];
+      propModels?: string[];
+      stats: Record<string, number>;
+    };
     meshes: { name: string; isEnabled(): boolean }[];
     collider: { getTotalVertices(): number };
     water: unknown[];
@@ -44,7 +50,7 @@ test.describe('valley region', () => {
         trees: d.level.sidecar.trees?.length ?? 0,
         terrain: names.filter((n) => n.startsWith('t:')).length,
         terrainOn: d.level.meshes.filter((m) => m.name.startsWith('t:') && m.isEnabled()).length,
-        forest: names.filter((n) => n.startsWith('forest:')).length,
+        forest: names.filter((n) => n.startsWith('props:tree-')).length,
         backdrop: d.level.meshes.filter((m) => m.name === 'backdrop' && m.isEnabled()).length,
         backdropTriangles: d.level.sidecar.stats['backdropTriangles'],
         pass: d.pointOf('pass'),
@@ -52,15 +58,22 @@ test.describe('valley region', () => {
         town: d.pointOf('town'),
         cave: d.pointOf('cave'),
         portals: d.portals.portals.map((p) => `${p.name}>${p.target.level}:${p.target.entry}`),
-        houses: d.level.sidecar.stats['houses'],
+        props: d.level.sidecar.props?.length ?? 0,
+        propModels: d.level.sidecar.propModels ?? [],
+        buildings: names.filter((n) => n.startsWith('props:building-')).length,
         waterfalls: d.level.sidecar.stats['waterfalls'],
         water: d.level.water.length,
         solids: d.level.collider.getTotalVertices() > 0,
         spawn: d.positionOf(),
       };
     });
-    // The village: seven houses and the well round a square the party wakes up in, solid.
-    expect(info.houses).toBe(7);
+    // The village (DESIGN 15.2): Meshy buildings and props along the street, the party
+    // waking in the square, every footprint solid.
+    expect(info.props).toBeGreaterThan(35);
+    expect(info.propModels).toEqual(
+      expect.arrayContaining(['building-inn', 'building-temple', 'prop-well']),
+    );
+    expect(info.buildings).toBeGreaterThanOrEqual(10);
     // The brook steps down the ravine: a waterfall per terrace, pools plus the river.
     expect(info.waterfalls).toBeGreaterThanOrEqual(5);
     expect(info.water).toBe(info.waterfalls! + 2);

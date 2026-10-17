@@ -120,6 +120,15 @@ async function buildTerrain(id: string, validate: boolean): Promise<boolean> {
       round(t.yaw),
       round(t.scale),
     ]),
+    propModels: [...new Set(level.props.map((p) => p.model))],
+    props: level.props.map((p) => [
+      [...new Set(level.props.map((q) => q.model))].indexOf(p.model),
+      round(p.x),
+      round(p.y),
+      round(p.z),
+      round(p.yaw),
+      round(p.scale),
+    ]),
     spawn: level.spawn,
     points: level.points,
     lights: level.lights,
@@ -137,7 +146,7 @@ async function buildTerrain(id: string, validate: boolean): Promise<boolean> {
         .filter((c) => c.lod === 0)
         .reduce((n, c) => n + c.mesh.indices.length / 3, 0),
       trees: level.trees.length,
-      houses: level.town?.houses.length ?? 0,
+      props: level.props.length,
       portals: level.portals.length,
       spawns: level.spawns.length,
       waterfalls: level.waterfalls.length,
@@ -158,7 +167,7 @@ async function buildTerrain(id: string, validate: boolean): Promise<boolean> {
   console.info(
     [
       `${id}: ${sidecar.stats.triangles} terrain tris at full detail, ${level.trees.length} trees ` +
-        `(${sidecar.stats.forestTriangles} tris), ${sidecar.stats.houses} houses ` +
+        `(${sidecar.stats.forestTriangles} tris), ${sidecar.stats.props} props ` +
         `(${sidecar.stats.visualTriangles} tris), ${(glb.byteLength / 1024 / 1024).toFixed(1)} MB glb, ` +
         `${sidecar.stats.navTriangles} nav tris, heights ${sidecar.stats.heightMin} to ${sidecar.stats.heightMax} m`,
       `  generate ${ms(t0, t1)}, nav ${ms(t1, t2)}, glb ${ms(t2, t3)}`,

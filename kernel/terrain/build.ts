@@ -19,7 +19,7 @@ import type { Heightfield } from './heightfield';
 import { appendMesh, terrainMesh, type ColouredMeshData } from './mesh';
 import { riverSurface } from './river';
 import { streamFalls, streamSurfaces } from './stream';
-import { buildTown, type TownResult } from './town';
+import type { PropPlacement, VillageLayout } from './village';
 import { forestMeshes, placeTrees, type ForestOptions, type TreeInstance } from './trees';
 import { generateValley, type ValleyResult } from './valley';
 
@@ -63,9 +63,11 @@ export interface TerrainLevel {
   chunks: TerrainChunk[];
   /** The ring of far mountains beyond the map edge; drawn, never collided with. */
   backdrop: ColouredMeshData;
-  /** Structures: houses, the well, the cave; chunked by the exporter's centroid grouping. */
+  /** Generated structures (the cave mouth); chunked by the exporter's centroid grouping. */
   visual: MeshData;
-  town?: TownResult;
+  village?: VillageLayout;
+  /** Meshy models placed in the world: buildings, props, rocks (DESIGN.md 10.3). */
+  props: PropPlacement[];
   /** Forest geometry, for statistics; trees ship as instances. */
   forest: MeshData;
   trees: TreeInstance[];
@@ -176,19 +178,12 @@ function buildValleyLevel(spec: TerrainSpec): TerrainLevel {
         valley.ravine.nearest(t.x, t.z).distance < 150,
     ),
   ).collider;
-  const town = buildTown({
-    centre: valley.town.centre,
-    y: valley.town.y,
-    radius: valley.town.radius,
-    seed: spec.seed,
-    roadDirection: valley.town.roadDirection,
-  });
+  const village = valley.village;
   const cave = caveMouth(valley.cave);
   const visual = empty();
-  appendPlain(visual, town.visual);
   appendPlain(visual, cave.visual);
   const solids = empty();
-  appendPlain(solids, town.collider);
+  appendPlain(solids, village.collider);
   appendPlain(solids, cave.collider);
   const half = spec.width / 2;
   const bounds = {
@@ -221,13 +216,15 @@ function buildValleyLevel(spec: TerrainSpec): TerrainLevel {
       openings: [{ x: pass[0], z: pass[2], radius: 320, floor: pass[1] - 120 }],
     }),
     visual,
-    town,
+    village,
+    props: village.props,
     forest: forest.visual,
     trees,
     collider: navCollider(valley, navTrunks, solids),
     solids,
     lights: [
       { position: cave.light, color: [1, 0.62, 0.3], range: 10, intensity: 2.5, kind: 'glow' },
+      ...village.lights,
     ],
     portals: [
       {
@@ -316,6 +313,7 @@ function buildDesertLevel(spec: TerrainSpec): TerrainLevel {
     trees: desert.trees,
     collider: navCollider(desert, forest.collider),
     solids,
+    props: [],
     lights: [],
     portals: [
       {

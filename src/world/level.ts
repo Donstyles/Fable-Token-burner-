@@ -18,9 +18,12 @@ import type { ShaderMaterial } from '@babylonjs/core/Materials/shaderMaterial';
 import type { Scene } from '@babylonjs/core/scene';
 import type { PointLightDesc, RetroMaterials } from '../render/materials';
 import { ROLE } from '../../kernel/elements/roles';
-import { TREE_KINDS, treeMesh } from '../../kernel/terrain/trees';
+import { TREE_KINDS } from '../../kernel/terrain/trees';
+import { PROPS, treesOfClass } from '../../kernel/terrain/props';
+import { CATALOGUE, loadPropModels, pickModel } from './props';
 import { Matrix, Quaternion } from '@babylonjs/core/Maths/math.vector';
 import {
+  PhysicsShapeBox,
   PhysicsShapeContainer,
   PhysicsShapeCylinder,
 } from '@babylonjs/core/Physics/v2/physicsShape';
@@ -83,6 +86,10 @@ export interface LevelSidecar {
   lod?: { chunk: number; distances: [number, number]; forestFar: number };
   /** Trees as [kind (an index into TREE_KINDS), x, y, z, yaw, scale] in kernel space. */
   trees?: [number, number, number, number, number, number][];
+  /** Meshy prop models placed by `props`, by index (DESIGN.md 10.3). */
+  propModels?: string[];
+  /** Buildings, rocks and small props as [model, x, y, z, yaw, scale] in kernel space. */
+  props?: [number, number, number, number, number, number][];
   spawn: { position: V3; yawDeg: number };
   points: { name: string; position: V3; kind: string }[];
   /** Doors to other levels (DESIGN.md 15.3). */
@@ -281,7 +288,8 @@ export async function loadLevel(
   const visual = find('visual');
   // Outdoor forests are env-lit; their vertex colours, if any, are not baked light.
   const bakedVisual = !sidecar.outdoor;
-  const forestChunks: { meshes: Mesh[]; centre: Vector3 }[] = [];
+  // Instanced things switched by distance from the eye: near detail, far detail, off.
+  const forestChunks: { near: Mesh[]; far: Mesh[]; centre: Vector3; keep?: boolean }[] = [];
   for (const chunk of visual?.children ?? []) {
     const group: Mesh[] = [];
     chunk.primitives.forEach((p, i) => {
@@ -296,7 +304,7 @@ export async function loadLevel(
     });
     if (sidecar.outdoor && group.length) {
       const b = group[0]!.getBoundingInfo().boundingBox;
-      forestChunks.push({ meshes: group, centre: b.centerWorld.clone() });
+      forestChunks.push({ near: group, far: [], centre: b.centerWorld.clone() });
     }
   }
   // Terrain chunks: one mesh per detail level; `update` enables the one for the distance.
@@ -344,127 +352,177 @@ export async function loadLevel(
   // switched off. Trunks collide as static bodies of cylinders, one per 200 m cell, built
   // the first time the eye comes within 60 m of the cell: thirteen thousand trees then cost
   // the load nothing, and the party never walks through a trunk it can reach.
+  // Static colliders for trunks, buildings and rocks: one body per 200 m cell, built the
+  // first time the eye comes within 60 m of the cell, so ten thousand trees cost the load
+  // nothing and the party never walks through a trunk or a wall it can reach.
   const physicsBodies: PhysicsBody[] = [];
-  const TRUNK_CELL = 200;
-  const trunkBuckets = new Map<string, [number, number, number, number][]>();
-  const trunkCellsBuilt = new Set<string>();
-  const buildTrunksNear = (eye: Vector3): void => {
-    if (!trunkBuckets.size) return;
-    const cx = Math.floor(eye.x / TRUNK_CELL);
-    const cz = Math.floor(eye.z / TRUNK_CELL);
+  const CELL = 200;
+  type Cylinder = { kind: 'cylinder'; x: number; y: number; z: number; r: number; h: number };
+  type Box = { kind: 'box'; centre: Vector3; yaw: number; extents: Vector3 };
+  const colliderBuckets = new Map<string, (Cylinder | Box)[]>();
+  const cellKey = (x: number, z: number): string =>
+    `${Math.floor(x / CELL)}:${Math.floor(z / CELL)}`;
+  const addCollider = (x: number, z: number, c: Cylinder | Box): void => {
+    const k = cellKey(x, z);
+    (colliderBuckets.get(k) ?? colliderBuckets.set(k, []).get(k)!).push(c);
+  };
+  const cellsBuilt = new Set<string>();
+  const buildCollidersNear = (eye: Vector3): void => {
+    if (!colliderBuckets.size) return;
+    const cx = Math.floor(eye.x / CELL);
+    const cz = Math.floor(eye.z / CELL);
     for (let x = cx - 1; x <= cx + 1; x++) {
       for (let z = cz - 1; z <= cz + 1; z++) {
         const key = `${x}:${z}`;
-        if (trunkCellsBuilt.has(key)) continue;
-        const dx = Math.max(x * TRUNK_CELL - eye.x, 0, eye.x - (x + 1) * TRUNK_CELL);
-        const dz = Math.max(z * TRUNK_CELL - eye.z, 0, eye.z - (z + 1) * TRUNK_CELL);
+        if (cellsBuilt.has(key)) continue;
+        const dx = Math.max(x * CELL - eye.x, 0, eye.x - (x + 1) * CELL);
+        const dz = Math.max(z * CELL - eye.z, 0, eye.z - (z + 1) * CELL);
         if (dx * dx + dz * dz > 60 * 60) continue;
-        trunkCellsBuilt.add(key);
-        const trees = trunkBuckets.get(key);
-        if (!trees?.length) continue;
-        const trunkRoot = new TransformNode(`level-trunks:${key}`, scene);
-        trunkRoot.parent = root;
+        cellsBuilt.add(key);
+        const shapes = colliderBuckets.get(key);
+        if (!shapes?.length) continue;
+        const cellRoot = new TransformNode(`level-colliders:${key}`, scene);
+        cellRoot.parent = root;
         const container = new PhysicsShapeContainer(scene);
-        for (const [sx, y, z2, scale] of trees) {
-          const shape = new PhysicsShapeCylinder(
-            new Vector3(sx, y, z2),
-            new Vector3(sx, y + 3.6 * scale, z2),
-            0.32 * scale,
-            scene,
-          );
-          container.addChildFromParent(trunkRoot, shape, trunkRoot);
+        for (const c of shapes) {
+          const shape =
+            c.kind === 'cylinder'
+              ? new PhysicsShapeCylinder(
+                  new Vector3(c.x, c.y, c.z),
+                  new Vector3(c.x, c.y + c.h, c.z),
+                  c.r,
+                  scene,
+                )
+              : new PhysicsShapeBox(
+                  c.centre,
+                  Quaternion.RotationAxis(Vector3.Up(), c.yaw),
+                  c.extents.scale(2),
+                  scene,
+                );
+          container.addChildFromParent(cellRoot, shape, cellRoot);
         }
-        const body = new PhysicsBody(trunkRoot, PhysicsMotionType.STATIC, false, scene);
+        const body = new PhysicsBody(cellRoot, PhysicsMotionType.STATIC, false, scene);
         body.shape = container;
         physicsBodies.push(body);
       }
     }
   };
-  if (sidecar.outdoor && sidecar.trees?.length) {
+  // Forests, rocks, bushes and buildings: Meshy models (DESIGN.md 10.3) drawn as thin
+  // instances in six by six regions, each region with a near and a far copy of every model,
+  // switched by distance so the whole valley's forest costs a few draw calls.
+  const propPlacements: { model: string; position: Vector3; yaw: number; scale: number }[] = [];
+  if (sidecar.outdoor && (sidecar.trees?.length || sidecar.props?.length)) {
     const half = Math.max(
       Math.abs(sidecar.bounds.min[0]),
       Math.abs(sidecar.bounds.max[0]),
       Math.abs(sidecar.bounds.min[2]),
       Math.abs(sidecar.bounds.max[2]),
     );
-    // Six by six regions: from any spawn a good share of the map lies beyond forestFar.
     const regions = 6;
     const regionSize = (2 * half) / regions;
-    const kinds = TREE_KINDS;
-    const buckets = new Map<string, Matrix[]>();
-    for (const [kind, kx, ky, kz, yaw, scale] of sidecar.trees) {
-      const rx = Math.min(regions - 1, Math.floor((kx + half) / regionSize));
-      const rz = Math.min(regions - 1, Math.floor((kz + half) / regionSize));
-      const key = `${kind}:${rx}:${rz}`;
+    // Instances per model per region; buildings in one bucket each, never switched off.
+    const buckets = new Map<
+      string,
+      { model: string; rx: number; rz: number; matrices: Matrix[] }
+    >();
+    const place = (
+      model: string,
+      kx: number,
+      ky: number,
+      kz: number,
+      yaw: number,
+      scale: number,
+      keep: boolean,
+    ): void => {
+      const rx = keep ? -1 : Math.min(regions - 1, Math.floor((kx + half) / regionSize));
+      const rz = keep ? -1 : Math.min(regions - 1, Math.floor((kz + half) / regionSize));
+      const key = `${model}:${rx}:${rz}`;
       // Kernel space is mirrored on X: position and yaw flip with it.
       const m = Matrix.Compose(
         new Vector3(scale, scale, scale),
         Quaternion.RotationAxis(Vector3.Up(), -yaw),
         new Vector3(-kx, ky, kz),
       );
-      (buckets.get(key) ?? buckets.set(key, []).get(key)!).push(m);
-      const tk = `${Math.floor(-kx / TRUNK_CELL)}:${Math.floor(kz / TRUNK_CELL)}`;
-      (trunkBuckets.get(tk) ?? trunkBuckets.set(tk, []).get(tk)!).push([-kx, ky, kz, scale]);
+      (
+        buckets.get(key) ?? buckets.set(key, { model, rx, rz, matrices: [] }).get(key)!
+      ).matrices.push(m);
+    };
+    for (const [kind, kx, ky, kz, yaw, scale] of sidecar.trees ?? []) {
+      const cls = TREE_KINDS[kind];
+      if (!cls) throw new Error(`tree kind ${kind} is not in TREE_KINDS`);
+      const model = pickModel(treesOfClass(cls), kx, kz);
+      place(model, kx, ky, kz, yaw, scale, false);
+      const trunk = (PROPS[model]?.trunk ?? 0.3) * scale;
+      addCollider(-kx, kz, { kind: 'cylinder', x: -kx, y: ky, z: kz, r: trunk, h: 4 });
     }
-    buildTrunksNear(toBabylon(sidecar.spawn.position));
-    const protoData = kinds.map((kind) => {
-      const data = treeMesh(kind);
-      // One Babylon mesh per material role of the prototype.
-      const byRole = new Map<
-        number,
-        { positions: number[]; normals: number[]; uvs: number[]; indices: number[] }
-      >();
-      for (let t = 0; t < data.materials.length; t++) {
-        const role = data.materials[t]!;
-        const g = byRole.get(role) ?? { positions: [], normals: [], uvs: [], indices: [] };
-        byRole.set(role, g);
-        for (let k = 0; k < 3; k++) {
-          const vi = data.indices[t * 3 + k]!;
-          g.indices.push(g.positions.length / 3);
-          g.positions.push(
-            -data.positions[vi * 3]!,
-            data.positions[vi * 3 + 1]!,
-            data.positions[vi * 3 + 2]!,
-          );
-          g.normals.push(
-            -data.normals[vi * 3]!,
-            data.normals[vi * 3 + 1]!,
-            data.normals[vi * 3 + 2]!,
-          );
-          g.uvs.push(data.uvs[vi * 2]!, data.uvs[vi * 2 + 1]!);
-        }
+    const propModels = sidecar.propModels ?? [];
+    for (const [mi, kx, ky, kz, yaw, scale] of sidecar.props ?? []) {
+      const model = propModels[mi];
+      if (!model) throw new Error(`prop model ${mi} is not in propModels`);
+      const spec = PROPS[model];
+      const measure = CATALOGUE[model];
+      if (!spec || !measure) throw new Error(`prop ${model}: not in the catalogue`);
+      const keep = spec.kind === 'building';
+      place(model, kx, ky, kz, yaw, scale, keep);
+      propPlacements.push({ model, position: new Vector3(-kx, ky, kz), yaw: -yaw, scale });
+      if (spec.kind === 'building' || spec.kind === 'rock' || spec.kind === 'prop') {
+        // A box round the model's footprint; the loader mirrors x, hence the sign.
+        const [w, h, d] = measure.size;
+        const lx = -(measure.min[0] + w / 2) * scale;
+        const lz = (measure.min[2] + d / 2) * scale;
+        const c = Math.cos(-yaw);
+        const sn = Math.sin(-yaw);
+        const centre = new Vector3(
+          -kx + lx * c + lz * sn,
+          ky + (h * scale) / 2,
+          kz - lx * sn + lz * c,
+        );
+        addCollider(centre.x, centre.z, {
+          kind: 'box',
+          centre,
+          yaw: -yaw,
+          extents: new Vector3((w * scale) / 2, (h * scale) / 2, (d * scale) / 2),
+        });
       }
-      return byRole;
-    });
-    for (const [key, matrices] of buckets) {
-      const [kindIndex, rx, rz] = key.split(':').map(Number) as [number, number, number];
-      const group: Mesh[] = [];
-      for (const [role, g] of protoData[kindIndex]!) {
-        const mesh = new Mesh(`forest:${key}:${role}`, scene);
-        const vd = new VertexData();
-        vd.positions = new Float32Array(g.positions);
-        vd.normals = new Float32Array(g.normals);
-        vd.uvs = new Float32Array(g.uvs);
-        vd.indices = new Uint32Array(g.indices);
-        vd.applyToMesh(mesh, false);
-        const buffer = new Float32Array(matrices.length * 16);
-        matrices.forEach((m, i) => m.copyToArray(buffer, i * 16));
+    }
+    buildCollidersNear(toBabylon(sidecar.spawn.position));
+    const models = await loadPropModels(
+      scene,
+      materials,
+      [...buckets.values()].map((b) => b.model),
+    );
+    for (const [key, bucket] of buckets) {
+      const model = models.get(bucket.model)!;
+      const buffer = new Float32Array(bucket.matrices.length * 16);
+      bucket.matrices.forEach((m, i) => m.copyToArray(buffer, i * 16));
+      const instanced = (proto: Mesh, suffix: string): Mesh => {
+        const mesh = proto.clone(`props:${key}${suffix}`, null);
+        // A clone shares its source's geometry, and thin-instance buffers hang off the
+        // geometry: without its own copy every bucket of a model would draw the matrices
+        // of whichever bucket set them last.
+        mesh.makeGeometryUnique();
+        mesh.isVisible = true;
         mesh.thinInstanceSetBuffer('matrix', buffer, 16, true);
         mesh.thinInstanceRefreshBoundingInfo(false);
-        mesh.material = materialFor(role, false);
         mesh.parent = root;
         mesh.isPickable = false;
         meshes.push(mesh);
-        group.push(mesh);
-      }
-      const centre = new Vector3(
-        -(-half + (rx + 0.5) * regionSize),
-        0,
-        -half + (rz + 0.5) * regionSize,
-      );
-      forestChunks.push({ meshes: group, centre });
+        return mesh;
+      };
+      const near = [instanced(model.mesh, '')];
+      const far = model.far ? [instanced(model.far, ':far')] : [];
+      const keep = bucket.rx < 0;
+      const centre = keep
+        ? Vector3.Zero()
+        : new Vector3(
+            -(-half + (bucket.rx + 0.5) * regionSize),
+            0,
+            -half + (bucket.rz + 0.5) * regionSize,
+          );
+      forestChunks.push({ near, far, centre, keep });
     }
   }
+  const forestNear = 260;
   const lodDistances = sidecar.lod?.distances ?? [300, 700];
   const forestFar = sidecar.lod?.forestFar ?? 700;
   let lastEye: Vector3 | null = null;
@@ -615,7 +673,7 @@ export async function loadLevel(
       navOverlay().setEnabled(on);
     },
     update(eye) {
-      buildTrunksNear(eye);
+      buildCollidersNear(eye);
       if (!sidecar.outdoor) return;
       if (lastEye && Vector3.DistanceSquared(lastEye, eye) < 4) return;
       lastEye = eye.clone();
@@ -627,9 +685,11 @@ export async function loadLevel(
         c.lods.forEach((m, i) => m.setEnabled(i === want));
       }
       for (const f of forestChunks) {
+        if (f.keep) continue;
         const d = Math.hypot(f.centre.x - eye.x, f.centre.z - eye.z);
-        const on = d < forestFar;
-        for (const m of f.meshes) m.setEnabled(on);
+        const near = d < forestNear || (f.far.length === 0 && d < forestFar);
+        for (const m of f.near) m.setEnabled(near);
+        for (const m of f.far) m.setEnabled(!near && d < forestFar);
       }
     },
     setLiveLights(on, scale = 1) {

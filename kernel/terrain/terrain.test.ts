@@ -11,7 +11,11 @@ import { CAVE, caveLocalOf, caveMouth } from './cave';
 import { generateDesert } from './desert';
 import { headingDeg } from './spline';
 import { streamFalls, streamSurfaces } from './stream';
-import { buildTown } from './town';
+import { layoutVillage, type PropPlacement } from './village';
+import catalogueJson from '../../assets/props/catalogue.json';
+import type { PropCatalogue } from './props';
+
+const CATALOGUE = catalogueJson as unknown as PropCatalogue;
 import { forestMeshes, placeTrees, treeMesh } from './trees';
 import { generateValley, WATER_LEVEL } from './valley';
 
@@ -141,45 +145,73 @@ describe('valley', () => {
 });
 
 describe('village', () => {
-  it('rings the well with houses, leaving the road slot open, doors to the square', () => {
-    const town = buildTown({ centre: [100, -50], y: 12, radius: 40, seed: 3, roadDirection: 0 });
-    expect(town.houses).toHaveLength(7);
-    expect(town.well).toEqual([100, -50]);
-    expect(town.visual.indices.length / 3).toBeGreaterThan(500);
-    expect(town.collider.indices.length / 3).toBeGreaterThan(50);
-    for (const h of town.houses) {
-      const angle = Math.atan2(h.z + 50, h.x - 100);
-      // Nothing within the road's slot (±22.5° of +X).
-      expect(Math.abs(angle)).toBeGreaterThan(Math.PI / 8 - 1e-6);
-      // The door (local +Z) points at the well.
-      const door = [-Math.sin(h.yaw), Math.cos(h.yaw)];
-      const toWell = [100 - h.x, -50 - h.z];
-      const len = Math.hypot(toWell[0]!, toWell[1]!);
-      const dot = (door[0]! * toWell[0]! + door[1]! * toWell[1]!) / len;
+  it('lays the street through a square with the inn and store, the temple on a knoll', () => {
+    const v = layoutVillage({ centre: [100, -50], along: [0, 1], y: 12, roadHalf: 5 });
+    const by = (model: string): PropPlacement[] => v.props.filter((p) => p.model === model);
+    expect(by('building-inn')).toHaveLength(1);
+    expect(by('building-store')).toHaveLength(1);
+    expect(by('building-temple')).toHaveLength(1);
+    expect(by('building-smithy')).toHaveLength(1);
+    expect(by('prop-well')).toHaveLength(1);
+    expect(by('prop-fence').length).toBeGreaterThan(10);
+    // Nothing stands on the street itself (within the road's half width of its centre line).
+    for (const p of v.props) {
+      const m = CATALOGUE[p.model]!;
+      const across = Math.abs(p.x - 100);
+      expect(across).toBeGreaterThan(5 + Math.min(m.size[0], m.size[2]) / 2 - 0.01);
+    }
+    // Buildings face the street: the door (local +Z, facing (-sin yaw, cos yaw)) points
+    // across to the centre line.
+    for (const p of v.props.filter((q) => q.model.startsWith('building-'))) {
+      const face = [-Math.sin(p.yaw), Math.cos(p.yaw)];
+      const toStreet = [100 - p.x, 0];
+      const dot = face[0]! * Math.sign(toStreet[0]!);
       expect(dot).toBeGreaterThan(0.95);
-      expect(h.y).toBe(12);
+    }
+    // The temple rises on its knoll; everything else sits on the floor.
+    const temple = by('building-temple')[0]!;
+    expect(temple.y).toBeCloseTo(14.5);
+    expect(by('building-inn')[0]!.y).toBe(12);
+    expect(v.pads.find((pad) => pad.rise > 0)).toBeTruthy();
+    // Footprint boxes for the navmesh: at least one per building and prop.
+    expect(v.collider.indices.length / 3).toBeGreaterThan(v.props.length * 10);
+    // Lanterns light the square; the forge glows.
+    expect(v.lights.filter((l) => l.kind === 'lantern')).toHaveLength(2);
+    expect(v.lights.filter((l) => l.kind === 'glow')).toHaveLength(1);
+    // No two buildings overlap.
+    const buildings = v.props.filter((q) => q.model.startsWith('building-'));
+    for (let i = 0; i < buildings.length; i++) {
+      for (let j = i + 1; j < buildings.length; j++) {
+        const a = buildings[i]!;
+        const b = buildings[j]!;
+        const ra = Math.max(...CATALOGUE[a.model]!.size) / 2;
+        const rb = Math.max(...CATALOGUE[b.model]!.size) / 2;
+        expect(Math.hypot(a.x - b.x, a.z - b.z)).toBeGreaterThan(Math.min(ra, rb));
+      }
     }
   });
 
-  it('sits on a level square at the start of the road, clear of trees', () => {
-    const v = generateValley({ seed: 7, width: 1024, cell: 16 });
-    const { centre, y, radius } = v.town;
-    expect(v.road.at(0)).toEqual(centre);
-    for (let a = 0; a < Math.PI * 2; a += 0.7) {
-      for (const r of [0, radius * 0.35, radius * 0.7]) {
-        const h = v.height.sample(centre[0] + Math.cos(a) * r, centre[1] + Math.sin(a) * r);
-        expect(Math.abs(h - y)).toBeLessThan(0.5);
-      }
-    }
+  it('sits on a level floor along the street, pads dead level, clear of trees', () => {
+    // Real cell size: a cottage's pad is narrower than a sixteen-metre cell.
+    const v = generateValley({ seed: 7, width: 1024, cell: 5 });
+    const { centre, y } = v.town;
+    expect(v.road.nearest(centre[0], centre[1]).distance).toBeLessThan(1);
     expect(y).toBeGreaterThan(WATER_LEVEL + 2);
-    const town = v.points.find((p) => p.name === 'town')!;
-    expect(Math.hypot(town.position[0] - centre[0], town.position[2] - centre[1])).toBeCloseTo(
-      8,
-      0,
-    );
-    for (const t of placeTrees(v)) {
-      expect(Math.hypot(t.x - centre[0], t.z - centre[1])).toBeGreaterThan(radius + 10);
+    for (const pad of v.village.pads) {
+      const h = v.height.sample(pad.x, pad.z);
+      expect(Math.abs(h - (y + pad.rise))).toBeLessThan(0.6);
     }
+    const town = v.points.find((p) => p.name === 'town')!;
+    expect(Math.hypot(town.position[0] - centre[0], town.position[2] - centre[1])).toBeLessThan(2);
+    expect(v.points.find((p) => p.name === 'square')).toBeTruthy();
+    expect(v.points.find((p) => p.name === 'temple')).toBeTruthy();
+    for (const t of placeTrees(v)) {
+      expect(Math.hypot(t.x - centre[0], t.z - centre[1])).toBeGreaterThan(30);
+    }
+    // The party wakes in the square looking back along the street.
+    expect(
+      Math.hypot(v.spawn.position[0] - centre[0], v.spawn.position[2] - centre[1]),
+    ).toBeLessThan(15);
   });
 });
 
