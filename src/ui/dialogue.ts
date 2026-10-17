@@ -121,7 +121,7 @@ export function createDialogue(
     }
     // Farewell ends the list as a line of it (critics, round 8: MM6 had no gold pill).
     const foot = el('div', 'dlg-foot');
-    const bye = el('button', 'dlg-topic dlg-bye', 'Farewell');
+    const bye = el('button', 'dlg-bye', 'Farewell');
     bye.type = 'button';
     bye.addEventListener('click', (e) => {
       e.preventDefault();

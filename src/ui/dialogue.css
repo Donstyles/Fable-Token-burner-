@@ -128,7 +128,8 @@
   gap: 1px;
   padding-top: 4px;
 }
-.dlg-topic {
+.dlg-topic,
+.dlg-bye {
   appearance: none;
   background: none;
   border: 0;
@@ -142,10 +143,12 @@
   text-align: center;
   cursor: pointer;
 }
-.dlg-topic:active {
+.dlg-topic:active,
+.dlg-bye:active {
   transform: translateY(1px);
 }
 .dlg-topic:active,
+.dlg-bye:active,
 .dlg-topic.said {
   color: var(--ink-yellow);
 }
@@ -154,7 +157,7 @@
   justify-content: center;
   padding-top: 6px;
 }
-.dlg-foot .dlg-topic {
+.dlg-foot .dlg-bye {
   min-height: 30px;
   padding: 2px 18px;
 }
