@@ -362,6 +362,149 @@
       "balanceAfter": 2195,
       "consumedCredits": 15,
       "finished": "2026-10-17T10:45:36.480Z"
+    },
+    {
+      "started": "2026-10-17T10:53:46.654Z",
+      "taskIds": [
+        "01a1497f-1beb-75b3-a111-54f800194d97",
+        "01a14980-6f6f-7210-babe-cef727699316",
+        "01a14980-aeeb-7492-8ccf-022bfe91ff2a",
+        "01a14981-1a4f-7476-b298-9f3e4e1b7b2e",
+        "01a14982-3ed5-70d2-95e8-2d53abbe4036",
+        "01a14982-7bb8-71ee-a2c1-c9112301ee20",
+        "01a14982-e1e4-7444-809c-28c7197b87ae",
+        "01a14984-2798-73ca-a2c0-67a57a04e636",
+        "01a14984-6228-758f-bdba-89667eeefbad",
+        "01a14984-c1ff-74a1-863a-a99075cc39c2",
+        "01a14985-e7d5-72a9-b7c4-10474b242741",
+        "01a14986-2180-7124-af04-109e7160c256",
+        "01a14986-5d13-703c-856d-360ff4eff507",
+        "01a14987-89ab-7655-ba63-10386d209563",
+        "01a14987-c213-77d3-8416-274bd86668bc"
+      ],
+      "tasks": {
+        "goblin-scout": {
+          "image-to-3d": {
+            "taskId": "01a1497f-1beb-75b3-a111-54f800194d97",
+            "status": "SUCCEEDED",
+            "consumedCredits": 15,
+            "operationId": "b005-goblin-scout-image-to-3d-r2-a1"
+          },
+          "rig": {
+            "taskId": "01a14980-6f6f-7210-babe-cef727699316",
+            "status": "SUCCEEDED",
+            "consumedCredits": 5,
+            "operationId": "b005-goblin-scout-rig-r2-a1"
+          },
+          "animate": {
+            "taskId": "01a14980-aeeb-7492-8ccf-022bfe91ff2a",
+            "status": "SUCCEEDED",
+            "consumedCredits": 30,
+            "operationId": "b005-goblin-scout-animate-r2-a1"
+          }
+        },
+        "skeleton-warrior": {
+          "image-to-3d": {
+            "taskId": "01a14981-1a4f-7476-b298-9f3e4e1b7b2e",
+            "status": "SUCCEEDED",
+            "consumedCredits": 15,
+            "operationId": "b005-skeleton-warrior-image-to-3d-r2-a1"
+          },
+          "rig": {
+            "taskId": "01a14982-3ed5-70d2-95e8-2d53abbe4036",
+            "status": "SUCCEEDED",
+            "consumedCredits": 5,
+            "operationId": "b005-skeleton-warrior-rig-r2-a1"
+          },
+          "animate": {
+            "taskId": "01a14982-7bb8-71ee-a2c1-c9112301ee20",
+            "status": "SUCCEEDED",
+            "consumedCredits": 30,
+            "operationId": "b005-skeleton-warrior-animate-r2-a1"
+          }
+        },
+        "nomad-raider": {
+          "image-to-3d": {
+            "taskId": "01a14982-e1e4-7444-809c-28c7197b87ae",
+            "status": "SUCCEEDED",
+            "consumedCredits": 15,
+            "operationId": "b005-nomad-raider-image-to-3d-r2-a1"
+          },
+          "rig": {
+            "taskId": "01a14984-2798-73ca-a2c0-67a57a04e636",
+            "status": "SUCCEEDED",
+            "consumedCredits": 5,
+            "operationId": "b005-nomad-raider-rig-r2-a1"
+          },
+          "animate": {
+            "taskId": "01a14984-6228-758f-bdba-89667eeefbad",
+            "status": "SUCCEEDED",
+            "consumedCredits": 30,
+            "operationId": "b005-nomad-raider-animate-r2-a1"
+          }
+        },
+        "villager-man": {
+          "image-to-3d": {
+            "taskId": "01a14984-c1ff-74a1-863a-a99075cc39c2",
+            "status": "SUCCEEDED",
+            "consumedCredits": 15,
+            "operationId": "b005-villager-man-image-to-3d-r2-a1"
+          },
+          "rig": {
+            "taskId": "01a14985-e7d5-72a9-b7c4-10474b242741",
+            "status": "SUCCEEDED",
+            "consumedCredits": 5,
+            "operationId": "b005-villager-man-rig-r2-a1"
+          },
+          "animate": {
+            "taskId": "01a14986-2180-7124-af04-109e7160c256",
+            "status": "SUCCEEDED",
+            "consumedCredits": 9,
+            "operationId": "b005-villager-man-animate-r2-a1"
+          }
+        },
+        "villager-woman": {
+          "image-to-3d": {
+            "taskId": "01a14986-5d13-703c-856d-360ff4eff507",
+            "status": "SUCCEEDED",
+            "consumedCredits": 15,
+            "operationId": "b005-villager-woman-image-to-3d-r2-a1"
+          },
+          "rig": {
+            "taskId": "01a14987-89ab-7655-ba63-10386d209563",
+            "status": "SUCCEEDED",
+            "consumedCredits": 5,
+            "operationId": "b005-villager-woman-rig-r2-a1"
+          },
+          "animate": {
+            "taskId": "01a14987-c213-77d3-8416-274bd86668bc",
+            "status": "SUCCEEDED",
+            "consumedCredits": 9,
+            "operationId": "b005-villager-woman-animate-r2-a1"
+          }
+        }
+      },
+      "balanceBefore": 2195,
+      "attempts": {
+        "goblin-scout/image-to-3d": 1,
+        "goblin-scout/rig": 1,
+        "goblin-scout/animate": 1,
+        "skeleton-warrior/image-to-3d": 1,
+        "skeleton-warrior/rig": 1,
+        "skeleton-warrior/animate": 1,
+        "nomad-raider/image-to-3d": 1,
+        "nomad-raider/rig": 1,
+        "nomad-raider/animate": 1,
+        "villager-man/image-to-3d": 1,
+        "villager-man/rig": 1,
+        "villager-man/animate": 1,
+        "villager-woman/image-to-3d": 1,
+        "villager-woman/rig": 1,
+        "villager-woman/animate": 1
+      },
+      "balanceAfter": 1987,
+      "consumedCredits": 208,
+      "finished": "2026-10-17T11:03:30.634Z"
     }
   ],
   "imagesReviewed": true

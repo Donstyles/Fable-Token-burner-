@@ -423,6 +423,104 @@
       "notes": "batch 003; 254 triangles"
     },
     {
+      "id": "goblin-scout",
+      "kind": "character",
+      "source": "Meshy image-to-3D (smart topology) from the owner's concept image pipeline/inbox/goblin-scout.png",
+      "meshy": {
+        "taskIds": [
+          "01a1497f-1beb-75b3-a111-54f800194d97",
+          "01a14980-6f6f-7210-babe-cef727699316",
+          "01a14980-aeeb-7492-8ccf-022bfe91ff2a"
+        ],
+        "params": {
+          "imageTo3d": {
+            "model_type": "smart-topology",
+            "ai_model": "meshy-t2.5",
+            "target_polycount": 4000,
+            "pose_mode": "a-pose",
+            "should_texture": true,
+            "texture_resolution": "2k",
+            "enable_pbr": false,
+            "auto_size": true,
+            "origin_at": "bottom",
+            "target_formats": ["glb"]
+          },
+          "rig": {
+            "height_meters": 1.3
+          },
+          "animate": {
+            "clips": [
+              "idle",
+              "walk",
+              "run",
+              "attack_1",
+              "attack_2",
+              "hit",
+              "death",
+              "cast",
+              "talk",
+              "block"
+            ],
+            "action_ids": [0, 30, 14, 97, 240, 178, 188, 125, 313, 138]
+          }
+        },
+        "consumedCredits": 50
+      },
+      "licence": "Meshy output (paid plan): owner holds full rights",
+      "files": ["assets/characters/goblin-scout/goblin-scout.glb"],
+      "date": "2026-10-17",
+      "notes": "batch 005; 4234 triangles, 10 clips"
+    },
+    {
+      "id": "nomad-raider",
+      "kind": "character",
+      "source": "Meshy image-to-3D (smart topology) from the owner's concept image pipeline/inbox/nomad-raider.png",
+      "meshy": {
+        "taskIds": [
+          "01a14982-e1e4-7444-809c-28c7197b87ae",
+          "01a14984-2798-73ca-a2c0-67a57a04e636",
+          "01a14984-6228-758f-bdba-89667eeefbad"
+        ],
+        "params": {
+          "imageTo3d": {
+            "model_type": "smart-topology",
+            "ai_model": "meshy-t2.5",
+            "target_polycount": 4000,
+            "pose_mode": "a-pose",
+            "should_texture": true,
+            "texture_resolution": "2k",
+            "enable_pbr": false,
+            "auto_size": true,
+            "origin_at": "bottom",
+            "target_formats": ["glb"]
+          },
+          "rig": {
+            "height_meters": 1.75
+          },
+          "animate": {
+            "clips": [
+              "idle",
+              "walk",
+              "run",
+              "attack_1",
+              "attack_2",
+              "hit",
+              "death",
+              "cast",
+              "talk",
+              "block"
+            ],
+            "action_ids": [0, 30, 14, 97, 240, 178, 188, 125, 313, 138]
+          }
+        },
+        "consumedCredits": 50
+      },
+      "licence": "Meshy output (paid plan): owner holds full rights",
+      "files": ["assets/characters/nomad-raider/nomad-raider.glb"],
+      "date": "2026-10-17",
+      "notes": "batch 005; 4161 triangles, 10 clips"
+    },
+    {
       "id": "prop-cart",
       "kind": "prop",
       "source": "Meshy text-to-3D (smart topology, preview then refine)",
@@ -793,6 +891,55 @@
       "files": ["assets/props/rock-outcrop-01/rock-outcrop-01.glb"],
       "date": "2026-10-17",
       "notes": "batch 004; 524 triangles"
+    },
+    {
+      "id": "skeleton-warrior",
+      "kind": "character",
+      "source": "Meshy image-to-3D (smart topology) from the owner's concept image pipeline/inbox/skeleton-warrior.png",
+      "meshy": {
+        "taskIds": [
+          "01a14981-1a4f-7476-b298-9f3e4e1b7b2e",
+          "01a14982-3ed5-70d2-95e8-2d53abbe4036",
+          "01a14982-7bb8-71ee-a2c1-c9112301ee20"
+        ],
+        "params": {
+          "imageTo3d": {
+            "model_type": "smart-topology",
+            "ai_model": "meshy-t2.5",
+            "target_polycount": 4000,
+            "pose_mode": "a-pose",
+            "should_texture": true,
+            "texture_resolution": "2k",
+            "enable_pbr": false,
+            "auto_size": true,
+            "origin_at": "bottom",
+            "target_formats": ["glb"]
+          },
+          "rig": {
+            "height_meters": 1.75
+          },
+          "animate": {
+            "clips": [
+              "idle",
+              "walk",
+              "run",
+              "attack_1",
+              "attack_2",
+              "hit",
+              "death",
+              "cast",
+              "talk",
+              "block"
+            ],
+            "action_ids": [0, 30, 14, 97, 240, 178, 188, 125, 313, 138]
+          }
+        },
+        "consumedCredits": 50
+      },
+      "licence": "Meshy output (paid plan): owner holds full rights",
+      "files": ["assets/characters/skeleton-warrior/skeleton-warrior.glb"],
+      "date": "2026-10-17",
+      "notes": "batch 005; 4277 triangles, 10 clips"
     },
     {
       "id": "tree-beech-01",
@@ -1351,6 +1498,82 @@
       "files": ["assets/props/tree-willow-01/tree-willow-01.glb"],
       "date": "2026-10-17",
       "notes": "batch 003; 639 triangles"
+    },
+    {
+      "id": "villager-man",
+      "kind": "character",
+      "source": "Meshy image-to-3D (smart topology) from the owner's concept image pipeline/inbox/villager-man.png",
+      "meshy": {
+        "taskIds": [
+          "01a14984-c1ff-74a1-863a-a99075cc39c2",
+          "01a14985-e7d5-72a9-b7c4-10474b242741",
+          "01a14986-2180-7124-af04-109e7160c256"
+        ],
+        "params": {
+          "imageTo3d": {
+            "model_type": "smart-topology",
+            "ai_model": "meshy-t2.5",
+            "target_polycount": 4000,
+            "pose_mode": "a-pose",
+            "should_texture": true,
+            "texture_resolution": "2k",
+            "enable_pbr": false,
+            "auto_size": true,
+            "origin_at": "bottom",
+            "target_formats": ["glb"]
+          },
+          "rig": {
+            "height_meters": 1.75
+          },
+          "animate": {
+            "clips": ["idle", "walk", "talk"],
+            "action_ids": [0, 30, 313]
+          }
+        },
+        "consumedCredits": 29
+      },
+      "licence": "Meshy output (paid plan): owner holds full rights",
+      "files": ["assets/characters/villager-man/villager-man.glb"],
+      "date": "2026-10-17",
+      "notes": "batch 005; 4190 triangles, 3 clips"
+    },
+    {
+      "id": "villager-woman",
+      "kind": "character",
+      "source": "Meshy image-to-3D (smart topology) from the owner's concept image pipeline/inbox/villager-woman.png",
+      "meshy": {
+        "taskIds": [
+          "01a14986-5d13-703c-856d-360ff4eff507",
+          "01a14987-89ab-7655-ba63-10386d209563",
+          "01a14987-c213-77d3-8416-274bd86668bc"
+        ],
+        "params": {
+          "imageTo3d": {
+            "model_type": "smart-topology",
+            "ai_model": "meshy-t2.5",
+            "target_polycount": 4000,
+            "pose_mode": "a-pose",
+            "should_texture": true,
+            "texture_resolution": "2k",
+            "enable_pbr": false,
+            "auto_size": true,
+            "origin_at": "bottom",
+            "target_formats": ["glb"]
+          },
+          "rig": {
+            "height_meters": 1.65
+          },
+          "animate": {
+            "clips": ["idle", "walk", "talk"],
+            "action_ids": [0, 30, 313]
+          }
+        },
+        "consumedCredits": 29
+      },
+      "licence": "Meshy output (paid plan): owner holds full rights",
+      "files": ["assets/characters/villager-woman/villager-woman.glb"],
+      "date": "2026-10-17",
+      "notes": "batch 005; 4265 triangles, 3 clips"
     }
   ]
 }
