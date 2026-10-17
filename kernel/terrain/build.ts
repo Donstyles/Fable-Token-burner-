@@ -192,6 +192,7 @@ function buildValleyLevel(spec: TerrainSpec): TerrainLevel {
     return [p[0], valley.height.sample(p[0], p[1]), p[1]];
   };
   const back = road.nearest(...road.at(road.length - 10)).tangent;
+  const pass = at3(road.length - 4);
   return {
     region: 'valley',
     height: valley.height,
@@ -206,6 +207,8 @@ function buildValleyLevel(spec: TerrainSpec): TerrainLevel {
       peak: 950,
       snowLine: 280,
       edgeHeight: edgeSampler(valley.height, half),
+      // The pass opens onto the desert: the land beyond it drops to the desert's plateau.
+      openings: [{ x: pass[0], z: pass[2], radius: 320, floor: pass[1] - 120 }],
     }),
     visual,
     town,

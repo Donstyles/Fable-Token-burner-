@@ -791,7 +791,12 @@ generated from a seed by `kernel/terrain/` and compiled by
   edge height, giving way within 150 m to a profile averaged along the
   edge (a sharp ridge on the rim must not be extruded into a blade), rolls
   on for a few hundred metres, then climbs to ridged peaks (950 m in the
-  valley, 260 m low hills in the desert, no snow there).
+  valley, 260 m low hills in the desert, no snow there). The ring winds
+  counter-clockwise like the terrain (a first version was wound inside
+  out, so only the dark back faces drew). Openings: where the pass meets
+  the edge the rim gives way to lower land (120 m below the saddle) and
+  the ridges beyond stay low, so the pass looks out over the desert's
+  plateau rather than at a wall.
 - The fog is thinned to let it show: valley 0.0009, desert 0.0008 (from
   0.0017), so the far ridges two kilometres out read through the haze and
   the map's edge never shows as a cut. The fog colour is the sky's own

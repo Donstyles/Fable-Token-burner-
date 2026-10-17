@@ -365,6 +365,40 @@ describe('backdrop', () => {
     expect(up).toBeGreaterThan(0);
     expect(b.normals.filter((_, i) => i % 3 === 1).every((ny) => ny > 0)).toBe(true);
   });
+
+  it('opens onto lower land where a pass meets the edge', () => {
+    const spec = {
+      seed: 3,
+      half: 512,
+      rings: 6,
+      segments: 48,
+      reach: 2000,
+      peak: 800,
+      snowLine: 300,
+      edgeHeight: () => 250,
+    };
+    const closed = backdropMesh(spec);
+    const open = backdropMesh({ ...spec, openings: [{ x: -512, z: 0, radius: 300, floor: 130 }] });
+    // The vertex nearest the west edge's middle on each ring: the join is unchanged, the
+    // rings beyond sit far lower with the opening.
+    const west = (b: typeof closed, ring: number): number => {
+      let best = Infinity;
+      let y = 0;
+      for (let k = 0; k < 48; k++) {
+        const i = (ring * 48 + k) * 3;
+        if (b.positions[i]! >= 0) continue;
+        const d = Math.abs(b.positions[i + 2]!);
+        if (d < best) {
+          best = d;
+          y = b.positions[i + 1]!;
+        }
+      }
+      return y;
+    };
+    expect(west(open, 0)).toBeCloseTo(west(closed, 0));
+    expect(west(open, 3)).toBeLessThan(west(closed, 3) - 200);
+    expect(west(open, 6)).toBeLessThan(west(closed, 6) - 300);
+  });
 });
 
 describe('headings', () => {

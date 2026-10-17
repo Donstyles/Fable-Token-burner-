@@ -22,6 +22,12 @@ export interface BackdropSpec {
   snowLine: number;
   /** The map's height near its edge, so the ring joins it. */
   edgeHeight(x: number, z: number): number;
+  /**
+   * Where the ring opens onto lower land (a pass onto the desert): within `radius` of the
+   * point the land descends to `floor` instead of continuing the rim, and the ridges beyond
+   * stay low.
+   */
+  openings?: { x: number; z: number; radius: number; floor: number }[];
 }
 
 /** A point on the unit square's perimeter for u in [0, 1). */
@@ -65,10 +71,22 @@ export function backdropMesh(s: BackdropSpec): ColouredMeshData {
         smooth += s.edgeHeight(qx * (s.half - 12), qz * (s.half - 12));
       }
       smooth /= 7;
-      const profile = edge + (smooth - edge) * smoothstep(0, 0.12, t);
+      // An opening: the rim gives way to lower land and the ridges beyond stay low.
+      let open = 0;
+      let floor = smooth;
+      for (const o of s.openings ?? []) {
+        const d = Math.hypot(px * inner - o.x, pz * inner - o.z);
+        const w = 1 - smoothstep(o.radius * 0.35, o.radius, d);
+        if (w > open) {
+          open = w;
+          floor = o.floor;
+        }
+      }
+      const target = smooth + (floor - smooth) * open;
+      const profile = edge + (target - edge) * smoothstep(0, 0.12, t);
       // The land then rolls on for a few hundred metres before the ridges climb, so from a
       // summit near the edge the backdrop is a far range, not a wall of facets.
-      const climb = smoothstep(0.22, 0.75, t);
+      const climb = smoothstep(0.22, 0.75, t) * (1 - 0.85 * open);
       const ridgeLine = 0.35 + 0.65 * ridged(x, z, 900, s.seed);
       const roll = fbm(x, z, 220, s.seed + 2) * 30 * smoothstep(0, 0.2, t);
       const h =
