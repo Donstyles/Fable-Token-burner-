@@ -50,6 +50,12 @@ import { dust } from '../world/particles';
 import { CATALOGUE, loadPropModels, propLabel } from '../world/props';
 import { createStatusLine } from '../ui/status';
 import { Npc } from '../world/npc';
+import { Bust } from '../world/bust';
+import { createDialogue, type Dialogue } from '../ui/dialogue';
+import { DIALOGUES, QUESTS } from '../game/dialogue';
+import { questNotice } from '../ui/dialogue-model';
+import { handleQuestEvent } from '../game/quests';
+import { shareExperience } from '../game/experience';
 import { Soundscape } from '../world/soundscape';
 import { DOOR_REACH, VILLAGE_HOUSES } from '../game/content';
 import { loadGame, saveGame } from '../app/autosave';
@@ -115,6 +121,13 @@ export interface DevHandle {
   roster: Party;
   /** Attack a monster by name with the ready member, as a tap would; the log line or null. */
   attack(name: string): string | null;
+  /** Townsfolk in the level, for tests. */
+  npcs: Npc[];
+  dialogue: Dialogue;
+  /** The talking head, for tests. */
+  bust: Bust;
+  /** Talk to a villager by id, as a tap would; false when there is no such villager. */
+  talkTo(id: string): boolean;
 }
 
 const DEG = Math.PI / 180;
@@ -291,6 +304,7 @@ export async function startDev(app: App): Promise<DevHandle> {
   // pauses the world, as MM6's books did. Spell effects beyond healing are reported for now.
   const screens: Screens = installScreens(uiLayer, state, {
     now: () => simTime,
+    questDefs: QUESTS,
     onClose: () => saveGame(state),
     onRest: (kind) => {
       status.say(
@@ -317,6 +331,33 @@ export async function startDev(app: App): Promise<DevHandle> {
       status.say(`${caster} casts ${cast.spell}`);
     },
   });
+  // Talk (DESIGN.md 16.7): a tapped villager opens the wooden panel with their living face
+  // in its window and the world waits while they speak. A villager without a script keeps
+  // their line in the status bar.
+  const bust = new Bust(scene, canvas);
+  let talking: Npc | null = null;
+  const dialogue: Dialogue = createDialogue(uiLayer, state, QUESTS, {
+    onSpeak: () => talking?.say(),
+    onWindow: (rect) => bust.place(rect),
+    notice: (line) => status.say(line, 6000),
+    onClose: () => {
+      bust.hide();
+      talking = null;
+      screens.toggleButtonBar(true);
+      saveGame(state);
+    },
+  });
+  const talkTo = (npc: Npc): void => {
+    const def = DIALOGUES[npc.def.id];
+    if (!def) {
+      status.say(npc.greet(), 6000);
+      return;
+    }
+    talking = npc;
+    screens.toggleButtonBar(false);
+    bust.show(npc.character);
+    dialogue.open(npc.def, def);
+  };
   const partyTarget = {
     get position() {
       return party.position;
@@ -497,6 +538,15 @@ export async function startDev(app: App): Promise<DevHandle> {
     portals,
     screens,
     state,
+    npcs,
+    dialogue,
+    bust,
+    talkTo: (id) => {
+      const npc = npcs.find((n) => n.def.id === id);
+      if (!npc) return false;
+      talkTo(npc);
+      return true;
+    },
   };
 
   void startCombat();
@@ -525,6 +575,8 @@ export async function startDev(app: App): Promise<DevHandle> {
   // Tap feedback: outline the tapped mesh briefly.
   const flashing = new Map<Mesh, number>();
   const handleTap = (x: number, y: number): void => {
+    // While a villager talks the view takes no taps; the panel's own buttons do.
+    if (dialogue.isOpen()) return;
     const pick = scene.pick(x, y, (m) => m.isPickable && m.isVisible);
     const mesh = pick?.pickedMesh as Mesh | null;
     if (!mesh) return;
@@ -542,7 +594,7 @@ export async function startDev(app: App): Promise<DevHandle> {
     const d = pick?.distance ?? 0;
     const villager = npcs.find((n) => mesh.name.startsWith(`${n.character.node.name}:`));
     if (villager) {
-      status.say(villager.greet(), 6000);
+      talkTo(villager);
       return;
     }
     const monster = handle.monsters.find((m) => mesh.name.startsWith(`${m.name}:`));
@@ -611,9 +663,14 @@ export async function startDev(app: App): Promise<DevHandle> {
   scene.onBeforeRenderObservable.add(() => {
     // Hit stop (DESIGN.md 14.4): the world's step is zero for a few frames after a blow.
     // An open screen pauses the world; the hit stop also zeroes the step for a few frames.
-    const paused = screens.current() !== null;
-    const dt = paused ? 0 : feedback.update(Math.min(engine.getDeltaTime() / 1000, 0.05));
-    if (paused) stepper.timeScale = 0;
+    // A book opened from the HUD while a villager talks ends the talk first.
+    if (screens.current() !== null && dialogue.isOpen()) dialogue.close();
+    const talking_ = dialogue.isOpen();
+    const paused = screens.current() !== null || talking_;
+    const frameDt = Math.min(engine.getDeltaTime() / 1000, 0.05);
+    const dt = paused ? 0 : feedback.update(frameDt);
+    // A book stops the clips too; a talk lets the villager mouth their words.
+    if (paused) stepper.timeScale = talking_ ? 1 : 0;
     simTime += dt;
     const input = zones.consume();
     if (fly) {
@@ -669,7 +726,8 @@ export async function startDev(app: App): Promise<DevHandle> {
         strip.setClock(state.clock.minutes);
       }
     }
-    for (const n of npcs) n.update(dt, party.position);
+    for (const n of npcs) n.update(talking_ ? frameDt : dt, party.position);
+    if (talking_) bust.aim();
     if (dt > 0 && !fly) {
       const p = party.position;
       const moved = Math.hypot(p.x - lastPartyPos.x, p.z - lastPartyPos.z);
@@ -679,6 +737,16 @@ export async function startDev(app: App): Promise<DevHandle> {
     for (const m of handle.monsters) {
       m.update(dt, partyTarget, simTime);
       for (const ev of m.takeEvents()) {
+        if (ev.kind === 'death') {
+          // A kill pays its experience (DESIGN 14.3) and counts for any quest that wants it.
+          shareExperience(state.party, m.def.xp);
+          status.say(`${ev.text}; ${m.def.xp} experience`);
+          const kill = { kind: 'kill', monster: m.def.id } as const;
+          for (const change of handleQuestEvent(state.quests, QUESTS, kill)) {
+            status.say(questNotice(change, QUESTS), 6000);
+          }
+          continue;
+        }
         status.say(ev.text);
         if (ev.kind === 'miss') feedback.partyMissed();
       }

@@ -1,7 +1,7 @@
 /**
  * Townsfolk (DESIGN.md 16.2): a villager stands at their place, idles, turns to face the
- * party when it comes near, and answers a tap with a line in the status bar while the talk
- * clip plays. No quests yet; the lines are the village's voice until dialogue lands.
+ * party when it comes near, and talks when tapped: the talk panel (src/ui/dialogue.ts) for
+ * the villagers with a script, a line in the status bar for the rest.
  */
 import type { Vector3 } from '@babylonjs/core/Maths/math.vector';
 import type { NpcDef } from '../game/monsters';
@@ -36,9 +36,14 @@ export class Npc {
   greet(): string {
     const text = this.def.lines[this.line % this.def.lines.length]!;
     this.line += 1;
+    this.say();
+    return `${this.def.name}: ${text}`;
+  }
+
+  /** Mouth some words: the talk clip for a few seconds, then idle again. */
+  say(): void {
     this.talkUntil = this.time + TALK_SECONDS;
     if (this.character.clips.includes('talk')) this.character.play('talk');
-    return `${this.def.name}: ${text}`;
   }
 
   update(dt: number, party: Vector3): void {
