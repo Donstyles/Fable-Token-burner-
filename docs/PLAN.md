@@ -494,7 +494,11 @@ waterfalls and deserts, walkable end to end.
     measurements followed. **Round 6 scored 2026-10-17**: 4, 4, 5
     (talk), 3 (world), no. **Round 7 done 2026-10-17** (DESIGN 16.17):
     the palette filter by default, figured marble, measured tones
-    throughout, carved boxes, white type; the round-7 scoring follows.
+    throughout, carved boxes, white type. **Round 7 scored 2026-10-17**:
+    3, 4, 5 (talk), 4 (world), no; all three critics measured MM6's
+    surfaces as soft many-level clouds. **Round 8 done 2026-10-17**
+    (DESIGN 16.18): the shell's surfaces as value-noise clouds, measured
+    HUD tones, nearest upscale, no fog; the round-8 scoring follows.
 18. Remaining, in order: lasting buffs and Jump; weather states (rain, a
     sandstorm); music; the smith's hammer and the temple bell.
 

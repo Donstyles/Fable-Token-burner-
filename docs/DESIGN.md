@@ -1557,8 +1557,52 @@ lut-mm6.png`, since Phase 1, never the default until now). Every frame
   knots; a thin dark-gold line round the face over black with a harder
   key; "Greta the Goodwife" in MM6's blue.
 
+### 16.18 Round 8: surfaces as clouds (2026-10-17)
+
+Round 7 scored 3 (HUD), 4 (screens), 5 (talk) and 4 (world), verdict no.
+All three critics measured the same thing: MM6's shell surfaces are
+soft, warm, hundreds of levels deep, the marble a luminance spread of 24
+to 45 with veins as smudges, the sheet stone a 14-step mottle of
+olive and blue patches, the page a 25-level cloud, the leather a 2 to 4
+pixel mottle; nothing is a ramp of tones. The posteriser was the wrong
+model for the shell (it stays right for the world's tiles). Round 8:
+
+- **`cloudy` in `src/render/brush.ts`**: tiling value noise in octaves
+  of a period and an amplitude, a slow per-channel tint, a pixel of
+  grain; `smudge` lays soft wide strokes over it. The HUD marble
+  (159,151,148), the frames' and pillars' darker marble (122,113,108),
+  the sheet stone (74,72,68), the page (200,190,172), the rose
+  (174,123,100) and the inventory leather (35,12,2) are all clouds now,
+  to the critics' bases, spreads and periods.
+- **HUD**: the oval in MM6's bands from the marble in, with the gold
+  thread and the lit member's thread brighter; a gold rail across the
+  band at the ovals' top; the blue tube a cylinder in MM6's six tones,
+  the empty glass neutral, matte caps, the tubes seventeen percent of
+  the screen tall; the gem a soft blob beside the oval, no bezel; the
+  pillars lit at the left and in shade at the right through the marble's
+  grain; eight-row matte bands with one highlight row; the clock a brass
+  plaque with dark serif numerals; the gold a bronze with a light lower
+  rim; the emblems line art in MM6's two golds.
+- **Screens**: the right page a hard step darker, the gutter one line;
+  spell ovals the page's own mottle a dozen steps darker; the rest
+  screen's choices rose-marble slabs with MM6's bevel and white text in
+  a plain column; quest headings over a rule in place of the pills;
+  skills as plain rows.
+- **World and talk**: the canvas upscaled nearest by default, so the
+  palette's colours reach the screen unblended (the critic counted nine
+  thousand colours where MM6 has six hundred: the smooth upscale had
+  blended them back); the sky MM6's measured blue flat to the treeline,
+  no fog, no glow; cream lobed clouds; the frame round the face a dark
+  line and two of pewter; the village behind the party showing round
+  the head; a softer key; the wood's highlights to chestnut.
+
 ## 13. Decision log
 
+- 2026-10-17 – Round 8 (16.18): the shell's surfaces painted as value
+  noise clouds to the critics' measured bases and spreads, no ramps; the
+  HUD's oval, rail, tubes, gem, pillars, bands, plaque and emblems in
+  measured tones; the canvas upscaled nearest so the palette holds; no
+  fog; the village behind the talking head.
 - 2026-10-17 – Round 7 (16.17): the palette mode becomes the default
   filter (MM6's 256 colours on every frame); marble as soft figure; the
   ring, tubes, spines, emblems, clock and shelf in the critics' measured

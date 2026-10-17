@@ -65,7 +65,8 @@ function skillsColumn(v: SheetView, onRaise: (id: SkillId) => void): HTMLElement
   for (const group of v.skills) {
     col.appendChild(el('div', 'sheet-group', group.label));
     for (const row of group.rows) {
-      const line = el('div', 'ui-row');
+      // Plain rows, as MM6's skill lists (critics, round 7): no box round each skill.
+      const line = el('div', 'ui-row plain');
       const name = el('div', 'grow');
       name.append(el('div', '', row.name), el('div', 'sub', `${row.rankLabel} · ${row.cost} pt`));
       const level = el('div', 'ui-v sheet-level', String(row.level));

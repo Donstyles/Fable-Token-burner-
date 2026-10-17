@@ -25,10 +25,11 @@ const FRAMED_HEIGHT = 0.19;
 /** The eyes sit here, as a fraction of the model's height. */
 const EYE_LINE = 0.9;
 /** The near-black ground behind the face, as MM6's portraits sat on one. */
-const GROUND = new Color4(0.02, 0.015, 0.01, 1);
+// Clear to nothing: the village behind the party shows through round the head (critics, round 7).
+const GROUND = new Color4(0, 0, 0, 0);
 /** The key: a hard warm light from the camera's upper left, as a painted portrait's. */
-const KEY_COLOR = new Color3(1.25, 1.1, 0.9);
-const KEY_FILL = 0.15;
+const KEY_COLOR = new Color3(1.0, 0.92, 0.8);
+const KEY_FILL = 0.2;
 
 export interface PageRect {
   x: number;

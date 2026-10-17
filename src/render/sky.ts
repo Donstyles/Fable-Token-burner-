@@ -74,9 +74,10 @@ void main(void) {
   float tone = strip.g;
   // Lit top to shaded underside as one soft run (critics, round 6: beige-white 166,157,140
   // to violet-grey 131,125,140), no outline; the palette steps it.
-  vec3 cream = cloudColor;
+  // Cream (170,160,140) with highlights toward 191 along the top, violet-grey beneath.
+  vec3 cream = min(cloudColor * 1.12, vec3(0.96));
   vec3 grey = cloudColor * vec3(0.79, 0.79, 1.02);
-  vec3 cloud = mix(grey, cream, smoothstep(0.1, 0.9, tone));
+  vec3 cloud = mix(grey, cream, smoothstep(0.15, 0.85, tone));
   float cover = body;
   vec3 c = mix(sky, cloud, cover);
   // No sun disc: MM6 painted none; a faint warmth toward it only.

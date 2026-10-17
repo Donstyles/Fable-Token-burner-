@@ -170,6 +170,104 @@ export function speckle(
   return c;
 }
 
+/** Tiling value noise, centred on zero (-0.5 to 0.5), smooth between lattice points `period` apart. */
+export function valueNoise(w: number, h: number, period: number, seed: number): Float32Array {
+  const r = die(seed);
+  const gw = Math.max(1, Math.round(w / period));
+  const gh = Math.max(1, Math.round(h / period));
+  const lattice = new Float32Array(gw * gh);
+  for (let i = 0; i < lattice.length; i++) lattice[i] = r();
+  const out = new Float32Array(w * h);
+  const smooth = (t: number): number => t * t * (3 - 2 * t);
+  for (let y = 0; y < h; y++) {
+    const gy = (y / h) * gh;
+    const y0 = Math.floor(gy);
+    const y1 = (y0 + 1) % gh;
+    const fy = smooth(gy - y0);
+    for (let x = 0; x < w; x++) {
+      const gx = (x / w) * gw;
+      const x0 = Math.floor(gx);
+      const x1 = (x0 + 1) % gw;
+      const fx = smooth(gx - x0);
+      const a = lattice[y0 * gw + x0]!;
+      const b = lattice[y0 * gw + x1]!;
+      const c = lattice[y1 * gw + x0]!;
+      const d = lattice[y1 * gw + x1]!;
+      out[y * w + x] = (a + (b - a) * fx) * (1 - fy) + (c + (d - c) * fx) * fy - 0.5;
+    }
+  }
+  return out;
+}
+
+/**
+ * A cloudy surface as MM6's scans were (critics, round 7): a base colour, octaves of value
+ * noise each of a period and an amplitude in luminance, a slow per-channel tint, a
+ * pixel-wide grain; hundreds of levels, no ramp.
+ */
+export function cloudy(
+  w: number,
+  h: number,
+  seed: number,
+  o: { base: Rgb; octaves: [number, number][]; tint?: number; grain?: number },
+): HTMLCanvasElement {
+  const [c, g] = canvas(w, h);
+  const img = g.createImageData(w, h);
+  const d = img.data;
+  const layers = o.octaves.map(([p, a], i) => [valueNoise(w, h, p, seed + i * 101), a] as const);
+  const tint = o.tint ?? 0;
+  const tr = tint ? valueNoise(w, h, 40, seed + 7) : null;
+  const tb = tint ? valueNoise(w, h, 52, seed + 9) : null;
+  const grain = o.grain ?? 0;
+  const r = die(seed + 13);
+  for (let i = 0; i < w * h; i++) {
+    let l = 0;
+    for (const [n, a] of layers) l += n[i]! * 2 * a;
+    const gr = grain ? (r() - 0.5) * 2 * grain : 0;
+    const dr = tr ? tr[i]! * 2 * tint : 0;
+    const db = tb ? tb[i]! * 2 * tint : 0;
+    d[i * 4] = Math.max(0, Math.min(255, o.base[0] + l + gr + dr));
+    d[i * 4 + 1] = Math.max(0, Math.min(255, o.base[1] + l + gr));
+    d[i * 4 + 2] = Math.max(0, Math.min(255, o.base[2] + l + gr + db));
+    d[i * 4 + 3] = 255;
+  }
+  g.putImageData(img, 0, 0);
+  return c;
+}
+
+/** Soft smudges across a surface: wide, faint, wandering strokes, light or dark, wrapped. */
+export function smudge(
+  g: CanvasRenderingContext2D,
+  w: number,
+  h: number,
+  seed: number,
+  count: number,
+  color: string,
+  alpha: number,
+  width: [number, number],
+  length: [number, number],
+  angle = -0.7,
+): void {
+  const r = die(seed);
+  for (let v = 0; v < count; v++) {
+    let x = r() * w;
+    let y = r() * h;
+    let ang = angle + (r() - 0.5) * 0.6;
+    const pts: [number, number][] = [];
+    const len = length[0] + r() * (length[1] - length[0]);
+    for (let t = 0; t < len; t += 3) {
+      ang += (r() - 0.5) * 0.12;
+      x += Math.cos(ang) * 3;
+      y += Math.sin(ang) * 3;
+      pts.push([x, y]);
+    }
+    const wd = width[0] + r() * (width[1] - width[0]);
+    const rgba = (a: number): string =>
+      color.replace(')', `,${a.toFixed(3)})`).replace('rgb(', 'rgba(');
+    stroke(g, w, h, pts, rgba(alpha * 0.5), wd * 1.8);
+    stroke(g, w, h, pts.slice(1, -1), rgba(alpha), wd);
+  }
+}
+
 /** Snap every pixel to the nearest tone of a ramp: hard pixel art out of soft brushwork. */
 export function snap(g: CanvasRenderingContext2D, w: number, h: number, tones: Tone[]): void {
   const img = g.getImageData(0, 0, w, h);
@@ -273,7 +371,7 @@ export function paintSkyStrip(w: number, h: number, seed: number): HTMLCanvasEle
     const cx = r() * w;
     const v = 0.1 + r() * 0.75;
     const cy = h - v * h;
-    const streak = r() < 0.72;
+    const streak = r() < 0.5;
     const n = streak ? 5 + Math.floor(r() * 5) : 6 + Math.floor(r() * 6);
     const spread = (streak ? 80 + r() * 140 : 20 + r() * 30) * (w / 1024);
     const slope = (r() - 0.5) * 0.12;

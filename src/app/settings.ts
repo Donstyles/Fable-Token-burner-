@@ -16,7 +16,8 @@ export interface Settings {
 const defaults: Settings = {
   renderPreset: DEFAULT_RENDER_PRESET,
   filter: { ...DEFAULT_FILTER },
-  upscale: 'linear',
+  // Nearest, so the palette's colours reach the screen unblended (critics, round 7).
+  upscale: 'nearest',
 };
 
 function num(v: unknown, fallback: number, min: number, max: number): number {

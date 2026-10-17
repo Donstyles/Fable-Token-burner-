@@ -42,7 +42,7 @@ export function renderRest(ctx: ScreenContext): void {
       right.appendChild(button('Done', close, { className: 'primary' }));
     } else {
       right.appendChild(heading('Rest'));
-      const actions = el('div', 'ui-col rest-actions');
+      const actions = el('div', 'rest-actions');
       actions.append(
         button('Rest 8 hours', () => act(doRest(state)), {
           className: 'primary',

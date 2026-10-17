@@ -48,15 +48,14 @@ export const SCREEN_LABELS: Record<ScreenName, string> = {
 
 /** Gold line-art glyphs on the spines, 24-unit boxes. */
 const SHELF_GLYPHS: Record<ScreenName, string> = {
-  // Filled silhouettes, as MM6's gold emblems (critics, round 6): a sword, a satchel, an
-  // open book, a scroll, a compass rose; 24 units wide, 40 tall.
-  sheet: '<path d="M12 1l2 4v22l-2 3-2-3V5zM5 27h14v2h-5v9l-2 2-2-2v-9H5z"/>',
-  items: '<path d="M6 12h12l3 24H3zM9 12V8a3 3 0 0 1 6 0v4h-2V8a1 1 0 0 0-2 0v4z"/>',
+  // Line art, as MM6's gold emblems (critics, round 7): a sword, a satchel, an open book, a
+  // scroll, a compass rose; 24 units wide, 40 tall.
+  sheet: '<path d="M12 2v24M8 8h8M7 26h10M12 26v10M10 36h4"/>',
+  items: '<path d="M6 14h12l3 22H3zM9 14v-4a3 3 0 0 1 6 0v4"/>',
   spells: '<path d="M2 8c4-2 7-2 10 1v24c-3-3-6-3-10-1zM22 8c-4-2-7-2-10 1v24c3-3 6-3 10-1z"/>',
   rest: '<path d="M14 3a8 8 0 1 0 7 11 7 7 0 0 1-7-11z"/>',
-  quests:
-    '<path d="M5 4h14v26a3 3 0 0 1-3 3H8a3 3 0 0 1-3-3zM3 30a2 2 0 0 0 4 0v-1H3zM17 33a2 2 0 0 0 4 0v-1h-4z"/>',
-  map: '<path d="M12 2l3 12 9 3-9 3-3 12-3-12-9-3 9-3z"/><circle cx="12" cy="17" r="3"/>',
+  quests: '<path d="M6 4h12v28H6zM9 11h6M9 17h6M9 23h4M4 32a2 2 0 0 0 4 0"/>',
+  map: '<path d="M12 4l3 10 9 3-9 3-3 10-3-10-9-3 9-3z"/><circle cx="12" cy="17" r="3"/>',
 };
 
 const SCREEN_TITLES: Record<ScreenName, string> = {

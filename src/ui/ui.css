@@ -95,18 +95,19 @@
    strokes gold, the same strokes wider and dark beneath for the outline, a thin cream edge
    above and to the left for the relief. */
 .ui-shelf-btn svg .gilt {
-  fill: #c8a040;
-  stroke: #2a1a06;
-  stroke-width: 0.8;
+  /* MM6's emblems (critics, round 7): one- to two-pixel lines, a (255,223,115) core over a
+     (115,85,41) edge, on the leather. */
+  fill: none;
+  stroke: #ffdf73;
+  stroke-width: 1.5;
 }
 .ui-shelf-btn svg .shade {
-  fill: #1a0e04;
-  stroke: none;
+  fill: none;
+  stroke: #735529;
+  stroke-width: 3;
 }
 .ui-shelf-btn svg .sheen {
-  fill: none;
-  stroke: #fff0b0;
-  stroke-width: 1;
+  display: none;
 }
 .ui-shelf-btn.rest {
   width: 42px;
@@ -358,6 +359,10 @@
     serif;
   color: var(--ink-yellow);
 }
+.ui-h.ui-rule {
+  padding-bottom: 3px;
+  border-bottom: 1.5px solid rgba(120, 110, 95, 0.9);
+}
 .ui-note {
   margin: 2px 0;
   font-size: 18px;
@@ -400,6 +405,12 @@
   box-shadow:
     inset 1.5px 1.5px 0 rgba(16, 16, 12, 0.7),
     inset -1.5px -1.5px 0 rgba(160, 160, 150, 0.45);
+}
+.ui-row.plain {
+  background: none;
+  box-shadow: none;
+  padding: 1px 4px;
+  min-height: 30px;
 }
 .ui-row.selected {
   box-shadow:

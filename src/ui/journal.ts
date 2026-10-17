@@ -9,10 +9,10 @@ import { type MapView, mapView, type QuestRow, questRows } from './journal-model
 
 function questList(title: string, rows: QuestRow[], empty: string): HTMLElement {
   const col = el('div', 'ui-col scroll');
+  // A heading over a rule (critics, round 7): MM6's knotwork banner is the owner's to
+  // commission; a pill is not it.
   const head = heading(title);
-  // A carved stone banner across the page, as MM6's "Current Quests".
-  head.classList.add('ui-banner');
-  head.dataset['paint'] = 'banner';
+  head.classList.add('ui-rule');
   col.appendChild(head);
   if (rows.length === 0) col.appendChild(note(empty));
   for (const q of rows) {

@@ -50,23 +50,25 @@
   image-rendering: pixelated;
 }
 .hud-clock-time {
+  /* Dark serif on the brass plaque, as MM6's compass letter. */
   font:
     19.5px/1.1 'Tinos',
     Georgia,
     serif;
-  color: #ffff00;
+  color: #2a2010;
 }
 .hud-clock-date {
   font:
     italic 18px/1.1 'Tinos',
     Georgia,
     serif;
-  color: #ffff00;
+  color: #2a2010;
 }
 .hud-band {
-  /* The four members in rectangles recessed into the marble (paint.ts `recess`), a gutter
-     of marble three pixels wide between; sized to fit the phone's safe areas with the clock
-     at the left and the shelf at the right. */
+  /* The four members on one marble surface with a seam round each (paint.ts `recess`); a
+     gold rail runs along the ovals' top as MM6's does; sized to fit the phone's safe areas
+     with the clock at the left and the shelf at the right. */
+  position: relative;
   display: flex;
   justify-content: center;
   align-items: stretch;
@@ -74,6 +76,16 @@
   height: 100px;
   margin: 6px 280px 0 88px;
   padding: 0;
+}
+.hud-band::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 7.5px;
+  height: 1.5px;
+  background: #ad8e52;
+  pointer-events: none;
 }
 .hud-cell {
   position: relative;
@@ -130,15 +142,20 @@
   shape-rendering: crispEdges;
 }
 .hud-bars {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 3px;
-  margin-top: 0;
+  gap: 0;
+  margin-top: 9px;
 }
 .hud-gem {
-  width: 13.5px;
-  height: 13.5px;
+  /* A soft blob beside the oval's top, on the marble (paint.ts `gem`). */
+  position: absolute;
+  top: -10.5px;
+  left: -9px;
+  width: 10.5px;
+  height: 10.5px;
   background: var(--paint) center / 100% 100% no-repeat;
   image-rendering: pixelated;
 }
@@ -154,15 +171,15 @@
 .hud-bar {
   position: relative;
   width: 9px;
-  height: 54px;
+  height: 72px;
   background: var(--paint) center / 100% 100% no-repeat;
   image-rendering: pixelated;
 }
 .hud-fill {
   position: absolute;
-  left: 1.5px;
-  right: 1.5px;
-  bottom: 4.5px;
+  left: 0;
+  right: 0;
+  bottom: 3px;
   height: 0;
   background: var(--paint) center / 100% 100% no-repeat;
   image-rendering: pixelated;

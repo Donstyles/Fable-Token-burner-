@@ -275,3 +275,28 @@
 .spell-slot.pending {
   box-shadow: 0 0 0 1.5px #f0d880;
 }
+
+/* The rest screen's choices: a column of full-width slabs (paint.ts `paintSlab`). */
+.rest-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 4px 0;
+}
+.rest-actions .ui-btn {
+  width: 100%;
+}
+/* The spellbook's schools sit on the page as parchment rows, not marble slabs; MM6's
+   painted school tiles are the owner's to commission. */
+.screen-spells .ui-tab.slab {
+  background: rgba(0, 0, 0, 0.06);
+  box-shadow: inset 0 0 0 1.5px rgba(90, 60, 24, 0.45);
+  color: #3a2a10;
+}
+.screen-spells .ui-tab.slab.active {
+  background: rgba(0, 0, 0, 0.14);
+  color: #2a1a08;
+}
+.screen-spells .ui-tab.slab .ui-btn-note {
+  color: #5a4020;
+}

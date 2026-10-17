@@ -57,11 +57,12 @@ export const ENVIRONMENTS: Record<EnvironmentPreset, LightingEnvironment> = {
     lightDirection: new Vector3(-0.4, -1, 0.3).normalize(),
     lightColor: c(0.86, 0.8, 0.7),
     ambientColor: c(0.42, 0.42, 0.46),
-    fogColor: c(0.4, 0.44, 0.56),
-    fogDensity: 0.0045,
-    skyZenith: c(0.29, 0.36, 0.52),
-    skyHorizon: c(0.37, 0.42, 0.57),
-    cloudColor: c(0.65, 0.62, 0.55),
+    // MM6's sky (critics, round 7: 55,77,140 flat to the treeline, no fog, no glow).
+    fogColor: c(0.24, 0.32, 0.56),
+    fogDensity: 0.002,
+    skyZenith: c(0.22, 0.3, 0.55),
+    skyHorizon: c(0.24, 0.32, 0.56),
+    cloudColor: c(0.67, 0.63, 0.55),
     cloudAmount: 0.4,
   },
 };
