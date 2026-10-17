@@ -71,7 +71,7 @@ export function boot(canvas: HTMLCanvasElement, uiLayer: HTMLElement): App {
   applyUpscale(settings.upscale);
 
   let preset: RenderPreset = settings.renderPreset;
-  const overlay: DevOverlay | null = isDevMode() ? createDevOverlay(engine, uiLayer) : null;
+  const overlay: DevOverlay | null = isDevMode() ? createDevOverlay(engine, uiLayer, scene) : null;
 
   const applyResolution = (): void => {
     const w = canvas.clientWidth;

@@ -52,7 +52,7 @@ export const DEFAULT_WATER_LOOK: WaterLook = {
 };
 
 /** Reflections stop being rendered for a body further than this from the camera. */
-const ACTIVE_DISTANCE = 60;
+const ACTIVE_DISTANCE = 40;
 /** Chunks within this distance of a body appear in its reflection and refraction. */
 const REFLECT_DISTANCE = 45;
 
@@ -167,7 +167,7 @@ export class LevelWater {
     private readonly reflectables: Mesh[],
     private readonly materials: RetroMaterials,
     private readonly fallback: () => Material,
-    quality: WaterQuality = 'quarter',
+    quality: WaterQuality = 'eighth',
     /** Meshes every body reflects regardless of distance: the sky dome, the backdrop. */
     private readonly always: Mesh[] = [],
     look: WaterLook = DEFAULT_WATER_LOOK,

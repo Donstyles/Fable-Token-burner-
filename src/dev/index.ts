@@ -191,7 +191,9 @@ export async function startDev(app: App): Promise<DevHandle> {
         ? new Vector3(-0.85, -0.45, 0.2).normalize()
         : new Vector3(-0.45, -0.8, 0.4).normalize(),
       lightColor: env ? c3(env.lightColor) : new Color3(1.0, 0.92, 0.78),
-      ambientColor: env ? c3(env.ambientColor) : new Color3(0.36, 0.4, 0.48),
+      // Lifted by half: the houses' shadow sides went black on the phone (owner, 2026-10-17);
+      // MM6 lit its world nearly flat.
+      ambientColor: (env ? c3(env.ambientColor) : new Color3(0.36, 0.4, 0.48)).scale(1.5),
       fogColor: space?.fog?.color ?? new Color3(0.62, 0.68, 0.78),
       fogDensity: space?.fog?.density ?? 0.0017,
       ...(env
@@ -237,7 +239,9 @@ export async function startDev(app: App): Promise<DevHandle> {
         ...(stillWater.emissive ? { emissive: stillWater.emissive } : {}),
         ...(stillWater.tint ? { tint: stillWater.tint } : {}),
       }),
-    'quarter',
+    // Outdoors the water is the flat painted texture, as MM6's was: the mirror passes drew
+    // the valley twice more per frame on the phone (owner, 2026-10-17). Indoors a pool mirrors.
+    level.sidecar.outdoor ? 'off' : 'eighth',
     // Every body mirrors the sky; outdoors the far ridges too.
     [app.sky.mesh, ...level.meshes.filter((m) => m.name === 'backdrop')],
   );
@@ -900,7 +904,7 @@ export async function startDev(app: App): Promise<DevHandle> {
         if (ev.kind === 'miss') feedback.partyMissed();
       }
     }
-    if (!fly) feedback.applyCamera(camera);
+    if (!fly && !paused) feedback.applyCamera(camera);
     strip.update(simTime);
     const eye = camera.globalPosition;
     const yaw = fly ? flyYaw : party.yaw;

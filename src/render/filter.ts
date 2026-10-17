@@ -26,8 +26,10 @@ export interface FilterSettings {
 /** Off by default since the look re-target (2026-10-14); the MM6 modes stay available. */
 export const DEFAULT_FILTER: FilterSettings = {
   mode: 'posterize',
-  levels: 5,
-  dither: 0.45,
+  levels: 8,
+  // MM6 drew flat colour; on a phone the dither read as static over everything (owner,
+  // 2026-10-17), so it is off by default and stays a dial.
+  dither: 0,
   ditherCell: 2,
 };
 

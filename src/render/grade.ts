@@ -26,7 +26,8 @@ export interface GradeSettings {
 }
 
 export const DEFAULT_GRADE: GradeSettings = {
-  bloom: true,
+  // Off: the blur chain cost whole milliseconds on a phone for a weight of zero.
+  bloom: false,
   bloomThreshold: 0.4,
   bloomWeight: 0,
   bloomKernel: 48,

@@ -430,13 +430,21 @@ export function paintButton(w: number, h: number, pressed: boolean): HTMLCanvasE
   const oval = (inset: number, tone: string, dx = 0, dy = 0): void => {
     g.fillStyle = tone;
     g.beginPath();
-    g.ellipse(w / 2 + dx, h / 2 + dy, w / 2 - inset, h / 2 - inset, 0, 0, Math.PI * 2);
+    g.ellipse(
+      w / 2 + dx,
+      h / 2 + dy,
+      Math.max(0.5, w / 2 - inset),
+      Math.max(0.5, h / 2 - inset),
+      0,
+      0,
+      Math.PI * 2,
+    );
     g.fill();
   };
   oval(0, golds[0]!);
   g.save();
   g.beginPath();
-  g.ellipse(w / 2, h / 2, w / 2 - 1, h / 2 - 1, 0, 0, Math.PI * 2);
+  g.ellipse(w / 2, h / 2, Math.max(0.5, w / 2 - 1), Math.max(0.5, h / 2 - 1), 0, 0, Math.PI * 2);
   g.clip();
   for (let y = 1; y < h - 1; y++) {
     const t = pressed ? 1 - (y - 1) / (h - 2) : (y - 1) / (h - 2);
@@ -447,7 +455,7 @@ export function paintButton(w: number, h: number, pressed: boolean): HTMLCanvasE
   g.restore();
   g.save();
   g.beginPath();
-  g.ellipse(w / 2, h / 2, w / 2 - 2, h / 2 - 2, 0, 0, Math.PI * 2);
+  g.ellipse(w / 2, h / 2, Math.max(0.5, w / 2 - 2), Math.max(0.5, h / 2 - 2), 0, 0, Math.PI * 2);
   g.clip();
   oval(4, golds[golds.length - 1]!, -2, -3);
   oval(4, golds[pressed ? 2 : 4]!, -1, -1);
@@ -489,7 +497,7 @@ export function paintRing(w: number, h: number): HTMLCanvasElement {
   // The glass: a pale crescent at the top.
   g.save();
   g.beginPath();
-  g.ellipse(w / 2, h / 2, w / 2 - 5, h / 2 - 5, 0, 0, Math.PI * 2);
+  g.ellipse(w / 2, h / 2, Math.max(0.5, w / 2 - 5), Math.max(0.5, h / 2 - 5), 0, 0, Math.PI * 2);
   g.clip();
   oval(6, '#4a3a28', 0, 1);
   oval(6, '#2a1c10', 0, 3);

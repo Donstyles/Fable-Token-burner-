@@ -522,9 +522,9 @@ export async function loadLevel(
       forestChunks.push({ near, far, centre, keep });
     }
   }
-  const forestNear = 260;
+  const forestNear = 180;
   const lodDistances = sidecar.lod?.distances ?? [300, 700];
-  const forestFar = sidecar.lod?.forestFar ?? 700;
+  const forestFar = Math.min(sidecar.lod?.forestFar ?? 700, 450);
   let lastEye: Vector3 | null = null;
   // Water bodies and waterfalls keep their own meshes; LevelWater gives them materials.
   const named = (prefix: string, material: string | null): string =>

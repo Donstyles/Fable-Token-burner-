@@ -4,11 +4,16 @@
  * The world renders at a fixed number of lines and is upscaled to the display with
  * nearest-neighbour sampling. UI and text are HTML at native resolution.
  */
-export type RenderPreset = 'lines-1080' | 'lines-720' | 'native';
+export type RenderPreset = 'lines-1080' | 'lines-720' | 'lines-540' | 'native';
 
-export const RENDER_PRESETS: readonly RenderPreset[] = ['lines-1080', 'lines-720', 'native'];
+export const RENDER_PRESETS: readonly RenderPreset[] = [
+  'lines-1080',
+  'lines-720',
+  'lines-540',
+  'native',
+];
 
-export const DEFAULT_RENDER_PRESET: RenderPreset = 'lines-720';
+export const DEFAULT_RENDER_PRESET: RenderPreset = 'lines-540';
 
 export function presetLines(preset: RenderPreset): number | null {
   switch (preset) {
@@ -16,6 +21,8 @@ export function presetLines(preset: RenderPreset): number | null {
       return 1080;
     case 'lines-720':
       return 720;
+    case 'lines-540':
+      return 540;
     case 'native':
       return null;
   }

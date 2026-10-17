@@ -1146,8 +1146,46 @@ hand."
   their strokes carry no anti-aliasing either. Left smooth: the gold rails
   and bevels, which are already single CSS lines.
 
+### 16.11 The first phone pass (owner, 2026-10-17)
+
+The owner opened the dev build on the phone: "abysmal", "ultra low
+unplayable fps in the village", the horizon rolled thirty degrees against
+the band, dither static over everything, the shaded sides of the houses
+pure black, the sky in purple and cyan bands, the talk window showing the
+hillside instead of the face, the sheet's skill names cut short. Each cause
+found and set, in `src/render/filter.ts`, `grade.ts`, `resolution.ts`,
+`src/world/water.ts`, `level.ts`, `combat-feedback.ts`, `bust.ts`, and
+`src/ui/dialogue.ts`:
+
+- The roll: the hit shake added its roll to the camera each frame instead
+  of setting it, so a stale roll was never undone; it is set absolutely now
+  and left alone while the world is paused.
+- Static: dither off (0) and the posterise step finer (8 levels, was 5),
+  which also takes the bands out of the sky. The posterise still gives the
+  flat 8-bit tones; the dither was reading as noise on a phone's pixels.
+- Black shade: the outdoor ambient lifted by half, so the shaded sides keep
+  their colour as MM6's did.
+- The frame: measured at 2.7 million triangles a frame where the main pass
+  draws 690 thousand; the two mirror passes of the river and the pools
+  tripled the scene. Outdoors the water now draws its flat painted texture
+  with no reflection or refraction pass, the bloom pass is off, the
+  default preset is 540 lines (`lines-540`), and the forests draw to 180 m
+  (far 450 m). The dev overlay prints draws, active meshes, triangles,
+  render-target count, particle systems and frame and render milliseconds
+  so the next phone shot carries its own numbers.
+- The talk window: a bounding box is reported in viewport pixels and the
+  rotated phone layout turns it a quarter; `toLocalRect` and `toAppPoint`
+  (`src/app/orientation.ts`) now map both the mask hole in the planks and
+  the bust layer on the canvas into the rotated frame.
+- The sheet: the raise buttons are a bare "+" and the cost moved into the
+  rank line, so the skill names have their room; the name column wraps.
+
 ## 13. Decision log
 
+- 2026-10-17 – First phone pass (16.11): dither off, posterise 8 levels,
+  bloom off, 540 lines, outdoor water flat, forests nearer, ambient lifted,
+  the shake roll set not added, the talk window mapped for the rotated
+  phone, the dev overlay carrying the frame's numbers.
 - 2026-10-17 – Hand-painted shell (16.10): surfaces painted stroke by stroke
   and posterised on a 1998 pixel grid, buttons painted per size, bitmap type
   with hard edges; Tinos replaces IM Fell English for the body.

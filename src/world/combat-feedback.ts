@@ -153,7 +153,8 @@ export class CombatFeedback {
     const right = camera.getDirection(Vector3.Right());
     const up = camera.getDirection(Vector3.Up());
     camera.position.addInPlace(right.scale(o.x)).addInPlace(up.scale(o.y));
-    camera.rotation.z += o.roll;
+    // Set, never added: an added roll outlived the frame it was meant for.
+    camera.rotation.z = o.roll;
   }
 
   private emit(at: Vector3, dir: Vector3, count: number): void {

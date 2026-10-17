@@ -12,6 +12,7 @@ import { RenderTargetTexture } from '@babylonjs/core/Materials/Textures/renderTa
 import { Color4 } from '@babylonjs/core/Maths/math.color';
 import { Matrix, Vector2, Vector3 } from '@babylonjs/core/Maths/math.vector';
 import type { Scene } from '@babylonjs/core/scene';
+import { isForcedLandscape, toAppPoint } from '../app/orientation';
 import { type Character, DEFAULT_CHARACTER_FILL } from './character';
 
 const SIZE = 256;
@@ -80,11 +81,19 @@ export class Bust {
   place(rect: PageRect): void {
     const c = this.canvas.getBoundingClientRect();
     if (c.width <= 0 || c.height <= 0) return;
-    const w = rect.width / c.width;
-    const h = rect.height / c.height;
+    // On a portrait phone the page is rotated to run landscape (src/app/orientation.ts): the
+    // window's page rectangle maps into the game's own pixels like a touch does.
+    const [ax0, ay0] = toAppPoint(rect.x, rect.y, c);
+    const [ax1, ay1] = toAppPoint(rect.x + rect.width, rect.y + rect.height, c);
+    const appW = isForcedLandscape() ? c.height : c.width;
+    const appH = isForcedLandscape() ? c.width : c.height;
+    const left = Math.min(ax0, ax1);
+    const top = Math.min(ay0, ay1);
+    const w = Math.abs(ax1 - ax0) / appW;
+    const h = Math.abs(ay1 - ay0) / appH;
     if (w <= 0 || h <= 0) return;
-    const cx = ((rect.x + rect.width / 2 - c.left) / c.width) * 2 - 1;
-    const cy = 1 - ((rect.y + rect.height / 2 - c.top) / c.height) * 2;
+    const cx = ((left + Math.abs(ax1 - ax0) / 2) / appW) * 2 - 1;
+    const cy = 1 - ((top + Math.abs(ay1 - ay0) / 2) / appH) * 2;
     this.layer.scale = new Vector2(w, h);
     this.layer.offset = new Vector2(cx, cy);
     // A layer samples its texture by screen position (its scale and offset zoom the texture,

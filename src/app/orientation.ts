@@ -63,3 +63,33 @@ export function toAppPoint(clientX: number, clientY: number, rect: DOMRect): [nu
 export function appSize(rect: DOMRect): [number, number] {
   return forced ? [rect.height, rect.width] : [rect.width, rect.height];
 }
+
+/**
+ * An element's bounding box in an ancestor's own layout pixels (what CSS masks, backgrounds
+ * and offsets are measured in). Bounding boxes are reported in viewport pixels, which the
+ * forced rotation turns a quarter: the ancestor's x runs down the screen and its y runs
+ * leftwards from its right edge, so its local top-left is the screen top-right of its box.
+ */
+export function toLocalRect(inner: DOMRect, outer: DOMRect): PageBox {
+  if (!forced) {
+    return {
+      x: inner.left - outer.left,
+      y: inner.top - outer.top,
+      w: inner.width,
+      h: inner.height,
+    };
+  }
+  return {
+    x: inner.top - outer.top,
+    y: outer.right - inner.right,
+    w: inner.height,
+    h: inner.width,
+  };
+}
+
+export interface PageBox {
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+}

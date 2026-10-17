@@ -461,9 +461,17 @@ waterfalls and deserts, walkable end to end.
     against the MM6 crops. **First pass 2026-10-17** (DESIGN 16.10): the
     surfaces, the buttons and the type; the HUD's frames, gems, bars,
     spines, plates, pillars and rails still to paint.
-16. Remaining, in order: lasting buffs and Jump; weather states (rain, a
-    sandstorm); music; the smith's hammer and the temple bell; performance
-    measured on the owner's phone.
+16. The first phone pass (owner, 2026-10-17, "abysmal", "unplayable fps in
+    the village"): the rolled horizon, the dither static, the black shade,
+    the banded sky, the empty talk window, the cut skill names and the frame
+    cost found and set. **Done 2026-10-17** (DESIGN 16.11); the owner's next
+    phone shot, with the overlay's numbers, says whether the frame is there.
+17. The critic loop (owner, 2026-10-17): screenshots of every screen judged
+    against the MM6 reference shots by independent critics until they rate
+    the hand-painted feel at the original's level; the smooth pieces still
+    to paint (gold rails and bevels, the shelf's spines, the sky's clouds).
+18. Remaining, in order: lasting buffs and Jump; weather states (rain, a
+    sandstorm); music; the smith's hammer and the temple bell.
 
 **Status, night of 2026-10-16 (owner asleep, best judgement):** steps 1 to 6
 are in: the valley (village, road, pass, gorge with eight cascades, cave

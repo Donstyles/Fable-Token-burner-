@@ -74,12 +74,11 @@ function skillsColumn(v: SheetView, onRaise: (id: SkillId) => void): HTMLElement
     for (const row of group.rows) {
       const line = el('div', 'ui-row');
       const name = el('div', 'grow');
-      name.append(el('div', '', row.name), el('div', 'sub', row.rankLabel));
+      name.append(el('div', '', row.name), el('div', 'sub', `${row.rankLabel} · ${row.cost} pt`));
       const level = el('div', 'ui-v sheet-level', String(row.level));
       const plus = button('+', () => onRaise(row.id), {
         className: 'sheet-raise',
         disabled: !row.canRaise,
-        note: `${row.cost} pt`,
       });
       line.append(name, level, plus);
       col.appendChild(line);

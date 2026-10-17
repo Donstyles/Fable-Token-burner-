@@ -9,6 +9,7 @@ import type { DialogueDef } from '../game/dialogue';
 import type { NpcDef } from '../game/monsters';
 import type { QuestDef } from '../game/quests';
 import type { GameState } from '../game/state';
+import { toLocalRect } from '../app/orientation';
 import { chooseTopic, dialogueView } from './dialogue-model';
 import { button, el } from './dom';
 
@@ -56,12 +57,13 @@ export function createDialogue(
 
   const measure = (): void => {
     if (!open_) return;
-    const wood = open_.wood.getBoundingClientRect();
     const hole = open_.window.getBoundingClientRect();
-    open_.wood.style.setProperty('--hole-x', `${hole.left - wood.left}px`);
-    open_.wood.style.setProperty('--hole-y', `${hole.top - wood.top}px`);
-    open_.wood.style.setProperty('--hole-w', `${hole.width}px`);
-    open_.wood.style.setProperty('--hole-h', `${hole.height}px`);
+    // The mask is cut in the planks' own pixels, which the rotated phone layout turns.
+    const local = toLocalRect(hole, open_.wood.getBoundingClientRect());
+    open_.wood.style.setProperty('--hole-x', `${local.x}px`);
+    open_.wood.style.setProperty('--hole-y', `${local.y}px`);
+    open_.wood.style.setProperty('--hole-w', `${local.w}px`);
+    open_.wood.style.setProperty('--hole-h', `${local.h}px`);
     hooks.onWindow(hole);
   };
 
