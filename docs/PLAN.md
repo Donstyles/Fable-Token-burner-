@@ -427,9 +427,25 @@ waterfalls and deserts, walkable end to end.
 7. Weather and motion: wind in the canopies, drifting cloud shadows, the
    desert's heat shimmer, mirage, glint, low sun and blowing sand; the
    sun's disc in the sky. **Done 2026-10-17** (DESIGN 15.7).
-8. Meshy trees and bushes (batch 003, twenty text-to-3D props) as the
-   forest's prototypes in place of the generated ones. **Running
-   2026-10-17**; loading them at runtime follows.
+8. Meshy trees and bushes (batch 003) as the forest's prototypes in place
+   of the generated ones, with far detail. **Done 2026-10-17** (DESIGN
+   15.1, 10.3).
+9. The village rebuilt: Meshy buildings and props (batch 004) along the
+   street with a square, lanes, the temple's knoll and the farm. **Done
+   2026-10-17** (DESIGN 15.2).
+10. Shell polish from the wow audit: loading veil, fonts, the marble HUD
+    band with sigils, HP/SP bars and condition gems, the spine shelf, the
+    status line, melee reach, the sun's size, debug toasts gone. **Done
+    2026-10-17** (DESIGN 16).
+11. Creatures image first (batch 005): goblin scout, skeleton warrior,
+    nomad raider, two villagers, placed in the regions; villagers answer
+    a tap. **Done 2026-10-17** (DESIGN 16.1, 16.2).
+12. Wow audit (2026-10-17) roadmap, remaining, in order: loading veil and dev chrome
+    day/night with a moving sun, stars and dusk lanterns; the screens in
+    marble, leather and parchment; autosave and the party carried through
+    portals; synthesised footsteps, wind, birds, smith and bell; dialogue
+    with a live-rendered bust and the first quest; spells with effects;
+    weather states; shops through the doors.
 
 **Status, night of 2026-10-16 (owner asleep, best judgement):** steps 1 to 6
 are in: the valley (village, road, pass, gorge with eight cascades, cave

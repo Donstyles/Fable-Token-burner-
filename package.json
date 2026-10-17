@@ -27,7 +27,8 @@
     "textures": "tsx tools/textures.ts",
     "asset": "tsx tools/asset.ts",
     "asset:validate": "tsx tools/asset.ts validate",
-    "props:catalogue": "tsx tools/props-catalogue.ts"
+    "props:catalogue": "tsx tools/props-catalogue.ts",
+    "fonts": "tsx tools/fonts.ts"
   },
   "dependencies": {
     "@babylonjs/core": "^9.30.0",

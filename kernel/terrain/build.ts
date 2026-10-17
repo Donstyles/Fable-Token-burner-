@@ -248,14 +248,17 @@ function buildValleyLevel(spec: TerrainSpec): TerrainLevel {
     ],
     // Bandits: on the road above the village, along the gorge banks and at the cave.
     spawns: [
+      // Bandits on the road, goblin scouts at the forest's edge and up the gorge.
       besidePath(valley.height, road, 140, 4),
-      besidePath(valley.height, road, 300, -4),
+      besidePath(valley.height, road, 300, -4, 'goblin-scout'),
+      besidePath(valley.height, road, 330, -9, 'goblin-scout'),
       besidePath(valley.height, road, 520, 4),
       besidePath(valley.height, road, road.length * 0.75, -4),
-      besidePath(valley.height, valley.ravine, 140, 10),
+      besidePath(valley.height, valley.ravine, 140, 10, 'goblin-scout'),
       besidePath(valley.height, valley.ravine, 330, -10),
-      besidePath(valley.height, valley.ravine, valley.ravine.length - 75, 9),
+      besidePath(valley.height, valley.ravine, valley.ravine.length - 75, 9, 'goblin-scout'),
       besidePath(valley.height, valley.river, valley.river.length * 0.4, 22),
+      ...village.spawns,
     ],
     water: [riverSurface(valley), ...streamSurfaces(valley.ravine, valley.stream)],
     waterfalls: streamFalls(valley.ravine, valley.stream),
@@ -328,10 +331,11 @@ function buildDesertLevel(spec: TerrainSpec): TerrainLevel {
       },
     ],
     spawns: [
-      besidePath(desert.height, road, road.length * 0.25, 5),
-      besidePath(desert.height, road, road.length * 0.45, -5),
-      besidePath(desert.height, road, road.length * 0.62, 5),
-      besidePath(desert.height, road, road.length * 0.85, -5),
+      // Nomad raiders hold the road across the dunes.
+      besidePath(desert.height, road, road.length * 0.25, 5, 'nomad-raider'),
+      besidePath(desert.height, road, road.length * 0.45, -5, 'nomad-raider'),
+      besidePath(desert.height, road, road.length * 0.62, 5, 'nomad-raider'),
+      besidePath(desert.height, road, road.length * 0.85, -5, 'nomad-raider'),
     ],
     water: [oasisSurface(desert)],
     waterfalls: [],

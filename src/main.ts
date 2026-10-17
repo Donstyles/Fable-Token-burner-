@@ -1,3 +1,4 @@
+import './ui/fonts.css';
 import './style.css';
 import { boot, type App } from './app/boot';
 import { installForcedLandscape, tryLockLandscape } from './app/orientation';
@@ -31,11 +32,8 @@ document.addEventListener(
   },
   { passive: false },
 );
-if (
-  import.meta.env.DEV ||
-  import.meta.env.MODE === 'devbuild' ||
-  new URLSearchParams(location.search).has('dev')
-) {
+// The sound test button is a diagnostic: only with `?dev`, like the stats overlay.
+if (import.meta.env.DEV || new URLSearchParams(location.search).has('dev')) {
   installSoundButton(ui);
 }
 void installAudio();

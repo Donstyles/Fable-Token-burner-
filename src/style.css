@@ -169,7 +169,7 @@ html.forced-landscape body {
 /* Build version, always visible, deliberately faint. */
 .version-tag {
   position: absolute;
-  right: calc(var(--sar) + 6px);
+  left: calc(var(--sal) + 6px);
   bottom: calc(var(--sab) + 4px);
   font:
     10px ui-monospace,
@@ -179,4 +179,48 @@ html.forced-landscape body {
   color: rgba(232, 220, 192, 0.55);
   pointer-events: none;
   letter-spacing: 0.02em;
+}
+
+/* The loading veil (src/app/veil.ts): black cloth, the place's name, a gold rule. */
+.veil {
+  position: absolute;
+  inset: 0;
+  z-index: 80;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  background: #050403;
+  color: #e8c860;
+  pointer-events: none;
+}
+.veil-title {
+  font:
+    34px/1.1 'Pirata One',
+    'IM Fell English',
+    Georgia,
+    serif;
+  letter-spacing: 0.06em;
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.8);
+}
+.veil-sub {
+  min-height: 1.2em;
+  font:
+    italic 15px/1.2 'IM Fell English',
+    Georgia,
+    serif;
+  color: #c8b080;
+}
+.veil-track {
+  width: 220px;
+  height: 2px;
+  margin-top: 8px;
+  background: rgba(232, 200, 96, 0.18);
+}
+.veil-rule {
+  width: 0;
+  height: 100%;
+  background: linear-gradient(90deg, #a07820, #f0d070);
+  transition: width 250ms ease-out;
 }

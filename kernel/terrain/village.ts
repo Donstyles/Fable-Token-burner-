@@ -10,7 +10,8 @@
 import catalogue from '../../assets/props/catalogue.json';
 import { ROLE } from '../elements/roles';
 import type { MeshData } from '../core/mesh';
-import type { LightPlacement, NamedPoint } from '../plan/level';
+import type { LightPlacement, NamedPoint, SpawnRecord } from '../plan/level';
+import { headingDeg } from './spline';
 import { PROPS, type PropCatalogue } from './props';
 import { box, nb, transformInto } from './solids';
 import type { P2 } from './spline';
@@ -65,6 +66,8 @@ export interface VillageLayout {
   collider: MeshData;
   lights: LightPlacement[];
   points: NamedPoint[];
+  /** Townsfolk at their places: kind is an NPC id (src/game/monsters.ts NPCS). */
+  spawns: SpawnRecord[];
   /** The village's extent along and across the street, for levelling and clearing. */
   extent: { halfA: number; halfB: number };
 }
@@ -217,6 +220,14 @@ export function layoutVillage(spec: VillageSpec): VillageLayout {
   ];
   const [sx, sz] = world(0, 0);
   const square = { x: sx, z: sz, halfA: 17, halfB: 12, yaw: yawOf(0, 1) };
+  // Greta by the well, Old Henrik at his farm gate; each faces the street.
+  const villager = (kind: string, a: number, b: number): SpawnRecord => {
+    const [x, z] = world(a, b);
+    const fx = ux * 0 + vx * (b > 0 ? -1 : 1);
+    const fz = uz * 0 + vz * (b > 0 ? -1 : 1);
+    return { kind, position: [x, spec.y, z], yawDeg: headingDeg(fx, fz) };
+  };
+  const spawns = [villager('villager-woman', -5, 7.5), villager('villager-man', -46, 9)];
   points.push({
     name: 'square',
     position: [sx, spec.y, sz],
@@ -230,6 +241,7 @@ export function layoutVillage(spec: VillageSpec): VillageLayout {
     collider,
     lights,
     points,
+    spawns,
     extent: { halfA: 78, halfB: 36 },
   };
 }

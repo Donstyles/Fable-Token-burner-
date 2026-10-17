@@ -5,6 +5,7 @@
  * itself is a fade to black and a fresh load of the page on the target level, with
  * `entry` naming the portal to arrive at: MM6 showed a loading screen between maps too.
  */
+import { lowerVeil } from '../app/veil';
 import type { Vector3 } from '@babylonjs/core/Maths/math.vector';
 
 export interface Portal {
@@ -61,25 +62,6 @@ export function portalUrl(current: string, portal: Portal): string {
 
 /** Fade the view to black with a line of text, then go. */
 export function travel(uiLayer: HTMLElement, text: string, href: string, fadeMs = 600): void {
-  const veil = document.createElement('div');
-  Object.assign(veil.style, {
-    position: 'absolute',
-    inset: '0',
-    background: '#000',
-    opacity: '0',
-    transition: `opacity ${fadeMs}ms ease-in`,
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    color: '#d8c090',
-    font: '600 20px/1.2 ui-monospace, Menlo, monospace',
-    letterSpacing: '0.04em',
-    zIndex: '50',
-  } satisfies Partial<CSSStyleDeclaration>);
-  veil.textContent = text;
-  uiLayer.appendChild(veil);
-  requestAnimationFrame(() => {
-    veil.style.opacity = '1';
-  });
-  window.setTimeout(() => location.assign(href), fadeMs + 80);
+  // The loading veil comes down over the view, then the page moves to the next level.
+  void lowerVeil(uiLayer, text, fadeMs).then(() => location.assign(href));
 }

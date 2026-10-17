@@ -269,6 +269,23 @@ pending task and goes on (owner, "Run the trees!", 2026-10-17; batch 003,
 twenty trees and bushes). Measured cost: a preview is 5 credits, a refine
 10, a quarter of the dry-run estimate.
 
+Owner, 2026-10-17, after batches 003 and 004: **never text-to-3D again**.
+Every model starts as a low-poly text-to-image concept through Meshy's
+cheapest image model (`text-to-image create --ai-model nano-banana-2-lite`,
+multi-view for creatures), the image is reviewed, then image-to-3D. The
+trees and buildings already made stay unless they fail inspection.
+
+Catalogue: `npm run props:catalogue` measures every GLB in `assets/props`
+at the nominal height in `kernel/terrain/props.ts` and writes
+`assets/props/catalogue.json` (footprint, scale to metres, triangles).
+Trees and bushes also get `<id>.lod.glb`, a far-detail copy at a third of
+the triangles with textures stripped (meshoptimizer through gltf-transform).
+The kernel lays out the village from the footprints; the runtime
+(`src/world/props.ts`) loads each model once, bakes the loader's handedness
+mirror into the vertices (reversing the winding, or every face culls
+inside out), scales it to metres with the foot at y = 0, and draws it as
+thin instances. The dev build shows one model with `?prop=<id>`.
+
 ### 10.4 Dungeons and world geometry
 
 Dungeon geometry is **generated**, never modelled; the full system is in
@@ -687,9 +704,12 @@ generated from a seed by `kernel/terrain/` and compiled by
   models (about 110 to 200 triangles each: a lathed trunk with
   `pine_bark`; a three-tier pine, a five-tier spruce, a broadleaf with an
   ellipsoid crown and a broad flat-topped oak with `forest_leaves_02`),
-  picked at random within each class, varied by yaw and scale, carried in
-  the sidecar as instances and drawn as thin instances in thirty-six
-  regions, switched off beyond 700 m; a cylinder per trunk in static
+  were the first forest; since 2026-10-17 the trees are the Meshy models of
+  batch 003 (18 trees of five classes: pine, spruce, broadleaf, oak, palm,
+  plus two bushes), each class drawn from its models by a hash of the
+  position, scaled 0.85–1.15 about the catalogue height, carried in the
+  sidecar as instances and drawn as thin instances in thirty-six regions:
+  the full model within 260 m, the far copy to 700 m, nothing beyond; a cylinder per trunk in static
   physics bodies built lazily, one per 200 m cell the first time the eye
   comes within 60 m of it, so the load pays for none of them. The navmesh
   takes only trunks within 150 m of the road or the ravine: the full set
@@ -707,27 +727,47 @@ generated from a seed by `kernel/terrain/` and compiled by
   thin enough to see 600 m with the far ridges fading; the sky dome from
   the `mm6-day` preset. No shadows, as in MM6.
 
-### 15.2 The village
+### 15.2 The village (rebuilt 2026-10-17)
 
-- The road begins at the village well, so the party wakes in the square and
-  walks out between two houses onto the serpentine. The square is a disc of
-  40 m radius flattened to one height (blending into the slope over 40 m
-  beyond), trodden earth in the splat, no trees within 20 m of its edge.
-- Houses are generated (`kernel/terrain/town.ts`), in the late-medieval
-  timber-framed manner MM6 draws: a stone plinth, plaster walls between
-  plank posts and an eave beam, a steep plank gable roof with overhanging
-  eaves, plaster gables, a chimney, a trim-stone door and iron-barred
-  windows. Eight slots ring the well at 0.6 of the square's radius; the
-  slot the road leaves through stays empty, so seven houses, every door
-  facing the well, sizes varied by the seed (7–11 m wide, 6–9 m deep,
-  walls 3.2–4.4 m). The well is a stone ring with two posts and a little
-  roof. About 870 triangles in all.
-- Solid: the houses' walls and roof wedges and the well ring go into the
-  GLB `collider` node, which the loader adds to physics beside the terrain
-  chunks, and into the navmesh collider, so monsters path round them. The
-  `town` point (8 m from the well along the road) is in the reachability
-  check.
-- Interiors come with Phase 6 (doors are drawn, not openable yet).
+A ring of houses round a well is a diagram, not a village (owner: "don't you
+dare put some houses in a circle and call it a circle"). The village is laid
+out the way one grows (`kernel/terrain/village.ts`, `layoutVillage`):
+
+- The road is its main street: it now starts beyond the farm at the river
+  end, crosses the square and climbs toward the pass. The party wakes in the
+  square looking back along the street.
+- The square: the street widens to a dirt oval (34 × 24 m) with the well
+  off the carriageway, a market stall, two lantern posts and a cart; the inn
+  (the largest model, 20 m along the square's left side) and the trader's
+  store across from it both face the square.
+- Toward the pass: the stables beside the inn, a two-storey house and a
+  cottage across the street with its woodpile, the smithy last (its noise
+  and fire bother nobody; the forge glows in its arch), a wayside shrine
+  where the road leaves.
+- Toward the river: the temple on a 2.5 m knoll up a short lane, a cottage
+  and a second cottage, then the farm: farmhouse on one side, barn across
+  with its lane, two haystacks, a cart, and a fenced yard of twenty fence
+  sections.
+- Every door faces the street or its lane (a building's yaw is set from
+  its side of the street). Models are the Meshy buildings and props of
+  batch 004 (10.3), placed by their catalogue footprints; nothing here is
+  generated geometry any more (`town.ts` is gone).
+- Ground: the floor is levelled along the street with a 40 m soft edge, a
+  dead-level pad (footprint + 2.5 m) under every building, and the knoll
+  fades over 8 m; this runs after the road is laid so the road's cut cannot
+  undo it. Dirt (the path splat) covers the square, the two lanes and an
+  apron before each door; the ground between houses stays grass. The forest
+  keeps 18 m clear of the village rectangle (156 × 72 m).
+- Each building and prop contributes a footprint box to the navmesh and,
+  at runtime, to the lazy cell colliders (15.1), so bandits path round the
+  houses and the party cannot walk through a wall or the well.
+- Lights: the two lantern posts (warm, range 9) and the forge glow.
+- Points: `square`, `temple`, `inn`, `store`, `smithy`, `stables`, `barn`,
+  `farmhouse`, `cottage-01`… for teleports and tests. Tests: nothing on
+  the carriageway, every building faces the street, no two overlap, pads
+  level at the real cell size, the temple on its knoll.
+- Not yet: doors that open into shops (the services screen exists; a tap
+  on a building should open it), villagers, chimney smoke.
 
 ### 15.3 The cave mouth and portals
 
@@ -862,6 +902,67 @@ far ridges show.
 A triplanar projection for the whole terrain (steep faces now use a
 wall projection for the rock slot only); a desert town and dungeon when
 Phase 6 content comes; creatures per region.
+
+## 16. The shell as built (2026-10-17)
+
+- **Loading veil** (`src/app/veil.ts`): a black cloth with the place's name
+  in Pirata One and a thin gold rule that fills as the level, its paths and
+  its people load; it lifts over half a second when the level is ready, and
+  portal travel lowers the same veil with the destination's name. The dev
+  chrome (stats box, sound test) shows only with `?dev`; Babylon's own
+  unmute button is off; the version tag sits bottom left.
+- **Fonts** (`npm run fonts`, `src/ui/fonts/`, OFL): IM Fell English
+  regular and italic (the worn serif of MM6's stat screens) and Pirata One
+  for headings, woff2, 124 KiB in all, precached by the service worker.
+- **HUD band** (`src/ui/hud.ts`, DESIGN 9 realised): MM6's marble foot along
+  the bottom of the view (the repo's `marble_01`), four cells each with a
+  gold oval frame holding the member's class sigil in gold line art (sword,
+  shield, bow, ankh, star, leaf; the owner's portrait art drops into the same
+  frame later), the name on a plate in IM Fell italic, a green hit point bar
+  and a blue spell point bar standing beside the frame with gold caps, and a
+  condition gem above them (green good, yellow weak, red poisoned or
+  diseased, grey out, black dead). A tap selects the member for the next
+  blow; a second tap opens their sheet. The book shelf stands on the band's
+  right end: leather spines with gold glyphs for Sheet, Items, Spells, Quests
+  and Map, and a round gold button for Rest.
+- **Status line** (`src/ui/status.ts`): MM6's one-line stone bar on the
+  band's top edge, IM Fell italic in yellow. A tapped model is named there
+  ("The Inn", "A Spruce", "The Village Well"), the fight is told there
+  ("Alric hits Bandit for 7", "Bandit falls"), and so are falls, deep
+  water, spells and rest. Nothing else pops up over the view; the dev
+  panel's toasts are for development notices only.
+- **Reach**: a sword reaches 3.5 m. A tap on a bandit farther off answers
+  "Alric cannot reach Bandit" instead of killing it from across the field;
+  a member with a bow equipped shoots at any range.
+- **Sun**: a disc about a degree across with a tight corona (it was a fist).
+- **Debug toasts** ("tapped chunk-14 at 3.2 m", "fell 0.6 m") are gone; a
+  fall of three metres or more says "The party falls".
+- The tuning panel no longer remembers the sky preset, ambient, fog scale or
+  exposure between launches: the region sets those.
+
+### 16.1 Creatures image first (batch 005)
+
+`npm run asset -- batch creatures <name> <specs.json>` plans a creature or
+villager from `{ id, height, prompt, set? }`: a text-to-image concept
+(`nano-banana-2-lite`, A-pose, white background, background removed, the
+pose and look appended from `CONCEPT_STYLE`), then image-to-3D, rig and
+the clip set. A run stops after the images, which land in `pipeline/inbox/`
+like an owner's, until `batch approve-images <n>`; the next run builds the
+models. Batch 005: goblin scout, skeleton warrior, nomad raider (combat
+set), a village man and woman (civilian set), 223 credits estimated.
+
+### 16.2 Creatures and townsfolk in the world
+
+- Monsters (`src/game/monsters.ts`): bandits on the valley road, goblin
+  scouts at the forest's edge and up the gorge (level 1, quick, weak),
+  nomad raiders on the desert road (level 3), skeleton warriors (level 3,
+  slow, armoured) for the dungeons. Each kind loads its own model from
+  `assets/characters/<id>/`; the kernel's spawn records name the kind.
+- Townsfolk (`src/world/npc.ts`, `NPCS`): Greta by the well and Old Henrik
+  at his farm gate. They idle, turn to face the party within six metres,
+  and answer a tap with their next line in the status bar while the talk
+  clip plays. No quests yet: the lines are the village's voice until
+  dialogue lands (the audit's next step).
 
 ## 13. Decision log
 

@@ -61,8 +61,9 @@ void main(void) {
   vec3 c = mix(sky, cloudColor, cover * horizonFade);
   // The sun: a hard disc, a tight corona and a wide warm glow, dimmed behind clouds.
   float s = max(dot(d, sunDir), 0.0);
-  float disc = smoothstep(0.9990, 0.9996, s);
-  float glow = pow(s, 160.0) * 0.5 + pow(s, 10.0) * 0.12;
+  // About a degree across, twice the real sun: a disc, not a fist (wow audit, 2026-10-17).
+  float disc = smoothstep(0.99955, 0.99985, s);
+  float glow = pow(s, 600.0) * 0.6 + pow(s, 40.0) * 0.08;
   c += sunColor * (disc * 1.2 + glow) * (1.0 - cover * 0.7);
   if (d.y < 0.0) c = horizon;
   gl_FragColor = vec4(c, 1.0);

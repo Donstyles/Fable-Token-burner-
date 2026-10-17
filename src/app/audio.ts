@@ -153,7 +153,12 @@ export function installAudio(): Promise<AudioEngineV2 | null> {
     try {
       context = new AudioContext();
       context.onstatechange = () => diag(`audio: ${context?.state ?? 'none'}`);
-      engine = await CreateAudioEngineAsync({ audioContext: context, resumeOnInteraction: true });
+      // No unmute button of Babylon's own: the shell's sound button is the one control.
+      engine = await CreateAudioEngineAsync({
+        audioContext: context,
+        resumeOnInteraction: true,
+        disableDefaultUI: true,
+      });
       beep = await engine.createSoundAsync('test-beep', beepBuffer(context), { volume: 1 });
       for (const kind of ['whack', 'thud', 'whoosh'] as const) {
         impacts.set(

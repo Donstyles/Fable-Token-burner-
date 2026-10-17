@@ -1,0 +1,212 @@
+/* The HUD band (src/ui/hud.ts): MM6's marble foot with four gold oval frames, name plates,
+   green hit point and blue spell point bars, condition gems; the book shelf stands on its
+   right end. Sized for 932 × 430 CSS px in landscape with the safe areas. */
+.hud {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: calc(var(--sab) + 100px);
+  padding: 0 var(--sar) var(--sab) var(--sal);
+  pointer-events: none;
+  z-index: 25;
+  background:
+    linear-gradient(rgba(60, 50, 40, 0.35), rgba(20, 16, 12, 0.55)),
+    url('../../assets/textures/marble.png') center / 320px auto;
+  border-top: 2px solid #b08a2e;
+  box-shadow:
+    inset 0 2px 0 rgba(255, 240, 200, 0.35),
+    inset 0 -3px 0 rgba(0, 0, 0, 0.45),
+    0 -2px 10px rgba(0, 0, 0, 0.5);
+}
+.hud-band {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  height: 100px;
+  padding: 5px 300px 0 60px;
+}
+.hud-cell {
+  pointer-events: auto;
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  width: 150px;
+  padding: 2px 4px;
+  background: linear-gradient(rgba(255, 250, 240, 0.08), rgba(0, 0, 0, 0.12));
+  border: 1px solid rgba(90, 70, 40, 0.5);
+  border-radius: 4px;
+  font: inherit;
+  color: inherit;
+}
+.hud-cell.selected {
+  border-color: #f0c050;
+  box-shadow:
+    0 0 0 1px #f0c050 inset,
+    0 0 10px rgba(240, 192, 80, 0.5);
+}
+.hud-cell.recovering .hud-cameo {
+  filter: brightness(0.55);
+}
+.hud-cell.dead .hud-frame {
+  border-color: #6a2a20;
+  filter: grayscale(1) brightness(0.6);
+}
+.hud-left {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+.hud-frame {
+  width: 54px;
+  height: 62px;
+  border: 3px solid #d2a53c;
+  border-radius: 50% / 46%;
+  background: radial-gradient(ellipse at 50% 35%, #4a3a2a, #1a1208 70%, #0a0806);
+  box-shadow:
+    inset 0 0 0 1px #7a5a18,
+    inset 0 2px 4px rgba(0, 0, 0, 0.8),
+    0 1px 0 rgba(255, 240, 200, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.hud-cameo {
+  width: 34px;
+  height: 34px;
+}
+.hud-cameo svg {
+  width: 100%;
+  height: 100%;
+  filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.9));
+}
+.hud-plate {
+  min-width: 64px;
+  padding: 0 6px;
+  font:
+    italic 13px/1.1 'IM Fell English',
+    Georgia,
+    serif;
+  color: #f0d060;
+  text-align: center;
+  text-shadow: 0 1px 1px #000;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 84px;
+}
+.hud-bars {
+  display: grid;
+  grid-template-columns: 9px 9px;
+  grid-template-rows: 12px 60px;
+  gap: 2px 4px;
+  margin-top: 2px;
+}
+.hud-gem {
+  grid-column: 1 / span 2;
+  width: 10px;
+  height: 10px;
+  margin: 0 auto;
+  border-radius: 50%;
+  border: 1px solid #6a5018;
+  box-shadow:
+    inset 0 -2px 2px rgba(0, 0, 0, 0.5),
+    0 0 4px currentColor;
+}
+.hud-gem.good {
+  background: radial-gradient(circle at 35% 30%, #a8ff8a, #1f8a2a 60%, #0c4a14);
+  color: #3ad050;
+}
+.hud-gem.weak {
+  background: radial-gradient(circle at 35% 30%, #fff0a0, #c8a020 60%, #6a4e08);
+  color: #e8c040;
+}
+.hud-gem.ill {
+  background: radial-gradient(circle at 35% 30%, #ffb090, #c84020 60%, #601a08);
+  color: #e05030;
+}
+.hud-gem.out {
+  background: radial-gradient(circle at 35% 30%, #d0d0d0, #707070 60%, #303030);
+  color: #909090;
+}
+.hud-gem.dead {
+  background: radial-gradient(circle at 35% 30%, #505050, #181818 60%, #000);
+  color: #000;
+}
+.hud-bar {
+  position: relative;
+  height: 60px;
+  border: 1px solid #8a6a20;
+  border-radius: 2px;
+  background: linear-gradient(90deg, #14100a, #2a2016, #14100a);
+  box-shadow: inset 0 0 3px rgba(0, 0, 0, 0.8);
+  overflow: hidden;
+}
+.hud-bar::before,
+.hud-bar::after {
+  content: '';
+  position: absolute;
+  left: -2px;
+  right: -2px;
+  height: 3px;
+  background: #d2a53c;
+}
+.hud-bar::before {
+  top: -2px;
+}
+.hud-bar::after {
+  bottom: -2px;
+}
+.hud-fill {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 0;
+  transition: height 180ms ease-out;
+}
+.hud-bar.hp .hud-fill {
+  background: linear-gradient(90deg, #1c7a1c, #4ee04e 45%, #1c7a1c);
+}
+.hud-bar.sp .hud-fill {
+  background: linear-gradient(90deg, #1c3a9a, #4e8cff 45%, #1c3a9a);
+}
+
+/* The status line (src/ui/status.ts): a narrow stone bar on the band's top edge. */
+.status-line {
+  position: absolute;
+  left: calc(var(--sal) + 60px);
+  right: calc(var(--sar) + 300px);
+  bottom: calc(var(--sab) + 102px);
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 12px;
+  pointer-events: none;
+  z-index: 26;
+  background:
+    linear-gradient(rgba(40, 32, 24, 0.55), rgba(20, 16, 12, 0.7)),
+    url('../../assets/textures/marble.png') center / 320px auto;
+  border: 1px solid #8a6a20;
+  border-bottom: none;
+  border-radius: 4px 4px 0 0;
+  box-shadow: inset 0 1px 0 rgba(255, 240, 200, 0.25);
+  opacity: 0;
+  transition: opacity 200ms ease-out;
+}
+.status-line.shown {
+  opacity: 1;
+}
+.status-text {
+  font:
+    italic 15px/1 'IM Fell English',
+    Georgia,
+    serif;
+  color: #f0d060;
+  text-shadow: 0 1px 1px #000;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}

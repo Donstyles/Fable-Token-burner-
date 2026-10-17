@@ -23,9 +23,9 @@ import { Navigation } from '../world/navigation';
 import { CombatFeedback } from '../world/combat-feedback';
 import { PortalWatcher, portalUrl, travel, type Portal } from '../world/portals';
 import { Monster } from '../world/monster';
-import { MONSTERS } from '../game/monsters';
+import { MONSTERS, NPCS } from '../game/monsters';
 import { Party } from '../game/party';
-import { healCharacter, type Character as CharacterSheet } from '../game/character';
+import { damageDice, healCharacter, type Character as CharacterSheet } from '../game/character';
 import { testCharacters } from '../game/fixtures';
 import { newGame, type GameState } from '../game/state';
 import { automapLevel, revealAt } from '../game/automap';
@@ -33,10 +33,24 @@ import { createCreationScreen } from '../ui/creation';
 import { installScreens, type Screens } from '../ui/screens';
 import { mulberry32 } from '../game/rng';
 import { HUMANOID_CLIPS } from '../../kernel/characters/clips';
-import { createPartyStrip } from './party-strip';
-import banditUrl from '../../assets/characters/bandit/bandit.glb?url';
+import { createHud } from '../ui/hud';
+// Every character model in the repo, by asset id (src/game/monsters.ts names them).
+const CHARACTER_URLS = import.meta.glob('../../assets/characters/*/*.glb', {
+  query: '?url',
+  import: 'default',
+  eager: true,
+}) as Record<string, string>;
+const characterUrl = (id: string): string => {
+  const url = CHARACTER_URLS[`../../assets/characters/${id}/${id}.glb`];
+  if (!url) throw new Error(`no character model for ${id}`);
+  return url;
+};
 import { Braziers, FogBySpace, Torch } from '../world/atmosphere';
 import { dust } from '../world/particles';
+import { CATALOGUE, loadPropModels, propLabel } from '../world/props';
+import { createStatusLine } from '../ui/status';
+import { Npc } from '../world/npc';
+import { hideVeil, showVeil, veilProgress } from '../app/veil';
 import { UnderwaterTint, isUnderwater, wadeSpeedFactor, waterDepthAt } from '../world/wading';
 import { ROLE } from '../../kernel/elements/roles';
 import { FILTER_MODES, type FilterMode } from '../render/filter';
@@ -102,15 +116,26 @@ const DEG = Math.PI / 180;
 const QUERY = new URLSearchParams(location.search);
 // The valley is the first thing a visitor sees; the dungeon is a portal away (or ?level=showcase).
 const LEVEL = QUERY.get('level') ?? 'valley';
+/** What the veil calls each level while it loads. */
+const PLACE_NAMES: Record<string, string> = {
+  valley: 'The Valley',
+  desert: 'The Desert',
+  showcase: 'The Old Halls',
+};
 /** Arriving through a portal: the portal of this level to appear at (DESIGN.md 15.3). */
 const ENTRY = QUERY.get('entry');
 
 export async function startDev(app: App): Promise<DevHandle> {
   const { scene, engine, camera, canvas, uiLayer } = app;
+  // Townsfolk standing about the village (src/world/npc.ts); monsters live on the handle.
+  const npcs: Npc[] = [];
   await enableHavok(scene, new Vector3(0, -DEFAULT_TUNING.gravity, 0));
   const textures = loadRoleTextures(scene, true);
   // Levels live next to the page: <base>levels/<id>.glb and .json.
   const base = new URL(import.meta.env.BASE_URL, location.href).href;
+  // The veil hides the load; it lifts when the level is ready (src/app/veil.ts).
+  showVeil(uiLayer, PLACE_NAMES[LEVEL] ?? LEVEL, 'Loading the land');
+  veilProgress(0.1);
   diag(`loading level ${LEVEL}`);
   const level = await loadLevel(scene, app.materials, `${base}levels/${LEVEL}`, textures);
   diag(
@@ -193,6 +218,7 @@ export async function startDev(app: App): Promise<DevHandle> {
   const fog = new FogBySpace(app.materials, level.spaces);
   const underwater = new UnderwaterTint(uiLayer);
   diag(`water: ${level.water.length} bodies, ${level.waterfalls.length} falls`);
+  veilProgress(0.55);
   // Combat test bed (PLAN Phase 5 step 4): the test party, a seeded die, the level's navmesh
   // and one bandit six metres ahead of the spawn. Clips step at MM6's rate regardless of the
   // display refresh. `?seed=<n>` makes a run repeatable.
@@ -224,7 +250,10 @@ export async function startDev(app: App): Promise<DevHandle> {
   });
   let mapTimer = 0;
   const roster = new Party(state.party);
-  const strip = createPartyStrip(uiLayer, roster);
+  // The HUD band (DESIGN 9): a tap selects a member, a second tap opens their sheet. The
+  // status line above it names what is tapped and tells the fight, as MM6's did.
+  const strip = createHud(uiLayer, roster, { onOpenSheet: () => screens.open('sheet') });
+  const status = createStatusLine(uiLayer);
   const feedback = new CombatFeedback(scene, stepper, uiLayer, {}, rng);
   // Simulated seconds: the party's recovery and the screens' die run on it.
   let simTime = 0;
@@ -234,13 +263,17 @@ export async function startDev(app: App): Promise<DevHandle> {
     now: () => simTime,
     onClose: () => {},
     onRest: (kind) =>
-      panel.toast(
-        kind === 'dawn' ? 'waited until dawn' : kind === 'room' ? 'slept at the inn' : 'rested',
+      status.say(
+        kind === 'dawn'
+          ? 'The party waits until dawn'
+          : kind === 'room'
+            ? 'The party sleeps at the inn'
+            : 'The party rests',
       ),
     onCast: (cast) => {
       const caster = state.party[cast.caster]?.name ?? 'someone';
       if (cast.failed) {
-        panel.toast(`${caster}'s spell fizzles`);
+        status.say(`${caster}'s spell fizzles`);
         return;
       }
       for (const e of cast.effects) {
@@ -249,7 +282,7 @@ export async function startDev(app: App): Promise<DevHandle> {
           if (m) healCharacter(m, e.amount);
         }
       }
-      panel.toast(`${caster} casts ${cast.spell}`);
+      status.say(`${caster} casts ${cast.spell}`);
     },
   });
   const partyTarget = {
@@ -281,12 +314,13 @@ export async function startDev(app: App): Promise<DevHandle> {
     try {
       nav = await Navigation.load(`${base}levels/${LEVEL}.nav.bin`);
       diag('navmesh: loaded');
+      veilProgress(0.75);
     } catch (e) {
       diag(`navmesh failed: ${e instanceof Error ? e.message : String(e)}`);
     }
     // The level's spawns (regions), or the test bed's one bandit six metres ahead.
     const placements = level.spawns.length
-      ? level.spawns.map((s, i) => ({ ...s, name: i === 0 ? 'bandit' : `bandit-${i + 1}` }))
+      ? level.spawns.map((s, i) => ({ ...s, name: i === 0 ? 'bandit' : `${s.kind}-${i + 1}` }))
       : [
           {
             kind: 'bandit',
@@ -295,25 +329,37 @@ export async function startDev(app: App): Promise<DevHandle> {
             yawDeg: level.spawnYawDeg + 180,
           },
         ];
-    for (const p of placements) {
-      const def = MONSTERS[p.kind];
-      if (!def) {
-        diag(`no such monster: ${p.kind}`);
-        continue;
-      }
-      try {
-        const c = await loadCharacter(scene, app.materials, stepper, banditUrl, {
-          name: p.name,
-          position: p.position,
-          yawDeg: p.yawDeg,
-        });
-        handle.character ??= c;
-        handle.monsters.push(new Monster(def, c, nav, rng));
-      } catch (e) {
-        diag(`${p.name} failed: ${e instanceof Error ? e.message : String(e)}`);
-      }
+    // Everyone loads at once: one after another, each waited frames of its own, and at a
+    // frame a second (software GL in CI) eight of them took longer than the tests allow.
+    const loaded = await Promise.all(
+      placements.map(async (p) => {
+        const def = MONSTERS[p.kind];
+        const npcDef = NPCS[p.kind];
+        if (!def && !npcDef) {
+          diag(`no such monster: ${p.kind}`);
+          return null;
+        }
+        try {
+          const c = await loadCharacter(scene, app.materials, stepper, characterUrl(p.kind), {
+            name: p.name,
+            position: p.position,
+            yawDeg: p.yawDeg,
+          });
+          return { p, c, def, npcDef };
+        } catch (e) {
+          diag(`${p.name} failed: ${e instanceof Error ? e.message : String(e)}`);
+          return null;
+        }
+      }),
+    );
+    for (const got of loaded) {
+      if (!got) continue;
+      handle.character ??= got.c;
+      if (got.def) handle.monsters.push(new Monster(got.def, got.c, nav, rng));
+      else if (got.npcDef) npcs.push(new Npc(got.npcDef, got.c));
     }
     diag(`${handle.monsters.length} monsters, ${nav ? 'on the navmesh' : 'no navmesh'}`);
+    veilProgress(0.95);
     navigation = nav;
   };
 
@@ -330,6 +376,21 @@ export async function startDev(app: App): Promise<DevHandle> {
   canvas.addEventListener('pointercancel', note('cancel'));
   const entry = ENTRY ? level.portals.find((p) => p.name === ENTRY) : undefined;
   const start = entry?.arrive ?? { position: level.spawn, yawDeg: level.spawnYawDeg };
+  // `?prop=<id>` stands one Meshy model in front of the party for inspection (dev only).
+  const propId = QUERY.get('prop');
+  if (propId) {
+    const measure = CATALOGUE[propId];
+    if (!measure) throw new Error(`prop ${propId}: not in the catalogue`);
+    const model = (await loadPropModels(scene, app.materials, [propId])).get(propId)!;
+    const yaw = start.yawDeg * DEG;
+    const forward = new Vector3(Math.sin(yaw), 0, Math.cos(yaw));
+    const away = 6 + Math.max(measure.size[0], measure.size[2]) * 0.9 + measure.size[1] * 0.6;
+    model.mesh.isVisible = true;
+    model.mesh.position = start.position.add(forward.scale(away));
+    model.mesh.position.y = start.position.y - 0.9;
+    model.mesh.rotation.y = yaw + Math.PI;
+    diag(`prop ${propId}: ${measure.size.map((v) => v.toFixed(1)).join(' × ')} m`);
+  }
   const party = new PartyController(scene, camera, start.position, DEFAULT_TUNING, start.yawDeg);
   if (ENTRY) diag(`arrived through ${entry ? ENTRY : `unknown portal ${ENTRY}, at the spawn`}`);
   const portals = new PortalWatcher(level.portals, (p: Portal) => {
@@ -355,7 +416,7 @@ export async function startDev(app: App): Promise<DevHandle> {
     roster,
     attack(name) {
       const monster = handle.monsters.find((m) => m.name === name);
-      return monster ? attackMonster(monster) : null;
+      return monster ? attackMonster(monster, 0) : null;
     },
     screenPointOf(name) {
       const mesh = scene.getMeshByName(name);
@@ -407,10 +468,17 @@ export async function startDev(app: App): Promise<DevHandle> {
   void startCombat();
 
   // A tap on a monster attacks it with the ready member (DESIGN 7.1); the log line is shown.
-  const attackMonster = (monster: Monster): string => {
+  // A sword reaches this far; a bow reaches anything in view (DESIGN 14.1).
+  const MELEE_REACH = 3.5;
+  const attackMonster = (monster: Monster, distance = 0): string => {
     if (!monster.alive) return `${monster.def.name} is dead`;
+    const ready = roster.readyIndex(simTime);
+    if (ready < 0) return 'Nobody is ready';
+    const next = roster.members[ready]!;
+    const ranged = next.character ? damageDice(next.character, true) !== null : false;
+    if (!ranged && distance > MELEE_REACH) return `${next.name} cannot reach ${monster.def.name}`;
     const a = roster.attack(monster, simTime, rng);
-    if (!a) return 'nobody is ready';
+    if (!a) return 'Nobody is ready';
     if (a.result.hit) feedback.monsterStruck(monster, party.position, !monster.alive);
     else feedback.monsterMissed();
     const line = a.result.hit
@@ -438,6 +506,11 @@ export async function startDev(app: App): Promise<DevHandle> {
       }, 250),
     );
     const d = pick?.distance ?? 0;
+    const villager = npcs.find((n) => mesh.name.startsWith(`${n.character.node.name}:`));
+    if (villager) {
+      status.say(villager.greet(), 6000);
+      return;
+    }
     const monster = handle.monsters.find((m) => mesh.name.startsWith(`${m.name}:`));
     if (monster) {
       if (clipReview) {
@@ -448,11 +521,12 @@ export async function startDev(app: App): Promise<DevHandle> {
         monster.character.play(next);
         panel.toast(`${monster.name}: ${next}`);
       } else {
-        panel.toast(attackMonster(monster));
+        status.say(attackMonster(monster, d));
       }
       return;
     }
-    panel.toast(`tapped ${mesh.name} at ${d.toFixed(1)} m`);
+    // A tapped model is named; the ground and the walls stay quiet, as in MM6.
+    if (mesh.name.startsWith('props:')) status.say(propLabel(mesh.name.split(':')[1] ?? ''));
   };
 
   // Free fly camera: the stick moves along the view direction, the party stays put.
@@ -509,7 +583,7 @@ export async function startDev(app: App): Promise<DevHandle> {
       party.update(dt, input);
       if (depth >= 1.3 && simTime - lastDeepToast > 2) {
         lastDeepToast = simTime;
-        panel.toast('deep water');
+        status.say('Deep water');
       }
     }
     level.update(camera.globalPosition);
@@ -527,10 +601,11 @@ export async function startDev(app: App): Promise<DevHandle> {
       state.level = { id: LEVEL, x: p.x, y: p.y, z: p.z, yawDeg: (party.yaw * 180) / Math.PI };
     }
     navigation?.update(dt);
+    for (const n of npcs) n.update(dt, party.position);
     for (const m of handle.monsters) {
       m.update(dt, partyTarget, simTime);
       for (const ev of m.takeEvents()) {
-        panel.toast(ev.text);
+        status.say(ev.text);
         if (ev.kind === 'miss') feedback.partyMissed();
       }
     }
@@ -546,7 +621,9 @@ export async function startDev(app: App): Promise<DevHandle> {
     events.taps += input.taps.length;
     for (const t of input.taps) handleTap(t.x, t.y);
   });
-  party.onFall.add((e) => panel.toast(`fell ${e.height.toFixed(1)} m`));
+  party.onFall.add((e) => {
+    if (e.height >= 3) status.say('The party falls');
+  });
 
   const range = (
     key: string,
@@ -556,7 +633,8 @@ export async function startDev(app: App): Promise<DevHandle> {
     step: number,
     get: () => number,
     set: (v: number) => void,
-  ): Field => ({ kind: 'range', key, label, min, max, step, get, set });
+    persist = true,
+  ): Field => ({ kind: 'range', key, label, min, max, step, get, set, persist });
   const env = (): typeof app.materials.env => app.materials.env;
   // Owner's tuning 2026-10-15: live per-pixel lights on top of the baked light.
   let liveLights = true;
@@ -822,6 +900,8 @@ export async function startDev(app: App): Promise<DevHandle> {
         options: ENVIRONMENT_PRESETS,
         get: () => 'dusk-violet',
         set: (v) => app.setEnvironmentPreset(v as EnvironmentPreset),
+        // The region sets its own light; a remembered preset would drown it in dungeon fog.
+        persist: false,
       },
       range(
         'bloomWeight',
@@ -867,6 +947,7 @@ export async function startDev(app: App): Promise<DevHandle> {
         0.05,
         () => app.grade.settings.exposure,
         (v) => app.setGrade({ exposure: v }),
+        false,
       ),
       range(
         'splitTone',
@@ -929,6 +1010,7 @@ export async function startDev(app: App): Promise<DevHandle> {
         0.1,
         () => fog.scale,
         (v) => (fog.scale = v),
+        false,
       ),
       range(
         'ambient',
@@ -938,6 +1020,7 @@ export async function startDev(app: App): Promise<DevHandle> {
         0.02,
         () => env().ambientColor.r,
         (v) => app.materials.setEnvironment({ ambientColor: new Color3(v, v, v * 1.15) }),
+        false,
       ),
       {
         kind: 'toggle',
@@ -1068,6 +1151,8 @@ export async function startDev(app: App): Promise<DevHandle> {
     { log: diagText },
   );
   diag(`dev level ready: ${LEVEL}`);
+  veilProgress(1);
+  hideVeil(600);
 
   handle.ready = true;
   return handle;

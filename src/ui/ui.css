@@ -1,22 +1,90 @@
-/* Screens (Phase 5 step 10): the book-shelf bar and the full-viewport screens. Dark stone
-   panels with gold borders, warm amber for the selection, monospace numbers; sized for a phone
-   in landscape (932 × 430 CSS px with the safe areas) and tap targets of 36 px or more. */
+/* Screens (DESIGN.md 14.5, 16): MM6's books. Grey-green marble stone panels (the repo's
+   marble_01 under a green-grey wash), gold-bordered inset boxes with a bevel, labels and
+   numbers in IM Fell English italic in yellow, gold oval buttons. Sized for a phone in
+   landscape (932 × 430 CSS px with the safe areas) and tap targets of 36 px or more. */
+:root {
+  --stone: url('../../assets/textures/marble.png');
+  --gold: #e2b84a;
+  --gold-dark: #8a6a20;
+  --ink-yellow: #f0d060;
+  --ink-pale: #e8dcb0;
+  --ink-brown: #3a2608;
+  --serif-italic: italic 15px/1.25 'IM Fell English', Georgia, serif;
+}
 .ui-shelf {
+  /* The book shelf: leather spines standing on the HUD's right end, gold glyphs on them,
+     and a round gold button for rest. */
   position: absolute;
-  right: calc(var(--sar) + 8px);
-  bottom: calc(var(--sab) + 8px);
-  display: grid;
-  grid-template-columns: repeat(2, 58px);
-  gap: 4px;
+  right: calc(var(--sar) + 14px);
+  bottom: calc(var(--sab) + 10px);
+  display: flex;
+  align-items: flex-end;
+  gap: 3px;
   z-index: 30;
+  padding: 4px 6px 4px 4px;
+  background: linear-gradient(#2a1a10, #140c06);
+  border: 1px solid #6a4a20;
+  border-radius: 3px;
+  box-shadow: inset 0 1px 0 rgba(255, 220, 160, 0.15);
 }
 .ui-shelf.hidden {
   display: none;
 }
 .ui-shelf-btn {
-  min-height: 38px;
-  padding: 0 4px;
-  font-size: 12px;
+  position: relative;
+  width: 40px;
+  min-height: 72px;
+  padding: 4px 2px 2px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  background: linear-gradient(90deg, #4a2612, #7a4020 30%, #5a2e16 70%, #3a1c0c);
+  border: 1px solid #2a140a;
+  border-radius: 5px 5px 3px 3px;
+  box-shadow:
+    inset 2px 0 0 rgba(255, 200, 120, 0.18),
+    inset -2px 0 0 rgba(0, 0, 0, 0.45),
+    inset 0 8px 0 -6px #c89a3a,
+    inset 0 -8px 0 -6px #c89a3a;
+  color: #f0d060;
+  font:
+    italic 10px/1 'IM Fell English',
+    Georgia,
+    serif;
+}
+.ui-shelf-btn:active {
+  filter: brightness(1.2);
+}
+.ui-shelf-btn svg {
+  width: 24px;
+  height: 24px;
+  fill: none;
+  stroke: #e2b84a;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.9));
+}
+.ui-shelf-btn.rest {
+  width: 44px;
+  min-height: 44px;
+  margin-left: 6px;
+  margin-bottom: 14px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 40% 35%, #f0d070, #b8862a 60%, #6a4a12);
+  border: 2px solid #5a3e10;
+  box-shadow:
+    inset 0 2px 3px rgba(255, 240, 200, 0.6),
+    inset 0 -3px 4px rgba(0, 0, 0, 0.5);
+  color: #3a2608;
+}
+.ui-shelf-btn.rest svg {
+  stroke: #3a2608;
+  filter: none;
+}
+.ui-shelf-label {
+  font: inherit;
 }
 
 .ui-btn {
@@ -26,32 +94,36 @@
   justify-content: center;
   gap: 1px;
   min-height: 36px;
-  padding: 2px 10px;
-  background: linear-gradient(#3a2c1c, #241a10);
-  color: var(--ink);
-  border: 1px solid #7a6a40;
-  border-radius: 4px;
+  padding: 2px 14px;
+  background: radial-gradient(ellipse at 40% 30%, #f4d878, #c89a3a 55%, #7a5416);
+  color: var(--ink-brown);
+  border: 1px solid #5a3e10;
+  border-radius: 18px;
+  box-shadow:
+    inset 0 2px 2px rgba(255, 245, 210, 0.7),
+    inset 0 -3px 3px rgba(0, 0, 0, 0.45),
+    0 1px 2px rgba(0, 0, 0, 0.6);
   font:
-    13px/1.1 Georgia,
+    15px/1.1 'IM Fell English',
+    Georgia,
     serif;
   white-space: nowrap;
 }
 .ui-btn:active {
-  background: #4a3a24;
+  filter: brightness(1.15);
 }
 .ui-btn:disabled {
   opacity: 0.45;
 }
 .ui-btn.primary {
-  color: #f0c050;
-  border-color: #c9a227;
+  background: radial-gradient(ellipse at 40% 30%, #fff0a0, #e0b040 55%, #9a6e1c);
 }
 .ui-btn-note {
   font:
-    10px ui-monospace,
-    Menlo,
-    monospace;
-  color: #b8a888;
+    italic 11px 'IM Fell English',
+    Georgia,
+    serif;
+  color: #5a4010;
 }
 
 .ui-modal {
@@ -59,7 +131,7 @@
   inset: 0;
   z-index: 60;
   padding: var(--sat) var(--sar) var(--sab) var(--sal);
-  background: rgba(0, 0, 0, 0.55);
+  background: rgba(0, 0, 0, 0.5);
   display: flex;
 }
 .ui-panel {
@@ -69,33 +141,37 @@
   margin: 6px;
   display: flex;
   flex-direction: column;
-  background: linear-gradient(170deg, #1e160e, #0f0b07);
-  border: 1px solid #6e5a30;
-  border-radius: 6px;
+  background:
+    linear-gradient(rgba(110, 120, 104, 0.55), rgba(70, 78, 66, 0.62)),
+    var(--stone) center / 420px auto;
+  border: 2px solid var(--gold-dark);
+  border-radius: 4px;
   box-shadow:
-    0 0 0 1px #2a2012 inset,
+    inset 0 0 0 1px rgba(255, 240, 200, 0.35),
+    inset 0 0 24px rgba(0, 0, 0, 0.35),
     0 0 24px rgba(0, 0, 0, 0.6);
-  color: var(--ink);
-  font:
-    14px/1.3 Georgia,
-    serif;
+  color: var(--ink-pale);
+  font: var(--serif-italic);
 }
 .ui-head {
   display: flex;
   align-items: center;
   gap: 8px;
   padding: 4px 8px;
-  min-height: 40px;
-  border-bottom: 1px solid #4a3a20;
+  min-height: 42px;
+  border-bottom: 1px solid var(--gold-dark);
+  box-shadow: 0 1px 0 rgba(255, 240, 200, 0.25);
 }
 .ui-title {
   margin: 0;
   font:
-    bold 17px/1 Georgia,
+    24px/1 'Pirata One',
+    'IM Fell English',
+    Georgia,
     serif;
-  font-variant: small-caps;
-  letter-spacing: 0.04em;
-  color: var(--gold);
+  letter-spacing: 0.03em;
+  color: var(--ink-yellow);
+  text-shadow: 0 1px 1px #000;
   white-space: nowrap;
 }
 .ui-head-tabs {
@@ -105,7 +181,7 @@
   touch-action: pan-x;
 }
 .ui-close {
-  min-height: 32px;
+  min-height: 34px;
 }
 .ui-body {
   flex: 1;
@@ -113,15 +189,15 @@
   overflow: auto;
   padding: 8px;
   display: flex;
-  gap: 12px;
+  gap: 10px;
   touch-action: pan-x pan-y;
 }
 .ui-foot {
   display: none;
   padding: 4px 10px;
-  border-top: 1px solid #4a3a20;
-  color: #f0c050;
-  font-size: 13px;
+  border-top: 1px solid var(--gold-dark);
+  color: var(--ink-yellow);
+  font-size: 14px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -136,25 +212,35 @@
 }
 .ui-tab {
   min-height: 32px;
-  padding: 0 10px;
-  background: rgba(0, 0, 0, 0.35);
+  padding: 0 12px;
+  background: radial-gradient(ellipse at 40% 30%, #c8a850, #8a6a28 60%, #4a3410);
+  color: #f0e0b0;
 }
 .ui-tab.active {
-  color: #f0c050;
-  border-color: #f0c050;
-  background: #3a2c1c;
+  background: radial-gradient(ellipse at 40% 30%, #fff0a0, #e0b040 55%, #9a6e1c);
+  color: var(--ink-brown);
 }
 .ui-tab.down {
   text-decoration: line-through;
   opacity: 0.6;
 }
 
+/* An inset stone box with a gold border: MM6's groups of lines. */
 .ui-col {
   flex: 1;
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 3px;
+  padding: 6px 8px;
+  background:
+    linear-gradient(rgba(40, 46, 40, 0.5), rgba(30, 34, 30, 0.55)),
+    var(--stone) center / 420px auto;
+  border: 1px solid var(--gold-dark);
+  box-shadow:
+    inset 0 0 0 1px rgba(0, 0, 0, 0.5),
+    inset 0 2px 6px rgba(0, 0, 0, 0.5),
+    0 0 0 1px rgba(255, 240, 200, 0.18);
   touch-action: pan-y;
 }
 .ui-col.narrow {
@@ -167,79 +253,77 @@
   display: flex;
   justify-content: space-between;
   gap: 8px;
-  padding: 2px 0;
-  border-bottom: 1px dotted #3a2e1a;
+  padding: 1px 0;
 }
 .ui-k {
-  color: #c8b89a;
+  color: var(--ink-pale);
 }
 .ui-v {
-  font:
-    13px ui-monospace,
-    Menlo,
-    Consolas,
-    monospace;
-  color: #f0e4c8;
+  font: var(--serif-italic);
+  color: var(--ink-yellow);
   white-space: pre;
 }
 .ui-kv.good .ui-v,
 .ui-v.good {
-  color: #8fc46a;
+  color: #8fe07a;
 }
 .ui-kv.bad .ui-v,
 .ui-v.bad {
-  color: #e06050;
+  color: #f07060;
 }
 .ui-h {
-  margin: 6px 0 2px;
+  margin: 4px 0 2px;
   font:
-    bold 13px Georgia,
+    17px/1.1 'Pirata One',
+    'IM Fell English',
+    Georgia,
     serif;
-  font-variant: small-caps;
-  color: var(--gold);
-  border-bottom: 1px solid #4a3a20;
+  letter-spacing: 0.02em;
+  color: var(--ink-yellow);
+  text-shadow: 0 1px 1px #000;
+  border-bottom: 1px solid var(--gold-dark);
 }
 .ui-note {
   margin: 2px 0;
-  font-size: 12px;
-  color: #a89a7c;
+  font-size: 13px;
+  color: var(--ink-pale);
 }
 .ui-note.good {
-  color: #8fc46a;
+  color: #8fe07a;
 }
 .ui-note.warn {
-  color: #e0a040;
+  color: #e8b050;
 }
 .ui-note.bad {
-  color: #e06050;
+  color: #f07060;
 }
 .ui-bar {
-  height: 6px;
-  background: rgba(0, 0, 0, 0.6);
-  border: 1px solid #3a2e1a;
+  height: 8px;
+  background: linear-gradient(#0c0a08, #1e1a14);
+  border: 1px solid var(--gold-dark);
 }
 .ui-fill {
   height: 100%;
 }
 .ui-bar.hp .ui-fill {
-  background: #c03a2a;
+  background: linear-gradient(#5ee05e, #1c7a1c);
 }
 .ui-bar.sp .ui-fill {
-  background: #3a6ac0;
+  background: linear-gradient(#5e9cff, #1c3a9a);
 }
 .ui-row {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 3px 6px;
+  padding: 3px 8px;
   min-height: 36px;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid #3a2e1a;
+  background: rgba(0, 0, 0, 0.22);
+  border: 1px solid var(--gold-dark);
   border-radius: 3px;
 }
 .ui-row.selected {
-  border-color: #f0c050;
-  box-shadow: 0 0 0 1px #f0c050 inset;
+  border-color: var(--gold);
+  box-shadow: 0 0 0 1px var(--gold) inset;
 }
 .ui-row.dim {
   opacity: 0.55;
@@ -251,12 +335,12 @@
   text-overflow: ellipsis;
 }
 .ui-row .sub {
-  font-size: 11px;
-  color: #a89a7c;
+  font-size: 12px;
+  color: var(--ink-pale);
 }
 .ui-row .ui-btn {
   min-height: 30px;
-  padding: 0 8px;
+  padding: 0 10px;
 }
 .ui-actions {
   display: flex;
@@ -268,35 +352,102 @@
 /* Character sheet */
 .sheet-name {
   font:
-    bold 18px Georgia,
+    22px/1.1 'Pirata One',
+    'IM Fell English',
+    Georgia,
     serif;
+  color: var(--ink-yellow);
+  text-shadow: 0 1px 1px #000;
 }
 .sheet-class {
-  font-size: 12px;
-  color: #a89a7c;
+  font-size: 13px;
+  color: var(--ink-pale);
   margin-bottom: 4px;
 }
 .sheet-stats {
   display: grid;
   grid-template-columns: 1fr auto auto;
-  gap: 4px 12px;
+  gap: 3px 12px;
   padding: 2px 0;
 }
 .sheet-bonus {
-  color: #f0c050;
+  color: var(--ink-yellow);
   min-width: 2.5em;
   text-align: right;
 }
 .sheet-group {
   margin-top: 4px;
-  font-size: 12px;
-  color: var(--gold);
+  font-size: 13px;
+  color: var(--ink-yellow);
 }
 .sheet-level {
   min-width: 2em;
   text-align: right;
-  font-size: 15px;
+  font-size: 16px;
 }
 .sheet-raise {
   min-width: 48px;
+}
+
+/* Parchment books: the spellbook, the quest log and the rest screen read on paper. */
+.screen-spells .ui-panel,
+.screen-quests .ui-panel,
+.screen-rest .ui-panel {
+  background:
+    radial-gradient(ellipse at 50% 40%, rgba(255, 250, 230, 0.35), rgba(120, 90, 40, 0.35) 95%),
+    repeating-linear-gradient(
+      93deg,
+      rgba(120, 90, 40, 0.06) 0 3px,
+      rgba(255, 255, 240, 0.04) 3px 7px
+    ),
+    #d9c79a;
+  color: #3a2a10;
+}
+.screen-spells .ui-col,
+.screen-quests .ui-col,
+.screen-rest .ui-col {
+  background: rgba(255, 250, 235, 0.25);
+  border-color: #8a6a30;
+  box-shadow: inset 0 0 12px rgba(120, 90, 40, 0.35);
+}
+.screen-spells .ui-k,
+.screen-quests .ui-k,
+.screen-rest .ui-k,
+.screen-spells .ui-note,
+.screen-quests .ui-note,
+.screen-rest .ui-note,
+.screen-spells .ui-row .sub,
+.screen-quests .ui-row .sub {
+  color: #4a3414;
+}
+.screen-spells .ui-v,
+.screen-quests .ui-v,
+.screen-rest .ui-v,
+.screen-spells .ui-h,
+.screen-quests .ui-h,
+.screen-rest .ui-h,
+.screen-spells .ui-title,
+.screen-quests .ui-title,
+.screen-rest .ui-title {
+  color: #5a2a0a;
+  text-shadow: none;
+}
+.screen-spells .ui-row,
+.screen-quests .ui-row {
+  background: rgba(255, 250, 235, 0.35);
+  border-color: #8a6a30;
+}
+.screen-spells .ui-head,
+.screen-quests .ui-head,
+.screen-rest .ui-head,
+.screen-spells .ui-foot,
+.screen-quests .ui-foot,
+.screen-rest .ui-foot {
+  border-color: #8a6a30;
+  box-shadow: none;
+}
+.screen-spells .ui-foot,
+.screen-quests .ui-foot,
+.screen-rest .ui-foot {
+  color: #5a2a0a;
 }

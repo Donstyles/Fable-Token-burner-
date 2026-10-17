@@ -134,3 +134,35 @@ export function pickModel(ids: readonly string[], x: number, z: number): string 
   const h = Math.abs(Math.sin(x * 12.9898 + z * 78.233) * 43758.5453);
   return ids[Math.floor((h - Math.floor(h)) * ids.length)]!;
 }
+
+/** What the status line calls a tapped model. */
+export function propLabel(id: string): string {
+  const named: Record<string, string> = {
+    'building-inn': 'The Inn',
+    'building-store': "The Trader's Store",
+    'building-temple': 'The Temple',
+    'building-smithy': 'The Smithy',
+    'building-stables': 'The Stables',
+    'building-barn': 'The Barn',
+    'building-farmhouse': 'The Farmhouse',
+    'prop-well': 'The Village Well',
+    'prop-shrine': 'A Wayside Shrine',
+    'prop-cart': 'A Cart',
+    'prop-market-stall': 'A Market Stall',
+    'prop-haystack': 'A Haystack',
+    'prop-lantern-post': 'A Lantern Post',
+    'prop-fence': 'A Fence',
+    'prop-woodpile': 'A Woodpile',
+  };
+  if (named[id]) return named[id]!;
+  if (id.startsWith('building-cottage')) return 'A Cottage';
+  if (id.startsWith('bush')) return 'A Bush';
+  if (id.startsWith('rock')) return id.includes('outcrop') ? 'An Outcrop' : 'A Boulder';
+  if (id.startsWith('tree-')) {
+    const kind = id.slice(5).replace(/-\d+$/, '');
+    const vowel = /^[aeiou]/.test(kind);
+    const name = kind === 'dead' ? 'Dead Tree' : kind.charAt(0).toUpperCase() + kind.slice(1);
+    return `${vowel ? 'An' : 'A'} ${name}`;
+  }
+  return id;
+}

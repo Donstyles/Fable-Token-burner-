@@ -13,6 +13,9 @@ anything. Both are the source of truth; update them when a decision changes.
   `npm run asset -- run <nnn>` (`--dry-run` first). The key is a network
   secret the cloud proxy injects; it is never in the container, so never ask
   for it, look for it or paste it anywhere.
+- Never text-to-3D (owner, 2026-10-17). Every model starts as a low-poly
+  text-to-image concept (`--ai-model nano-banana-2-lite`, the cheapest), then
+  image-to-3D; the image is reviewed first.
 - Work on the designated branch; commit in logical steps.
 - Before building any system, check whether Babylon.js or an established
   library already provides it, and prefer that (owner, 2026-10-15, after a
