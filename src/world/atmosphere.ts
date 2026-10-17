@@ -17,6 +17,10 @@ export class Torch {
   private time = 0;
   base = 0.9;
   private on = true;
+  /** Torch Light (DESIGN.md 16.9): extra brightness and reach, and the seconds left of it. */
+  private boost = 0;
+  private boostLeft = 0;
+  private readonly baseRange: number;
 
   constructor(private readonly materials: RetroMaterials) {
     this.light = materials.addLight({
@@ -26,6 +30,17 @@ export class Torch {
       intensity: this.base,
       priority: true,
     });
+    this.baseRange = this.light.range;
+  }
+
+  /** Brighten the torch by `power` steps (1 to 3) for `seconds`; a new cast takes the longer. */
+  brighten(power: number, seconds: number): void {
+    this.boost = Math.max(this.boost, Math.min(3, Math.max(1, power)));
+    this.boostLeft = Math.max(this.boostLeft, seconds);
+  }
+
+  get brightened(): boolean {
+    return this.boostLeft > 0;
   }
 
   get enabled(): boolean {
@@ -42,10 +57,18 @@ export class Torch {
     // Held slightly forward and below the eyes, so walls to the side still catch it.
     this.light.position.set(eye.x + Math.sin(yaw) * 0.4, eye.y - 0.3, eye.z + Math.cos(yaw) * 0.4);
     if (!this.on) return;
+    if (this.boostLeft > 0) {
+      this.boostLeft -= dt;
+      if (this.boostLeft <= 0) this.boost = 0;
+    }
     const t = this.time;
     const flicker =
       0.82 + 0.1 * Math.sin(t * 11.3) + 0.05 * Math.sin(t * 27.1) + 0.03 * Math.sin(t * 5.7);
-    this.light.intensity = this.base * flicker;
+    // A magic light burns steadier and whiter than a flame, and farther.
+    const magic = this.boost > 0 ? 1 + 0.45 * this.boost : 1;
+    this.light.intensity =
+      this.base * (this.boost > 0 ? 0.92 + (flicker - 0.82) * 0.4 : flicker) * magic;
+    this.light.range = this.baseRange * (this.boost > 0 ? 1 + 0.4 * this.boost : 1);
   }
 
   dispose(): void {

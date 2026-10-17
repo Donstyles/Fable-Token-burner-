@@ -447,10 +447,21 @@ waterfalls and deserts, walkable end to end.
 13. Talk and the first quests: the wooden talk panel with the villager's
     living face, topics, rumours, Henrik's Sheep and the goblins at the
     forest edge, experience for kills. **Done 2026-10-17** (DESIGN 16.7).
-14. Remaining, in order: the UI craft pass the owner asked for (the buttons'
-    press travel, the inventory, the colours, the type); spells with visible
-    effects; weather states (rain, a sandstorm); music; the smith's hammer and
-    the temple bell; performance measured on the owner's phone.
+14. The UI craft pass the owner asked for: press travel and click, the
+    leather inventory with drawn glyphs, the type. **Done 2026-10-17**
+    (DESIGN 16.8). Spells with visible effects: bolts, torch light, stun,
+    cures. **Done 2026-10-17** (DESIGN 16.9).
+15. Hand-painted 1998 UI (owner, 2026-10-17): "the text and fonts in MM6 are
+    pixelated with heavy aliasing"; "the marble in MM6 is defined and hand
+    painted, yours is generative noise"; "every button and element needs to
+    be artisanal like someone from 1998 drew it by hand". Every surface
+    painted as pixel art on a 1998 pixel grid (marble with deliberate veins,
+    wood with drawn grain, leather, gold rails, buttons with painted
+    highlights, brass plates) and bitmap text with hard edges; checked
+    against the MM6 crops.
+16. Remaining, in order: lasting buffs and Jump; weather states (rain, a
+    sandstorm); music; the smith's hammer and the temple bell; performance
+    measured on the owner's phone.
 
 **Status, night of 2026-10-16 (owner asleep, best judgement):** steps 1 to 6
 are in: the valley (village, road, pass, gorge with eight cascades, cave

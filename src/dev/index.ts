@@ -31,7 +31,15 @@ import { newGame, type GameState } from '../game/state';
 import { automapLevel, revealAt } from '../game/automap';
 import { createCreationScreen } from '../ui/creation';
 import { installScreens, type Screens } from '../ui/screens';
-import { mulberry32 } from '../game/rng';
+import { mulberry32, rollDice } from '../game/rng';
+import { afflict, cure } from '../game/conditions';
+import { spellDef, type SpellId } from '../game/spells';
+import { canCast, learnSpell } from '../game/spellbook';
+import { cast as castFromBook, castMessage } from '../ui/spellbook-model';
+import { SpellEffects } from '../world/spellfx';
+import { pickTarget } from '../world/spell-target';
+import { playCast } from '../app/audio';
+import type { CastEvent } from '../ui/context';
 import { HUMANOID_CLIPS } from '../../kernel/characters/clips';
 import { createHud } from '../ui/hud';
 // Every character model in the repo, by asset id (src/game/monsters.ts names them).
@@ -126,6 +134,11 @@ export interface DevHandle {
   dialogue: Dialogue;
   /** The talking head, for tests. */
   bust: Bust;
+  /** Bolts in the air and bursts, for tests. */
+  spells: SpellEffects;
+  torch: Torch;
+  /** Cast a spell as the first member who can (taught first in the dev build); the log line. */
+  cast(spell: SpellId): string | null;
   /** Talk to a villager by id, as a tap would; false when there is no such villager. */
   talkTo(id: string): boolean;
 }
@@ -316,21 +329,12 @@ export async function startDev(app: App): Promise<DevHandle> {
       );
       saveGame(state);
     },
-    onCast: (cast) => {
-      const caster = state.party[cast.caster]?.name ?? 'someone';
-      if (cast.failed) {
-        status.say(`${caster}'s spell fizzles`);
-        return;
-      }
-      for (const e of cast.effects) {
-        if (e.kind === 'heal') {
-          const m = state.party[e.member];
-          if (m) healCharacter(m, e.amount);
-        }
-      }
-      status.say(`${caster} casts ${cast.spell}`);
-    },
+    onCast: (cast) => performCast(cast),
   });
+  // Spells you can see (DESIGN.md 16.9); the cast itself is performed below, once the
+  // view, the torch and the monsters exist.
+  const spellfx = new SpellEffects(scene, app.materials);
+  let performCast: (cast: CastEvent) => void = () => {};
   // Talk (DESIGN.md 16.7): a tapped villager opens the wooden panel with their living face
   // in its window and the world waits while they speak. A villager without a script keeps
   // their line in the status bar.
@@ -541,6 +545,21 @@ export async function startDev(app: App): Promise<DevHandle> {
     npcs,
     dialogue,
     bust,
+    spells: spellfx,
+    torch,
+    cast: (spell) => {
+      const index = state.party.findIndex((c) => canCast(c, spell).ok);
+      let caster = index;
+      if (caster < 0) {
+        // Dev build: the first member who can learn it is taught it on the spot.
+        caster = state.party.findIndex((c) => learnSpell(c, spell).ok);
+        if (caster < 0) return null;
+      }
+      const r = castFromBook(state, caster, spell, state.selected, rng);
+      if (!r.ok) return r.message;
+      performCast(r.event);
+      return castMessage(state, r.event);
+    },
     talkTo: (id) => {
       const npc = npcs.find((n) => n.def.id === id);
       if (!npc) return false;
@@ -659,6 +678,135 @@ export async function startDev(app: App): Promise<DevHandle> {
     camera.rotation.set(flyPitch, flyYaw, 0);
   };
 
+  // A cast from the book (or a scroll): the effects the rules produced, made visible.
+  performCast = (c: CastEvent): void => {
+    const caster = state.party[c.caster];
+    const name = caster?.name ?? 'Someone';
+    const def = spellDef(c.spell);
+    if (c.failed) {
+      status.say(`${name}'s ${def.name} fizzles`);
+      return;
+    }
+    playCast();
+    // A spell at the world or a monster leaves the book: the hand is in the view.
+    if (def.target === 'monster' || def.target === 'world') screens.close();
+    const eye = camera.globalPosition.clone();
+    const yaw = fly ? flyYaw : party.yaw;
+    const pitch = fly ? flyPitch : party.pitch;
+    const forward = new Vector3(
+      Math.sin(yaw) * Math.cos(pitch),
+      -Math.sin(pitch),
+      Math.cos(yaw) * Math.cos(pitch),
+    );
+    const hand = eye.add(forward.scale(0.6)).add(new Vector3(0.12, -0.28, 0));
+    const lines: string[] = [];
+    for (const e of c.effects) {
+      switch (e.kind) {
+        case 'heal': {
+          const m = state.party[e.member];
+          if (m) lines.push(`${m.name} is healed ${healCharacter(m, e.amount)}`);
+          break;
+        }
+        case 'cure': {
+          const m = state.party[e.member];
+          if (m && e.condition !== 'good' && cure(m.conditions, e.condition)) {
+            lines.push(`${m.name} is cured of ${e.condition}`);
+          }
+          break;
+        }
+        case 'afflict': {
+          const m = state.party[e.member];
+          if (m && e.condition !== 'good') {
+            afflict(
+              m.conditions,
+              e.condition,
+              state.clock.minutes,
+              e.minutes !== undefined ? { minutes: e.minutes } : {},
+            );
+            lines.push(`${m.name} is ${e.condition}`);
+          }
+          break;
+        }
+        case 'light':
+          torch.brighten(e.power, e.minutes / MINUTES_PER_REAL_SECOND);
+          lines.push('The torch burns white and far');
+          break;
+        case 'projectile': {
+          // The bolt goes for the living monster nearest the middle of the view.
+          const candidates = handle.monsters.map((m) => ({
+            x: m.position.x,
+            y: m.position.y + m.def.heightMetres * 0.55,
+            z: m.position.z,
+            alive: m.alive,
+          }));
+          const picked = pickTarget(candidates, eye, forward);
+          const target = picked >= 0 ? handle.monsters[picked]! : null;
+          const mark = target
+            ? {
+                position: target.position.add(new Vector3(0, target.def.heightMetres * 0.55, 0)),
+                radius: 0.6,
+              }
+            : null;
+          for (let i = 0; i < e.count; i++) {
+            window.setTimeout(() => {
+              spellfx.bolt({
+                from: hand.add(new Vector3((i % 2) * 0.2 - 0.1, 0, 0)),
+                dir: forward,
+                element: e.element,
+                mark,
+                onEnd: (hit) => {
+                  if (!hit || !target || !target.alive) {
+                    status.say(`${name}'s ${def.name} flies wide`);
+                    return;
+                  }
+                  const dmg = rollDice(e.damage, rng);
+                  target.takeDamage(dmg);
+                  feedback.monsterStruck(target, party.position, !target.alive);
+                  status.say(`${name}'s ${def.name} hits ${target.def.name} for ${dmg}`);
+                },
+              });
+            }, i * 110);
+          }
+          lines.push(
+            target
+              ? `${name} casts ${def.name} at ${target.def.name}`
+              : `${name} casts ${def.name}`,
+          );
+          break;
+        }
+        case 'stun': {
+          // The nearest living monster within arm's reach reels and is thrown back.
+          const near = handle.monsters
+            .filter((m) => m.alive && m.distanceTo(party.position) <= 4)
+            .sort((a, b) => a.distanceTo(party.position) - b.distanceTo(party.position))[0];
+          if (!near) {
+            lines.push(`${def.name} finds nothing within reach`);
+            break;
+          }
+          const dir = near.position.subtract(party.position);
+          dir.y = 0;
+          dir.normalize();
+          near.knockback(dir, e.knockbackMetres);
+          near.stun(e.seconds, simTime);
+          spellfx.flash(
+            def.school,
+            near.position.add(new Vector3(0, near.def.heightMetres * 0.6, 0)),
+          );
+          lines.push(`${near.def.name} reels`);
+          break;
+        }
+        case 'jump':
+        case 'buff':
+        case 'party-buff':
+          // Lasting buffs and the leap wait on their systems (PLAN 5b step 14); the
+          // points are spent, and the line says so plainly.
+          lines.push(`${def.name} takes no hold yet`);
+          break;
+      }
+    }
+    status.say(lines.join('; ') || `${name} casts ${def.name}`, 5000);
+  };
+
   let lastDeepToast = -10;
   scene.onBeforeRenderObservable.add(() => {
     // Hit stop (DESIGN.md 14.4): the world's step is zero for a few frames after a blow.
@@ -759,6 +907,7 @@ export async function startDev(app: App): Promise<DevHandle> {
     water.update(eye, dt);
     waterfalls.update(dt, eye);
     torch.update(dt, eye, yaw);
+    spellfx.update(dt);
     fog.update(dt, eye);
     events.taps += input.taps.length;
     for (const t of input.taps) handleTap(t.x, t.y);

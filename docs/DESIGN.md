@@ -1077,8 +1077,33 @@ font: everything needs to be wow."
   yellow of their own beside the brighter values, as MM6's sheet set every
   line in yellow italic rather than cream and gold.
 
+### 16.9 Spells you can see (2026-10-17)
+
+- A cast from the book pays its points (14.5) and the runtime performs the
+  effects (`src/dev/index.ts`, `performCast`): a bolt spell (Fire Bolt, Sparks,
+  Spirit Arrow) leaves the book, the hand throws one bolt per count from
+  beside the eye at the living monster nearest the middle of the view within
+  40 m and a 28° cone (`src/world/spell-target.ts`, tested), and each bolt that
+  lands rolls the spell's dice against the monster, with the hit feedback of a
+  blow (14.4); a bolt with nothing in the cone flies out 45 m and dies.
+- The bolt (`src/world/spellfx.ts`) is a glowing core, a point light of its
+  school's colour through the retro materials, a particle trail behind it and
+  a burst where it lands, all Babylon particle systems, posterised and
+  dithered by the same filter as the world. Each school has its palette.
+- Torch Light brightens the party's torch, whiter, steadier and farther, by
+  rank for an hour per skill point (`Torch.brighten`); Stun throws the nearest
+  monster within arm's reach back and holds it reeling (`Monster.stun`); the
+  heals, cures and afflictions change the member. Jump and the lasting buffs
+  spend their points and say plainly that they take no hold yet, until the
+  buff system lands (PLAN 5b step 14).
+- The cast has its sound, a rising sweep with a shimmer of noise, synthesised
+  like the impacts.
+
 ## 13. Decision log
 
+- 2026-10-17 – Spells made visible (16.9): bolts fly from the hand at the
+  monster nearest the middle of the view; buffs are not faked, they say they
+  take no hold yet.
 - 2026-10-17 – Press feel: buttons click on touch and travel with a turned
   bevel; the inventory on drawn leather with line-art item glyphs; the type a
   size larger and the labels in yellow (16.8), on the owner's note.

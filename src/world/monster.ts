@@ -42,6 +42,7 @@ export class Monster {
   private nextSwingIn = 0;
   private moving: 'walk' | 'run' | null = null;
   private push: { dir: Vector3; remaining: number } | null = null;
+  private stunnedUntil = -1;
 
   constructor(
     readonly def: MonsterDef,
@@ -107,6 +108,21 @@ export class Monster {
     this.push = { dir: dir.clone(), remaining: metres };
   }
 
+  /** Hold the monster reeling until `now + seconds` (Stun, DESIGN.md 16.9). */
+  stun(seconds: number, now: number): void {
+    if (!this.alive) return;
+    this.stunnedUntil = Math.max(this.stunnedUntil, now + seconds);
+    this.state = 'hit';
+    this.swingDone = true;
+    this.moving = null;
+    this.agent?.stop();
+    this.character.play('hit', { loop: false, speed: 1 });
+  }
+
+  get stunned(): boolean {
+    return this.alive && this.state === 'hit' && this.stunnedUntil > 0;
+  }
+
   private applyPush(dt: number): void {
     if (!this.push || dt <= 0) return;
     // An exponential ease over about a tenth of a second, by time so a frozen or slow frame
@@ -123,6 +139,12 @@ export class Monster {
   update(dt: number, party: PartyTarget, now: number): void {
     this.applyPush(dt);
     if (this.state === 'dead') return;
+    if (this.stunnedUntil > 0) {
+      if (now < this.stunnedUntil) return;
+      this.stunnedUntil = -1;
+      this.state = 'idle';
+      this.character.play('idle');
+    }
     const d = this.distanceTo(party.position);
     switch (this.state) {
       case 'idle':

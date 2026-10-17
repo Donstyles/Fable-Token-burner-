@@ -30,7 +30,7 @@ let beep: StaticSound | null = null;
 const impacts = new Map<ImpactKind, StaticSound>();
 
 /** Combat impacts (DESIGN.md 14.4): the blow that lands, the heavy one, the swing that misses. */
-export type ImpactKind = 'whack' | 'thud' | 'whoosh' | 'click';
+export type ImpactKind = 'whack' | 'thud' | 'whoosh' | 'click' | 'cast';
 
 function applySessionType(type: string): void {
   const nav = navigator as Navigator & { audioSession?: { type: string } };
@@ -102,15 +102,40 @@ function noise(seed: number): () => number {
  */
 function impactBuffer(ctx: BaseAudioContext, kind: ImpactKind): AudioBuffer {
   const rate = ctx.sampleRate;
-  const seconds = kind === 'thud' ? 0.32 : kind === 'whack' ? 0.18 : kind === 'click' ? 0.05 : 0.16;
+  const seconds =
+    kind === 'thud'
+      ? 0.32
+      : kind === 'whack'
+        ? 0.18
+        : kind === 'click'
+          ? 0.05
+          : kind === 'cast'
+            ? 0.5
+            : 0.16;
   const buffer = ctx.createBuffer(1, Math.floor(rate * seconds), rate);
   const data = buffer.getChannelData(0);
-  const rnd = noise(kind === 'whack' ? 11 : kind === 'thud' ? 23 : kind === 'click' ? 53 : 37);
+  const rnd = noise(
+    kind === 'whack'
+      ? 11
+      : kind === 'thud'
+        ? 23
+        : kind === 'click'
+          ? 53
+          : kind === 'cast'
+            ? 71
+            : 37,
+  );
   let low = 0;
   for (let i = 0; i < data.length; i++) {
     const t = i / rate;
     let v: number;
-    if (kind === 'click') {
+    if (kind === 'cast') {
+      // A cast: a rising sweep with a shimmer of noise on it, gone in half a second.
+      const hz = 220 + 900 * Math.min(1, t / 0.3);
+      const sweep = Math.sin(2 * Math.PI * hz * t) * Math.exp(-t / 0.18);
+      low += (rnd() - low) * 0.3;
+      v = sweep * 0.5 + low * 0.9 * Math.exp(-t / 0.12);
+    } else if (kind === 'click') {
       // A button's click, as MM6's: a dry wooden tick, a hair of noise on a short knock.
       const tick = rnd() * Math.exp(-t / 0.003);
       const knock = Math.sin(2 * Math.PI * 1900 * t) * Math.exp(-t / 0.012);
@@ -165,11 +190,11 @@ export function installAudio(): Promise<AudioEngineV2 | null> {
         disableDefaultUI: true,
       });
       beep = await engine.createSoundAsync('test-beep', beepBuffer(context), { volume: 1 });
-      for (const kind of ['whack', 'thud', 'whoosh', 'click'] as const) {
+      for (const kind of ['whack', 'thud', 'whoosh', 'click', 'cast'] as const) {
         impacts.set(
           kind,
           await engine.createSoundAsync(`impact-${kind}`, impactBuffer(context, kind), {
-            volume: kind === 'whoosh' ? 0.5 : kind === 'click' ? 0.6 : 0.9,
+            volume: kind === 'whoosh' ? 0.5 : kind === 'click' ? 0.6 : kind === 'cast' ? 0.7 : 0.9,
           }),
         );
       }
@@ -208,6 +233,11 @@ export function installAudio(): Promise<AudioEngineV2 | null> {
 /** Puts the listener on a scene node, normally the camera. */
 export function attachListener(node: Node): void {
   engine?.listener.attach(node);
+}
+
+/** A spell leaving the hand (DESIGN.md 16.9). */
+export function playCast(): void {
+  playImpact('cast');
 }
 
 /** The click of a pressed button, on the press (DESIGN.md 16.8). */
