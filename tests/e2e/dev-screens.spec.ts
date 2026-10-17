@@ -13,7 +13,7 @@ const SCREENS = ['sheet', 'items', 'spells', 'rest', 'quests', 'map'];
 
 test.describe('screens', () => {
   test('the shelf opens every screen and an open screen pauses the world', async ({ page }) => {
-    await page.goto('dev/?dev&lite&seed=3');
+    await page.goto('dev/?dev&lite&level=showcase&seed=3');
     await page.waitForFunction(() => (window as unknown as W).ftb?.dev?.ready === true, null, {
       timeout: 120_000,
     });
@@ -50,7 +50,7 @@ test.describe('screens', () => {
   });
 
   test('?create shows the creation screen before the world starts', async ({ page }) => {
-    await page.goto('dev/?dev&lite&create');
+    await page.goto('dev/?dev&lite&level=showcase&create');
     await expect(page.locator('.ui-title')).toHaveText('New Party', { timeout: 120_000 });
     await expect(page.locator('.cre-chip').first()).toBeVisible();
     await page.waitForTimeout(400);

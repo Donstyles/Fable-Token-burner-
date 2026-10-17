@@ -133,7 +133,7 @@ const pitch = (page: Page) => page.evaluate(() => (window as unknown as W).ftb!.
 test.describe('dev build', () => {
   test.beforeEach(async ({ page, browserName }) => {
     if (browserName === 'chromium') cdp = await page.context().newCDPSession(page);
-    await page.goto('dev/?dev&lite');
+    await page.goto('dev/?dev&lite&level=showcase');
     await page.waitForFunction(() => (window as unknown as W).ftb?.dev?.ready === true, null, {
       timeout: 90_000,
     });
@@ -262,7 +262,7 @@ test.describe('dev build', () => {
 
   test('the bandit closes in, swings at the party, and falls to taps', async ({ page }) => {
     test.setTimeout(240_000);
-    await page.goto('dev/?dev&lite&seed=11');
+    await page.goto('dev/?dev&lite&level=showcase&seed=11');
     await page.waitForFunction(() => (window as unknown as W).ftb?.dev?.ready === true, null, {
       timeout: 60_000,
     });
@@ -420,7 +420,7 @@ test.describe('dev build', () => {
     browserName,
   }) => {
     // Full look for the capture (the shared setup loads the lite variant).
-    await page.goto('dev/?dev');
+    await page.goto('dev/?dev&level=showcase');
     await page.waitForFunction(() => (window as unknown as W).ftb?.dev?.ready === true, null, {
       timeout: 90_000,
     });

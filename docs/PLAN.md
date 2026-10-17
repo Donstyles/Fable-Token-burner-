@@ -429,9 +429,9 @@ waterfalls and deserts, walkable end to end.
 are in: the valley (village, road, pass, gorge with eight cascades, cave
 mouth), the showcase dungeon reached through the cave and left through
 its door, the desert beyond the pass, far backdrops, bandits about both
-regions, hit feedback, the rules layer and its screens. Live at
-`/dev/?level=valley` (the showcase is the default level, `?level=desert`
-the desert). Not done: performance on the owner's phone (untested; the
+regions, hit feedback, the rules layer and its screens. Live at `/dev/`
+(the valley is the default level; `?level=showcase` the dungeon,
+`?level=desert` the desert). Not done: performance on the owner's phone (untested; the
 valley carries 300 chunk meshes, 2500 thin-instanced trees, 9 water
 bodies and 8 falls), party state across a portal reload, NPC dialogue,
 a desert town, Meshy spends (none of the 900 credits used: generated

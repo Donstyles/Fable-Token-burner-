@@ -99,7 +99,8 @@ export interface DevHandle {
 
 const DEG = Math.PI / 180;
 const QUERY = new URLSearchParams(location.search);
-const LEVEL = QUERY.get('level') ?? 'showcase';
+// The valley is the first thing a visitor sees; the dungeon is a portal away (or ?level=showcase).
+const LEVEL = QUERY.get('level') ?? 'valley';
 /** Arriving through a portal: the portal of this level to appear at (DESIGN.md 15.3). */
 const ENTRY = QUERY.get('entry');
 
