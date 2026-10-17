@@ -84,8 +84,9 @@ export function backdropMesh(s: BackdropSpec): ColouredMeshData {
       const b = at(i, k + 1);
       const c = at(i + 1, k);
       const d = at(i + 1, k + 1);
-      // Counter-clockwise seen from above, like the terrain (the ring winds anticlockwise).
-      indices.push(a, c, b, b, c, d);
+      // Counter-clockwise seen from above, like the terrain: along the ring first, then
+      // outward (the ring winds anticlockwise, so "along then out" turns left, like +x then +z).
+      indices.push(a, b, c, b, d, c);
       materials.push(ROLE.terrain, ROLE.terrain);
     }
   }

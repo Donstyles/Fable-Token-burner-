@@ -352,6 +352,18 @@ describe('backdrop', () => {
     expect(outer / 48).toBeGreaterThan(300);
     // Snow only high up: the lowest ring carries none.
     for (let k = 0; k < 48; k++) expect(b.colors[k * 3 + 2]).toBe(0);
+    // Faces wind counter-clockwise seen from above, like the terrain: their normals point up.
+    let up = 0;
+    for (let t = 0; t < b.indices.length; t += 3) {
+      const [ia, ib, ic] = [b.indices[t]! * 3, b.indices[t + 1]! * 3, b.indices[t + 2]! * 3];
+      const ux = b.positions[ib]! - b.positions[ia]!;
+      const uz = b.positions[ib + 2]! - b.positions[ia + 2]!;
+      const vx = b.positions[ic]! - b.positions[ia]!;
+      const vz = b.positions[ic + 2]! - b.positions[ia + 2]!;
+      up += uz * vx - ux * vz;
+    }
+    expect(up).toBeGreaterThan(0);
+    expect(b.normals.filter((_, i) => i % 3 === 1).every((ny) => ny > 0)).toBe(true);
   });
 });
 
