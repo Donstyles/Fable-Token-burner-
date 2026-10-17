@@ -412,11 +412,12 @@ describe('headings', () => {
     expect(headingDeg(-1, 0)).toBeCloseTo(90);
     expect(Math.abs(headingDeg(0, -1))).toBeCloseTo(180);
   });
-  it('wakes the party facing along the road in both regions', () => {
+  it('wakes the party facing the square in the valley and along the road in the desert', () => {
     const v = generateValley({ seed: 7, width: 1024, cell: 16 });
     const vt = v.road.nearest(v.spawn.position[0], v.spawn.position[2]).tangent;
     const vf = forward(v.spawn.yawDeg);
-    expect(vf[0] * vt[0] + vf[1] * vt[1]).toBeGreaterThan(0.99);
+    // Back down the road: the well and the houses are the first view.
+    expect(vf[0] * vt[0] + vf[1] * vt[1]).toBeLessThan(-0.99);
     const d = generateDesert({ seed: 11, width: 1024, cell: 16 });
     const dt = d.road.nearest(d.spawn.position[0], d.spawn.position[2]).tangent;
     const df = forward(d.spawn.yawDeg);

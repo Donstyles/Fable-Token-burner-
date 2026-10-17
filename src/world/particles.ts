@@ -91,6 +91,33 @@ export function hitBurst(scene: Scene): ParticleSystem {
   return ps;
 }
 
+/**
+ * Sand on the wind (DESIGN.md 15.5): a box of drifting grains round the camera, blown along
+ * `wind` (metres per second); move `emitter` with the camera each frame.
+ */
+export function dust(scene: Scene, wind: Vector3): ParticleSystem {
+  const ps = new ParticleSystem('dust', 500, scene);
+  ps.particleTexture = softSprite(scene);
+  ps.emitter = Vector3.Zero();
+  ps.minEmitBox = new Vector3(-45, 0, -45);
+  ps.maxEmitBox = new Vector3(45, 7, 45);
+  ps.direction1 = wind.scale(0.7).add(new Vector3(-0.4, -0.1, -0.4));
+  ps.direction2 = wind.scale(1.3).add(new Vector3(0.4, 0.25, 0.4));
+  ps.minEmitPower = 1;
+  ps.maxEmitPower = 1;
+  ps.minLifeTime = 3;
+  ps.maxLifeTime = 6;
+  ps.minSize = 0.5;
+  ps.maxSize = 1.6;
+  ps.color1 = new Color4(0.86, 0.74, 0.5, 0.16);
+  ps.color2 = new Color4(0.8, 0.66, 0.42, 0.1);
+  ps.colorDead = new Color4(0.8, 0.66, 0.42, 0);
+  ps.emitRate = 110;
+  ps.blendMode = ParticleSystem.BLENDMODE_STANDARD;
+  ps.updateSpeed = 0.016;
+  return ps;
+}
+
 /** Slow drifting mist around a plunge pool. */
 export function mist(scene: Scene, at: Vector3, radius: number): ParticleSystem {
   const ps = new ParticleSystem('mist', 80, scene);

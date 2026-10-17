@@ -424,6 +424,12 @@ waterfalls and deserts, walkable end to end.
 6. Far-mountain backdrop; day sky tuning; performance pass on device.
    **Backdrop done 2026-10-16** (DESIGN 15.6); the device pass waits for
    the owner's phone.
+7. Weather and motion: wind in the canopies, drifting cloud shadows, the
+   desert's heat shimmer, mirage, glint, low sun and blowing sand; the
+   sun's disc in the sky. **Done 2026-10-17** (DESIGN 15.7).
+8. Meshy trees and bushes (batch 003, twenty text-to-3D props) as the
+   forest's prototypes in place of the generated ones. **Running
+   2026-10-17**; loading them at runtime follows.
 
 **Status, night of 2026-10-16 (owner asleep, best judgement):** steps 1 to 6
 are in: the valley (village, road, pass, gorge with eight cascades, cave

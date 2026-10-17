@@ -270,6 +270,8 @@ export async function loadLevel(
       ...(baked ? { baked: true } : {}),
       ...(tex.emissive ? { emissive: tex.emissive } : {}),
       ...(tex.tint ? { tint: tex.tint } : {}),
+      // Canopies sway in the wind (DESIGN.md 15.7).
+      ...(role === ROLE.leaves ? { wind: true } : {}),
     });
     byRole.set(role, mat);
     return mat;
@@ -338,9 +340,46 @@ export async function loadLevel(
     mesh.isPickable = false;
     meshes.push(mesh);
   }
-  // Forests: two prototype trees drawn as thin instances, in regions so distant ones can
-  // be switched off; trunks collide as one static body of cylinders.
+  // Forests: prototype trees drawn as thin instances, in regions so distant ones can be
+  // switched off. Trunks collide as static bodies of cylinders, one per 200 m cell, built
+  // the first time the eye comes within 60 m of the cell: thirteen thousand trees then cost
+  // the load nothing, and the party never walks through a trunk it can reach.
   const physicsBodies: PhysicsBody[] = [];
+  const TRUNK_CELL = 200;
+  const trunkBuckets = new Map<string, [number, number, number, number][]>();
+  const trunkCellsBuilt = new Set<string>();
+  const buildTrunksNear = (eye: Vector3): void => {
+    if (!trunkBuckets.size) return;
+    const cx = Math.floor(eye.x / TRUNK_CELL);
+    const cz = Math.floor(eye.z / TRUNK_CELL);
+    for (let x = cx - 1; x <= cx + 1; x++) {
+      for (let z = cz - 1; z <= cz + 1; z++) {
+        const key = `${x}:${z}`;
+        if (trunkCellsBuilt.has(key)) continue;
+        const dx = Math.max(x * TRUNK_CELL - eye.x, 0, eye.x - (x + 1) * TRUNK_CELL);
+        const dz = Math.max(z * TRUNK_CELL - eye.z, 0, eye.z - (z + 1) * TRUNK_CELL);
+        if (dx * dx + dz * dz > 60 * 60) continue;
+        trunkCellsBuilt.add(key);
+        const trees = trunkBuckets.get(key);
+        if (!trees?.length) continue;
+        const trunkRoot = new TransformNode(`level-trunks:${key}`, scene);
+        trunkRoot.parent = root;
+        const container = new PhysicsShapeContainer(scene);
+        for (const [sx, y, z2, scale] of trees) {
+          const shape = new PhysicsShapeCylinder(
+            new Vector3(sx, y, z2),
+            new Vector3(sx, y + 3.6 * scale, z2),
+            0.32 * scale,
+            scene,
+          );
+          container.addChildFromParent(trunkRoot, shape, trunkRoot);
+        }
+        const body = new PhysicsBody(trunkRoot, PhysicsMotionType.STATIC, false, scene);
+        body.shape = container;
+        physicsBodies.push(body);
+      }
+    }
+  };
   if (sidecar.outdoor && sidecar.trees?.length) {
     const half = Math.max(
       Math.abs(sidecar.bounds.min[0]),
@@ -348,13 +387,11 @@ export async function loadLevel(
       Math.abs(sidecar.bounds.min[2]),
       Math.abs(sidecar.bounds.max[2]),
     );
-    const regions = 4;
+    // Six by six regions: from any spawn a good share of the map lies beyond forestFar.
+    const regions = 6;
     const regionSize = (2 * half) / regions;
     const kinds = TREE_KINDS;
     const buckets = new Map<string, Matrix[]>();
-    const trunkRoot = new TransformNode('level-trunks', scene);
-    trunkRoot.parent = root;
-    const container = new PhysicsShapeContainer(scene);
     for (const [kind, kx, ky, kz, yaw, scale] of sidecar.trees) {
       const rx = Math.min(regions - 1, Math.floor((kx + half) / regionSize));
       const rz = Math.min(regions - 1, Math.floor((kz + half) / regionSize));
@@ -366,18 +403,10 @@ export async function loadLevel(
         new Vector3(-kx, ky, kz),
       );
       (buckets.get(key) ?? buckets.set(key, []).get(key)!).push(m);
-      const trunkTop = ky + 3.6 * scale;
-      const shape = new PhysicsShapeCylinder(
-        new Vector3(-kx, ky, kz),
-        new Vector3(-kx, trunkTop, kz),
-        0.32 * scale,
-        scene,
-      );
-      container.addChildFromParent(trunkRoot, shape, trunkRoot);
+      const tk = `${Math.floor(-kx / TRUNK_CELL)}:${Math.floor(kz / TRUNK_CELL)}`;
+      (trunkBuckets.get(tk) ?? trunkBuckets.set(tk, []).get(tk)!).push([-kx, ky, kz, scale]);
     }
-    const trunkBody = new PhysicsBody(trunkRoot, PhysicsMotionType.STATIC, false, scene);
-    trunkBody.shape = container;
-    physicsBodies.push(trunkBody);
+    buildTrunksNear(toBabylon(sidecar.spawn.position));
     const protoData = kinds.map((kind) => {
       const data = treeMesh(kind);
       // One Babylon mesh per material role of the prototype.
@@ -586,6 +615,7 @@ export async function loadLevel(
       navOverlay().setEnabled(on);
     },
     update(eye) {
+      buildTrunksNear(eye);
       if (!sidecar.outdoor) return;
       if (lastEye && Vector3.DistanceSquared(lastEye, eye) < 4) return;
       lastEye = eye.clone();

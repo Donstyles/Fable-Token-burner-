@@ -27,6 +27,8 @@ uniform vec3 horizon;
 uniform vec3 cloudColor;
 uniform float cloudAmount;
 uniform float time;
+uniform vec3 sunDir;
+uniform vec3 sunColor;
 
 float hash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
 float noise(vec2 p) {
@@ -57,6 +59,11 @@ void main(void) {
   float cover = smoothstep(0.45 - cloudAmount * 0.3, 0.75, n) * cloudAmount;
   float horizonFade = smoothstep(0.0, 0.25, up);
   vec3 c = mix(sky, cloudColor, cover * horizonFade);
+  // The sun: a hard disc, a tight corona and a wide warm glow, dimmed behind clouds.
+  float s = max(dot(d, sunDir), 0.0);
+  float disc = smoothstep(0.9990, 0.9996, s);
+  float glow = pow(s, 160.0) * 0.5 + pow(s, 10.0) * 0.12;
+  c += sunColor * (disc * 1.2 + glow) * (1.0 - cover * 0.7);
   if (d.y < 0.0) c = horizon;
   gl_FragColor = vec4(c, 1.0);
 }
@@ -90,6 +97,8 @@ export class SkyDome {
         'cloudColor',
         'cloudAmount',
         'time',
+        'sunDir',
+        'sunColor',
       ],
     });
     this.material.backFaceCulling = false;
@@ -107,6 +116,8 @@ export class SkyDome {
     this.material.setColor3('horizon', env.skyHorizon);
     this.material.setColor3('cloudColor', env.cloudColor);
     this.material.setFloat('cloudAmount', env.cloudAmount);
+    this.material.setVector3('sunDir', env.lightDirection.scale(-1).normalize());
+    this.material.setColor3('sunColor', env.lightColor);
   }
 
   dispose(): void {

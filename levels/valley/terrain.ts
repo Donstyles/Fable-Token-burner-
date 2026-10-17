@@ -10,7 +10,10 @@ const spec: TerrainSpec = {
   width: 1600,
   cell: 5,
   chunkCells: 32,
-  forest: { spacing: 6, density: 0.72, pineAbove: 110 },
+  // A Black Forest: candidates every 5 m, four in five kept, over the forest mask (about
+  // nine thousand trees; 4.5 m and nine in ten made thirteen thousand and halved the frame
+  // rate for no visible gain, 2026-10-17).
+  forest: { spacing: 5, density: 0.8, pineAbove: 110 },
 };
 
 export default spec;

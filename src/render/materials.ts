@@ -39,6 +39,14 @@ export interface PointLightDesc {
 
 export const MAX_POINT_LIGHTS = 4;
 
+/** Outdoor weather fed to every material (DESIGN.md 15.7). */
+export interface Weather {
+  /** 1 in the desert: far geometry wavers, far sand mirrors the sky and glints. */
+  heat: number;
+  /** How dark the drifting cloud shadows get, 0 (none) to 1. */
+  cloudShadow: number;
+}
+
 const SHADER = 'ftbVertexLit';
 
 ShaderStore.ShadersStore[`${SHADER}VertexShader`] = /* glsl */ `
@@ -63,6 +71,10 @@ uniform float fogDensity;
 uniform vec2 uvScale;
 uniform float bakedMix;
 uniform vec4 clipPlane;
+// Weather (DESIGN.md 15.7): seconds, canopy sway on this material, hot air over the view.
+uniform float time;
+uniform float wind;
+uniform float heat;
 varying vec2 vUV;
 varying float vClip;
 varying vec3 vLight;
@@ -78,6 +90,14 @@ void main(void) {
 #include<instancesVertex>
 #include<bonesVertex>
   vec4 wp = finalWorld * vec4(position, 1.0);
+  if (wind > 0.0) {
+    // Canopies sway: nothing at the foot, up to a dozen centimetres at the crown, each tree
+    // on its own phase from its place in the world.
+    float crown = clamp((position.y - 1.0) * 0.15, 0.0, 1.0) * wind;
+    wp.xz += crown * vec2(
+      0.12 * sin(time * 1.7 + wp.x * 0.08 + wp.z * 0.05) + 0.04 * sin(time * 3.3 + wp.z * 0.3),
+      0.05 * sin(time * 1.3 + wp.x * 0.07 + wp.z * 0.09));
+  }
   vec3 n = normalize(mat3(finalWorld) * normal);
   float ndl = max(dot(n, -lightDirection), 0.0);
   vec3 light = ambientColor + lightColor * ndl;
@@ -104,6 +124,13 @@ void main(void) {
   // Scene clip plane (water reflection and refraction passes); zero plane = no clipping.
   vClip = dot(wp, clipPlane);
   gl_Position = viewProjection * wp;
+  if (heat > 0.0) {
+    // Rising hot air: what is far wavers by a pixel or two; what is near stands still.
+    float far = smoothstep(40.0, 250.0, distance(wp.xyz, cameraPosition));
+    gl_Position.xy += heat * far * 0.0035 * gl_Position.w * vec2(
+      sin(time * 6.0 + wp.z * 0.21 + wp.x * 0.17),
+      0.6 * sin(time * 7.3 + wp.x * 0.23));
+  }
 }
 `;
 
@@ -134,6 +161,20 @@ uniform float lightKnee;
 uniform float priorityLights;
 // Hit flash: 1 paints the surface white (DESIGN.md 14.4).
 uniform float flash;
+// Weather (DESIGN.md 15.7): drifting cloud shadows and the desert's mirage and glint.
+uniform float time;
+uniform float cloudShadow;
+uniform float heat;
+uniform vec3 cameraPosition;
+uniform vec3 lightDirection;
+float hash2(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
+float noise2(vec2 p) {
+  vec2 i = floor(p);
+  vec2 f = fract(p);
+  f = f * f * (3.0 - 2.0 * f);
+  return mix(mix(hash2(i), hash2(i + vec2(1.0, 0.0)), f.x),
+             mix(hash2(i + vec2(0.0, 1.0)), hash2(i + vec2(1.0, 1.0)), f.x), f.y);
+}
 void main(void) {
   if (clipEnabled > 0.5 && vClip > 0.0) discard;
   vec3 n = normalize(vNormal);
@@ -158,6 +199,12 @@ void main(void) {
     else pl += contribution;
   }
   vec3 light = vLight + pl;
+  if (cloudShadow > 0.0) {
+    // Cloud shadows: patches of shade drift over slopes, trees and houses alike.
+    vec2 cp = vWorldPos.xz * 0.0035 + time * vec2(0.012, 0.005);
+    float cs = 0.65 * noise2(cp) + 0.35 * noise2(cp * 2.1 + 7.0);
+    light *= 1.0 - cloudShadow * 0.4 * smoothstep(0.5, 0.68, cs);
+  }
   // Soft knee: light above lightKnee compresses towards lightKnee + 0.5, so a lamp in a
   // corner brightens the wall without blowing it out to white (owner, 2026-10-15).
   float peak = max(light.r, max(light.g, light.b));
@@ -179,6 +226,15 @@ void main(void) {
     texture2D(pathSampler, vUV * splatScale.y).rgb * w.r +
     texture2D(screeSampler, screeUV).rgb * w.g +
     texture2D(snowSampler, vUV * splatScale.w).rgb * w.b;
+  if (heat > 0.0) {
+    // Mirage: seen at a grazing angle the far sand mirrors the sky; the sun glints off it.
+    vec3 v = normalize(cameraPosition - vWorldPos);
+    float graze = 1.0 - smoothstep(0.0, 0.06, abs(v.y));
+    float far = smoothstep(60.0, 300.0, distance(cameraPosition, vWorldPos));
+    albedo = mix(albedo, fogColor * 1.15, heat * graze * far * 0.6);
+    float glint = pow(max(dot(reflect(-v, n), -lightDirection), 0.0), 8.0);
+    albedo += heat * 0.25 * glint;
+  }
 #else
   vec3 albedo = texture2D(diffuseSampler, vUV).rgb;
 #endif
@@ -199,6 +255,8 @@ export interface VertexLitOptions {
   emissive?: Color3;
   /** Draw both faces, lit by the side that faces the camera (glTF doubleSided). */
   doubleSided?: boolean;
+  /** Canopy sway: vertices above a metre move with the wind (forest leaves). */
+  wind?: boolean;
   /**
    * Ambient light for this material instead of the environment's: characters carry a fill so
    * they never go black between lamps, like MM6's minimum sprite brightness.
@@ -229,6 +287,9 @@ export class RetroMaterials {
   readonly lights: PointLightDesc[] = [];
   env: LightingEnvironment;
   private bakedMix = 1;
+  private time = 0;
+  /** Weather (DESIGN.md 15.7): 0 is still air and an even sky. */
+  readonly weather: Weather = { heat: 0, cloudShadow: 0 };
 
   constructor(
     private readonly scene: Scene,
@@ -277,6 +338,10 @@ export class RetroMaterials {
         'pointRange',
         'splatScale',
         'flash',
+        'time',
+        'wind',
+        'heat',
+        'cloudShadow',
       ],
       samplers: ['diffuseSampler', 'pathSampler', 'screeSampler', 'snowSampler'],
       defines,
@@ -294,6 +359,10 @@ export class RetroMaterials {
     mat.setFloat('lightKnee', this.lightKnee);
     mat.setFloat('priorityLights', 0);
     mat.setFloat('flash', 0);
+    mat.setFloat('time', this.time);
+    mat.setFloat('wind', opts.wind ? 1 : 0);
+    mat.setFloat('heat', this.weather.heat);
+    mat.setFloat('cloudShadow', this.weather.cloudShadow);
     mat.setVector4('clipPlane', Vector4.Zero());
     mat.setFloat('clipEnabled', 0);
     // Water render passes set scene.clipPlane around their draws; read it per bind so the
@@ -319,6 +388,15 @@ export class RetroMaterials {
     this.materials.add(mat);
     this.pushEnv(mat);
     return mat;
+  }
+
+  /** Hot air over the view (desert) and the strength of drifting cloud shadows (outdoors). */
+  setWeather(next: Partial<Weather>): void {
+    Object.assign(this.weather, next);
+    for (const m of this.materials) {
+      m.setFloat('heat', this.weather.heat);
+      m.setFloat('cloudShadow', this.weather.cloudShadow);
+    }
   }
 
   /** Paint a material white: 0 normal, 1 fully white (hit flash). */
@@ -374,11 +452,13 @@ export class RetroMaterials {
     const cam = this.scene.activeCamera;
     if (!cam) return;
     const p = cam.globalPosition;
+    this.time += this.scene.getEngine().getDeltaTime() / 1000;
     const pos = new Array<number>(MAX_POINT_LIGHTS * 3).fill(0);
     const col = new Array<number>(MAX_POINT_LIGHTS * 3).fill(0);
     const rng = new Array<number>(MAX_POINT_LIGHTS).fill(0);
     for (const m of this.materials) {
       m.setVector3('cameraPosition', p);
+      m.setFloat('time', this.time);
       if (this.lights.length === 0) continue;
       // Nearest lights to the material's first mesh, measured to its bounding box rather
       // than its centre (level chunks are 12 m wide, and a light at a chunk's edge is as

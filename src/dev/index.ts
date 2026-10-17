@@ -36,6 +36,7 @@ import { HUMANOID_CLIPS } from '../../kernel/characters/clips';
 import { createPartyStrip } from './party-strip';
 import banditUrl from '../../assets/characters/bandit/bandit.glb?url';
 import { Braziers, FogBySpace, Torch } from '../world/atmosphere';
+import { dust } from '../world/particles';
 import { UnderwaterTint, isUnderwater, wadeSpeedFactor, waterDepthAt } from '../world/wading';
 import { ROLE } from '../../kernel/elements/roles';
 import { FILTER_MODES, type FilterMode } from '../render/filter';
@@ -121,10 +122,14 @@ export async function startDev(app: App): Promise<DevHandle> {
     // region's sidecar carries its own colours.
     const space = level.spaces[0];
     const env = level.sidecar.environment;
+    const desert = level.sidecar.region === 'desert';
     const c3 = (v: [number, number, number]): Color3 => new Color3(v[0], v[1], v[2]);
     app.materials.setEnvironment({
       ...ENVIRONMENTS['mm6-day'],
-      lightDirection: new Vector3(-0.45, -0.8, 0.4).normalize(),
+      // The desert's sun hangs low ahead of the spawn, in the view down the road.
+      lightDirection: desert
+        ? new Vector3(-0.85, -0.45, 0.2).normalize()
+        : new Vector3(-0.45, -0.8, 0.4).normalize(),
       lightColor: env ? c3(env.lightColor) : new Color3(1.0, 0.92, 0.78),
       ambientColor: env ? c3(env.ambientColor) : new Color3(0.36, 0.4, 0.48),
       fogColor: space?.fog?.color ?? new Color3(0.62, 0.68, 0.78),
@@ -139,6 +144,11 @@ export async function startDev(app: App): Promise<DevHandle> {
     });
     app.sky.apply(app.materials.env);
     app.sky.mesh.setEnabled(true);
+    // Weather (DESIGN.md 15.7): cloud shadows drift over every region; the desert shimmers.
+    app.materials.setWeather({
+      heat: desert ? 1 : 0,
+      cloudShadow: Math.min(1, app.materials.env.cloudAmount * 1.5),
+    });
     camera.maxZ = 6000;
   } else {
     // Dungeon look: no sky light, dark fog close in.
@@ -148,6 +158,7 @@ export async function startDev(app: App): Promise<DevHandle> {
       fogColor: new Color3(0.01, 0.01, 0.015),
       fogDensity: 0.016,
     });
+    app.materials.setWeather({ heat: 0, cloudShadow: 0 });
     app.sky.mesh.setEnabled(false);
   }
   // Real water: reflection and refraction at a fraction of the world resolution.
@@ -170,6 +181,10 @@ export async function startDev(app: App): Promise<DevHandle> {
     [app.sky.mesh, ...level.meshes.filter((m) => m.name === 'backdrop')],
   );
   const waterfalls = new LevelWaterfalls(scene, level.waterfalls, app.materials);
+  // Desert weather (DESIGN.md 15.5): a hot wind carries sand across the view.
+  const wind = new Vector3(5.5, 0, 2.2);
+  const sand = level.sidecar.region === 'desert' ? dust(scene, wind) : null;
+  sand?.start();
   // Babylon's listener rides the camera; sounds place themselves in scene space.
   void installAudio().then(() => attachListener(app.camera));
   let mipmapsOn = true;
@@ -498,6 +513,11 @@ export async function startDev(app: App): Promise<DevHandle> {
       }
     }
     level.update(camera.globalPosition);
+    if (sand) {
+      // Spawn upwind of the eye, so the grains blow through the view rather than away.
+      const e = camera.globalPosition;
+      sand.emitter = new Vector3(e.x - wind.x * 4, Math.max(e.y - 4, 0), e.z - wind.z * 4);
+    }
     if (!fly) portals.update(party.position);
     mapTimer += dt;
     if (mapTimer > 0.5) {

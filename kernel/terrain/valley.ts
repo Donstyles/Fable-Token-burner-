@@ -272,9 +272,11 @@ export function generateValley(spec: ValleySpec): ValleyResult {
     }
   }
 
+  // The party wakes on the road's first metres looking back at the square: the well, the
+  // houses and the forested slope beyond are the first thing seen, not an empty field.
   const start = road.at(18);
   const tangent = road.nearest(start[0], start[1]).tangent;
-  const yawDeg = headingDeg(tangent[0], tangent[1]);
+  const yawDeg = headingDeg(-tangent[0], -tangent[1]);
   const at3 = (p: P2): Vec3 => [p[0], hf.sample(p[0], p[1]), p[1]];
   let top = { i: 0, j: 0, h: -Infinity };
   for (let j = 0; j < n; j++) {

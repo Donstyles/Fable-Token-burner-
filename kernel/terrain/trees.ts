@@ -72,7 +72,7 @@ export function placeTrees(v: ValleyResult, o: ForestOptions = {}): TreeInstance
         : rng() < 0.6
           ? 'broadleaf'
           : 'oak';
-      trees.push({ kind, x: jx, y, z: jz, yaw: rng() * Math.PI * 2, scale: 0.8 + rng() * 0.5 });
+      trees.push({ kind, x: jx, y, z: jz, yaw: rng() * Math.PI * 2, scale: 0.9 + rng() * 0.7 });
     }
   }
   return trees;

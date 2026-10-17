@@ -258,6 +258,17 @@ ChatGPT concept image → Meshy image-to-3D (Smart Topology, polycount 300–300
 by size) → post-process → `assets/props/<id>/`. Buildings are exterior shells;
 interiors are separate scenes, as in MM6. `auto_size` keeps real-world scale.
 
+Vegetation and small props need no concept image: a prompt is enough, so
+they go through Meshy text-to-3D (`meshy-t2.5`, smart topology, 300–800
+triangles, preview then refine without PBR) as a `props` batch
+(`npm run asset -- batch props <name> <specs.json>`, specs in
+`pipeline/props/`). The runner submits every preview, waits, then every
+refine, so twenty trees take as long as one; Meshy queues about ten tasks
+per account, and when it refuses more the runner waits for the oldest
+pending task and goes on (owner, "Run the trees!", 2026-10-17; batch 003,
+twenty trees and bushes). Measured cost: a preview is 5 credits, a refine
+10, a quarter of the dry-run estimate.
+
 ### 10.4 Dungeons and world geometry
 
 Dungeon geometry is **generated**, never modelled; the full system is in
@@ -667,17 +678,22 @@ generated from a seed by `kernel/terrain/` and compiled by
   faces), grass as the remainder. The material blends four Poly Haven
   textures (`leafy_grass`, `dirt_floor`, `rocky_terrain`, `snow_02`) by
   those weights, UVs in world metres from the shader.
-- Forests: a jittered 6 m grid over a mask (slope under 30°, between the
-  floor and 205 m, clear of road, river and ravine, noise over 0.1), 72 %
-  of the candidates kept (about 5,500 trees); conifers above 110 m and a
+- Forests: a jittered 5 m grid over a mask (slope under 30°, between the
+  floor and 205 m, clear of road, river and ravine, noise over 0.1), 80 %
+  of the candidates kept (about 9,500 trees, a Black Forest; 4.5 m and 90 %
+  gave 13,000 and halved the frame rate for no visible gain, 2026-10-17);
+  conifers above 110 m and a
   third of the rest, broadleaf otherwise. Four generated low-polygon
   models (about 110 to 200 triangles each: a lathed trunk with
   `pine_bark`; a three-tier pine, a five-tier spruce, a broadleaf with an
   ellipsoid crown and a broad flat-topped oak with `forest_leaves_02`),
   picked at random within each class, varied by yaw and scale, carried in
-  the sidecar as instances and drawn as thin instances in sixteen regions,
-  switched off beyond 700 m; a cylinder per trunk in one static physics
-  body.
+  the sidecar as instances and drawn as thin instances in thirty-six
+  regions, switched off beyond 700 m; a cylinder per trunk in static
+  physics bodies built lazily, one per 200 m cell the first time the eye
+  comes within 60 m of it, so the load pays for none of them. The navmesh
+  takes only trunks within 150 m of the road or the ravine: the full set
+  made recast drop the road at the pass.
 - Chunks: 32 cells per side, three detail levels (every vertex, every
   second, every fourth) with 6 m skirts so cracks between levels never show
   the sky; the loader enables one level per chunk by distance (2.2 and 5
@@ -811,7 +827,37 @@ generated from a seed by `kernel/terrain/` and compiled by
   facets; a finer inner ring or a second detail level is the fix if that
   bothers on device.
 
-### 15.7 Plans
+### 15.7 Weather and motion (2026-10-17)
+
+A still landscape reads as a photograph; these make it a place. All of it
+lives in the one world shader (`src/render/materials.ts`), fed by a
+`time` uniform and a `Weather` record (`heat`, `cloudShadow`) the dev
+entry sets per region; no new render pass and nothing the phone measures.
+
+- Wind: the leaves material sways. A vertex above a metre moves up to
+  twelve centimetres in the plane, phased by its place in the world, so
+  neighbouring crowns differ; trunks and everything else stand still.
+- Cloud shadows (`cloudShadow`, 0.6 in the valley, 0.2 in the desert):
+  two octaves of value noise over world XZ, drifting with the sky's
+  clouds, darken the light by up to a quarter where they pass. They fall
+  on terrain, trees, houses and bandits alike.
+- Heat (`heat` = 1 in the desert): what is more than 40 m away wavers by
+  a pixel or two in the vertex shader (near geometry stays sharp, so it
+  never reads as being under water); sand seen at a grazing angle more
+  than 60 m off mirrors the sky's colour (the mirage, the silver "wet
+  road"), and the sun glints off the dunes. The desert's sun hangs low
+  ahead of the spawn so the glint and the sky's disc are in the first
+  view, and a sand particle system of 500 small dim grains blows past
+  the eye downwind (`dust()` in `src/world/particles.ts`).
+- Sky: a hard sun disc, a tight corona and a wide glow at the light's
+  direction, dimmed behind clouds.
+
+Kept deliberately small (wow-idea review, 2026-10-17): no bloom or god
+rays, canopy sway under 15 cm, shimmer under 2 px, shadows never darker
+than 0.55 and never hard-edged; the fog density stays as tuned so the
+far ridges show.
+
+### 15.8 Plans
 
 A triplanar projection for the whole terrain (steep faces now use a
 wall projection for the rock slot only); a desert town and dungeon when
@@ -819,6 +865,15 @@ Phase 6 content comes; creatures per region.
 
 ## 13. Decision log
 
+- 2026-10-17 – First look pass under the owner's thirty-minute "wow"
+  deadline: a wow-idea review ranked ten ideas by effect per hour; the
+  shader-only ones went in (15.7: wind in the canopies, drifting cloud
+  shadows, heat shimmer, mirage and glint, the low desert sun), the dense
+  forest settled at spacing 5 / density 0.8 (15.1) after 13,000 trees
+  halved the frame rate, and trunk colliders became lazy per 200 m cell
+  so the forest costs the load nothing. Not done in the window: the MM6
+  restyle of the screens, the Meshy trees in the world (batch 003 running),
+  campfire and chimney smoke, birdsong.
 - 2026-10-11 – Platform, delivery (PWA), art direction, Meshy pipeline, key
   handling, real-time combat, party of four with full creation, enemies plan,
   HUD direction, design doc kept in repo.
