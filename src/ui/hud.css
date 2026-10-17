@@ -22,7 +22,8 @@
   left: 0;
   right: 0;
   top: 0;
-  height: 4.5px;
+  /* MM6's edge (critics, round 8): a two-row lip, a groove, a trough of five rows. */
+  height: 12px;
   background: var(--paint) 0 0 / auto 100% repeat-x;
   image-rendering: pixelated;
 }
@@ -50,19 +51,19 @@
   image-rendering: pixelated;
 }
 .hud-clock-time {
-  /* Dark serif on the brass plaque, as MM6's compass letter. */
+  /* White serif with a black shadow in a dark well (paint.ts `plaque`), as MM6's clock. */
   font:
     19.5px/1.1 'Tinos',
     Georgia,
     serif;
-  color: #2a2010;
+  color: #ffffff;
 }
 .hud-clock-date {
   font:
     italic 18px/1.1 'Tinos',
     Georgia,
     serif;
-  color: #2a2010;
+  color: #ffffff;
 }
 .hud-band {
   /* The four members on one marble surface with a seam round each (paint.ts `recess`); a
@@ -73,8 +74,8 @@
   justify-content: center;
   align-items: stretch;
   gap: 4.5px;
-  height: 100px;
-  margin: 6px 280px 0 88px;
+  height: 88px;
+  margin: 12px 280px 0 88px;
   padding: 0;
 }
 .hud-band::before {
@@ -147,7 +148,7 @@
   flex-direction: column;
   align-items: center;
   gap: 0;
-  margin-top: 9px;
+  margin-top: 7.5px;
 }
 .hud-gem {
   /* A soft blob beside the oval's top, on the marble (paint.ts `gem`). */
@@ -160,8 +161,8 @@
   image-rendering: pixelated;
 }
 .hud-tubes {
-  /* The tubes on the marble, a shadow at the left and a highlight at the right (paint.ts
-     `tube-slot`), three pixels of marble between them. */
+  /* The tubes on the marble, a shadow at the left (paint.ts `tube-slot`), three pixels of
+     marble between them. */
   display: flex;
   gap: 4.5px;
   padding: 0 4.5px;
@@ -175,11 +176,19 @@
   background: var(--paint) center / 100% 100% no-repeat;
   image-rendering: pixelated;
 }
+.hud-track {
+  /* The glass between the caps: the fill stands inside it, so a full tube keeps its cap. */
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 7.5px;
+  bottom: 7.5px;
+}
 .hud-fill {
   position: absolute;
   left: 0;
   right: 0;
-  bottom: 3px;
+  bottom: 0;
   height: 0;
   background: var(--paint) center / 100% 100% no-repeat;
   image-rendering: pixelated;
@@ -232,7 +241,8 @@
   position: absolute;
   top: 0;
   bottom: calc(var(--sab) + 100px);
-  width: 24px;
+  /* MM6's shaft is narrow (critics, round 8): ten pixels, lit left to shade right. */
+  width: 15px;
   pointer-events: none;
   z-index: 24;
   background: var(--paint) 0 0 / 100% auto repeat-y;

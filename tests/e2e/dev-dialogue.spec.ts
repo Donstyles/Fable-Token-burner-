@@ -105,7 +105,7 @@ test.describe('talk', () => {
     );
     expect(quests).toEqual([{ id: 'henriks-sheep', state: 'active', step: 0, progress: 0 }]);
 
-    await page.locator('.dlg-foot .ui-btn').click();
+    await page.locator('.dlg-foot .dlg-bye').click();
     await expect(page.locator('.dlg')).toHaveCount(0);
     expect(await page.evaluate(() => (window as unknown as W).ftb!.dev!.dialogue.isOpen())).toBe(
       false,

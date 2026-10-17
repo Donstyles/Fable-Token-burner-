@@ -102,16 +102,21 @@ export function createHud(parent: HTMLElement, party: Party, hooks: HudHooks): H
     // Both tubes stand in one recessed slot.
     const tubes = el('div', 'hud-tubes');
     tubes.dataset['paint'] = 'tube-slot';
+    // The fill stands in a track between the caps, so a full tube keeps its cap.
     const hp = el('div', 'hud-bar hp');
     hp.dataset['paint'] = 'tube';
+    const hpTrack = el('div', 'hud-track');
     const hpFill = el('div', 'hud-fill');
     hpFill.dataset['paint'] = 'tube-hp';
-    hp.appendChild(hpFill);
+    hpTrack.appendChild(hpFill);
+    hp.appendChild(hpTrack);
     const sp = el('div', 'hud-bar sp');
     sp.dataset['paint'] = 'tube';
+    const spTrack = el('div', 'hud-track');
     const spFill = el('div', 'hud-fill');
     spFill.dataset['paint'] = 'tube-sp';
-    sp.appendChild(spFill);
+    spTrack.appendChild(spFill);
+    sp.appendChild(spTrack);
     tubes.append(hp, sp);
     bars.append(gem, tubes);
     // No name plate: MM6 named nobody in the band; the sheet carries the name.

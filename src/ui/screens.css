@@ -12,22 +12,21 @@
   padding: 3px;
   align-self: flex-start;
   flex: none;
-  /* MM6's brown leather with its orange lines: the hide drawn in leather.css, a glint of
-     wear at the top left, a dark rim pressed into it. */
-  background:
-    radial-gradient(ellipse at 30% 20%, rgba(255, 220, 160, 0.1), transparent 60%),
-    var(--leather) 0 0 / var(--leather-size);
+  /* MM6's near-black leather (paint.ts `paintLeather`, critics, round 8) with its rust
+     lines, each a pixel of (105,38,8) with a darker pixel beside it; no glint, no wash. */
+  background: var(--leather) 0 0 / var(--leather-size);
   image-rendering: pixelated;
-  /* Rust lines sunk into the hide, the grid recessed: a dark lip above and left. */
   border: 0;
   box-shadow:
-    inset 1.5px 1.5px 0 rgba(16, 12, 8, 0.85),
-    inset -1.5px -1.5px 0 rgba(200, 160, 110, 0.45),
-    0 0 0 1.5px #6a3210;
+    inset 1.5px 1.5px 0 #1a0600,
+    0 0 0 1.5px #692608;
 }
 .inv-cell {
-  background: rgba(0, 0, 0, 0.06);
-  border: 1px solid rgba(106, 50, 16, 0.6);
+  background: none;
+  border: 0;
+  box-shadow:
+    inset 1.5px 1.5px 0 #692608,
+    inset -1.5px -1.5px 0 #1a0600;
 }
 .inv-item {
   position: relative;
@@ -123,20 +122,26 @@
   text-align: center;
 }
 
-/* Rest */
+/* Rest: the clock in white on a near-black green well (paint.ts `plaque`), as MM6's. */
+.rest-well {
+  padding: 6px 8px 7px;
+  text-align: center;
+  background: var(--paint) center / 100% 100% no-repeat;
+  image-rendering: pixelated;
+}
 .rest-clock {
   font:
     italic 30px/1 'Tinos',
     Georgia,
     serif;
-  color: #5a2a0a;
+  color: #ffffff;
 }
 .rest-date {
   font:
     italic 15px 'Tinos',
     Georgia,
     serif;
-  color: #4a3414;
+  color: #ffffff;
 }
 .rest-actions .ui-btn {
   min-height: 44px;

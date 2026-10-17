@@ -13,9 +13,11 @@ export function renderRest(ctx: ScreenContext): void {
   const draw = (summary: RestSummary | null): void => {
     const v = restView(state);
     const left = el('div', 'ui-col narrow');
+    const well = el('div', 'rest-well');
+    well.dataset['paint'] = 'plaque';
+    well.append(el('div', 'rest-clock', v.time), el('div', 'rest-date', v.date));
     left.append(
-      el('div', 'rest-clock', v.time),
-      el('div', 'rest-date', v.date),
+      well,
       note(v.daylight ? 'It is light.' : 'It is dark.'),
       kv('Food', v.food, v.hungry ? 'bad' : ''),
     );

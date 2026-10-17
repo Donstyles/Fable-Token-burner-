@@ -46,17 +46,35 @@ export const SCREEN_LABELS: Record<ScreenName, string> = {
   map: 'Map',
 };
 
-/** Gold line-art glyphs on the spines, 24-unit boxes. */
-const SHELF_GLYPHS: Record<ScreenName, string> = {
-  // Line art, as MM6's gold emblems (critics, round 7): a sword, a satchel, an open book, a
-  // scroll, a compass rose; 24 units wide, 40 tall.
-  sheet: '<path d="M12 2v24M8 8h8M7 26h10M12 26v10M10 36h4"/>',
-  items: '<path d="M6 14h12l3 22H3zM9 14v-4a3 3 0 0 1 6 0v4"/>',
-  spells: '<path d="M2 8c4-2 7-2 10 1v24c-3-3-6-3-10-1zM22 8c-4-2-7-2-10 1v24c3-3 6-3 10-1z"/>',
-  rest: '<path d="M14 3a8 8 0 1 0 7 11 7 7 0 0 1-7-11z"/>',
-  quests: '<path d="M6 4h12v28H6zM9 11h6M9 17h6M9 23h4M4 32a2 2 0 0 0 4 0"/>',
-  map: '<path d="M12 4l3 10 9 3-9 3-3 10-3-10-9-3 9-3z"/><circle cx="12" cy="17" r="3"/>',
+/**
+ * Gold emblems on the spines, 24 units wide and 40 tall, as MM6's (reference shelf: a
+ * sword, a leaf, a globe, a key in gold lines two pixels wide, shaded, with a solid part or
+ * two): line art in gold strokes over a dark shade, a filled piece where the object is
+ * solid; a sword, a satchel, an open book, a scroll, a compass rose; the moon for the rest
+ * button in a 24-unit square.
+ */
+const SHELF_GLYPHS: Record<ScreenName, { line: string; fill?: string }> = {
+  sheet: {
+    line: '<path d="M12 23v12M9 36h6M6 24h12"/>',
+    fill: '<path d="M12 1l2.5 4v18h-5V5z"/>',
+  },
+  items: {
+    line: '<path d="M5 14h14l3 22H2zM9 14v-4a3 3 0 0 1 6 0v4M5 22h14"/>',
+  },
+  spells: {
+    line: '<path d="M2 8c4-2 7-2 10 1v24c-3-3-6-3-10-1zM22 8c-4-2-7-2-10 1v24c3-3 6-3 10-1zM5 15c2-1 4-1 6 0M5 20c2-1 4-1 6 0M13 15c2-1 4-1 6 0M13 20c2-1 4-1 6 0"/>',
+  },
+  rest: { line: '', fill: '<path d="M14 3a8 8 0 1 0 7 11 7 7 0 0 1-7-11z"/>' },
+  quests: {
+    line: '<path d="M6 4h12v28H6zM9 11h6M9 17h6M9 23h4M6 32a2 2 0 0 0 4 0"/>',
+  },
+  map: {
+    line: '<path d="M12 4l3 10 9 3-9 3-3 10-3-10-9-3 9-3z"/><circle cx="12" cy="17" r="3"/>',
+  },
 };
+
+const GILT_GRADIENT =
+  '<defs><linearGradient id="giltGrad" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#d6ba63"/><stop offset="1" stop-color="#9c8242"/></linearGradient></defs>';
 
 const SCREEN_TITLES: Record<ScreenName, string> = {
   sheet: 'Character',
@@ -104,13 +122,15 @@ export function installScreens(
     const b = button('', () => open(name), {
       className: `ui-shelf-btn ${name === 'rest' ? 'rest' : ''}`.trim(),
     });
-    // The emblems gilded: gold strokes over the same strokes a pixel down in dark bronze;
-    // the rest button's moon stamped dark with a lit lower edge.
+    // The emblems gilded: the shade a pixel down and right, the bright edge a pixel up and
+    // left, the strokes and the solid parts in a gradient of the golds over both; the rest
+    // button's moon a black glyph with a lit lower edge.
     const glyph = SHELF_GLYPHS[name];
+    const body = `<g class="solid">${glyph.fill ?? ''}</g><g class="line">${glyph.line}</g>`;
     b.innerHTML =
       name === 'rest'
-        ? `<svg viewBox="0 0 24 24" aria-hidden="true"><g class="lit" transform="translate(0 1)">${glyph}</g><g class="ink">${glyph}</g></svg>`
-        : `<svg viewBox="0 0 24 40" aria-hidden="true"><g class="shade" transform="translate(1 1.2)">${glyph}</g><g class="gilt">${glyph}</g><g class="sheen" transform="translate(-0.6 -0.6) scale(0.96)">${glyph}</g></svg><span class="ui-shelf-label">${SCREEN_LABELS[name]}</span>`;
+        ? `<svg viewBox="0 0 24 24" aria-hidden="true"><g class="lit" transform="translate(0 1)">${glyph.fill}</g><g class="ink">${glyph.fill}</g></svg>`
+        : `<svg viewBox="0 0 24 40" aria-hidden="true">${GILT_GRADIENT}<g class="shade" transform="translate(1.2 1.2)">${body}</g><g class="sheen" transform="translate(-0.8 -0.8)">${body}</g><g class="gilt">${body}</g></svg><span class="ui-shelf-label">${SCREEN_LABELS[name]}</span>`;
     b.title = SCREEN_LABELS[name];
     b.dataset['paint'] = name === 'rest' ? 'gold' : 'spine';
     (name === 'rest' ? shelf : books).appendChild(b);

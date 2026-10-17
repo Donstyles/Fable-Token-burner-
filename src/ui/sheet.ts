@@ -5,7 +5,7 @@
  */
 import type { SkillId } from '../game/skills';
 import type { ScreenContext } from './context';
-import { button, el, kv, note } from './dom';
+import { el, kv, note } from './dom';
 import { raise, raiseMessage, type SheetView, sheetView, signed } from './sheet-model';
 
 function identityColumn(v: SheetView): HTMLElement {
@@ -65,16 +65,19 @@ function skillsColumn(v: SheetView, onRaise: (id: SkillId) => void): HTMLElement
   for (const group of v.skills) {
     col.appendChild(el('div', 'sheet-group', group.label));
     for (const row of group.rows) {
-      // Plain rows, as MM6's skill lists (critics, round 7): no box round each skill.
-      const line = el('div', 'ui-row plain');
+      // Plain rows, as MM6's skill lists (critics, rounds 7 and 8): no box round each
+      // skill and no "+" oval; the row itself is the button.
+      const line = el('button', 'ui-row plain sheet-skill');
+      line.type = 'button';
+      line.disabled = !row.canRaise;
+      line.addEventListener('click', (e) => {
+        e.preventDefault();
+        onRaise(row.id);
+      });
       const name = el('div', 'grow');
       name.append(el('div', '', row.name), el('div', 'sub', `${row.rankLabel} · ${row.cost} pt`));
       const level = el('div', 'ui-v sheet-level', String(row.level));
-      const plus = button('+', () => onRaise(row.id), {
-        className: 'sheet-raise',
-        disabled: !row.canRaise,
-      });
-      line.append(name, level, plus);
+      line.append(name, level);
       col.appendChild(line);
     }
   }

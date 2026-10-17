@@ -11,7 +11,7 @@ import type { QuestDef } from '../game/quests';
 import type { GameState } from '../game/state';
 import { toLocalRect } from '../app/orientation';
 import { chooseTopic, dialogueView } from './dialogue-model';
-import { button, el } from './dom';
+import { el } from './dom';
 
 export interface DialogueHooks {
   /** The villager says something: play the talk clip. */
@@ -119,8 +119,15 @@ export function createDialogue(
       });
       topics.appendChild(b);
     }
+    // Farewell ends the list as a line of it (critics, round 8: MM6 had no gold pill).
     const foot = el('div', 'dlg-foot');
-    foot.appendChild(button('Farewell', () => unmount(true)));
+    const bye = el('button', 'dlg-topic dlg-bye', 'Farewell');
+    bye.type = 'button';
+    bye.addEventListener('click', (e) => {
+      e.preventDefault();
+      unmount(true);
+    });
+    foot.appendChild(bye);
     side.append(text, topics, foot);
     wood.append(frame, plate, side);
     root.appendChild(wood);

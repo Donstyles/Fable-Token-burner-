@@ -498,7 +498,13 @@ waterfalls and deserts, walkable end to end.
     3, 4, 5 (talk), 4 (world), no; all three critics measured MM6's
     surfaces as soft many-level clouds. **Round 8 done 2026-10-17**
     (DESIGN 16.18): the shell's surfaces as value-noise clouds, measured
-    HUD tones, nearest upscale, no fog; the round-8 scoring follows.
+    HUD tones, nearest upscale, no fog. **Round 8 scored 2026-10-17**:
+    4, 3, 4 (talk), 3 (world), no; the averages match MM6, the pixels do
+    not: MM6's surfaces are palettised paintings with hard per-pixel
+    detail. **Round 9 done 2026-10-17** (DESIGN 16.19): five-bit
+    quantise, speckle, wandering veins, fissures, crazed rose marble,
+    capped tubes, line-art emblems, one-spread book; the round-9 scoring
+    follows.
 18. Remaining, in order: lasting buffs and Jump; weather states (rain, a
     sandstorm); music; the smith's hammer and the temple bell.
 

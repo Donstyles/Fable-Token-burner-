@@ -1596,7 +1596,67 @@ model for the shell (it stays right for the world's tiles). Round 8:
   line and two of pewter; the village behind the party showing round
   the head; a softer key; the wood's highlights to chestnut.
 
+### 16.19 Round 9: palettised paint (2026-10-17)
+
+Round 8 scored 4 (HUD), 3 (screens), 4 (talk) and 3 (world), verdict no.
+The averages now match MM6 to the unit; the pixels do not. The critics'
+common finding: MM6's surfaces are palettised paintings with hard
+per-pixel detail (a one-pixel speckle, crisp veins, fissures and cracks,
+three quarters of the channel values on a 32-level grid), where ours
+were smooth clouds counting two thousand colours. Round 9:
+
+- **Brushes** (`src/render/brush.ts`): `quantise` rounds every channel
+  to the five-bit grid; `cracks` walks one-pixel lines twenty to sixty
+  pixels long (with an optional soft halo for marble veins); `crazed`
+  breaks a slab into cells of uneven size with bent boundaries, each a
+  shade lighter or darker, their edges crisp pale lines with a dark
+  pixel beside; `speck` is an unblurred per-pixel nudge; `veins` draws
+  the isolines of a noise field (kept, unused: the loops read as a
+  contour map).
+- **HUD**: the marble a small mottle at ±8 with sweeps no wider than
+  ±10, veins as wandering warm-grey streaks (123,113,107) with a soft
+  halo, quantised; the active thread capped at (222,215,181); seams one
+  line of (49,48,41) with a three-pixel shadow; tube caps of five shaded
+  gold rows with a highlight, the fill standing in a track between them
+  so a full tube keeps its cap; the empty glass a warm black
+  (33,28,24)-(57,52,49), the tube slot marble with a left shadow and no
+  stripe; the gem a flat (0,195-235,0) lozenge in a one-pixel bezel;
+  the clock white type in a (16,28,24) well; the band's edge a two-row
+  lip, a groove and a five-row trough; the lintel seven flat light rows;
+  six rows of wood under the books; the pillar ten pixels wide shaded
+  198 to 132, its collar turning with it; the spines a cylinder with
+  ±6 noise on every pixel; the emblems gold line art two pixels wide in
+  a gradient of the golds over a dark shade with a bright top-left
+  edge, solid where the object is solid (the sword's blade), as the
+  reference shelf's sword, leaf, globe and key.
+- **Screens**: the stone cool green-grey (68,72,68) with a ±12
+  per-pixel speckle and hairline fissures, quantised; the leather
+  near-black (35,12,0) with a one-pixel mottle and rust grid lines of
+  (105,38,8) with a dark edge, no glint; the book a dark green leather
+  cover round one parchment spread bowed across its width (164 at the
+  left, 210 at the middle, 174 at the right), seven stacked page edges
+  along the foot and the right, ribbon tabs cut on the slant, no corner
+  brackets, no gutter line; the rose marble (177,124,95) crazed; rest
+  text white, the rest clock in the dark well; gold ovals the full
+  range from a near-white specular at the upper left to (90,60,10) at
+  the lower right inside a black outline, their glyphs black; spell
+  ovals flat 26 levels darker with a two-pixel soft edge; the frame
+  round a screen one dark line with a lit lip, no corner blocks (the
+  critic's "translucent rectangle" was the corner block); skill rows
+  are the buttons (MM6 had no "+" ovals); Farewell a line of the list.
+- **World and talk** (already in the tree before this round's
+  scoring): the grade pass neutral (it had been lifting the sky); the
+  filter posterising at 32 levels; ground tiles in 16-tone ramps,
+  palettised; bitmap skins snapped to the palette; sprites without
+  mipmaps, nearest; the bust over black with a softer key; the
+  mahogany with blacks, slanted grain and knots.
+
 ## 13. Decision log
+
+- 2026-10-17 – Round 9 (16.19): the shell's surfaces as palettised
+  paintings: five-bit quantise, per-pixel speckle, wandering veins,
+  fissures, crazed rose marble; tube caps over the fill; gold line-art
+  emblems; one-spread book; skill rows as buttons; Farewell as a line.
 
 - 2026-10-17 – Round 8 (16.18): the shell's surfaces painted as value
   noise clouds to the critics' measured bases and spreads, no ramps; the

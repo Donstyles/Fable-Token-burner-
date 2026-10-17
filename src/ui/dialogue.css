@@ -151,10 +151,10 @@
 }
 .dlg-foot {
   display: flex;
-  justify-content: flex-end;
+  justify-content: center;
   padding-top: 6px;
 }
-.dlg-foot .ui-btn {
-  min-height: 32px;
+.dlg-foot .dlg-topic {
+  min-height: 30px;
   padding: 2px 18px;
 }
