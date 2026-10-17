@@ -1,0 +1,102 @@
+[
+  {
+    "id": "tree-spruce-01",
+    "prompt": "A tall Norway spruce tree, narrow conical shape, dense dark green layered foliage from near the ground to a pointed top, straight brown trunk. Low-polygon game asset in the style of a late-1990s first-person RPG: one solid opaque canopy as a simple rounded mass, no transparent or scattered leaves, a plain trunk, roots at the base, upright, flat even lighting, muted natural colours, nothing else in the scene.",
+    "polycount": 700
+  },
+  {
+    "id": "tree-spruce-02",
+    "prompt": "A mature Black Forest spruce, very tall and slim, dark blue-green tiered branches drooping slightly, bare lower trunk. Low-polygon game asset in the style of a late-1990s first-person RPG: one solid opaque canopy as a simple rounded mass, no transparent or scattered leaves, a plain trunk, roots at the base, upright, flat even lighting, muted natural colours, nothing else in the scene.",
+    "polycount": 700
+  },
+  {
+    "id": "tree-fir-01",
+    "prompt": "A silver fir tree, broad conical crown of dense deep green foliage, flat top, thick grey trunk. Low-polygon game asset in the style of a late-1990s first-person RPG: one solid opaque canopy as a simple rounded mass, no transparent or scattered leaves, a plain trunk, roots at the base, upright, flat even lighting, muted natural colours, nothing else in the scene.",
+    "polycount": 700
+  },
+  {
+    "id": "tree-pine-01",
+    "prompt": "A Scots pine tree, tall bare orange-brown trunk with an irregular flat-topped crown of dark green needles high up. Low-polygon game asset in the style of a late-1990s first-person RPG: one solid opaque canopy as a simple rounded mass, no transparent or scattered leaves, a plain trunk, roots at the base, upright, flat even lighting, muted natural colours, nothing else in the scene.",
+    "polycount": 600
+  },
+  {
+    "id": "tree-pine-02",
+    "prompt": "A young pine tree, compact conical crown of dense green needles, short trunk. Low-polygon game asset in the style of a late-1990s first-person RPG: one solid opaque canopy as a simple rounded mass, no transparent or scattered leaves, a plain trunk, roots at the base, upright, flat even lighting, muted natural colours, nothing else in the scene.",
+    "polycount": 500
+  },
+  {
+    "id": "tree-larch-01",
+    "prompt": "A European larch tree, slender conical shape, soft light green foliage in sparse tiers, thin trunk. Low-polygon game asset in the style of a late-1990s first-person RPG: one solid opaque canopy as a simple rounded mass, no transparent or scattered leaves, a plain trunk, roots at the base, upright, flat even lighting, muted natural colours, nothing else in the scene.",
+    "polycount": 600
+  },
+  {
+    "id": "tree-spruce-03",
+    "prompt": "A weather-beaten spruce, tall and gaunt with sparse dark green branches and a bent top, grey trunk. Low-polygon game asset in the style of a late-1990s first-person RPG: one solid opaque canopy as a simple rounded mass, no transparent or scattered leaves, a plain trunk, roots at the base, upright, flat even lighting, muted natural colours, nothing else in the scene.",
+    "polycount": 600
+  },
+  {
+    "id": "tree-oak-01",
+    "prompt": "A great old oak tree, massive gnarled trunk, wide spreading rounded crown of dense dark green leaves. Low-polygon game asset in the style of a late-1990s first-person RPG: one solid opaque canopy as a simple rounded mass, no transparent or scattered leaves, a plain trunk, roots at the base, upright, flat even lighting, muted natural colours, nothing else in the scene.",
+    "polycount": 800
+  },
+  {
+    "id": "tree-oak-02",
+    "prompt": "A young oak tree, straight trunk, rounded dense green crown. Low-polygon game asset in the style of a late-1990s first-person RPG: one solid opaque canopy as a simple rounded mass, no transparent or scattered leaves, a plain trunk, roots at the base, upright, flat even lighting, muted natural colours, nothing else in the scene.",
+    "polycount": 600
+  },
+  {
+    "id": "tree-beech-01",
+    "prompt": "A European beech tree, smooth grey trunk, tall oval crown of dense bright green leaves. Low-polygon game asset in the style of a late-1990s first-person RPG: one solid opaque canopy as a simple rounded mass, no transparent or scattered leaves, a plain trunk, roots at the base, upright, flat even lighting, muted natural colours, nothing else in the scene.",
+    "polycount": 700
+  },
+  {
+    "id": "tree-birch-01",
+    "prompt": "A silver birch tree, slender white trunk with dark marks, light airy crown of small pale green leaves. Low-polygon game asset in the style of a late-1990s first-person RPG: one solid opaque canopy as a simple rounded mass, no transparent or scattered leaves, a plain trunk, roots at the base, upright, flat even lighting, muted natural colours, nothing else in the scene.",
+    "polycount": 600
+  },
+  {
+    "id": "tree-maple-01",
+    "prompt": "A maple tree, broad rounded crown of dense green leaves with a hint of autumn orange, sturdy brown trunk. Low-polygon game asset in the style of a late-1990s first-person RPG: one solid opaque canopy as a simple rounded mass, no transparent or scattered leaves, a plain trunk, roots at the base, upright, flat even lighting, muted natural colours, nothing else in the scene.",
+    "polycount": 700
+  },
+  {
+    "id": "tree-linden-01",
+    "prompt": "A linden tree, tall dense heart-shaped crown of dark green leaves, straight trunk. Low-polygon game asset in the style of a late-1990s first-person RPG: one solid opaque canopy as a simple rounded mass, no transparent or scattered leaves, a plain trunk, roots at the base, upright, flat even lighting, muted natural colours, nothing else in the scene.",
+    "polycount": 700
+  },
+  {
+    "id": "tree-willow-01",
+    "prompt": "A weeping willow tree, thick trunk, drooping curtain of pale green foliage. Low-polygon game asset in the style of a late-1990s first-person RPG: one solid opaque canopy as a simple rounded mass, no transparent or scattered leaves, a plain trunk, roots at the base, upright, flat even lighting, muted natural colours, nothing else in the scene.",
+    "polycount": 700
+  },
+  {
+    "id": "tree-dead-01",
+    "prompt": "A dead leafless tree, twisted grey trunk and bare crooked branches. Low-polygon game asset in the style of a late-1990s first-person RPG: one solid opaque canopy as a simple rounded mass, no transparent or scattered leaves, a plain trunk, roots at the base, upright, flat even lighting, muted natural colours, nothing else in the scene.",
+    "polycount": 500
+  },
+  {
+    "id": "tree-dead-02",
+    "prompt": "A dead pine snag, tall broken grey trunk with a few bare branch stubs. Low-polygon game asset in the style of a late-1990s first-person RPG: one solid opaque canopy as a simple rounded mass, no transparent or scattered leaves, a plain trunk, roots at the base, upright, flat even lighting, muted natural colours, nothing else in the scene.",
+    "polycount": 400
+  },
+  {
+    "id": "bush-01",
+    "prompt": "A dense round shrub of dark green leaves, waist high, growing from the ground. Low-polygon game asset in the style of a late-1990s first-person RPG: one solid opaque canopy as a simple rounded mass, no transparent or scattered leaves, a plain trunk, roots at the base, upright, flat even lighting, muted natural colours, nothing else in the scene.",
+    "polycount": 300
+  },
+  {
+    "id": "bush-02",
+    "prompt": "A wild hazel bush, several thin stems with a loose dome of green leaves. Low-polygon game asset in the style of a late-1990s first-person RPG: one solid opaque canopy as a simple rounded mass, no transparent or scattered leaves, a plain trunk, roots at the base, upright, flat even lighting, muted natural colours, nothing else in the scene.",
+    "polycount": 400
+  },
+  {
+    "id": "tree-palm-01",
+    "prompt": "A date palm tree, tall rough brown trunk curving slightly, crown of long green fronds, hanging date clusters. Low-polygon game asset in the style of a late-1990s first-person RPG: one solid opaque canopy as a simple rounded mass, no transparent or scattered leaves, a plain trunk, roots at the base, upright, flat even lighting, muted natural colours, nothing else in the scene.",
+    "polycount": 700
+  },
+  {
+    "id": "tree-palm-02",
+    "prompt": "A short fan palm, stout trunk with a rounded crown of stiff green fan-shaped fronds. Low-polygon game asset in the style of a late-1990s first-person RPG: one solid opaque canopy as a simple rounded mass, no transparent or scattered leaves, a plain trunk, roots at the base, upright, flat even lighting, muted natural colours, nothing else in the scene.",
+    "polycount": 600
+  }
+]

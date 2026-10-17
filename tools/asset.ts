@@ -18,6 +18,8 @@ import {
   findBatch,
   formatBatch,
   humanoidItems,
+  propItems,
+  type PropSpec,
   makeBatch,
   nextBatchNumber,
   writeBatch,
@@ -194,6 +196,25 @@ async function batch(args: string[]): Promise<void> {
       if (!(await exists(`${INBOX_DIR}/${input}`)))
         fail(`${INBOX_DIR}/${input} missing: the owner's concept image comes first`);
       items.push(...humanoidItems(id, metres, input, set, pose));
+    }
+    const b = makeBatch(await nextBatchNumber(), name, items);
+    const path = await writeBatch(b);
+    console.info(`${formatBatch(b)}\nwrote ${path}; awaiting the owner's approval by number`);
+    return;
+  }
+  if (sub === 'props') {
+    // `batch props <name> <specs.json>`: a JSON list of { id, prompt, polycount }.
+    const [name, file] = rest;
+    if (!name || !isValidId(name) || !file) fail('batch props <name> <specs.json>');
+    const specs = JSON.parse(await readFile(file, 'utf8')) as PropSpec[];
+    if (!Array.isArray(specs) || !specs.length) fail(`${file}: a non-empty JSON list`);
+    const items = [];
+    for (const spec of specs) {
+      if (!isValidId(spec.id) || typeof spec.prompt !== 'string' || !spec.prompt.trim())
+        fail(`bad prop spec ${JSON.stringify(spec)}`);
+      if (!(spec.polycount >= 100 && spec.polycount <= 30000))
+        fail(`${spec.id}: polycount 100..30000`);
+      items.push(...propItems(spec));
     }
     const b = makeBatch(await nextBatchNumber(), name, items);
     const path = await writeBatch(b);

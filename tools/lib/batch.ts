@@ -30,9 +30,12 @@ export const CREDITS = {
   imageTo3d: { credits: 15, basis: 'reported by Meshy for batch 001 (2026-10-15)' },
   rig: { credits: 5, basis: 'reported by Meshy for batch 001 (2026-10-15)' },
   animatePerAction: { credits: 3, basis: 'documented (DESIGN.md 10.0), confirmed by batch 001' },
+  textTo3dPreview: { credits: 20, basis: '`meshy make --dry-run` estimate (2026-10-17)' },
+  textTo3dRefine: { credits: 10, basis: '`meshy make --dry-run` estimate (2026-10-17)' },
 } as const;
 
-export type BatchStep = 'image-to-3d' | 'rig' | 'animate' | 'text-to-image';
+export type BatchStep =
+  'image-to-3d' | 'rig' | 'animate' | 'text-to-image' | 'text-to-3d-preview' | 'text-to-3d-refine';
 
 export interface BatchItem {
   assetId: string;
@@ -143,6 +146,47 @@ export function humanoidItems(
 
 export function totalCredits(items: readonly BatchItem[]): number {
   return items.reduce((sum, i) => sum + i.estimatedCredits, 0);
+}
+
+/** A prop made from a text prompt: trees, rocks, furniture (DESIGN.md 10.1). */
+export interface PropSpec {
+  id: string;
+  prompt: string;
+  /** Target face count for smart topology (meshy-t2.5: 100 to 30,000). */
+  polycount: number;
+}
+
+/** The two Meshy steps of a text-to-3D prop: a preview mesh, then its textured refinement. */
+export function propItems(spec: PropSpec): BatchItem[] {
+  return [
+    {
+      assetId: spec.id,
+      step: 'text-to-3d-preview',
+      params: {
+        mode: 'preview',
+        prompt: spec.prompt,
+        model_type: 'smart-topology',
+        ai_model: 'meshy-t2.5',
+        target_polycount: spec.polycount,
+        pose_mode: 'auto',
+        target_formats: ['glb'],
+      },
+      estimatedCredits: CREDITS.textTo3dPreview.credits,
+      estimateBasis: CREDITS.textTo3dPreview.basis,
+    },
+    {
+      assetId: spec.id,
+      step: 'text-to-3d-refine',
+      params: {
+        mode: 'refine',
+        enable_pbr: false,
+        texture_resolution: '2k',
+        target_formats: ['glb'],
+      },
+      estimatedCredits: CREDITS.textTo3dRefine.credits,
+      estimateBasis: CREDITS.textTo3dRefine.basis,
+    },
+  ];
 }
 
 export function makeBatch(

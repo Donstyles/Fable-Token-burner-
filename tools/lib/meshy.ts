@@ -15,7 +15,7 @@ import { spawn } from 'node:child_process';
 import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 
-export type MeshyResource = 'image-to-3d' | 'rigging' | 'animate';
+export type MeshyResource = 'image-to-3d' | 'rigging' | 'animate' | 'text-to-3d';
 export type DownloadKind = 'model' | 'rig' | 'animation' | 'texture' | 'thumbnail';
 
 /** The CLI's `--output-schema v1` envelope: exactly one JSON object on stdout. */

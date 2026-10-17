@@ -23,6 +23,7 @@ import { CARD_DIR, INBOX_DIR } from './cards';
 import { readManifest, upsertAsset, writeManifest } from './manifest';
 import { MeshyClient, TERMINAL_STATES, type MeshyResource, type TaskOutcome } from './meshy';
 import { postProcessCharacter, type GlbReport } from './postprocess';
+import { propAssetIds, runProps } from './run-props';
 
 export const WORK_DIR = 'pipeline/work';
 export const CHARACTER_DIR = 'assets/characters';
@@ -33,6 +34,8 @@ const RESOURCE: Record<Exclude<BatchStep, 'text-to-image'>, MeshyResource> = {
   'image-to-3d': 'image-to-3d',
   rig: 'rigging',
   animate: 'animate',
+  'text-to-3d-preview': 'text-to-3d',
+  'text-to-3d-refine': 'text-to-3d',
 };
 
 export interface RunOptions {
@@ -172,7 +175,25 @@ export async function runBatch(number: number, opts: RunOptions = {}): Promise<R
 
   const manifest = await readManifest();
   const summary: RunSummary = { batch, run, assets: [] };
-  const assetIds = [...new Set(batch.items.map((i) => i.assetId))];
+  const props = propAssetIds(batch);
+  const assetIds = [...new Set(batch.items.map((i) => i.assetId))].filter(
+    (id) => !props.includes(id),
+  );
+  if (props.length) {
+    const results = await runProps({
+      batch,
+      run,
+      runIndex,
+      client,
+      dryRun,
+      log,
+      save,
+      manifest,
+      workDir: join(WORK_DIR, `batch-${pad(batch.number)}`),
+      licence: MESHY_LICENCE,
+    });
+    for (const r of results) summary.assets.push(r);
+  }
 
   for (const assetId of assetIds) {
     const items = batch.items.filter((i) => i.assetId === assetId);

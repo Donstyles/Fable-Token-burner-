@@ -120,6 +120,23 @@ export async function postProcessCharacter(
   return inspectGlb(output);
 }
 
+/** A prop's GLB: no clips to name; dedup, prune and shrink the textures. */
+export async function postProcessProp(
+  input: string,
+  output: string,
+  textureSize = CHARACTER_TEXTURE_SIZE,
+): Promise<GlbReport> {
+  const doc = await io().read(input);
+  await doc.transform(
+    dedup(),
+    prune(),
+    textureCompress({ encoder: sharp, targetFormat: 'png', resize: [textureSize, textureSize] }),
+  );
+  await mkdir(dirname(output), { recursive: true });
+  await io().write(output, doc);
+  return inspectGlb(output);
+}
+
 /**
  * Open boundary loops of a mesh, welded by position so UV seams do not count. Meshy's smart
  * topology delivers separated parts; a small loop at the front is a gap between parts (the

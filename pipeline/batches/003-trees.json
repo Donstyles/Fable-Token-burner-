@@ -1,0 +1,843 @@
+{
+  "number": 3,
+  "name": "trees",
+  "created": "2026-10-17",
+  "approved": true,
+  "items": [
+    {
+      "assetId": "tree-spruce-01",
+      "step": "text-to-3d-preview",
+      "params": {
+        "mode": "preview",
+        "prompt": "A tall Norway spruce tree, narrow conical shape, dense dark green layered foliage from near the ground to a pointed top, straight brown trunk. Low-polygon game asset in the style of a late-1990s first-person RPG: one solid opaque canopy as a simple rounded mass, no transparent or scattered leaves, a plain trunk, roots at the base, upright, flat even lighting, muted natural colours, nothing else in the scene.",
+        "model_type": "smart-topology",
+        "ai_model": "meshy-t2.5",
+        "target_polycount": 700,
+        "pose_mode": "auto",
+        "target_formats": ["glb"]
+      },
+      "estimatedCredits": 20,
+      "estimateBasis": "`meshy make --dry-run` estimate (2026-10-17)"
+    },
+    {
+      "assetId": "tree-spruce-01",
+      "step": "text-to-3d-refine",
+      "params": {
+        "mode": "refine",
+        "enable_pbr": false,
+        "texture_resolution": "2k",
+        "target_formats": ["glb"]
+      },
+      "estimatedCredits": 10,
+      "estimateBasis": "`meshy make --dry-run` estimate (2026-10-17)"
+    },
+    {
+      "assetId": "tree-spruce-02",
+      "step": "text-to-3d-preview",
+      "params": {
+        "mode": "preview",
+        "prompt": "A mature Black Forest spruce, very tall and slim, dark blue-green tiered branches drooping slightly, bare lower trunk. Low-polygon game asset in the style of a late-1990s first-person RPG: one solid opaque canopy as a simple rounded mass, no transparent or scattered leaves, a plain trunk, roots at the base, upright, flat even lighting, muted natural colours, nothing else in the scene.",
+        "model_type": "smart-topology",
+        "ai_model": "meshy-t2.5",
+        "target_polycount": 700,
+        "pose_mode": "auto",
+        "target_formats": ["glb"]
+      },
+      "estimatedCredits": 20,
+      "estimateBasis": "`meshy make --dry-run` estimate (2026-10-17)"
+    },
+    {
+      "assetId": "tree-spruce-02",
+      "step": "text-to-3d-refine",
+      "params": {
+        "mode": "refine",
+        "enable_pbr": false,
+        "texture_resolution": "2k",
+        "target_formats": ["glb"]
+      },
+      "estimatedCredits": 10,
+      "estimateBasis": "`meshy make --dry-run` estimate (2026-10-17)"
+    },
+    {
+      "assetId": "tree-fir-01",
+      "step": "text-to-3d-preview",
+      "params": {
+        "mode": "preview",
+        "prompt": "A silver fir tree, broad conical crown of dense deep green foliage, flat top, thick grey trunk. Low-polygon game asset in the style of a late-1990s first-person RPG: one solid opaque canopy as a simple rounded mass, no transparent or scattered leaves, a plain trunk, roots at the base, upright, flat even lighting, muted natural colours, nothing else in the scene.",
+        "model_type": "smart-topology",
+        "ai_model": "meshy-t2.5",
+        "target_polycount": 700,
+        "pose_mode": "auto",
+        "target_formats": ["glb"]
+      },
+      "estimatedCredits": 20,
+      "estimateBasis": "`meshy make --dry-run` estimate (2026-10-17)"
+    },
+    {
+      "assetId": "tree-fir-01",
+      "step": "text-to-3d-refine",
+      "params": {
+        "mode": "refine",
+        "enable_pbr": false,
+        "texture_resolution": "2k",
+        "target_formats": ["glb"]
+      },
+      "estimatedCredits": 10,
+      "estimateBasis": "`meshy make --dry-run` estimate (2026-10-17)"
+    },
+    {
+      "assetId": "tree-pine-01",
+      "step": "text-to-3d-preview",
+      "params": {
+        "mode": "preview",
+        "prompt": "A Scots pine tree, tall bare orange-brown trunk with an irregular flat-topped crown of dark green needles high up. Low-polygon game asset in the style of a late-1990s first-person RPG: one solid opaque canopy as a simple rounded mass, no transparent or scattered leaves, a plain trunk, roots at the base, upright, flat even lighting, muted natural colours, nothing else in the scene.",
+        "model_type": "smart-topology",
+        "ai_model": "meshy-t2.5",
+        "target_polycount": 600,
+        "pose_mode": "auto",
+        "target_formats": ["glb"]
+      },
+      "estimatedCredits": 20,
+      "estimateBasis": "`meshy make --dry-run` estimate (2026-10-17)"
+    },
+    {
+      "assetId": "tree-pine-01",
+      "step": "text-to-3d-refine",
+      "params": {
+        "mode": "refine",
+        "enable_pbr": false,
+        "texture_resolution": "2k",
+        "target_formats": ["glb"]
+      },
+      "estimatedCredits": 10,
+      "estimateBasis": "`meshy make --dry-run` estimate (2026-10-17)"
+    },
+    {
+      "assetId": "tree-pine-02",
+      "step": "text-to-3d-preview",
+      "params": {
+        "mode": "preview",
+        "prompt": "A young pine tree, compact conical crown of dense green needles, short trunk. Low-polygon game asset in the style of a late-1990s first-person RPG: one solid opaque canopy as a simple rounded mass, no transparent or scattered leaves, a plain trunk, roots at the base, upright, flat even lighting, muted natural colours, nothing else in the scene.",
+        "model_type": "smart-topology",
+        "ai_model": "meshy-t2.5",
+        "target_polycount": 500,
+        "pose_mode": "auto",
+        "target_formats": ["glb"]
+      },
+      "estimatedCredits": 20,
+      "estimateBasis": "`meshy make --dry-run` estimate (2026-10-17)"
+    },
+    {
+      "assetId": "tree-pine-02",
+      "step": "text-to-3d-refine",
+      "params": {
+        "mode": "refine",
+        "enable_pbr": false,
+        "texture_resolution": "2k",
+        "target_formats": ["glb"]
+      },
+      "estimatedCredits": 10,
+      "estimateBasis": "`meshy make --dry-run` estimate (2026-10-17)"
+    },
+    {
+      "assetId": "tree-larch-01",
+      "step": "text-to-3d-preview",
+      "params": {
+        "mode": "preview",
+        "prompt": "A European larch tree, slender conical shape, soft light green foliage in sparse tiers, thin trunk. Low-polygon game asset in the style of a late-1990s first-person RPG: one solid opaque canopy as a simple rounded mass, no transparent or scattered leaves, a plain trunk, roots at the base, upright, flat even lighting, muted natural colours, nothing else in the scene.",
+        "model_type": "smart-topology",
+        "ai_model": "meshy-t2.5",
+        "target_polycount": 600,
+        "pose_mode": "auto",
+        "target_formats": ["glb"]
+      },
+      "estimatedCredits": 20,
+      "estimateBasis": "`meshy make --dry-run` estimate (2026-10-17)"
+    },
+    {
+      "assetId": "tree-larch-01",
+      "step": "text-to-3d-refine",
+      "params": {
+        "mode": "refine",
+        "enable_pbr": false,
+        "texture_resolution": "2k",
+        "target_formats": ["glb"]
+      },
+      "estimatedCredits": 10,
+      "estimateBasis": "`meshy make --dry-run` estimate (2026-10-17)"
+    },
+    {
+      "assetId": "tree-spruce-03",
+      "step": "text-to-3d-preview",
+      "params": {
+        "mode": "preview",
+        "prompt": "A weather-beaten spruce, tall and gaunt with sparse dark green branches and a bent top, grey trunk. Low-polygon game asset in the style of a late-1990s first-person RPG: one solid opaque canopy as a simple rounded mass, no transparent or scattered leaves, a plain trunk, roots at the base, upright, flat even lighting, muted natural colours, nothing else in the scene.",
+        "model_type": "smart-topology",
+        "ai_model": "meshy-t2.5",
+        "target_polycount": 600,
+        "pose_mode": "auto",
+        "target_formats": ["glb"]
+      },
+      "estimatedCredits": 20,
+      "estimateBasis": "`meshy make --dry-run` estimate (2026-10-17)"
+    },
+    {
+      "assetId": "tree-spruce-03",
+      "step": "text-to-3d-refine",
+      "params": {
+        "mode": "refine",
+        "enable_pbr": false,
+        "texture_resolution": "2k",
+        "target_formats": ["glb"]
+      },
+      "estimatedCredits": 10,
+      "estimateBasis": "`meshy make --dry-run` estimate (2026-10-17)"
+    },
+    {
+      "assetId": "tree-oak-01",
+      "step": "text-to-3d-preview",
+      "params": {
+        "mode": "preview",
+        "prompt": "A great old oak tree, massive gnarled trunk, wide spreading rounded crown of dense dark green leaves. Low-polygon game asset in the style of a late-1990s first-person RPG: one solid opaque canopy as a simple rounded mass, no transparent or scattered leaves, a plain trunk, roots at the base, upright, flat even lighting, muted natural colours, nothing else in the scene.",
+        "model_type": "smart-topology",
+        "ai_model": "meshy-t2.5",
+        "target_polycount": 800,
+        "pose_mode": "auto",
+        "target_formats": ["glb"]
+      },
+      "estimatedCredits": 20,
+      "estimateBasis": "`meshy make --dry-run` estimate (2026-10-17)"
+    },
+    {
+      "assetId": "tree-oak-01",
+      "step": "text-to-3d-refine",
+      "params": {
+        "mode": "refine",
+        "enable_pbr": false,
+        "texture_resolution": "2k",
+        "target_formats": ["glb"]
+      },
+      "estimatedCredits": 10,
+      "estimateBasis": "`meshy make --dry-run` estimate (2026-10-17)"
+    },
+    {
+      "assetId": "tree-oak-02",
+      "step": "text-to-3d-preview",
+      "params": {
+        "mode": "preview",
+        "prompt": "A young oak tree, straight trunk, rounded dense green crown. Low-polygon game asset in the style of a late-1990s first-person RPG: one solid opaque canopy as a simple rounded mass, no transparent or scattered leaves, a plain trunk, roots at the base, upright, flat even lighting, muted natural colours, nothing else in the scene.",
+        "model_type": "smart-topology",
+        "ai_model": "meshy-t2.5",
+        "target_polycount": 600,
+        "pose_mode": "auto",
+        "target_formats": ["glb"]
+      },
+      "estimatedCredits": 20,
+      "estimateBasis": "`meshy make --dry-run` estimate (2026-10-17)"
+    },
+    {
+      "assetId": "tree-oak-02",
+      "step": "text-to-3d-refine",
+      "params": {
+        "mode": "refine",
+        "enable_pbr": false,
+        "texture_resolution": "2k",
+        "target_formats": ["glb"]
+      },
+      "estimatedCredits": 10,
+      "estimateBasis": "`meshy make --dry-run` estimate (2026-10-17)"
+    },
+    {
+      "assetId": "tree-beech-01",
+      "step": "text-to-3d-preview",
+      "params": {
+        "mode": "preview",
+        "prompt": "A European beech tree, smooth grey trunk, tall oval crown of dense bright green leaves. Low-polygon game asset in the style of a late-1990s first-person RPG: one solid opaque canopy as a simple rounded mass, no transparent or scattered leaves, a plain trunk, roots at the base, upright, flat even lighting, muted natural colours, nothing else in the scene.",
+        "model_type": "smart-topology",
+        "ai_model": "meshy-t2.5",
+        "target_polycount": 700,
+        "pose_mode": "auto",
+        "target_formats": ["glb"]
+      },
+      "estimatedCredits": 20,
+      "estimateBasis": "`meshy make --dry-run` estimate (2026-10-17)"
+    },
+    {
+      "assetId": "tree-beech-01",
+      "step": "text-to-3d-refine",
+      "params": {
+        "mode": "refine",
+        "enable_pbr": false,
+        "texture_resolution": "2k",
+        "target_formats": ["glb"]
+      },
+      "estimatedCredits": 10,
+      "estimateBasis": "`meshy make --dry-run` estimate (2026-10-17)"
+    },
+    {
+      "assetId": "tree-birch-01",
+      "step": "text-to-3d-preview",
+      "params": {
+        "mode": "preview",
+        "prompt": "A silver birch tree, slender white trunk with dark marks, light airy crown of small pale green leaves. Low-polygon game asset in the style of a late-1990s first-person RPG: one solid opaque canopy as a simple rounded mass, no transparent or scattered leaves, a plain trunk, roots at the base, upright, flat even lighting, muted natural colours, nothing else in the scene.",
+        "model_type": "smart-topology",
+        "ai_model": "meshy-t2.5",
+        "target_polycount": 600,
+        "pose_mode": "auto",
+        "target_formats": ["glb"]
+      },
+      "estimatedCredits": 20,
+      "estimateBasis": "`meshy make --dry-run` estimate (2026-10-17)"
+    },
+    {
+      "assetId": "tree-birch-01",
+      "step": "text-to-3d-refine",
+      "params": {
+        "mode": "refine",
+        "enable_pbr": false,
+        "texture_resolution": "2k",
+        "target_formats": ["glb"]
+      },
+      "estimatedCredits": 10,
+      "estimateBasis": "`meshy make --dry-run` estimate (2026-10-17)"
+    },
+    {
+      "assetId": "tree-maple-01",
+      "step": "text-to-3d-preview",
+      "params": {
+        "mode": "preview",
+        "prompt": "A maple tree, broad rounded crown of dense green leaves with a hint of autumn orange, sturdy brown trunk. Low-polygon game asset in the style of a late-1990s first-person RPG: one solid opaque canopy as a simple rounded mass, no transparent or scattered leaves, a plain trunk, roots at the base, upright, flat even lighting, muted natural colours, nothing else in the scene.",
+        "model_type": "smart-topology",
+        "ai_model": "meshy-t2.5",
+        "target_polycount": 700,
+        "pose_mode": "auto",
+        "target_formats": ["glb"]
+      },
+      "estimatedCredits": 20,
+      "estimateBasis": "`meshy make --dry-run` estimate (2026-10-17)"
+    },
+    {
+      "assetId": "tree-maple-01",
+      "step": "text-to-3d-refine",
+      "params": {
+        "mode": "refine",
+        "enable_pbr": false,
+        "texture_resolution": "2k",
+        "target_formats": ["glb"]
+      },
+      "estimatedCredits": 10,
+      "estimateBasis": "`meshy make --dry-run` estimate (2026-10-17)"
+    },
+    {
+      "assetId": "tree-linden-01",
+      "step": "text-to-3d-preview",
+      "params": {
+        "mode": "preview",
+        "prompt": "A linden tree, tall dense heart-shaped crown of dark green leaves, straight trunk. Low-polygon game asset in the style of a late-1990s first-person RPG: one solid opaque canopy as a simple rounded mass, no transparent or scattered leaves, a plain trunk, roots at the base, upright, flat even lighting, muted natural colours, nothing else in the scene.",
+        "model_type": "smart-topology",
+        "ai_model": "meshy-t2.5",
+        "target_polycount": 700,
+        "pose_mode": "auto",
+        "target_formats": ["glb"]
+      },
+      "estimatedCredits": 20,
+      "estimateBasis": "`meshy make --dry-run` estimate (2026-10-17)"
+    },
+    {
+      "assetId": "tree-linden-01",
+      "step": "text-to-3d-refine",
+      "params": {
+        "mode": "refine",
+        "enable_pbr": false,
+        "texture_resolution": "2k",
+        "target_formats": ["glb"]
+      },
+      "estimatedCredits": 10,
+      "estimateBasis": "`meshy make --dry-run` estimate (2026-10-17)"
+    },
+    {
+      "assetId": "tree-willow-01",
+      "step": "text-to-3d-preview",
+      "params": {
+        "mode": "preview",
+        "prompt": "A weeping willow tree, thick trunk, drooping curtain of pale green foliage. Low-polygon game asset in the style of a late-1990s first-person RPG: one solid opaque canopy as a simple rounded mass, no transparent or scattered leaves, a plain trunk, roots at the base, upright, flat even lighting, muted natural colours, nothing else in the scene.",
+        "model_type": "smart-topology",
+        "ai_model": "meshy-t2.5",
+        "target_polycount": 700,
+        "pose_mode": "auto",
+        "target_formats": ["glb"]
+      },
+      "estimatedCredits": 20,
+      "estimateBasis": "`meshy make --dry-run` estimate (2026-10-17)"
+    },
+    {
+      "assetId": "tree-willow-01",
+      "step": "text-to-3d-refine",
+      "params": {
+        "mode": "refine",
+        "enable_pbr": false,
+        "texture_resolution": "2k",
+        "target_formats": ["glb"]
+      },
+      "estimatedCredits": 10,
+      "estimateBasis": "`meshy make --dry-run` estimate (2026-10-17)"
+    },
+    {
+      "assetId": "tree-dead-01",
+      "step": "text-to-3d-preview",
+      "params": {
+        "mode": "preview",
+        "prompt": "A dead leafless tree, twisted grey trunk and bare crooked branches. Low-polygon game asset in the style of a late-1990s first-person RPG: one solid opaque canopy as a simple rounded mass, no transparent or scattered leaves, a plain trunk, roots at the base, upright, flat even lighting, muted natural colours, nothing else in the scene.",
+        "model_type": "smart-topology",
+        "ai_model": "meshy-t2.5",
+        "target_polycount": 500,
+        "pose_mode": "auto",
+        "target_formats": ["glb"]
+      },
+      "estimatedCredits": 20,
+      "estimateBasis": "`meshy make --dry-run` estimate (2026-10-17)"
+    },
+    {
+      "assetId": "tree-dead-01",
+      "step": "text-to-3d-refine",
+      "params": {
+        "mode": "refine",
+        "enable_pbr": false,
+        "texture_resolution": "2k",
+        "target_formats": ["glb"]
+      },
+      "estimatedCredits": 10,
+      "estimateBasis": "`meshy make --dry-run` estimate (2026-10-17)"
+    },
+    {
+      "assetId": "tree-dead-02",
+      "step": "text-to-3d-preview",
+      "params": {
+        "mode": "preview",
+        "prompt": "A dead pine snag, tall broken grey trunk with a few bare branch stubs. Low-polygon game asset in the style of a late-1990s first-person RPG: one solid opaque canopy as a simple rounded mass, no transparent or scattered leaves, a plain trunk, roots at the base, upright, flat even lighting, muted natural colours, nothing else in the scene.",
+        "model_type": "smart-topology",
+        "ai_model": "meshy-t2.5",
+        "target_polycount": 400,
+        "pose_mode": "auto",
+        "target_formats": ["glb"]
+      },
+      "estimatedCredits": 20,
+      "estimateBasis": "`meshy make --dry-run` estimate (2026-10-17)"
+    },
+    {
+      "assetId": "tree-dead-02",
+      "step": "text-to-3d-refine",
+      "params": {
+        "mode": "refine",
+        "enable_pbr": false,
+        "texture_resolution": "2k",
+        "target_formats": ["glb"]
+      },
+      "estimatedCredits": 10,
+      "estimateBasis": "`meshy make --dry-run` estimate (2026-10-17)"
+    },
+    {
+      "assetId": "bush-01",
+      "step": "text-to-3d-preview",
+      "params": {
+        "mode": "preview",
+        "prompt": "A dense round shrub of dark green leaves, waist high, growing from the ground. Low-polygon game asset in the style of a late-1990s first-person RPG: one solid opaque canopy as a simple rounded mass, no transparent or scattered leaves, a plain trunk, roots at the base, upright, flat even lighting, muted natural colours, nothing else in the scene.",
+        "model_type": "smart-topology",
+        "ai_model": "meshy-t2.5",
+        "target_polycount": 300,
+        "pose_mode": "auto",
+        "target_formats": ["glb"]
+      },
+      "estimatedCredits": 20,
+      "estimateBasis": "`meshy make --dry-run` estimate (2026-10-17)"
+    },
+    {
+      "assetId": "bush-01",
+      "step": "text-to-3d-refine",
+      "params": {
+        "mode": "refine",
+        "enable_pbr": false,
+        "texture_resolution": "2k",
+        "target_formats": ["glb"]
+      },
+      "estimatedCredits": 10,
+      "estimateBasis": "`meshy make --dry-run` estimate (2026-10-17)"
+    },
+    {
+      "assetId": "bush-02",
+      "step": "text-to-3d-preview",
+      "params": {
+        "mode": "preview",
+        "prompt": "A wild hazel bush, several thin stems with a loose dome of green leaves. Low-polygon game asset in the style of a late-1990s first-person RPG: one solid opaque canopy as a simple rounded mass, no transparent or scattered leaves, a plain trunk, roots at the base, upright, flat even lighting, muted natural colours, nothing else in the scene.",
+        "model_type": "smart-topology",
+        "ai_model": "meshy-t2.5",
+        "target_polycount": 400,
+        "pose_mode": "auto",
+        "target_formats": ["glb"]
+      },
+      "estimatedCredits": 20,
+      "estimateBasis": "`meshy make --dry-run` estimate (2026-10-17)"
+    },
+    {
+      "assetId": "bush-02",
+      "step": "text-to-3d-refine",
+      "params": {
+        "mode": "refine",
+        "enable_pbr": false,
+        "texture_resolution": "2k",
+        "target_formats": ["glb"]
+      },
+      "estimatedCredits": 10,
+      "estimateBasis": "`meshy make --dry-run` estimate (2026-10-17)"
+    },
+    {
+      "assetId": "tree-palm-01",
+      "step": "text-to-3d-preview",
+      "params": {
+        "mode": "preview",
+        "prompt": "A date palm tree, tall rough brown trunk curving slightly, crown of long green fronds, hanging date clusters. Low-polygon game asset in the style of a late-1990s first-person RPG: one solid opaque canopy as a simple rounded mass, no transparent or scattered leaves, a plain trunk, roots at the base, upright, flat even lighting, muted natural colours, nothing else in the scene.",
+        "model_type": "smart-topology",
+        "ai_model": "meshy-t2.5",
+        "target_polycount": 700,
+        "pose_mode": "auto",
+        "target_formats": ["glb"]
+      },
+      "estimatedCredits": 20,
+      "estimateBasis": "`meshy make --dry-run` estimate (2026-10-17)"
+    },
+    {
+      "assetId": "tree-palm-01",
+      "step": "text-to-3d-refine",
+      "params": {
+        "mode": "refine",
+        "enable_pbr": false,
+        "texture_resolution": "2k",
+        "target_formats": ["glb"]
+      },
+      "estimatedCredits": 10,
+      "estimateBasis": "`meshy make --dry-run` estimate (2026-10-17)"
+    },
+    {
+      "assetId": "tree-palm-02",
+      "step": "text-to-3d-preview",
+      "params": {
+        "mode": "preview",
+        "prompt": "A short fan palm, stout trunk with a rounded crown of stiff green fan-shaped fronds. Low-polygon game asset in the style of a late-1990s first-person RPG: one solid opaque canopy as a simple rounded mass, no transparent or scattered leaves, a plain trunk, roots at the base, upright, flat even lighting, muted natural colours, nothing else in the scene.",
+        "model_type": "smart-topology",
+        "ai_model": "meshy-t2.5",
+        "target_polycount": 600,
+        "pose_mode": "auto",
+        "target_formats": ["glb"]
+      },
+      "estimatedCredits": 20,
+      "estimateBasis": "`meshy make --dry-run` estimate (2026-10-17)"
+    },
+    {
+      "assetId": "tree-palm-02",
+      "step": "text-to-3d-refine",
+      "params": {
+        "mode": "refine",
+        "enable_pbr": false,
+        "texture_resolution": "2k",
+        "target_formats": ["glb"]
+      },
+      "estimatedCredits": 10,
+      "estimateBasis": "`meshy make --dry-run` estimate (2026-10-17)"
+    }
+  ],
+  "estimatedCredits": 600,
+  "runs": [
+    {
+      "started": "2026-10-17T09:30:27.774Z",
+      "taskIds": [
+        "01a14932-d1e4-7684-ae02-fca975b27068",
+        "01a14932-db0a-7136-beb7-b9acf9b6ecd0",
+        "01a14932-e383-71e0-9cb4-b79ddcc298da",
+        "01a14932-f073-7645-bfab-a8bf93bdf8f6",
+        "01a14932-f9ef-77d0-b7dc-f9a44d3b299b",
+        "01a14933-02a9-728b-b979-a197f78db549",
+        "01a14933-0bcf-7015-8857-682b8018d5e4",
+        "01a14933-143d-7127-95d1-bbb719a6af47",
+        "01a14933-1e31-73ed-995f-a956871eeaf8",
+        "01a14933-2763-74f8-9e6d-3c2687bb345a",
+        "01a1493e-516f-7236-95a0-512156a41d48",
+        "01a1493e-53fa-745f-ae89-153c9aceeb97",
+        "01a1493e-5db9-7593-b34b-891cd91274c4",
+        "01a1493e-66ba-71ad-8325-c2367fe25d0a",
+        "01a1493e-73b8-7372-84ab-23ae15861dd9",
+        "01a1493e-7ca0-7556-ad7a-07eb7a66cc05",
+        "01a1493e-854f-77b0-a44b-0c470139c1ef",
+        "01a1493e-8e88-74b2-a931-f6fe7be1c02e",
+        "01a1493e-9bad-756b-b1cd-fa5b6cb4095c",
+        "01a1493e-a4d7-7243-afc4-23b05713d4e2",
+        "01a14942-1ca7-7030-a634-3677aab2796d",
+        "01a14943-4b12-743e-8c48-d40639e10554",
+        "01a14943-4e33-7677-9250-b922893e8940",
+        "01a14943-5119-7688-9555-4d9444dbf0e0",
+        "01a14943-53f3-7785-a628-66188812f65b",
+        "01a14943-5862-74d4-8777-804345681510",
+        "01a14943-5b16-711e-a6db-405a9f4932c3",
+        "01a14943-5d5c-7657-8b01-5cce181ed6a8",
+        "01a14943-5fd9-7151-a884-72b96ad7e32b",
+        "01a14943-62c9-7489-9bb3-da21fc7b1515",
+        "01a14943-65a0-71d3-89e5-61fd54e97c95"
+      ],
+      "tasks": {
+        "tree-spruce-01": {
+          "text-to-3d-preview": {
+            "taskId": "01a14932-d1e4-7684-ae02-fca975b27068",
+            "status": "SUCCEEDED",
+            "consumedCredits": 5,
+            "operationId": "b003-tree-spruce-01-text-to-3d-preview-r1-a1"
+          },
+          "text-to-3d-refine": {
+            "taskId": "01a14943-4b12-743e-8c48-d40639e10554",
+            "status": "SUCCEEDED",
+            "consumedCredits": 10,
+            "operationId": "b003-tree-spruce-01-text-to-3d-refine-r1-a1"
+          }
+        },
+        "tree-spruce-02": {
+          "text-to-3d-preview": {
+            "taskId": "01a14932-db0a-7136-beb7-b9acf9b6ecd0",
+            "status": "SUCCEEDED",
+            "consumedCredits": 5,
+            "operationId": "b003-tree-spruce-02-text-to-3d-preview-r1-a1"
+          },
+          "text-to-3d-refine": {
+            "taskId": "01a14943-4e33-7677-9250-b922893e8940",
+            "status": "SUCCEEDED",
+            "consumedCredits": 10,
+            "operationId": "b003-tree-spruce-02-text-to-3d-refine-r1-a1"
+          }
+        },
+        "tree-fir-01": {
+          "text-to-3d-preview": {
+            "taskId": "01a14932-e383-71e0-9cb4-b79ddcc298da",
+            "status": "SUCCEEDED",
+            "consumedCredits": 5,
+            "operationId": "b003-tree-fir-01-text-to-3d-preview-r1-a1"
+          },
+          "text-to-3d-refine": {
+            "taskId": "01a14943-5119-7688-9555-4d9444dbf0e0",
+            "status": "SUCCEEDED",
+            "consumedCredits": 10,
+            "operationId": "b003-tree-fir-01-text-to-3d-refine-r1-a1"
+          }
+        },
+        "tree-pine-01": {
+          "text-to-3d-preview": {
+            "taskId": "01a14932-f073-7645-bfab-a8bf93bdf8f6",
+            "status": "SUCCEEDED",
+            "consumedCredits": 5,
+            "operationId": "b003-tree-pine-01-text-to-3d-preview-r1-a1"
+          },
+          "text-to-3d-refine": {
+            "taskId": "01a14943-53f3-7785-a628-66188812f65b",
+            "status": "SUCCEEDED",
+            "consumedCredits": 10,
+            "operationId": "b003-tree-pine-01-text-to-3d-refine-r1-a1"
+          }
+        },
+        "tree-pine-02": {
+          "text-to-3d-preview": {
+            "taskId": "01a14932-f9ef-77d0-b7dc-f9a44d3b299b",
+            "status": "SUCCEEDED",
+            "consumedCredits": 5,
+            "operationId": "b003-tree-pine-02-text-to-3d-preview-r1-a1"
+          },
+          "text-to-3d-refine": {
+            "taskId": "01a14943-5862-74d4-8777-804345681510",
+            "status": "SUCCEEDED",
+            "consumedCredits": 10,
+            "operationId": "b003-tree-pine-02-text-to-3d-refine-r1-a1"
+          }
+        },
+        "tree-larch-01": {
+          "text-to-3d-preview": {
+            "taskId": "01a14933-02a9-728b-b979-a197f78db549",
+            "status": "SUCCEEDED",
+            "consumedCredits": 5,
+            "operationId": "b003-tree-larch-01-text-to-3d-preview-r1-a1"
+          },
+          "text-to-3d-refine": {
+            "taskId": "01a14943-5b16-711e-a6db-405a9f4932c3",
+            "status": "SUCCEEDED",
+            "consumedCredits": 10,
+            "operationId": "b003-tree-larch-01-text-to-3d-refine-r1-a1"
+          }
+        },
+        "tree-spruce-03": {
+          "text-to-3d-preview": {
+            "taskId": "01a14933-0bcf-7015-8857-682b8018d5e4",
+            "status": "SUCCEEDED",
+            "consumedCredits": 5,
+            "operationId": "b003-tree-spruce-03-text-to-3d-preview-r1-a1"
+          },
+          "text-to-3d-refine": {
+            "taskId": "01a14943-5d5c-7657-8b01-5cce181ed6a8",
+            "status": "SUCCEEDED",
+            "consumedCredits": 10,
+            "operationId": "b003-tree-spruce-03-text-to-3d-refine-r1-a1"
+          }
+        },
+        "tree-oak-01": {
+          "text-to-3d-preview": {
+            "taskId": "01a14933-143d-7127-95d1-bbb719a6af47",
+            "status": "SUCCEEDED",
+            "consumedCredits": 5,
+            "operationId": "b003-tree-oak-01-text-to-3d-preview-r1-a1"
+          },
+          "text-to-3d-refine": {
+            "taskId": "01a14943-5fd9-7151-a884-72b96ad7e32b",
+            "status": "SUCCEEDED",
+            "consumedCredits": 10,
+            "operationId": "b003-tree-oak-01-text-to-3d-refine-r1-a1"
+          }
+        },
+        "tree-oak-02": {
+          "text-to-3d-preview": {
+            "taskId": "01a14933-1e31-73ed-995f-a956871eeaf8",
+            "status": "SUCCEEDED",
+            "consumedCredits": 5,
+            "operationId": "b003-tree-oak-02-text-to-3d-preview-r1-a1"
+          },
+          "text-to-3d-refine": {
+            "taskId": "01a14943-62c9-7489-9bb3-da21fc7b1515",
+            "status": "SUCCEEDED",
+            "consumedCredits": 10,
+            "operationId": "b003-tree-oak-02-text-to-3d-refine-r1-a1"
+          }
+        },
+        "tree-beech-01": {
+          "text-to-3d-preview": {
+            "taskId": "01a14933-2763-74f8-9e6d-3c2687bb345a",
+            "status": "SUCCEEDED",
+            "consumedCredits": 5,
+            "operationId": "b003-tree-beech-01-text-to-3d-preview-r1-a1"
+          },
+          "text-to-3d-refine": {
+            "taskId": "01a14943-65a0-71d3-89e5-61fd54e97c95",
+            "status": "SUCCEEDED",
+            "consumedCredits": 10,
+            "operationId": "b003-tree-beech-01-text-to-3d-refine-r1-a1"
+          }
+        },
+        "tree-birch-01": {
+          "text-to-3d-preview": {
+            "taskId": "01a1493e-516f-7236-95a0-512156a41d48",
+            "status": "SUCCEEDED",
+            "consumedCredits": 5,
+            "operationId": "b003-tree-birch-01-text-to-3d-preview-r1-a2"
+          }
+        },
+        "tree-maple-01": {
+          "text-to-3d-preview": {
+            "taskId": "01a1493e-53fa-745f-ae89-153c9aceeb97",
+            "status": "SUCCEEDED",
+            "consumedCredits": 5,
+            "operationId": "b003-tree-maple-01-text-to-3d-preview-r1-a1"
+          }
+        },
+        "tree-linden-01": {
+          "text-to-3d-preview": {
+            "taskId": "01a1493e-5db9-7593-b34b-891cd91274c4",
+            "status": "SUCCEEDED",
+            "consumedCredits": 5,
+            "operationId": "b003-tree-linden-01-text-to-3d-preview-r1-a1"
+          }
+        },
+        "tree-willow-01": {
+          "text-to-3d-preview": {
+            "taskId": "01a1493e-66ba-71ad-8325-c2367fe25d0a",
+            "status": "SUCCEEDED",
+            "consumedCredits": 5,
+            "operationId": "b003-tree-willow-01-text-to-3d-preview-r1-a1"
+          }
+        },
+        "tree-dead-01": {
+          "text-to-3d-preview": {
+            "taskId": "01a1493e-73b8-7372-84ab-23ae15861dd9",
+            "status": "SUCCEEDED",
+            "consumedCredits": 5,
+            "operationId": "b003-tree-dead-01-text-to-3d-preview-r1-a1"
+          }
+        },
+        "tree-dead-02": {
+          "text-to-3d-preview": {
+            "taskId": "01a1493e-7ca0-7556-ad7a-07eb7a66cc05",
+            "status": "SUCCEEDED",
+            "consumedCredits": 5,
+            "operationId": "b003-tree-dead-02-text-to-3d-preview-r1-a1"
+          }
+        },
+        "bush-01": {
+          "text-to-3d-preview": {
+            "taskId": "01a1493e-854f-77b0-a44b-0c470139c1ef",
+            "status": "SUCCEEDED",
+            "consumedCredits": 5,
+            "operationId": "b003-bush-01-text-to-3d-preview-r1-a1"
+          }
+        },
+        "bush-02": {
+          "text-to-3d-preview": {
+            "taskId": "01a14942-1ca7-7030-a634-3677aab2796d",
+            "status": "SUCCEEDED",
+            "consumedCredits": 5,
+            "operationId": "b003-bush-02-text-to-3d-preview-r1-a2"
+          }
+        },
+        "tree-palm-01": {
+          "text-to-3d-preview": {
+            "taskId": "01a1493e-9bad-756b-b1cd-fa5b6cb4095c",
+            "status": "SUCCEEDED",
+            "consumedCredits": 5,
+            "operationId": "b003-tree-palm-01-text-to-3d-preview-r1-a1"
+          }
+        },
+        "tree-palm-02": {
+          "text-to-3d-preview": {
+            "taskId": "01a1493e-a4d7-7243-afc4-23b05713d4e2",
+            "status": "SUCCEEDED",
+            "consumedCredits": 5,
+            "operationId": "b003-tree-palm-02-text-to-3d-preview-r1-a1"
+          }
+        }
+      },
+      "balanceBefore": 2840,
+      "attempts": {
+        "tree-spruce-01/text-to-3d-preview": 1,
+        "tree-spruce-02/text-to-3d-preview": 1,
+        "tree-fir-01/text-to-3d-preview": 1,
+        "tree-pine-01/text-to-3d-preview": 1,
+        "tree-pine-02/text-to-3d-preview": 1,
+        "tree-larch-01/text-to-3d-preview": 1,
+        "tree-spruce-03/text-to-3d-preview": 1,
+        "tree-oak-01/text-to-3d-preview": 1,
+        "tree-oak-02/text-to-3d-preview": 1,
+        "tree-beech-01/text-to-3d-preview": 1,
+        "tree-birch-01/text-to-3d-preview": 2,
+        "tree-maple-01/text-to-3d-preview": 1,
+        "tree-linden-01/text-to-3d-preview": 1,
+        "tree-willow-01/text-to-3d-preview": 1,
+        "tree-dead-01/text-to-3d-preview": 1,
+        "tree-dead-02/text-to-3d-preview": 1,
+        "bush-01/text-to-3d-preview": 1,
+        "bush-02/text-to-3d-preview": 2,
+        "tree-palm-01/text-to-3d-preview": 1,
+        "tree-palm-02/text-to-3d-preview": 1,
+        "tree-spruce-01/text-to-3d-refine": 1,
+        "tree-spruce-02/text-to-3d-refine": 1,
+        "tree-fir-01/text-to-3d-refine": 1,
+        "tree-pine-01/text-to-3d-refine": 1,
+        "tree-pine-02/text-to-3d-refine": 1,
+        "tree-larch-01/text-to-3d-refine": 1,
+        "tree-spruce-03/text-to-3d-refine": 1,
+        "tree-oak-01/text-to-3d-refine": 1,
+        "tree-oak-02/text-to-3d-refine": 1,
+        "tree-beech-01/text-to-3d-refine": 1,
+        "tree-birch-01/text-to-3d-refine": 1
+      }
+    }
+  ]
+}
