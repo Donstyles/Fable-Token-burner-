@@ -1005,6 +1005,20 @@ over a dark one, sunken recesses for the cells, turned metal rings round
 the crests, brass plates with engraved text, glass tube bars with gold
 beads. Portraits stay crests until painted ones exist; no generated faces.
 
+### 16.6 Doors and the autosave
+
+- A tap on the inn, the temple, the trader's store or the smithy within nine
+  metres of it opens that house's service screen (`src/game/content.ts`:
+  rooms and food at the inn, healing at the temple, goods at the store,
+  arms at the smithy); farther off the status line names the house and
+  asks the party to come to the door.
+- The game state autosaves to the browser's storage (`src/app/autosave.ts`)
+  when a screen closes, after a rest, before the party steps through a
+  portal and once a minute on the walk. Arriving through a portal (or
+  `?continue`) restores it, so the party, its gold, its clock and its quests
+  cross between the valley, the dungeon and the desert instead of starting
+  over on each load.
+
 ## 13. Decision log
 
 - 2026-10-17 – First look pass under the owner's thirty-minute "wow"

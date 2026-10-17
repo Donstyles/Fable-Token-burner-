@@ -51,6 +51,8 @@ import { CATALOGUE, loadPropModels, propLabel } from '../world/props';
 import { createStatusLine } from '../ui/status';
 import { Npc } from '../world/npc';
 import { Soundscape } from '../world/soundscape';
+import { DOOR_REACH, VILLAGE_HOUSES } from '../game/content';
+import { loadGame, saveGame } from '../app/autosave';
 import { daylightAt, environmentAt, MINUTES_PER_REAL_SECOND } from '../world/daylight';
 import { advanceClock, minuteOfDay } from '../game/time';
 import { hideVeil, showVeil, veilProgress } from '../app/veil';
@@ -249,7 +251,13 @@ export async function startDev(app: App): Promise<DevHandle> {
         });
       })
     : testCharacters();
-  const game = newGame(sheets, { seed, level: { id: LEVEL, x: 0, y: 0, z: 0, yawDeg: 0 } });
+  // Through a portal, or with `?continue`, the party comes back from the autosave; a fresh
+  // visit starts a new game (DESIGN.md 16.6).
+  const restored = ENTRY || QUERY.has('continue') ? loadGame() : null;
+  const game = restored
+    ? ({ ok: true, state: restored } as const)
+    : newGame(sheets, { seed, level: { id: LEVEL, x: 0, y: 0, z: 0, yawDeg: 0 } });
+  if (restored) diag(`autosave restored: ${restored.party.map((c) => c.name).join(', ')}`);
 
   if (!game.ok) throw new Error(`new game: ${game.reason}`);
   const state = game.state;
@@ -270,6 +278,7 @@ export async function startDev(app: App): Promise<DevHandle> {
     originZ: level.sidecar.bounds.min[2],
   });
   let mapTimer = 0;
+  let saveTimer = 0;
   const roster = new Party(state.party);
   // The HUD band (DESIGN 9): a tap selects a member, a second tap opens their sheet. The
   // status line above it names what is tapped and tells the fight, as MM6's did.
@@ -282,15 +291,17 @@ export async function startDev(app: App): Promise<DevHandle> {
   // pauses the world, as MM6's books did. Spell effects beyond healing are reported for now.
   const screens: Screens = installScreens(uiLayer, state, {
     now: () => simTime,
-    onClose: () => {},
-    onRest: (kind) =>
+    onClose: () => saveGame(state),
+    onRest: (kind) => {
       status.say(
         kind === 'dawn'
           ? 'The party waits until dawn'
           : kind === 'room'
             ? 'The party sleeps at the inn'
             : 'The party rests',
-      ),
+      );
+      saveGame(state);
+    },
     onCast: (cast) => {
       const caster = state.party[cast.caster]?.name ?? 'someone';
       if (cast.failed) {
@@ -416,6 +427,8 @@ export async function startDev(app: App): Promise<DevHandle> {
   if (ENTRY) diag(`arrived through ${entry ? ENTRY : `unknown portal ${ENTRY}, at the spawn`}`);
   const portals = new PortalWatcher(level.portals, (p: Portal) => {
     diag(`portal ${p.name} → ${p.target.level}`);
+    state.level = { id: p.target.level, x: 0, y: 0, z: 0, yawDeg: 0 };
+    saveGame(state);
     travel(
       uiLayer,
       p.target.level === 'showcase' ? 'Into the dark…' : 'Out into the light…',
@@ -546,8 +559,17 @@ export async function startDev(app: App): Promise<DevHandle> {
       }
       return;
     }
-    // A tapped model is named; the ground and the walls stay quiet, as in MM6.
-    if (mesh.name.startsWith('props:')) status.say(propLabel(mesh.name.split(':')[1] ?? ''));
+    // A tapped house opens its service when the party stands at its door; any other model
+    // is named; the ground and the walls stay quiet, as in MM6.
+    if (mesh.name.startsWith('props:')) {
+      const model = mesh.name.split(':')[1] ?? '';
+      const house = VILLAGE_HOUSES[model];
+      if (house && d <= DOOR_REACH) {
+        screens.openService(house.kind, house.house);
+        return;
+      }
+      status.say(house ? `${propLabel(model)} (come to the door)` : propLabel(model));
+    }
   };
 
   // Free fly camera: the stick moves along the view direction, the party stays put.
@@ -614,6 +636,11 @@ export async function startDev(app: App): Promise<DevHandle> {
       sand.emitter = new Vector3(e.x - wind.x * 4, Math.max(e.y - 4, 0), e.z - wind.z * 4);
     }
     if (!fly) portals.update(party.position);
+    saveTimer += dt;
+    if (saveTimer > 60) {
+      saveTimer = 0;
+      saveGame(state);
+    }
     mapTimer += dt;
     if (mapTimer > 0.5) {
       mapTimer = 0;

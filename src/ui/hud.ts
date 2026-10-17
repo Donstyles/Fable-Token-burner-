@@ -52,6 +52,10 @@ function gemClass(id: ConditionId): string {
 }
 
 export function createHud(parent: HTMLElement, party: Party, hooks: HudHooks): Hud {
+  // The window's frame: two fluted pillars and a lintel, drawn over the view's edges.
+  for (const side of ['left', 'right'] as const)
+    parent.appendChild(el('div', `view-pillar ${side}`));
+  parent.appendChild(el('div', 'view-lintel'));
   const root = el('div', 'hud');
   const clock = el('div', 'hud-clock');
   const clockTime = el('div', 'hud-clock-time');
@@ -121,6 +125,7 @@ export function createHud(parent: HTMLElement, party: Party, hooks: HudHooks): H
     },
     dispose() {
       root.remove();
+      for (const n of parent.querySelectorAll('.view-pillar, .view-lintel')) n.remove();
     },
   };
 }
