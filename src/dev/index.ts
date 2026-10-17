@@ -50,6 +50,8 @@ import { dust } from '../world/particles';
 import { CATALOGUE, loadPropModels, propLabel } from '../world/props';
 import { createStatusLine } from '../ui/status';
 import { Npc } from '../world/npc';
+import { daylightAt, environmentAt, MINUTES_PER_REAL_SECOND } from '../world/daylight';
+import { advanceClock, minuteOfDay } from '../game/time';
 import { hideVeil, showVeil, veilProgress } from '../app/veil';
 import { UnderwaterTint, isUnderwater, wadeSpeedFactor, waterDepthAt } from '../world/wading';
 import { ROLE } from '../../kernel/elements/roles';
@@ -142,6 +144,9 @@ export async function startDev(app: App): Promise<DevHandle> {
     `level ${level.sidecar.name}: ${level.sidecar.stats['triangles']} tris, ` +
       `${level.meshes.length} meshes`,
   );
+  // The region's noon; the day and night cycle (src/world/daylight.ts) bends it by the hour.
+  let dayEnvironment: typeof app.materials.env | null = null;
+  let lastDaylightMinute = -1;
   if (level.sidecar.outdoor) {
     // Outdoor look (DESIGN.md 15): a sun, a lit sky, fog that keeps the far ridges hazy; the
     // region's sidecar carries its own colours.
@@ -169,6 +174,7 @@ export async function startDev(app: App): Promise<DevHandle> {
     });
     app.sky.apply(app.materials.env);
     app.sky.mesh.setEnabled(true);
+    dayEnvironment = { ...app.materials.env };
     // Weather (DESIGN.md 15.7): cloud shadows drift over every region; the desert shimmers.
     app.materials.setWeather({
       heat: desert ? 1 : 0,
@@ -236,8 +242,15 @@ export async function startDev(app: App): Promise<DevHandle> {
       })
     : testCharacters();
   const game = newGame(sheets, { seed, level: { id: LEVEL, x: 0, y: 0, z: 0, yawDeg: 0 } });
+
   if (!game.ok) throw new Error(`new game: ${game.reason}`);
   const state = game.state;
+  // `?hour=21.5` starts the clock at that hour of the first day, for looking at dusk and night.
+  const startHour = Number(QUERY.get('hour'));
+  if (QUERY.has('hour') && Number.isFinite(startHour)) {
+    const dayStart = Math.floor(state.clock.minutes / (24 * 60)) * 24 * 60;
+    state.clock.minutes = dayStart + startHour * 60;
+  }
   // The automap of this level: 8 m cells over the level's bounds (Babylon space), revealed
   // round the party as it walks; the journal reads state.level for the party's mark.
   const mapCell = level.sidecar.outdoor ? 8 : 2;
@@ -601,6 +614,21 @@ export async function startDev(app: App): Promise<DevHandle> {
       state.level = { id: LEVEL, x: p.x, y: p.y, z: p.z, yawDeg: (party.yaw * 180) / Math.PI };
     }
     navigation?.update(dt);
+    // The clock runs while the party is in the world; the sky follows it (DESIGN.md 16.3).
+    if (dt > 0) advanceClock(state.clock, dt * MINUTES_PER_REAL_SECOND);
+    if (dayEnvironment) {
+      const minute = Math.floor(minuteOfDay(state.clock.minutes) * 4) / 4;
+      if (minute !== lastDaylightMinute) {
+        lastDaylightMinute = minute;
+        const light = daylightAt(minute);
+        app.materials.setEnvironment(environmentAt(dayEnvironment, light));
+        app.sky.apply(app.materials.env);
+        app.sky.setNight(light.night);
+        // Lanterns and the forge come up as the day goes; the cave's glow burns always.
+        level.setLiveLights(true, 0.15 + 0.85 * (1 - light.daylight));
+        strip.setClock(state.clock.minutes);
+      }
+    }
     for (const n of npcs) n.update(dt, party.position);
     for (const m of handle.monsters) {
       m.update(dt, partyTarget, simTime);

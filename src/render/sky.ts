@@ -29,6 +29,8 @@ uniform float cloudAmount;
 uniform float time;
 uniform vec3 sunDir;
 uniform vec3 sunColor;
+// How much of the night sky shows: stars come out as the day goes (DESIGN.md 16.3).
+uniform float night;
 
 float hash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
 float noise(vec2 p) {
@@ -65,6 +67,14 @@ void main(void) {
   float disc = smoothstep(0.99955, 0.99985, s);
   float glow = pow(s, 600.0) * 0.6 + pow(s, 40.0) * 0.08;
   c += sunColor * (disc * 1.2 + glow) * (1.0 - cover * 0.7);
+  if (night > 0.0 && d.y > 0.02) {
+    // Stars: a sparse hash over the dome, a few bright, the rest faint, never through cloud.
+    vec3 sd = d * 90.0;
+    vec2 cell = floor(sd.xz / max(d.y, 0.15)) + floor(sd.y) * 17.0;
+    float h = hash(cell);
+    float star = smoothstep(0.985, 0.999, h) * (0.35 + 0.65 * smoothstep(0.996, 1.0, h));
+    c += vec3(0.8, 0.85, 1.0) * star * night * (1.0 - cover) * smoothstep(0.02, 0.2, d.y);
+  }
   if (d.y < 0.0) c = horizon;
   gl_FragColor = vec4(c, 1.0);
 }
@@ -100,10 +110,12 @@ export class SkyDome {
         'time',
         'sunDir',
         'sunColor',
+        'night',
       ],
     });
     this.material.backFaceCulling = false;
     this.material.disableDepthWrite = true;
+    this.material.setFloat('night', 0);
     this.mesh.material = this.material;
     this.apply(env);
     scene.onBeforeRenderObservable.add(() => {
@@ -119,6 +131,11 @@ export class SkyDome {
     this.material.setFloat('cloudAmount', env.cloudAmount);
     this.material.setVector3('sunDir', env.lightDirection.scale(-1).normalize());
     this.material.setColor3('sunColor', env.lightColor);
+  }
+
+  /** How much of the night sky shows, 0 (day) to 1. */
+  setNight(amount: number): void {
+    this.material.setFloat('night', amount);
   }
 
   dispose(): void {

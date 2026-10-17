@@ -9,11 +9,14 @@ import type { Party } from '../game/party';
 import { maxSp } from '../game/character';
 import { worstCondition, type ConditionId } from '../game/conditions';
 import type { ClassId } from '../game/classes';
+import { formatDate, formatTime } from '../game/time';
 import { el } from './dom';
 import './hud.css';
 
 export interface Hud {
   update(now: number): void;
+  /** Show the game clock (minutes since the start of the calendar). */
+  setClock(minutes: number): void;
   dispose(): void;
 }
 
@@ -50,6 +53,11 @@ function gemClass(id: ConditionId): string {
 
 export function createHud(parent: HTMLElement, party: Party, hooks: HudHooks): Hud {
   const root = el('div', 'hud');
+  const clock = el('div', 'hud-clock');
+  const clockTime = el('div', 'hud-clock-time');
+  const clockDate = el('div', 'hud-clock-date');
+  clock.append(clockTime, clockDate);
+  root.appendChild(clock);
   const band = el('div', 'hud-band');
   const cells = party.members.map((m, i) => {
     const cell = el('button', 'hud-cell');
@@ -106,6 +114,10 @@ export function createHud(parent: HTMLElement, party: Party, hooks: HudHooks): H
         x.cell.classList.toggle('dead', !m.alive);
         x.cell.title = `${m.name}: ${cond}`;
       });
+    },
+    setClock(minutes) {
+      clockTime.textContent = formatTime(minutes);
+      clockDate.textContent = formatDate(minutes);
     },
     dispose() {
       root.remove();

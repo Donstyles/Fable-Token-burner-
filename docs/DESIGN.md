@@ -964,6 +964,22 @@ set), a village man and woman (civilian set), 223 credits estimated.
   clip plays. No quests yet: the lines are the village's voice until
   dialogue lands (the audit's next step).
 
+### 16.3 Day and night
+
+The game clock runs while the party walks, a game minute per real second
+(a day in 24 minutes; the rest screen jumps it). `src/world/daylight.ts`
+turns the minute of the day into the sun's place (east at dawn, high in
+the south at noon, west at dusk; dawn 5:00 and dusk 21:00 from the rules
+layer) and a blend of three keyframes for light, ambient, fog and sky: the
+region's own day, a warm dusk with a violet zenith, a blue night. The key
+light never comes from below: at night a faint moon-blue from high up
+keeps the slopes' shape. Stars come out in the sky shader as the day goes
+(a sparse hash over the dome, never through cloud); the sun's disc sets
+with the light. The village's lanterns and the forge glow come up as the
+daylight fades (live lights scaled by the night) and the HUD band shows
+the hour and the date in its left corner. Tested: dawn, noon, dusk and
+two in the morning.
+
 ## 13. Decision log
 
 - 2026-10-17 – First look pass under the owner's thirty-minute "wow"
