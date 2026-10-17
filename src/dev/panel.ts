@@ -84,6 +84,7 @@ export function createDevPanel(
 
   const root = document.createElement('div');
   root.className = 'dev-panel';
+  root.dataset['native'] = '';
   const toggle = document.createElement('button');
   toggle.className = 'dev-toggle';
   toggle.type = 'button';

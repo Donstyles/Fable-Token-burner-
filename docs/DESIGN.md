@@ -1099,8 +1099,51 @@ font: everything needs to be wow."
 - The cast has its sound, a rising sweep with a shimmer of noise, synthesised
   like the impacts.
 
+### 16.10 The paint shop and the bitmap type (owner, 2026-10-17)
+
+"The text and fonts in MM6 are pixelated with heavy aliasing"; "the marble
+in MM6 is defined and hand painted, yours is generative noise"; "every
+button and element needs to be artisanal like someone from 1998 drew it by
+hand."
+
+- The grid: the shell has a pixel of 1.5 CSS px (`PX` in
+  `src/ui/pixel-text.ts`), so the 932 px phone screen is 621 columns, MM6's 640. Everything painted is drawn at that grid and shown pixel for pixel
+  (`image-rendering: pixelated`).
+- The paint shop (`src/ui/paint.ts`) paints every surface once at startup as
+  a painter would: a base coat, dabs of a wide brush, veins or grain drawn
+  stroke by stroke, a knot or a scuff here and there, then the whole
+  posterised into a short ramp of tones warm and cool, as an 8-bit palette
+  did. The marble (cream to rose, grey-brown veins with a pale edge), the
+  sheet's grey-green stone, oak planks with grain lines and seams, the
+  inventory's hide, parchment with its fibres. The strokes' jitter comes
+  from a seeded die, so every build paints the same picture; nothing is a
+  turbulence filter any more. The CSS variables `--stone`, `--stone-dark`,
+  `--wood`, `--leather`, `--parchment` carry the bitmaps and their sizes.
+- Buttons are painted ovals per size: bands of gold light above and dark
+  below, a highlight crescent at the top left, a darker recess for the
+  label, a black rim; the pressed face turns the bands over and dulls the
+  gold. A ResizeObserver paints each `.ui-btn` as it appears (`--btn-up`,
+  `--btn-down`); the shelf's spines stay leather.
+- The type is bitmap (`src/ui/pixel-text.ts`): every run of text in the UI
+  layer is painted onto a canvas at the grid, the alpha cut hard, a dark
+  shadow one pixel down and right, pale ink; dark ink on gold casts none.
+  Words stay separate canvases in a span so the browser still wraps lines,
+  and a MutationObserver repaints whatever the screens change. The dev
+  chrome is marked `data-native` and stays smooth.
+- The body face is Tinos (Steve Matteson, Apache 2.0): a Times-metric serif
+  with lining figures and a true italic, given a hair of stroke so it holds
+  at 13 pixels, which is what MM6's bitmap font was in spirit. IM Fell
+  English clogged at that size (old-style figures, thin strokes) and is
+  gone. Headings stay Pirata One at 18 pixels. Sizes in CSS are set in CSS
+  pixels (19.5 for 13, 18 for 12, 27 for 18) and the painter clamps upward.
+- Still smooth CSS, to paint next: the HUD's frames, gems and bars, the
+  shelf's spines, the brass plates, the pillars and lintel, the gold rails.
+
 ## 13. Decision log
 
+- 2026-10-17 – Hand-painted shell (16.10): surfaces painted stroke by stroke
+  and posterised on a 1998 pixel grid, buttons painted per size, bitmap type
+  with hard edges; Tinos replaces IM Fell English for the body.
 - 2026-10-17 – Spells made visible (16.9): bolts fly from the hand at the
   monster nearest the middle of the view; buffs are not faked, they say they
   take no hold yet.

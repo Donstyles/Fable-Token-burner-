@@ -309,6 +309,7 @@ export async function startDev(app: App): Promise<DevHandle> {
   // The HUD band (DESIGN 9): a tap selects a member, a second tap opens their sheet. The
   // status line above it names what is tapped and tells the fight, as MM6's did.
   const strip = createHud(uiLayer, roster, { onOpenSheet: () => screens.open('sheet') });
+  strip.setClock(state.clock.minutes);
   const status = createStatusLine(uiLayer);
   const feedback = new CombatFeedback(scene, stepper, uiLayer, {}, rng);
   // Simulated seconds: the party's recovery and the screens' die run on it.

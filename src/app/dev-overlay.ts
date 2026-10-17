@@ -15,6 +15,7 @@ export function createDevOverlay(engine: Engine, parent: HTMLElement): DevOverla
   const el = document.createElement('div');
   el.className = 'dev-overlay';
   el.id = 'dev-overlay';
+  el.dataset['native'] = '';
   parent.appendChild(el);
 
   let preset: RenderPreset = 'lines-1080';

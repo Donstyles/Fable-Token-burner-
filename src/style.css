@@ -198,7 +198,7 @@ html.forced-landscape body {
 .veil-title {
   font:
     34px/1.1 'Pirata One',
-    'IM Fell English',
+    'Tinos',
     Georgia,
     serif;
   letter-spacing: 0.06em;
@@ -207,7 +207,7 @@ html.forced-landscape body {
 .veil-sub {
   min-height: 1.2em;
   font:
-    italic 15px/1.2 'IM Fell English',
+    italic 15px/1.2 'Tinos',
     Georgia,
     serif;
   color: #c8b080;

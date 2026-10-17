@@ -458,7 +458,9 @@ waterfalls and deserts, walkable end to end.
     painted as pixel art on a 1998 pixel grid (marble with deliberate veins,
     wood with drawn grain, leather, gold rails, buttons with painted
     highlights, brass plates) and bitmap text with hard edges; checked
-    against the MM6 crops.
+    against the MM6 crops. **First pass 2026-10-17** (DESIGN 16.10): the
+    surfaces, the buttons and the type; the HUD's frames, gems, bars,
+    spines, plates, pillars and rails still to paint.
 16. Remaining, in order: lasting buffs and Jump; weather states (rain, a
     sandstorm); music; the smith's hammer and the temple bell; performance
     measured on the owner's phone.

@@ -1,4 +1,3 @@
-@import './stone.css';
 /* The HUD band (src/ui/hud.ts): MM6's marble foot with four gold oval frames, name plates,
    green hit point and blue spell point bars, condition gems; the book shelf stands on its
    right end. Sized for 932 × 430 CSS px in landscape with the safe areas. */
@@ -13,7 +12,7 @@
   z-index: 25;
   background:
     linear-gradient(rgba(40, 32, 24, 0.06), rgba(20, 16, 12, 0.18)),
-    var(--stone) center / 512px auto;
+    var(--stone) 0 0 / var(--stone-size);
   border-top: 1px solid #5a3e10;
   box-shadow:
     inset 0 1px 0 #f8e090,
@@ -27,8 +26,8 @@
   position: absolute;
   left: calc(var(--sal) + 5px);
   top: 10px;
-  width: 52px;
-  padding: 3px 0;
+  width: 76px;
+  padding: 2px 0;
   text-align: center;
   pointer-events: none;
   background: linear-gradient(#e8c860, #b8882a 55%, #d4a848);
@@ -40,7 +39,7 @@
 }
 .hud-clock-time {
   font:
-    15px/1.1 'Pirata One',
+    24px/1 'Pirata One',
     Georgia,
     serif;
   color: #3a2608;
@@ -48,7 +47,7 @@
 }
 .hud-clock-date {
   font:
-    italic 9px/1.2 'IM Fell English',
+    italic 18px/1 'Tinos',
     Georgia,
     serif;
   color: #4a3414;
@@ -56,16 +55,16 @@
 .hud-band {
   display: flex;
   justify-content: center;
-  gap: 10px;
+  gap: 8px;
   height: 100px;
-  padding: 5px 300px 0 60px;
+  padding: 4px 250px 0 88px;
 }
 .hud-cell {
   pointer-events: auto;
   display: flex;
   align-items: flex-start;
   gap: 6px;
-  width: 150px;
+  width: 138px;
   padding: 2px 4px;
   background: rgba(0, 0, 0, 0.06);
   border: 0;
@@ -106,8 +105,8 @@
 }
 .hud-frame {
   position: relative;
-  width: 56px;
-  height: 64px;
+  width: 54px;
+  height: 60px;
   padding: 4px;
   border-radius: 50% / 46%;
   /* A turned metal ring: the sheen runs round it. */
@@ -156,9 +155,9 @@
   min-width: 64px;
   max-width: 84px;
   margin-top: 1px;
-  padding: 1px 6px;
+  padding: 0 6px;
   font:
-    italic 12px/1.1 'IM Fell English',
+    italic 18px/1 'Tinos',
     Georgia,
     serif;
   color: #3a2608;
@@ -263,7 +262,7 @@
   left: calc(var(--sal) + 60px);
   right: calc(var(--sar) + 300px);
   bottom: calc(var(--sab) + 102px);
-  height: 24px;
+  height: 30px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -272,7 +271,7 @@
   z-index: 26;
   background:
     linear-gradient(rgba(40, 32, 24, 0.35), rgba(20, 16, 12, 0.5)),
-    var(--stone) center / 512px auto;
+    var(--stone) 0 0 / var(--stone-size);
   border: 0;
   border-radius: 4px 4px 0 0;
   box-shadow:
@@ -288,7 +287,7 @@
 }
 .status-text {
   font:
-    italic 15px/1 'IM Fell English',
+    italic 15px/1 'Tinos',
     Georgia,
     serif;
   color: #f0d060;
@@ -342,7 +341,7 @@
       rgba(255, 255, 255, 0.35) 1px 2px,
       transparent 2px 4px
     ),
-    var(--stone) center / 512px auto;
+    var(--stone) 0 0 / var(--stone-size);
   box-shadow:
     inset 1px 0 0 rgba(255, 255, 255, 0.5),
     inset -1px 0 0 rgba(0, 0, 0, 0.55),
@@ -362,7 +361,7 @@
   left: -3px;
   right: -3px;
   height: 14px;
-  background: var(--stone) center / 512px auto;
+  background: var(--stone) 0 0 / var(--stone-size);
   border-bottom: 2px solid #c89a3a;
   box-shadow:
     inset 0 -1px 0 #5a3e10,
@@ -377,7 +376,7 @@
   height: 6px;
   pointer-events: none;
   z-index: 23;
-  background: var(--stone) center / 512px auto;
+  background: var(--stone) 0 0 / var(--stone-size);
   box-shadow:
     inset 0 -1px 0 rgba(0, 0, 0, 0.55),
     inset 0 1px 0 rgba(255, 255, 255, 0.5),

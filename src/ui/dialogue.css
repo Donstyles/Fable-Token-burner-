@@ -3,8 +3,6 @@
    canvas beneath, src/world/bust.ts), their name and calling under it on a brass plate,
    their words beside it in pale ink and the topics below in the yellow italic, as the
    tavern's menu was. Hard 1998 bevels throughout; the wood is drawn in wood.css. */
-@import './wood.css';
-
 .dlg {
   position: absolute;
   top: calc(var(--sat) + 10px);
@@ -39,7 +37,8 @@
       rgba(0, 0, 0, 0.4) 27px 28px,
       rgba(255, 220, 160, 0.1) 28px 29px
     ),
-    var(--wood) center / 512px auto;
+    var(--wood) 0 0 / var(--wood-size);
+  image-rendering: pixelated;
   /* The window is a hole in the planks: the mask keeps everything but it. */
   -webkit-mask-image: linear-gradient(#000 0 0), linear-gradient(#000 0 0);
   -webkit-mask-size:
@@ -101,8 +100,8 @@
 .dlg-name {
   margin: 0;
   font:
-    19px/1.1 'Pirata One',
-    'IM Fell English',
+    24px/1.1 'Pirata One',
+    'Tinos',
     Georgia,
     serif;
   color: #3a2608;
@@ -113,7 +112,7 @@
 }
 .dlg-role {
   font:
-    italic 12px/1.2 'IM Fell English',
+    italic 18px/1.2 'Tinos',
     Georgia,
     serif;
   color: #1a3a8a;
@@ -134,7 +133,7 @@
   overflow-y: auto;
   padding: 2px 6px 6px;
   font:
-    italic 14px/1.3 'IM Fell English',
+    italic 18px/1.25 'Tinos',
     Georgia,
     serif;
   color: var(--ink-pale);
@@ -156,7 +155,7 @@
   padding: 3px 6px;
   min-height: 26px;
   font:
-    italic 16px/1.2 'IM Fell English',
+    italic 19.5px/1.2 'Tinos',
     Georgia,
     serif;
   color: var(--ink-yellow);

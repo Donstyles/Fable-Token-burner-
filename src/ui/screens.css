@@ -2,8 +2,6 @@
    inventory grid, the spellbook, the rest screen, the services, character creation and the
    automap. */
 
-@import './leather.css';
-
 /* Inventory */
 .inv-grid {
   --cell: 32px;
@@ -18,7 +16,8 @@
      wear at the top left, a dark rim pressed into it. */
   background:
     radial-gradient(ellipse at 30% 20%, rgba(255, 220, 160, 0.1), transparent 60%),
-    var(--leather) center / 512px auto;
+    var(--leather) 0 0 / var(--leather-size);
+  image-rendering: pixelated;
   border: 2px solid #8a5a24;
   box-shadow:
     inset 0 0 0 1px #c8762a,
@@ -43,7 +42,7 @@
   border: 1px solid #d2a53c;
   border-radius: 3px;
   font:
-    italic 10px/1.1 'IM Fell English',
+    italic 18px/1.1 'Tinos',
     Georgia,
     serif;
   color: #f0d060;
@@ -101,8 +100,8 @@
   font-size: 12px;
 }
 .inv-slot .slot-name {
-  flex: 0 0 76px;
-  font-size: 13px;
+  flex: 0 0 112px;
+  font-size: 18px;
   color: var(--ink-pale);
 }
 .inv-slot {
@@ -136,7 +135,7 @@
 }
 .rest-date {
   font:
-    italic 15px 'IM Fell English',
+    italic 15px 'Tinos',
     Georgia,
     serif;
   color: #4a3414;
@@ -189,7 +188,7 @@
   border: 1px solid var(--gold-dark);
   border-radius: 4px;
   font:
-    italic 16px 'IM Fell English',
+    italic 16px 'Tinos',
     Georgia,
     serif;
   -webkit-user-select: text;
