@@ -1136,8 +1136,15 @@ hand."
   English clogged at that size (old-style figures, thin strokes) and is
   gone. Headings stay Pirata One at 18 pixels. Sizes in CSS are set in CSS
   pixels (19.5 for 13, 18 for 12, 27 for 18) and the painter clamps upward.
-- Still smooth CSS, to paint next: the HUD's frames, gems and bars, the
-  shelf's spines, the brass plates, the pillars and lintel, the gold rails.
+- The HUD's pieces are painted too, each at its own size through
+  `data-paint` and the same observer: the portrait frame a turned gold ring
+  round a leather recess under glass, the brass plates of the names and the
+  clock, the glass tubes and their green and blue fills, the condition gems
+  as beads lit at the top left, the shelf's leather spines with gold bands,
+  the fluted pillars over the marble, the volutes cut as pixels. The sigils
+  and glyphs, inline SVG, are drawn with `shape-rendering: crispEdges` so
+  their strokes carry no anti-aliasing either. Left smooth: the gold rails
+  and bevels, which are already single CSS lines.
 
 ## 13. Decision log
 

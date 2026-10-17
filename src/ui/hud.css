@@ -30,12 +30,8 @@
   padding: 2px 0;
   text-align: center;
   pointer-events: none;
-  background: linear-gradient(#e8c860, #b8882a 55%, #d4a848);
-  border-radius: 3px;
-  box-shadow:
-    inset 0 1px 0 #fff2b0,
-    inset 0 -1px 0 #5a3e10,
-    0 1px 0 rgba(0, 0, 0, 0.6);
+  background: var(--paint) center / 100% 100% no-repeat;
+  image-rendering: pixelated;
 }
 .hud-clock-time {
   font:
@@ -94,7 +90,6 @@
   filter: brightness(0.55);
 }
 .hud-cell.dead .hud-frame {
-  border-color: #6a2a20;
   filter: grayscale(1) brightness(0.6);
 }
 .hud-left {
@@ -108,35 +103,8 @@
   width: 54px;
   height: 60px;
   padding: 4px;
-  border-radius: 50% / 46%;
-  /* A turned metal ring: the sheen runs round it. */
-  background: conic-gradient(
-    from 200deg,
-    #7a5416,
-    #f8e090 15%,
-    #a87c28 32%,
-    #fff2b0 48%,
-    #8a6220 64%,
-    #e8c860 82%,
-    #7a5416
-  );
-  box-shadow:
-    0 1px 0 rgba(255, 245, 210, 0.6),
-    0 -1px 0 rgba(0, 0, 0, 0.5),
-    0 2px 0 rgba(0, 0, 0, 0.5);
-}
-.hud-frame::after {
-  /* The crest's recess: dark leather under a glass dome. */
-  content: '';
-  position: absolute;
-  inset: 4px;
-  border-radius: 50% / 46%;
-  background:
-    radial-gradient(ellipse at 35% 25%, rgba(255, 255, 255, 0.18), transparent 45%),
-    radial-gradient(ellipse at 50% 60%, #3a2a1a, #1a1208 65%, #0a0806);
-  box-shadow:
-    inset 0 2px 0 rgba(0, 0, 0, 0.9),
-    inset 0 0 0 1px #5a3e10;
+  background: var(--paint) center / 100% 100% no-repeat;
+  image-rendering: pixelated;
 }
 .hud-cameo {
   position: relative;
@@ -150,6 +118,8 @@
 .hud-cameo svg {
   width: 32px;
   height: 32px;
+  /* Pixels, not anti-aliased strokes. */
+  shape-rendering: crispEdges;
 }
 .hud-plate {
   min-width: 64px;
@@ -162,16 +132,10 @@
     serif;
   color: #3a2608;
   text-align: center;
-  text-shadow: 0 1px 0 rgba(255, 245, 210, 0.6);
   white-space: nowrap;
   overflow: hidden;
-  text-overflow: ellipsis;
-  background: linear-gradient(#e8c860, #b8882a 55%, #d4a848);
-  border-radius: 2px;
-  box-shadow:
-    inset 0 1px 0 #fff2b0,
-    inset 0 -1px 0 #5a3e10,
-    0 1px 0 rgba(0, 0, 0, 0.6);
+  background: var(--paint) center / 100% 100% no-repeat;
+  image-rendering: pixelated;
 }
 .hud-bars {
   display: grid;
@@ -185,41 +149,15 @@
   width: 10px;
   height: 10px;
   margin: 0 auto;
-  border-radius: 50%;
-  border: 1px solid #6a5018;
-  box-shadow:
-    inset 0 -2px 0 rgba(0, 0, 0, 0.5),
-    0 0 0 currentColor;
-}
-.hud-gem.good {
-  background: radial-gradient(circle at 35% 30%, #a8ff8a, #1f8a2a 60%, #0c4a14);
-  color: #3ad050;
-}
-.hud-gem.weak {
-  background: radial-gradient(circle at 35% 30%, #fff0a0, #c8a020 60%, #6a4e08);
-  color: #e8c040;
-}
-.hud-gem.ill {
-  background: radial-gradient(circle at 35% 30%, #ffb090, #c84020 60%, #601a08);
-  color: #e05030;
-}
-.hud-gem.out {
-  background: radial-gradient(circle at 35% 30%, #d0d0d0, #707070 60%, #303030);
-  color: #909090;
-}
-.hud-gem.dead {
-  background: radial-gradient(circle at 35% 30%, #505050, #181818 60%, #000);
-  color: #000;
+  background: var(--paint) center / 100% 100% no-repeat;
+  image-rendering: pixelated;
 }
 .hud-bar {
   position: relative;
   height: 60px;
-  border-radius: 5px;
-  background: linear-gradient(90deg, #0a0806, #26201a 40%, #14100a);
-  box-shadow:
-    inset 1px 0 0 rgba(0, 0, 0, 0.9),
-    inset -1px 0 0 rgba(255, 255, 255, 0.12),
-    0 0 0 1px #5a3e10;
+  background: var(--paint) center / 100% 100% no-repeat;
+  image-rendering: pixelated;
+  box-shadow: 0 0 0 1px #5a3e10;
 }
 .hud-bar::before,
 .hud-bar::after {
@@ -246,14 +184,9 @@
   right: 0;
   bottom: 0;
   height: 0;
-  border-radius: 5px;
+  background: var(--paint) center / 100% 100% no-repeat;
+  image-rendering: pixelated;
   transition: height 180ms ease-out;
-}
-.hud-bar.hp .hud-fill {
-  background: linear-gradient(90deg, #0e4a0e, #3ab83a 30%, #a8ff90 42%, #2a9a2a 60%, #0e4a0e);
-}
-.hud-bar.sp .hud-fill {
-  background: linear-gradient(90deg, #0e2a6a, #2a66d0 30%, #a0c8ff 42%, #2a5ab0 60%, #0e2a6a);
 }
 
 /* The status line (src/ui/status.ts): a narrow stone bar on the band's top edge. */
@@ -304,10 +237,10 @@
   position: absolute;
   top: 1px;
   right: 2px;
-  width: 22px;
-  height: 16px;
-  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='22' height='16' viewBox='0 0 22 16'%3E%3Cpath d='M2 13 C2 5, 9 2, 14 5 C18 7.5, 16 12, 12 11 C9.5 10.3, 10 7, 12.5 7.5' fill='none' stroke='%23fbf7ee' stroke-width='1.6' stroke-linecap='round' transform='translate%28-0.7,-0.7%29'/%3E%3Cpath d='M2 13 C2 5, 9 2, 14 5 C18 7.5, 16 12, 12 11 C9.5 10.3, 10 7, 12.5 7.5' fill='none' stroke='%235a564e' stroke-width='1.6' stroke-linecap='round'/%3E%3Cpath d='M14 5 C17 3.5, 20 5, 20 8' fill='none' stroke='%235a564e' stroke-width='1.2' stroke-linecap='round'/%3E%3C/svg%3E")
-    no-repeat;
+  width: 22.5px;
+  height: 16.5px;
+  background: var(--volute) center / 100% 100% no-repeat;
+  image-rendering: pixelated;
   opacity: 0.85;
   pointer-events: none;
 }
@@ -316,10 +249,10 @@
   position: absolute;
   top: 1px;
   left: 2px;
-  width: 22px;
-  height: 16px;
-  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='22' height='16' viewBox='0 0 22 16'%3E%3Cpath d='M2 13 C2 5, 9 2, 14 5 C18 7.5, 16 12, 12 11 C9.5 10.3, 10 7, 12.5 7.5' fill='none' stroke='%23fbf7ee' stroke-width='1.6' stroke-linecap='round' transform='translate%28-0.7,-0.7%29'/%3E%3Cpath d='M2 13 C2 5, 9 2, 14 5 C18 7.5, 16 12, 12 11 C9.5 10.3, 10 7, 12.5 7.5' fill='none' stroke='%235a564e' stroke-width='1.6' stroke-linecap='round'/%3E%3Cpath d='M14 5 C17 3.5, 20 5, 20 8' fill='none' stroke='%235a564e' stroke-width='1.2' stroke-linecap='round'/%3E%3C/svg%3E")
-    no-repeat;
+  width: 22.5px;
+  height: 16.5px;
+  background: var(--volute) center / 100% 100% no-repeat;
+  image-rendering: pixelated;
   transform: scaleX(-1);
   opacity: 0.85;
   pointer-events: none;
@@ -334,18 +267,8 @@
   width: 12px;
   pointer-events: none;
   z-index: 24;
-  background:
-    repeating-linear-gradient(
-      90deg,
-      rgba(0, 0, 0, 0.35) 0 1px,
-      rgba(255, 255, 255, 0.35) 1px 2px,
-      transparent 2px 4px
-    ),
-    var(--stone) 0 0 / var(--stone-size);
-  box-shadow:
-    inset 1px 0 0 rgba(255, 255, 255, 0.5),
-    inset -1px 0 0 rgba(0, 0, 0, 0.55),
-    0 0 0 rgba(0, 0, 0, 0.6);
+  background: var(--paint) 0 0 / 100% auto repeat-y;
+  image-rendering: pixelated;
 }
 .view-pillar.left {
   left: var(--sal);

@@ -5,8 +5,8 @@
  * face, its alpha cut hard, a dark shadow one pixel down and right, and shown with
  * `image-rendering: pixelated`. The DOM keeps a span per word so the browser still wraps lines,
  * and a MutationObserver repaints whatever text the screens change. The body face is Tinos, a
- * Times-metric serif with lining figures and a true italic, given a hair of stroke so it holds
- * at thirteen pixels; headings are Pirata One.
+ * Times-metric serif with lining figures and a true italic, at its own regular weight: MM6's
+ * font was not fat (owner), its edge came from the hard shadow; headings are Pirata One.
  */
 
 /** CSS pixels per UI pixel: 932 CSS px across becomes 621 columns, MM6's 640. */
@@ -46,7 +46,7 @@ function faceOf(el: Element): Face {
   return {
     family,
     size,
-    weight: family === 'Pirata One' ? 0.25 : size >= 14 ? 0.7 : italic ? 0.6 : 0.5,
+    weight: family === 'Pirata One' ? 0.25 : 0.15,
     italic,
     fill,
     // Dark ink (on gold) casts no shadow; pale ink casts a dark one, as MM6's did.
@@ -88,7 +88,7 @@ function stamp(
   const id = tg.getImageData(0, 0, w, h);
   const d = id.data;
   for (let i = 0; i < d.length; i += 4) {
-    if (d[i + 3]! >= 100) {
+    if (d[i + 3]! >= 90) {
       d[i] = color[0];
       d[i + 1] = color[1];
       d[i + 2] = color[2];

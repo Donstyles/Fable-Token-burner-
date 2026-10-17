@@ -58,11 +58,15 @@ export function createHud(parent: HTMLElement, party: Party, hooks: HudHooks): H
   installPaintedButtons(parent);
   installPixelText(parent);
   // The window's frame: two fluted pillars and a lintel, drawn over the view's edges.
-  for (const side of ['left', 'right'] as const)
-    parent.appendChild(el('div', `view-pillar ${side}`));
+  for (const side of ['left', 'right'] as const) {
+    const pillar = el('div', `view-pillar ${side}`);
+    pillar.dataset['paint'] = 'pillar';
+    parent.appendChild(pillar);
+  }
   parent.appendChild(el('div', 'view-lintel'));
   const root = el('div', 'hud');
   const clock = el('div', 'hud-clock');
+  clock.dataset['paint'] = 'plate';
   const clockTime = el('div', 'hud-clock-time');
   const clockDate = el('div', 'hud-clock-date');
   clock.append(clockTime, clockDate);
@@ -72,17 +76,24 @@ export function createHud(parent: HTMLElement, party: Party, hooks: HudHooks): H
     const cell = el('button', 'hud-cell');
     cell.type = 'button';
     const frame = el('div', 'hud-frame');
+    frame.dataset['paint'] = 'ring';
     const cameo = el('div', 'hud-cameo');
     cameo.innerHTML = m.character ? sigil(m.character.classId) : sigil('knight');
     frame.appendChild(cameo);
     const plate = el('div', 'hud-plate', m.name);
+    plate.dataset['paint'] = 'plate';
     const bars = el('div', 'hud-bars');
     const gem = el('div', 'hud-gem good');
+    gem.dataset['paint'] = 'gem-good';
     const hp = el('div', 'hud-bar hp');
+    hp.dataset['paint'] = 'tube';
     const hpFill = el('div', 'hud-fill');
+    hpFill.dataset['paint'] = 'tube-hp';
     hp.appendChild(hpFill);
     const sp = el('div', 'hud-bar sp');
+    sp.dataset['paint'] = 'tube';
     const spFill = el('div', 'hud-fill');
+    spFill.dataset['paint'] = 'tube-sp';
     sp.appendChild(spFill);
     bars.append(gem, hp, sp);
     const left = el('div', 'hud-left');
@@ -118,6 +129,7 @@ export function createHud(parent: HTMLElement, party: Party, hooks: HudHooks): H
         x.spFill.style.height = `${spMax > 0 && c ? Math.max(0, Math.min(100, (100 * c.sp) / spMax)) : 0}%`;
         const cond = c ? worstCondition(c.conditions) : m.alive ? 'good' : 'dead';
         x.gem.className = `hud-gem ${gemClass(cond)}`;
+        x.gem.dataset['paint'] = `gem-${gemClass(cond)}`;
         x.cell.classList.toggle('selected', party.selected === i);
         x.cell.classList.toggle('recovering', m.alive && !m.isReady(now));
         x.cell.classList.toggle('dead', !m.alive);

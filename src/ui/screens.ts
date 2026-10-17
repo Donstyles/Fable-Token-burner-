@@ -102,6 +102,7 @@ export function installScreens(
       name === 'rest' ? '' : `<span class="ui-shelf-label">${SCREEN_LABELS[name]}</span>`
     }`;
     b.title = SCREEN_LABELS[name];
+    b.dataset['paint'] = name === 'rest' ? 'gold' : 'spine';
     shelf.appendChild(b);
   }
   uiLayer.appendChild(shelf);

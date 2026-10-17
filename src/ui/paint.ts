@@ -412,6 +412,7 @@ export function installPaint(): Surfaces {
   set('--leather', surfaces.leather);
   set('--parchment', surfaces.parchment);
   root.setProperty('--px', `${PX}px`);
+  root.setProperty('--volute', `url("${paintVolute().toDataURL('image/png')}")`);
   return surfaces;
 }
 
@@ -456,6 +457,187 @@ export function paintButton(w: number, h: number, pressed: boolean): HTMLCanvasE
   return c;
 }
 
+/**
+ * A turned gold ring round a dark recess: the portrait frame. The sheen runs round the ring,
+ * light at the top left and dark at the bottom right; the recess is leather under glass.
+ */
+export function paintRing(w: number, h: number): HTMLCanvasElement {
+  const [c, g] = canvas(w, h);
+  const oval = (inset: number, tone: string, dx = 0, dy = 0): void => {
+    g.fillStyle = tone;
+    g.beginPath();
+    g.ellipse(
+      w / 2 + dx,
+      h / 2 + dy,
+      Math.max(1, w / 2 - inset),
+      Math.max(1, h / 2 - inset),
+      0,
+      0,
+      Math.PI * 2,
+    );
+    g.fill();
+  };
+  oval(0, '#1a1008');
+  oval(1, '#7a5416');
+  oval(1, '#f8e090', -1, -1);
+  oval(2, '#c89a3a');
+  oval(2, '#fff2b0', -1, -1);
+  oval(3, '#a07428');
+  oval(3, '#e8c860', -1, -1);
+  oval(4, '#1a1008');
+  oval(5, '#2a1c10');
+  // The glass: a pale crescent at the top.
+  g.save();
+  g.beginPath();
+  g.ellipse(w / 2, h / 2, w / 2 - 5, h / 2 - 5, 0, 0, Math.PI * 2);
+  g.clip();
+  oval(6, '#4a3a28', 0, 1);
+  oval(6, '#2a1c10', 0, 3);
+  g.restore();
+  return c;
+}
+
+/** A brass plate: bands light above and dark below, a dark rim, a bright line at the top. */
+export function paintPlate(w: number, h: number): HTMLCanvasElement {
+  const [c, g] = canvas(w, h);
+  const brass = ['#5a3e10', '#b8882a', '#d4a848', '#e8c860', '#f4d878'];
+  for (let y = 0; y < h; y++) {
+    const t = y / Math.max(1, h - 1);
+    const k = t < 0.12 ? 4 : t < 0.4 ? 3 : t < 0.75 ? 2 : 1;
+    g.fillStyle = brass[k]!;
+    g.fillRect(0, y, w, 1);
+  }
+  g.fillStyle = '#5a3e10';
+  g.fillRect(0, 0, w, 1);
+  g.fillRect(0, h - 1, w, 1);
+  g.fillRect(0, 0, 1, h);
+  g.fillRect(w - 1, 0, 1, h);
+  g.fillStyle = '#fff2b0';
+  g.fillRect(1, 1, w - 2, 1);
+  return c;
+}
+
+/** A leather spine: a dark red-brown with a lit left edge and two gold bands. */
+export function paintSpine(w: number, h: number): HTMLCanvasElement {
+  const [c, g] = canvas(w, h);
+  g.fillStyle = '#4a2612';
+  g.fillRect(0, 0, w, h);
+  g.fillStyle = '#6a3a1c';
+  g.fillRect(1, 0, Math.max(1, Math.floor(w * 0.3)), h);
+  g.fillStyle = '#8a4a24';
+  g.fillRect(1, 0, 1, h);
+  g.fillStyle = '#2a140a';
+  g.fillRect(w - 2, 0, 2, h);
+  g.fillRect(0, 0, 1, h);
+  for (const y of [3, h - 6]) {
+    g.fillStyle = '#7a5416';
+    g.fillRect(1, y, w - 2, 2);
+    g.fillStyle = '#e8c860';
+    g.fillRect(1, y, w - 2, 1);
+  }
+  g.fillStyle = '#1a0c06';
+  g.fillRect(0, h - 1, w, 1);
+  return c;
+}
+
+/** A glass tube, empty or filled green or blue, with a lit left edge and a bright core. */
+export function paintTube(w: number, h: number, kind: 'empty' | 'hp' | 'sp'): HTMLCanvasElement {
+  const [c, g] = canvas(w, h);
+  const tones =
+    kind === 'hp'
+      ? ['#0e4a0e', '#2a9a2a', '#a8ff90', '#3ab83a', '#0e4a0e']
+      : kind === 'sp'
+        ? ['#0e2a6a', '#2a5ab0', '#a0c8ff', '#2a66d0', '#0e2a6a']
+        : ['#0a0806', '#1a1612', '#2e2820', '#1a1612', '#0a0806'];
+  for (let x = 0; x < w; x++) {
+    const t = x / Math.max(1, w - 1);
+    const k = t < 0.15 ? 0 : t < 0.35 ? 1 : t < 0.5 ? 2 : t < 0.8 ? 3 : 4;
+    g.fillStyle = tones[k]!;
+    g.fillRect(x, 0, 1, h);
+  }
+  return c;
+}
+
+/** A condition gem: a bead lit at the top left. */
+export function paintGem(w: number, h: number, kind: string): HTMLCanvasElement {
+  const [c, g] = canvas(w, h);
+  const ramps: Record<string, string[]> = {
+    good: ['#0c4a14', '#1f8a2a', '#3ad050', '#a8ff8a'],
+    weak: ['#6a4e08', '#c8a020', '#e8c040', '#fff0a0'],
+    ill: ['#601a08', '#c84020', '#e05030', '#ffb090'],
+    out: ['#303030', '#707070', '#909090', '#d0d0d0'],
+    dead: ['#000000', '#181818', '#303030', '#505050'],
+  };
+  const r = ramps[kind] ?? ramps['good']!;
+  const oval = (inset: number, tone: string, dx = 0, dy = 0): void => {
+    g.fillStyle = tone;
+    g.beginPath();
+    g.ellipse(
+      w / 2 + dx,
+      h / 2 + dy,
+      Math.max(0.5, w / 2 - inset),
+      Math.max(0.5, h / 2 - inset),
+      0,
+      0,
+      Math.PI * 2,
+    );
+    g.fill();
+  };
+  oval(0, '#3a2a10');
+  oval(1, r[0]!);
+  oval(1.5, r[1]!, 0, -0.5);
+  oval(2.5, r[2]!, -0.5, -1);
+  oval(3, r[3]!, -1, -1.5);
+  return c;
+}
+
+/** A fluted marble pillar: the marble with a dark and a light line every few pixels. */
+export function paintPillar(w: number, h: number, marble: HTMLCanvasElement): HTMLCanvasElement {
+  const [c, g] = canvas(w, h);
+  g.drawImage(marble, 0, 0, w, h, 0, 0, w, h);
+  for (let x = 1; x < w - 1; x += 3) {
+    g.fillStyle = 'rgba(0,0,0,0.4)';
+    g.fillRect(x, 0, 1, h);
+    g.fillStyle = 'rgba(255,255,255,0.45)';
+    g.fillRect(x + 1, 0, 1, h);
+  }
+  g.fillStyle = 'rgba(255,255,255,0.6)';
+  g.fillRect(0, 0, 1, h);
+  g.fillStyle = 'rgba(0,0,0,0.6)';
+  g.fillRect(w - 1, 0, 1, h);
+  return c;
+}
+
+/** The volute chiselled into a cell's corner, drawn as pixels: a pale cut and a dark one. */
+export function paintVolute(): HTMLCanvasElement {
+  const w = 15;
+  const h = 11;
+  const [c, g] = canvas(w, h);
+  const curl = (ox: number, oy: number, color: string): void => {
+    g.strokeStyle = color;
+    g.lineWidth = 1;
+    g.lineCap = 'round';
+    g.beginPath();
+    g.moveTo(1.5 + ox, 9 + oy);
+    g.bezierCurveTo(1.5 + ox, 3.5 + oy, 6 + ox, 1.5 + oy, 9.5 + ox, 3.5 + oy);
+    g.bezierCurveTo(12.5 + ox, 5.2 + oy, 11 + ox, 8.3 + oy, 8.2 + ox, 7.6 + oy);
+    g.bezierCurveTo(6.5 + ox, 7.1 + oy, 7 + ox, 5 + oy, 8.6 + ox, 5.3 + oy);
+    g.stroke();
+    g.beginPath();
+    g.moveTo(9.5 + ox, 3.5 + oy);
+    g.bezierCurveTo(11.5 + ox, 2.5 + oy, 13.5 + ox, 3.5 + oy, 13.5 + ox, 5.5 + oy);
+    g.stroke();
+  };
+  curl(-0.5, -0.5, '#fbf7ee');
+  curl(0, 0, '#5a564e');
+  // Cut hard.
+  const id = g.getImageData(0, 0, w, h);
+  const d = id.data;
+  for (let i = 0; i < d.length; i += 4) d[i + 3] = d[i + 3]! >= 110 ? 255 : 0;
+  g.putImageData(id, 0, 0);
+  return c;
+}
+
 const buttonCache = new Map<string, string>();
 
 function buttonUrl(w: number, h: number, pressed: boolean): string {
@@ -477,27 +659,78 @@ function dress(b: HTMLElement): void {
   b.style.setProperty('--btn-down', buttonUrl(w, h, true));
 }
 
-/** Paint every `.ui-btn` under `root` as it appears and whenever it changes size. */
+const paintCache = new Map<string, string>();
+
+/** The painted piece named by an element's `data-paint`, at its size. */
+function pieceUrl(kind: string, w: number, h: number): string | null {
+  const k = `${kind}:${w}x${h}`;
+  const hit = paintCache.get(k);
+  if (hit) return hit;
+  let c: HTMLCanvasElement | null = null;
+  if (kind === 'ring') c = paintRing(w, h);
+  else if (kind === 'plate') c = paintPlate(w, h);
+  else if (kind === 'spine') c = paintSpine(w, h);
+  else if (kind === 'gold') c = paintButton(w, h, false);
+  else if (kind === 'tube') c = paintTube(w, h, 'empty');
+  else if (kind === 'tube-hp') c = paintTube(w, h, 'hp');
+  else if (kind === 'tube-sp') c = paintTube(w, h, 'sp');
+  else if (kind.startsWith('gem-')) c = paintGem(w, h, kind.slice(4));
+  else if (kind === 'pillar')
+    c = paintPillar(w, Math.min(h, 512), (surfaces ?? installPaint()).marble);
+  if (!c) return null;
+  const url = `url("${c.toDataURL('image/png')}")`;
+  paintCache.set(k, url);
+  return url;
+}
+
+function dressPiece(el: HTMLElement): void {
+  const kind = el.dataset['paint'];
+  if (!kind) return;
+  const w = Math.max(1, Math.round(el.offsetWidth / PX));
+  const h = Math.max(1, Math.round(el.offsetHeight / PX));
+  const url = pieceUrl(kind, w, h);
+  if (url) el.style.setProperty('--paint', url);
+}
+
+/**
+ * Paint every `.ui-btn` (gold, two faces) and every `[data-paint]` piece under `root` as it
+ * appears, whenever it changes size, and when its `data-paint` changes (a gem's colour).
+ */
 export function installPaintedButtons(root: HTMLElement): void {
   const sizes =
     typeof ResizeObserver === 'function'
       ? new ResizeObserver((entries) => {
-          for (const e of entries) dress(e.target as HTMLElement);
+          for (const e of entries) {
+            const t = e.target as HTMLElement;
+            if (t.dataset['paint']) dressPiece(t);
+            else dress(t);
+          }
         })
       : null;
   const adopt = (el: Element): void => {
     const buttons = el.matches('.ui-btn') ? [el] : [...el.querySelectorAll('.ui-btn')];
-    // The shelf's spines are leather, not gold.
+    // The shelf's spines are leather, not gold; they carry their own paint.
     for (const b of buttons) {
       if (b.classList.contains('ui-shelf-btn')) continue;
       dress(b as HTMLElement);
       sizes?.observe(b);
     }
+    const pieces = el.matches('[data-paint]') ? [el] : [...el.querySelectorAll('[data-paint]')];
+    for (const p of pieces) {
+      dressPiece(p as HTMLElement);
+      sizes?.observe(p);
+    }
   };
   adopt(root);
   new MutationObserver((records) => {
     for (const r of records) {
+      if (r.type === 'attributes') dressPiece(r.target as HTMLElement);
       for (const n of r.addedNodes) if (n.nodeType === Node.ELEMENT_NODE) adopt(n as Element);
     }
-  }).observe(root, { childList: true, subtree: true });
+  }).observe(root, {
+    childList: true,
+    subtree: true,
+    attributes: true,
+    attributeFilter: ['data-paint'],
+  });
 }
