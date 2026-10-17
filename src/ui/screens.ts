@@ -93,14 +93,19 @@ export function installScreens(
 ): Screens {
   const rng = hooks.rng ?? mulberry32((state.seed ^ Math.floor(hooks.now() * 1000)) >>> 0 || 1);
   const shelf = el('div', 'ui-shelf');
+  shelf.dataset['paint'] = 'alcove';
   for (const name of SCREEN_NAMES) {
     // Book spines with gold glyphs, as MM6's shelf; rest is the round gold button.
     const b = button('', () => open(name), {
       className: `ui-shelf-btn ${name === 'rest' ? 'rest' : ''}`.trim(),
     });
-    b.innerHTML = `<svg viewBox="0 0 24 24" aria-hidden="true">${SHELF_GLYPHS[name]}</svg>${
-      name === 'rest' ? '' : `<span class="ui-shelf-label">${SCREEN_LABELS[name]}</span>`
-    }`;
+    // The emblems gilded: gold strokes over the same strokes a pixel down in dark bronze;
+    // the rest button's moon stamped dark with a lit lower edge.
+    const glyph = SHELF_GLYPHS[name];
+    b.innerHTML =
+      name === 'rest'
+        ? `<svg viewBox="0 0 24 24" aria-hidden="true"><g class="lit" transform="translate(0 1)">${glyph}</g><g class="ink">${glyph}</g></svg>`
+        : `<svg viewBox="0 0 24 24" aria-hidden="true"><g class="shade" transform="translate(0.6 0.9)">${glyph}</g><g class="gilt">${glyph}</g></svg><span class="ui-shelf-label">${SCREEN_LABELS[name]}</span>`;
     b.title = SCREEN_LABELS[name];
     b.dataset['paint'] = name === 'rest' ? 'gold' : 'spine';
     shelf.appendChild(b);

@@ -19,12 +19,14 @@ const SIZE = 256;
 const FOV = 0.42;
 const NEAR = 0.05;
 const FAR = 40;
-/** The window frames this much of the model's height: the head and the shoulders. */
-const FRAMED_HEIGHT = 0.3;
+/** The window frames this much of the model's height: the head fills it, the shoulders at its foot. */
+const FRAMED_HEIGHT = 0.25;
 /** The eyes sit here, as a fraction of the model's height. */
 const EYE_LINE = 0.9;
 /** Faces read better lit than the street: the fill while they talk. */
 const TALK_FILL = 0.6;
+/** The flat dark umber behind the face, as MM6's portraits sat on a dark ground. */
+const GROUND = new Color4(0.2, 0.15, 0.1, 1);
 
 export interface PageRect {
   x: number;
@@ -53,7 +55,7 @@ export class Bust {
       samplingMode: Constants.TEXTURE_NEAREST_SAMPLINGMODE,
     });
     this.target.activeCamera = this.camera;
-    this.target.clearColor = new Color4(0, 0, 0, 0);
+    this.target.clearColor = GROUND;
     this.target.renderList = [];
     this.layer = new Layer('bust', null, scene, false);
     this.layer.texture = this.target;
@@ -122,7 +124,7 @@ export class Bust {
     // The distance at which the frame spans FRAMED_HEIGHT of the model.
     const distance = (height * FRAMED_HEIGHT) / 2 / Math.tan(FOV / 2);
     this.camera.position.copyFrom(eyes.add(forward.scale(distance)));
-    this.camera.position.y += height * 0.015;
+    this.camera.position.y += height * 0.03;
     this.camera.setTarget(eyes);
   }
 

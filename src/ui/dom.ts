@@ -91,7 +91,9 @@ export function kv(label: string, value: string | number, className = ''): HTMLE
 /** A horizontal bar showing `value` of `max`. */
 export function bar(value: number, max: number, className: string): HTMLElement {
   const track = el('div', `ui-bar ${className}`.trim());
+  track.dataset['paint'] = 'slot';
   const fill = el('div', 'ui-fill');
+  fill.dataset['paint'] = className.includes('sp') ? 'bar-sp' : 'bar-hp';
   const pct = max > 0 ? Math.max(0, Math.min(100, (100 * value) / max)) : 0;
   fill.style.width = `${pct}%`;
   track.appendChild(fill);
@@ -118,6 +120,7 @@ export interface Frame {
 export function createFrame(title: string, onClose: () => void): Frame {
   const root = el('div', 'ui-modal');
   const panel = el('div', 'ui-panel');
+  panel.dataset['paint'] = 'marble-frame';
   const head = el('div', 'ui-head');
   const titleNode = el('h1', 'ui-title', title);
   const tabs = el('div', 'ui-head-tabs');

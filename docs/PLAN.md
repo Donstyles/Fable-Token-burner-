@@ -468,8 +468,12 @@ waterfalls and deserts, walkable end to end.
     phone shot, with the overlay's numbers, says whether the frame is there.
 17. The critic loop (owner, 2026-10-17): screenshots of every screen judged
     against the MM6 reference shots by independent critics until they rate
-    the hand-painted feel at the original's level; the smooth pieces still
-    to paint (gold rails and bevels, the shelf's spines, the sky's clouds).
+    the hand-painted feel at the original's level. **Round 1 done
+    2026-10-17** (DESIGN 16.12): scored 2.5 to 3 of 10; the gold ramp, the
+    marble, the slots, the cells, the tubes, the shelf, the slabs, the
+    bevels, the talk panel and the sky repainted. Round 2 next; the world
+    (ground tiles, trees, building lines), the books and the item sprites
+    remain.
 18. Remaining, in order: lasting buffs and Jump; weather states (rain, a
     sandstorm); music; the smith's hammer and the temple bell.
 

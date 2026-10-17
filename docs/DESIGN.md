@@ -1180,8 +1180,80 @@ found and set, in `src/render/filter.ts`, `grade.ts`, `resolution.ts`,
 - The sheet: the raise buttons are a bare "+" and the cost moved into the
   rank line, so the skill names have their room; the name column wraps.
 
+### 16.12 The critic loop (owner, 2026-10-17)
+
+"I thought you had agentic critics? You need to run these critic-feedback
+loops till they say it's on the same hand-painted feel and level as the
+original MM6 reference shots." Each round: the dev build is captured at one
+UI pixel per image pixel (the village with the HUD, every screen, the talk
+panel) beside crops of the MM6 shots at one game pixel per image pixel
+(`artwork/reference`), and three critics with no other context, one each
+for the HUD, the screens and the talk panel with the world, score every
+element from 1 to 10 against MM6's craft and rank the changes. The reports
+are kept with the session's scratch; what they said and what changed is
+logged here.
+
+Round 1 (build 0695715): 2.5, 3 and 3 out of 10, "bordered boxes with a
+gradient filter", "a themed web UI with a noise filter", "a smooth 3D scene
+wearing a posterise filter". What they named, and what the paint shop
+(`src/ui/paint.ts`) now does:
+
+- One gold, one light: a seven-swatch bronze-gold ramp (`GOLD`) for every
+  rail, ring, plate, fillet and button, and every bevel lit from the top
+  left, a recess the other way about. No CSS hairline stands alone.
+- The marble was a cool three-tone clouds filter: now warm putty in eight
+  tones, mottled at the scale of a thumb, with one-pixel diagonal branching
+  veins each carrying a pale halo, tiled through the band, the pillars and
+  the screens' frames.
+- The clock's LCD-looking numerals and the ochre name plates: now gold
+  serif in near-black recessed slots, as MM6 set its numbers.
+- The cells: recessed dark-grey plates with a one-pixel bevel; the portrait
+  an oval opening in a turned gold ring three pixels wide (the owner's
+  "gold frames"); the corner curls gone.
+- The tubes in recessed slots with a stone cap, the cylinder in MM6's dark,
+  mid and bright stripes, no gold brackets; the gems beads in sockets with
+  a white speck.
+- The shelf: an alcove under an arched marble lintel that shadows the book
+  tops, cylinder-shaded spines with crimson bands between gold fillets,
+  the emblems gilded (gold strokes over the same strokes a pixel down in
+  bronze), the rest button a gold cartouche in a dark socket with the moon
+  stamped dark and lit from below.
+- The pillars sixteen pixels wide, shaded as cylinders in five bands with
+  capitals and plinths ringed in gold; a painted rail along the band's top
+  and under the lintel.
+- Buttons: the gold shaded round a hot spot a third in from the top left
+  to bronze at the bottom right, pressed the other way; buttons too wide
+  for an oval (the rest screen's) are dark red-brown slabs with a bevel
+  and cream lettering, as MM6's were, never a stretched oval.
+- The screens: the slate repainted as fine grain with soft diagonal
+  smudges, no scribble lines; a marble frame nine pixels wide painted at
+  the panel's size with the slate recessed into it; every inset box a
+  two-tone engraved bevel instead of a gold line; titles in the yellow
+  italic as MM6's (blackletter kept for banners to come); rust inventory
+  lines; the sheet's hit point line a painted tube in a slot.
+- The talk panel: the frame a mitred bevel with a glint and a shadow where
+  the planks meet the glass; the plate a brass bar with a highlight band,
+  a dark lower bevel and rivets, the name engraved (`--engrave: 1` paints
+  a pale line under each dark stroke); planks with staggered ends, nails
+  and knots; the face on a flat dark umber ground, cropped tighter.
+- The sky (`src/render/sky.ts`): the blue field in five flat bands and the
+  cloud field cut hard into cumulus with a lit edge toward the sun and a
+  grey underside, so the screen posteriser has no gradient to turn into
+  contour blobs.
+
+Named by the critics and not yet done, in their order: the screen-space
+posterise itself (they want crispness from nearest-sampled painted
+textures); painted ground tiles with a visible road; the portrait's key
+light; tree billboards; drawn stone, plank and tile lines on the building
+textures; item sprites and a paper doll; the spellbook and quest log as an
+open book; the automap.
+
 ## 13. Decision log
 
+- 2026-10-17 – The critic loop (16.12): three critics score each round
+  against the MM6 shots; round 1 scored 2.5 to 3 and set the gold ramp,
+  the warm marble, the slots, the recessed cells and tubes, the alcove
+  shelf, the slabs, the engraved bevels, the painted sky.
 - 2026-10-17 – First phone pass (16.11): dither off, posterise 8 levels,
   bloom off, 540 lines, outdoor water flat, forests nearer, ambient lifted,
   the shake roll set not added, the talk window mapped for the rotated

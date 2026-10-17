@@ -358,7 +358,8 @@ test.describe('dev build', () => {
         falls: d.level.waterfalls.length,
       };
     });
-    expect(info.quality).toBe('quarter');
+    // Indoors the mirrors run at an eighth (DESIGN 16.11); outdoors they are off.
+    expect(info.quality).toBe('eighth');
     expect(info.bodies.length).toBe(3);
     for (const cls of info.bodies) expect(cls).toBe('WaterMaterial');
     for (const off of info.levelOffsets) expect(off).toBeLessThan(1e-6);

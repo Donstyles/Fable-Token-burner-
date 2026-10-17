@@ -40,6 +40,7 @@ export function createCreationScreen(
 
   const root = el('div', 'cre-root');
   const panel = el('div', 'ui-panel');
+  panel.dataset['paint'] = 'marble-frame';
   const head = el('div', 'ui-head');
   const tabs = el('div', 'ui-head-tabs');
   const begin = button('Begin', () => tryBegin(), { className: 'primary' });

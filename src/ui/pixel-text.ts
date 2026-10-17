@@ -23,6 +23,8 @@ interface Face {
   italic: boolean;
   fill: [number, number, number];
   shadow: [number, number, number] | null;
+  /** Dark ink cut into brass: a pale line under each stroke instead of a dark one beside it. */
+  engrave: boolean;
 }
 
 const cache = new Map<string, HTMLCanvasElement>();
@@ -43,19 +45,22 @@ function faceOf(el: Element): Face {
   const fill = parseColor(cs.color);
   const lum = (0.299 * fill[0] + 0.587 * fill[1] + 0.114 * fill[2]) / 255;
   const italic = family !== 'Pirata One' && cs.fontStyle === 'italic';
+  const engrave = cs.getPropertyValue('--engrave').trim() === '1';
   return {
     family,
     size,
     weight: family === 'Pirata One' ? 0.25 : 0.15,
     italic,
     fill,
-    // Dark ink (on gold) casts no shadow; pale ink casts a dark one, as MM6's did.
-    shadow: lum < 0.45 ? null : [SHADOW[0]!, SHADOW[1]!, SHADOW[2]!],
+    // Dark ink (on gold) casts no shadow, unless engraved; pale ink casts a dark one, as
+    // MM6's did.
+    shadow: engrave ? [250, 238, 196] : lum < 0.45 ? null : [SHADOW[0]!, SHADOW[1]!, SHADOW[2]!],
+    engrave,
   };
 }
 
 function key(word: string, f: Face): string {
-  return `${f.family}|${f.size}|${f.italic ? 'i' : 'r'}|${f.weight}|${f.fill.join(',')}|${f.shadow ? 's' : '-'}|${word}`;
+  return `${f.family}|${f.size}|${f.italic ? 'i' : 'r'}|${f.weight}|${f.fill.join(',')}|${f.shadow ? (f.engrave ? 'e' : 's') : '-'}|${word}`;
 }
 
 function cssFont(f: Face): string {
@@ -116,7 +121,7 @@ function paintWord(word: string, f: Face): { canvas: HTMLCanvasElement; descent:
   c.height = Math.max(1, h);
   const g = c.getContext('2d');
   if (g) {
-    if (f.shadow) stamp(g, word, f, w, h, asc, f.shadow, 1, 1);
+    if (f.shadow) stamp(g, word, f, w, h, asc, f.shadow, f.engrave ? 0 : 1, 1);
     stamp(g, word, f, w, h, asc, f.fill, 0, 0);
   }
   if (cache.size > 3000) cache.clear();

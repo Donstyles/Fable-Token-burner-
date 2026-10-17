@@ -1,6 +1,9 @@
-/* The HUD band (src/ui/hud.ts): MM6's marble foot with four gold oval frames, name plates,
-   green hit point and blue spell point bars, condition gems; the book shelf stands on its
-   right end. Sized for 932 × 430 CSS px in landscape with the safe areas. */
+/* The HUD band (src/ui/hud.ts): MM6's marble foot. Four cells recessed into the marble, each a
+   gold oval frame round the member, their name in a dark slot under it, a green hit point tube
+   and a blue spell point tube in recessed slots beside it, a condition gem in its socket above
+   them; the clock in a slot at the left, the book shelf in its alcove at the right. Every
+   piece is painted by paint.ts at its size (`data-paint`), lit from the top left. Sized for
+   932 × 430 CSS px in landscape with the safe areas; 1.5 CSS px to the UI pixel. */
 .hud {
   position: absolute;
   left: 0;
@@ -10,24 +13,25 @@
   padding: 0 var(--sar) var(--sab) var(--sal);
   pointer-events: none;
   z-index: 25;
-  background:
-    linear-gradient(rgba(40, 32, 24, 0.06), rgba(20, 16, 12, 0.18)),
-    var(--stone) 0 0 / var(--stone-size);
-  border-top: 1px solid #5a3e10;
-  box-shadow:
-    inset 0 1px 0 #f8e090,
-    inset 0 2px 0 #c89a3a,
-    inset 0 3px 0 #7a5416,
-    inset 0 4px 0 rgba(255, 255, 255, 0.45),
-    inset 0 -2px 0 rgba(0, 0, 0, 0.35),
-    0 -2px 0 rgba(0, 0, 0, 0.5);
+  background: var(--stone) 0 0 / var(--stone-size);
+  image-rendering: pixelated;
+}
+.hud-rail {
+  /* The gold rail along the band's top edge. */
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 9px;
+  background: var(--paint) 0 0 / auto 100% repeat-x;
+  image-rendering: pixelated;
 }
 .hud-clock {
   position: absolute;
   left: calc(var(--sal) + 5px);
-  top: 10px;
+  top: 14px;
   width: 76px;
-  padding: 2px 0;
+  padding: 4px 0 3px;
   text-align: center;
   pointer-events: none;
   background: var(--paint) center / 100% 100% no-repeat;
@@ -35,56 +39,46 @@
 }
 .hud-clock-time {
   font:
-    24px/1 'Pirata One',
+    19.5px/1.1 'Tinos',
     Georgia,
     serif;
-  color: #3a2608;
-  text-shadow: 0 1px 0 rgba(255, 245, 210, 0.6);
+  color: #f0c838;
 }
 .hud-clock-date {
   font:
-    italic 18px/1 'Tinos',
+    italic 18px/1.1 'Tinos',
     Georgia,
     serif;
-  color: #4a3414;
+  color: #e8d08a;
 }
 .hud-band {
   display: flex;
   justify-content: center;
   gap: 8px;
   height: 100px;
-  padding: 4px 250px 0 88px;
+  padding: 7.5px 250px 0 88px;
 }
 .hud-cell {
+  position: relative;
   pointer-events: auto;
   display: flex;
   align-items: flex-start;
   gap: 6px;
   width: 138px;
-  padding: 2px 4px;
-  background: rgba(0, 0, 0, 0.06);
+  padding: 3px 4px;
+  background: var(--paint) center / 100% 100% no-repeat;
+  image-rendering: pixelated;
   border: 0;
-  border-radius: 3px;
-  box-shadow:
-    inset 1px 1px 0 rgba(0, 0, 0, 0.45),
-    inset -1px -1px 0 rgba(255, 255, 255, 0.5),
-    inset 2px 2px 0 rgba(0, 0, 0, 0.25);
+  border-radius: 0;
+  box-shadow: none;
   font: inherit;
   color: inherit;
 }
 .hud-cell:active {
-  background: rgba(0, 0, 0, 0.16);
-  box-shadow:
-    inset 2px 2px 0 rgba(0, 0, 0, 0.6),
-    inset -1px -1px 0 rgba(255, 255, 255, 0.3),
-    inset 3px 3px 0 rgba(0, 0, 0, 0.25);
+  filter: brightness(0.85);
 }
 .hud-cell.selected {
-  box-shadow:
-    inset 0 0 0 1px #f8e090,
-    inset 0 0 0 2px #7a5416,
-    inset 2px 2px 0 rgba(0, 0, 0, 0.25),
-    0 0 0 rgba(240, 192, 80, 0.45);
+  box-shadow: inset 0 0 0 1.5px #f0d880;
 }
 .hud-cell.recovering .hud-cameo {
   filter: brightness(0.55);
@@ -96,13 +90,14 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 2px;
+  gap: 3px;
 }
 .hud-frame {
   position: relative;
-  width: 54px;
-  height: 60px;
-  padding: 4px;
+  box-sizing: border-box;
+  width: 51px;
+  height: 54px;
+  padding: 7.5px;
   background: var(--paint) center / 100% 100% no-repeat;
   image-rendering: pixelated;
 }
@@ -116,21 +111,21 @@
   justify-content: center;
 }
 .hud-cameo svg {
-  width: 32px;
-  height: 32px;
+  width: 25px;
+  height: 25px;
   /* Pixels, not anti-aliased strokes. */
   shape-rendering: crispEdges;
 }
 .hud-plate {
   min-width: 64px;
   max-width: 84px;
-  margin-top: 1px;
+  height: 25.5px;
   padding: 0 6px;
   font:
-    italic 18px/1 'Tinos',
+    italic 18px/25.5px 'Tinos',
     Georgia,
     serif;
-  color: #3a2608;
+  color: #f0c838;
   text-align: center;
   white-space: nowrap;
   overflow: hidden;
@@ -139,50 +134,30 @@
 }
 .hud-bars {
   display: grid;
-  grid-template-columns: 11px 11px;
-  grid-template-rows: 12px 60px;
-  gap: 2px 4px;
-  margin-top: 2px;
+  grid-template-columns: 10.5px 10.5px;
+  grid-template-rows: 10.5px 58.5px;
+  gap: 4.5px 4.5px;
+  margin-top: 3px;
 }
 .hud-gem {
   grid-column: 1 / span 2;
-  width: 10px;
-  height: 10px;
+  width: 10.5px;
+  height: 10.5px;
   margin: 0 auto;
   background: var(--paint) center / 100% 100% no-repeat;
   image-rendering: pixelated;
 }
 .hud-bar {
   position: relative;
-  height: 60px;
+  height: 58.5px;
   background: var(--paint) center / 100% 100% no-repeat;
   image-rendering: pixelated;
-  box-shadow: 0 0 0 1px #5a3e10;
-}
-.hud-bar::before,
-.hud-bar::after {
-  /* Gold beads at both ends of the tube. */
-  content: '';
-  position: absolute;
-  left: -2px;
-  right: -2px;
-  height: 5px;
-  border-radius: 3px;
-  background: linear-gradient(#fff2b0, #c89a3a 60%, #7a5416);
-  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.6);
-  z-index: 1;
-}
-.hud-bar::before {
-  top: -3px;
-}
-.hud-bar::after {
-  bottom: -3px;
 }
 .hud-fill {
   position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  left: 1.5px;
+  right: 1.5px;
+  bottom: 1.5px;
   height: 0;
   background: var(--paint) center / 100% 100% no-repeat;
   image-rendering: pixelated;
@@ -205,13 +180,13 @@
   background:
     linear-gradient(rgba(40, 32, 24, 0.35), rgba(20, 16, 12, 0.5)),
     var(--stone) 0 0 / var(--stone-size);
+  image-rendering: pixelated;
   border: 0;
-  border-radius: 4px 4px 0 0;
   box-shadow:
-    inset 0 1px 0 #f8e090,
-    inset 0 2px 0 #7a5416,
-    inset 1px 0 0 #c89a3a,
-    inset -1px 0 0 #7a5416;
+    inset 0 1.5px 0 rgba(255, 250, 240, 0.5),
+    inset 1.5px 0 0 rgba(255, 250, 240, 0.4),
+    inset 0 -1.5px 0 rgba(0, 0, 0, 0.6),
+    inset -1.5px 0 0 rgba(0, 0, 0, 0.5);
   opacity: 0;
   transition: opacity 200ms ease-out;
 }
@@ -224,47 +199,18 @@
     Georgia,
     serif;
   color: #f0d060;
-  text-shadow: 0 1px 1px #000;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-/* Carved ornament (DESIGN.md 16.5): a volute chiselled into each cell's top corner, and the
-   view framed by two fluted stone pillars and a lintel, as MM6 framed its window. */
-.hud-cell::before {
-  content: '';
-  position: absolute;
-  top: 1px;
-  right: 2px;
-  width: 22.5px;
-  height: 16.5px;
-  background: var(--volute) center / 100% 100% no-repeat;
-  image-rendering: pixelated;
-  opacity: 0.85;
-  pointer-events: none;
-}
-.hud-cell::after {
-  content: '';
-  position: absolute;
-  top: 1px;
-  left: 2px;
-  width: 22.5px;
-  height: 16.5px;
-  background: var(--volute) center / 100% 100% no-repeat;
-  image-rendering: pixelated;
-  transform: scaleX(-1);
-  opacity: 0.85;
-  pointer-events: none;
-}
-.hud-cell {
-  position: relative;
-}
+/* The view framed by two marble pillars and a lintel, as MM6 framed its window: each pillar a
+   cylinder of marble sixteen pixels wide with a capital and a plinth ringed in gold. */
 .view-pillar {
   position: absolute;
   top: 0;
   bottom: calc(var(--sab) + 100px);
-  width: 12px;
+  width: 24px;
   pointer-events: none;
   z-index: 24;
   background: var(--paint) 0 0 / 100% auto repeat-y;
@@ -276,32 +222,29 @@
 .view-pillar.right {
   right: var(--sar);
 }
-.view-pillar::before {
-  /* The capital: a bracket of stone with a gold band. */
-  content: '';
+.view-capital,
+.view-plinth {
   position: absolute;
-  top: 0;
-  left: -3px;
-  right: -3px;
-  height: 14px;
-  background: var(--stone) 0 0 / var(--stone-size);
-  border-bottom: 2px solid #c89a3a;
-  box-shadow:
-    inset 0 -1px 0 #5a3e10,
-    inset 0 1px 0 rgba(255, 255, 255, 0.5),
-    0 2px 0 rgba(0, 0, 0, 0.5);
+  left: -4.5px;
+  right: -4.5px;
+  height: 21px;
+  background: var(--paint) center / 100% 100% no-repeat;
+  image-rendering: pixelated;
+}
+.view-capital {
+  top: 9px;
+}
+.view-plinth {
+  bottom: 0;
 }
 .view-lintel {
   position: absolute;
   top: 0;
   left: var(--sal);
   right: var(--sar);
-  height: 6px;
+  height: 10.5px;
   pointer-events: none;
   z-index: 23;
-  background: var(--stone) 0 0 / var(--stone-size);
-  box-shadow:
-    inset 0 -1px 0 rgba(0, 0, 0, 0.55),
-    inset 0 1px 0 rgba(255, 255, 255, 0.5),
-    0 1px 0 rgba(0, 0, 0, 0.5);
+  background: var(--paint) 0 0 / auto 100% repeat-x;
+  image-rendering: pixelated;
 }

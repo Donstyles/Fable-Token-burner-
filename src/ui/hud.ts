@@ -41,7 +41,8 @@ const SIGILS: Record<ClassId, string> = {
 };
 
 function sigil(classId: ClassId): string {
-  return `<svg viewBox="0 0 24 24" fill="none" stroke="#e2b84a" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${SIGILS[classId]}</svg>`;
+  // Gilded: the strokes in gold over the same strokes a pixel down in dark bronze.
+  return `<svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><g stroke="#2a1a06" transform="translate(0.6 0.9)">${SIGILS[classId]}</g><g stroke="#d8b858">${SIGILS[classId]}</g></svg>`;
 }
 
 /** The gem's colour for the member's worst condition. */
@@ -57,16 +58,26 @@ export function createHud(parent: HTMLElement, party: Party, hooks: HudHooks): H
   installPaint();
   installPaintedButtons(parent);
   installPixelText(parent);
-  // The window's frame: two fluted pillars and a lintel, drawn over the view's edges.
+  // The window's frame: two marble pillars with capitals and plinths, and a lintel.
   for (const side of ['left', 'right'] as const) {
     const pillar = el('div', `view-pillar ${side}`);
     pillar.dataset['paint'] = 'pillar';
+    const capital = el('div', 'view-capital');
+    capital.dataset['paint'] = 'capital';
+    const plinth = el('div', 'view-plinth');
+    plinth.dataset['paint'] = 'plinth';
+    pillar.append(capital, plinth);
     parent.appendChild(pillar);
   }
-  parent.appendChild(el('div', 'view-lintel'));
+  const lintel = el('div', 'view-lintel');
+  lintel.dataset['paint'] = 'lintel';
+  parent.appendChild(lintel);
   const root = el('div', 'hud');
+  const rail = el('div', 'hud-rail');
+  rail.dataset['paint'] = 'rail';
+  root.appendChild(rail);
   const clock = el('div', 'hud-clock');
-  clock.dataset['paint'] = 'plate';
+  clock.dataset['paint'] = 'slot';
   const clockTime = el('div', 'hud-clock-time');
   const clockDate = el('div', 'hud-clock-date');
   clock.append(clockTime, clockDate);
@@ -75,13 +86,14 @@ export function createHud(parent: HTMLElement, party: Party, hooks: HudHooks): H
   const cells = party.members.map((m, i) => {
     const cell = el('button', 'hud-cell');
     cell.type = 'button';
+    cell.dataset['paint'] = 'recess';
     const frame = el('div', 'hud-frame');
     frame.dataset['paint'] = 'ring';
     const cameo = el('div', 'hud-cameo');
     cameo.innerHTML = m.character ? sigil(m.character.classId) : sigil('knight');
     frame.appendChild(cameo);
     const plate = el('div', 'hud-plate', m.name);
-    plate.dataset['paint'] = 'plate';
+    plate.dataset['paint'] = 'slot';
     const bars = el('div', 'hud-bars');
     const gem = el('div', 'hud-gem good');
     gem.dataset['paint'] = 'gem-good';

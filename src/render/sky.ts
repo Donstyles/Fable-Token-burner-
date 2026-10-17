@@ -43,7 +43,7 @@ float noise(vec2 p) {
 float fbm(vec2 p) {
   float v = 0.0;
   float a = 0.5;
-  for (int i = 0; i < 5; i++) {
+  for (int i = 0; i < 4; i++) {
     v += a * noise(p);
     p = p * 2.03 + vec2(17.0, 9.0);
     a *= 0.5;
@@ -54,18 +54,33 @@ float fbm(vec2 p) {
 void main(void) {
   vec3 d = normalize(vDir);
   float up = clamp(d.y, 0.0, 1.0);
-  vec3 sky = mix(horizon, zenith, pow(up, 0.65));
-  // Clouds projected onto a flat layer, fading into the horizon haze.
+  // The blue field in four flat bands, as a painted sky, not a gradient for the posteriser to
+  // cut into contour blobs (critics, 2026-10-17).
+  float band = up < 0.05 ? 0.0 : up < 0.14 ? 0.25 : up < 0.3 ? 0.5 : up < 0.55 ? 0.75 : 1.0;
+  vec3 sky = mix(horizon, zenith, band);
+  // Cumulus: the cloud field cut hard into a body, with a lit edge where it thins upward and
+  // toward the sun and a grey underside where it thins toward the horizon.
   vec2 uv = d.xz / (d.y + 0.25) * 1.5 + vec2(time * 0.01, time * 0.004);
   float n = fbm(uv);
-  float cover = smoothstep(0.45 - cloudAmount * 0.3, 0.75, n) * cloudAmount;
-  float horizonFade = smoothstep(0.0, 0.25, up);
-  vec3 c = mix(sky, cloudColor, cover * horizonFade);
-  // The sun: a hard disc, a tight corona and a wide warm glow, dimmed behind clouds.
+  float t0 = 0.62 - cloudAmount * 0.22;
+  float body = step(t0, n);
+  vec2 outward = normalize(d.xz + vec2(1e-4)) * 0.05;
+  vec2 sunward = normalize(sunDir.xz + vec2(1e-4)) * 0.05;
+  float nTop = fbm(uv - outward + sunward * 0.5);
+  float nBot = fbm(uv + outward - sunward * 0.5);
+  float top = body * step(nTop, n - 0.03);
+  float bot = body * step(nBot, n - 0.03) * (1.0 - top);
+  vec3 cream = min(cloudColor, vec3(0.95));
+  vec3 bodyTone = cloudColor * 0.86;
+  vec3 grey = cloudColor * 0.68;
+  vec3 cloud = mix(mix(bodyTone, cream, top), grey, bot);
+  float hf = up < 0.05 ? 0.0 : up < 0.12 ? 0.5 : 1.0;
+  float cover = body * hf;
+  vec3 c = mix(sky, cloud, cover);
+  // The sun: a hard disc and a stepped corona, dimmed behind cloud.
   float s = max(dot(d, sunDir), 0.0);
-  // About a degree across, twice the real sun: a disc, not a fist (wow audit, 2026-10-17).
-  float disc = smoothstep(0.99955, 0.99985, s);
-  float glow = pow(s, 600.0) * 0.6 + pow(s, 40.0) * 0.08;
+  float disc = step(0.99975, s);
+  float glow = s > 0.998 ? 0.45 : s > 0.992 ? 0.18 : s > 0.975 ? 0.07 : 0.0;
   c += sunColor * (disc * 1.2 + glow) * (1.0 - cover * 0.7);
   if (night > 0.0 && d.y > 0.02) {
     // Stars: a sparse hash over the dome, a few bright, the rest faint, never through cloud.
