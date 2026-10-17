@@ -44,7 +44,13 @@ test.describe('screens', () => {
     expect(await page.evaluate(() => (window as unknown as W).ftb!.dev!.screens.current())).toBe(
       null,
     );
-    await page.waitForTimeout(600);
+    // The world runs again: software WebKit repaints the band once before the next frame,
+    // so the clock is polled rather than read after a fixed wait.
+    await page.waitForFunction(
+      (t) => (window as unknown as W).ftb!.dev!.simTime() > (t as number),
+      t1,
+      { timeout: 15_000 },
+    );
     const t2 = await page.evaluate(() => (window as unknown as W).ftb!.dev!.simTime());
     expect(t2).toBeGreaterThan(t1);
   });

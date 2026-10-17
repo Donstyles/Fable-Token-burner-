@@ -1005,6 +1005,13 @@ over a dark one, sunken recesses for the cells, turned metal rings round
 the crests, brass plates with engraved text, glass tube bars with gold
 beads. Portraits stay crests until painted ones exist; no generated faces.
 
+Period edges, period cost: every bevel is a hard line (`box-shadow` with a
+zero blur, no `drop-shadow` filters), and the marble is painted once at
+startup (`src/ui/stone.ts` rasterises the SVG to a 512² bitmap and hands
+that to CSS). WebKit without a GPU had repainted the turbulence filters and
+blurred shadows for whole frames whenever a panel changed, which stalled
+the world for over a second after a screen closed (CI run 93).
+
 ### 16.6 Doors and the autosave
 
 - A tap on the inn, the temple, the trader's store or the smithy within nine

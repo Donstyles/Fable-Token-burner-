@@ -11,6 +11,7 @@ import { worstCondition, type ConditionId } from '../game/conditions';
 import type { ClassId } from '../game/classes';
 import { formatDate, formatTime } from '../game/time';
 import { el } from './dom';
+import { rasterizeStone } from './stone';
 import './hud.css';
 
 export interface Hud {
@@ -52,6 +53,7 @@ function gemClass(id: ConditionId): string {
 }
 
 export function createHud(parent: HTMLElement, party: Party, hooks: HudHooks): Hud {
+  rasterizeStone();
   // The window's frame: two fluted pillars and a lintel, drawn over the view's edges.
   for (const side of ['left', 'right'] as const)
     parent.appendChild(el('div', `view-pillar ${side}`));
