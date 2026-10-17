@@ -23,11 +23,11 @@
   box-shadow:
     inset 1.5px 1.5px 0 rgba(16, 12, 8, 0.85),
     inset -1.5px -1.5px 0 rgba(200, 160, 110, 0.45),
-    0 0 0 1.5px #7a3a14;
+    0 0 0 1.5px #6a3210;
 }
 .inv-cell {
   background: rgba(0, 0, 0, 0.06);
-  border: 1px solid rgba(122, 58, 20, 0.75);
+  border: 1px solid rgba(106, 50, 16, 0.6);
 }
 .inv-item {
   position: relative;
@@ -226,10 +226,10 @@
 
 /* Automap */
 .map-canvas {
-  background: #0a0806;
+  /* Drawn in ink on the book's page. */
+  background: transparent;
   border: 0;
-  box-shadow:
-    inset 1.5px 1.5px 0 rgba(16, 16, 12, 0.85),
-    inset -1.5px -1.5px 0 rgba(160, 160, 150, 0.8);
+  box-shadow: none;
   align-self: center;
+  image-rendering: pixelated;
 }

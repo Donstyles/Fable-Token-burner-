@@ -14,7 +14,8 @@ import { InputZones } from '../app/input/zones';
 import { bindInput } from '../app/input/dom';
 import { PartyController, DEFAULT_TUNING } from '../world/player';
 import { loadLevel, type LoadedLevel } from '../world/level';
-import { loadRoleTextures, setRoleMipmaps } from '../world/textures';
+import { paintRoleTextures } from '../world/painted-textures';
+import { setRoleMipmaps } from '../world/textures';
 import { LevelWater, WATER_QUALITIES, type WaterQuality } from '../world/water';
 import { LevelWaterfalls } from '../world/waterfall';
 import { AnimationStepper } from '../render/animation-step';
@@ -161,7 +162,8 @@ export async function startDev(app: App): Promise<DevHandle> {
   // Townsfolk standing about the village (src/world/npc.ts); monsters live on the handle.
   const npcs: Npc[] = [];
   await enableHavok(scene, new Vector3(0, -DEFAULT_TUNING.gravity, 0));
-  const textures = loadRoleTextures(scene, true);
+  // Painted at startup, as MM6's bitmaps were (DESIGN.md 16.13), never photographs.
+  const textures = paintRoleTextures(scene, true);
   // Levels live next to the page: <base>levels/<id>.glb and .json.
   const base = new URL(import.meta.env.BASE_URL, location.href).href;
   // The veil hides the load; it lifts when the level is ready (src/app/veil.ts).
@@ -190,11 +192,12 @@ export async function startDev(app: App): Promise<DevHandle> {
       lightDirection: desert
         ? new Vector3(-0.85, -0.45, 0.2).normalize()
         : new Vector3(-0.45, -0.8, 0.4).normalize(),
-      lightColor: env ? c3(env.lightColor) : new Color3(1.0, 0.92, 0.78),
+      lightColor: (env ? c3(env.lightColor) : new Color3(1.0, 0.92, 0.78)).scale(1.15),
       // Lifted by half: the houses' shadow sides went black on the phone (owner, 2026-10-17);
       // MM6 lit its world nearly flat.
-      ambientColor: (env ? c3(env.ambientColor) : new Color3(0.36, 0.4, 0.48)).scale(1.5),
-      fogColor: space?.fog?.color ?? new Color3(0.62, 0.68, 0.78),
+      ambientColor: (env ? c3(env.ambientColor) : new Color3(0.36, 0.4, 0.48)).scale(1.15),
+      // The far ridges melt into the sky's own horizon band, not a lavender haze of their own.
+      fogColor: space?.fog?.color ?? (env ? c3(env.skyHorizon) : new Color3(0.62, 0.68, 0.78)),
       fogDensity: space?.fog?.density ?? 0.0017,
       ...(env
         ? {
@@ -343,7 +346,7 @@ export async function startDev(app: App): Promise<DevHandle> {
   // Talk (DESIGN.md 16.7): a tapped villager opens the wooden panel with their living face
   // in its window and the world waits while they speak. A villager without a script keeps
   // their line in the status bar.
-  const bust = new Bust(scene, canvas);
+  const bust = new Bust(scene, canvas, app.materials);
   let talking: Npc | null = null;
   const dialogue: Dialogue = createDialogue(uiLayer, state, QUESTS, {
     onSpeak: () => talking?.say(),

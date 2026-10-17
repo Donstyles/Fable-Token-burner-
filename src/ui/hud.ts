@@ -75,7 +75,7 @@ export function createHud(parent: HTMLElement, party: Party, hooks: HudHooks): H
   const root = el('div', 'hud');
   const rail = el('div', 'hud-rail');
   rail.dataset['paint'] = 'rail';
-  root.appendChild(rail);
+  root.append(el('div', 'hud-shadow'), rail);
   const clock = el('div', 'hud-clock');
   clock.dataset['paint'] = 'slot';
   const clockTime = el('div', 'hud-clock-time');
@@ -117,7 +117,7 @@ export function createHud(parent: HTMLElement, party: Party, hooks: HudHooks): H
       else party.selected = i;
     });
     band.appendChild(cell);
-    return { cell, hpFill, spFill, gem };
+    return { cell, frame, hpFill, spFill, gem };
   });
   root.appendChild(band);
   parent.appendChild(root);
@@ -143,6 +143,7 @@ export function createHud(parent: HTMLElement, party: Party, hooks: HudHooks): H
         x.gem.className = `hud-gem ${gemClass(cond)}`;
         x.gem.dataset['paint'] = `gem-${gemClass(cond)}`;
         x.cell.classList.toggle('selected', party.selected === i);
+        x.frame.dataset['paint'] = party.selected === i ? 'ring-active' : 'ring';
         x.cell.classList.toggle('recovering', m.alive && !m.isReady(now));
         x.cell.classList.toggle('dead', !m.alive);
         x.cell.title = `${m.name}: ${cond}`;

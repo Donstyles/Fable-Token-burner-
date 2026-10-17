@@ -49,7 +49,7 @@ function faceOf(el: Element): Face {
   return {
     family,
     size,
-    weight: family === 'Pirata One' ? 0.25 : 0.15,
+    weight: family === 'Pirata One' ? 0.25 : 0,
     italic,
     fill,
     // Dark ink (on gold) casts no shadow, unless engraved; pale ink casts a dark one, as
@@ -93,7 +93,7 @@ function stamp(
   const id = tg.getImageData(0, 0, w, h);
   const d = id.data;
   for (let i = 0; i < d.length; i += 4) {
-    if (d[i + 3]! >= 90) {
+    if (d[i + 3]! >= 100) {
       d[i] = color[0];
       d[i + 1] = color[1];
       d[i + 2] = color[2];

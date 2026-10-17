@@ -1241,12 +1241,133 @@ wearing a posterise filter". What they named, and what the paint shop
   grey underside, so the screen posteriser has no gradient to turn into
   contour blobs.
 
-Named by the critics and not yet done, in their order: the screen-space
-posterise itself (they want crispness from nearest-sampled painted
-textures); painted ground tiles with a visible road; the portrait's key
-light; tree billboards; drawn stone, plank and tile lines on the building
-textures; item sprites and a paper doll; the spellbook and quest log as an
-open book; the automap.
+Round 2 (build fb155e7): 3, 3 and 3. The gold went too far and the veins
+read as cracks. What they named, and what changed:
+
+- MM6 edges everything with stone, a dark line over a cream one; gold is
+  for rings, capitals and buttons. The gold rails are gone; the band and
+  the lintel carry stone lips.
+- The marble's one-pixel veins read as cracked flagstone: now broad clouds
+  of a wide brush and soft veins two to four pixels wide, quantised to
+  nine warm tones, as a 1998 scan of a slab. The slate is smoke patches
+  with a few hairline cracks, the leather rust mottling at the scale of a
+  thumb, the parchment broad stains; no grain, no speckle anywhere.
+- MM6's portrait frame is an oval cut from grey stone, lit cream at the
+  top left, with a wire of gold inside, and white for the member in hand;
+  it sits in a panel of the marble sunk a step, not a grey box. So do ours.
+- The tubes: a pale highlight, a saturated core (MM6's green and cobalt), a
+  dark edge, a light cap, in a navy well lit at the lower right; the fourth
+  member's tubes had been hidden under the shelf, which now stands inside
+  the band. The wells slate, not black, so the gold's shadow shows.
+- Spines chocolate to umber with a bright rim along a rounded top, maroon
+  bands ruled with gold, the emblems in relief (bronze below, cream above);
+  the alcove a warm dark recess; capitals as an abacus over a flared bell
+  and plinths as two steps, each with a three-tone gold ring.
+- Buttons as MM6's: a black outline and five bands top to bottom, pressed
+  uniformly brighter; wide buttons stone insets with dark lettering.
+- The body type white (`#f4f0e2`) at 14 pixels with its hard shadow,
+  values and modifiers white, headings yellow, no underline rules, no hit
+  point bar on the sheet; the boxes' bevels near-white and near-black with
+  a mid rim, their faces darker. The panel replaces the view only, the
+  portrait band stays, as MM6 kept its rail.
+- The talk panel: MM6's wood is dark oak standing on end; the planks are
+  repainted umber to near-black with long irregular grain, no seams or
+  nails, and the panel has no gold border. MM6 set the villager's name in
+  cyan on the wood, with no plate; so do we. The face has a key light of
+  its own (`RetroMaterials.setKeyLight`, on the subject's materials only),
+  warm from the camera's upper left, over a near-black ground, with the
+  fill down to 0.3.
+- The spellbook and the quest log are open books (`paintBook`): a leather
+  cover with brass corners, two pages meeting at a shadowed gutter, the
+  stack stepping out below and right, and a carved stone banner for the
+  quest headings in the blackletter.
+- The sky's clouds stretched along the wind, ragged at the edges and
+  dithered there as a 1998 painter did, the sun's disc gone; the far ridges
+  fade into the sky's own horizon colour instead of a lavender haze.
+
+Round 3 (build after fb155e7, the stone-edged shell): 3.5, 3 and 3. The
+critics now asked for what a painter's hand leaves that a rule cannot, and
+for the world itself. What changed:
+
+- The marble in three passes, as a 1998 scan: clouds of a wide brush, a
+  fine grain of near-white and oatmeal, soft veins that fade in and out
+  with broken pale threads beside them; twelve tones, ivory to grey-pink.
+  The slate likewise: clouds, a one-pixel speckle, broken pale veins; the
+  leather dark cordovan with a directional grain.
+- The portrait ovals without the gold wire: a thread of white light along
+  the upper-left inner edge (white for the member in hand), a chip or two
+  in the stone; the wells without bright lips; the tube wells with a gold
+  cap at the base; the spines with raised bands and the neighbour's shadow
+  down the left; the pillars with MM6's own shading (a dark edge, an
+  off-white band a third in, falling to dark); capitals as an abacus over
+  a bell with a volute at each corner, plinths as two steps, both with a
+  six-row gold collar; the rest button a domed coin on the marble beside
+  the alcove, not between the books; the band's shadow falling onto the
+  view.
+- The screens' frame as a carved architrave: a fluted pilaster down each
+  side, a block at each corner, the top rail casting a shadow onto the
+  slate; the box bevels two pixels deep; no headings inside boxes (MM6 has
+  none); the body type thinned to one-pixel stems; the member in hand's tab
+  in the brighter gold with dark ink; wide buttons MM6's dark green slabs
+  with white lettering; the books with eight page edges, curled corners,
+  cloth tabs and a faint engraved rose-compass watermark; the automap on
+  the book too, its debug caption gone; no point bars anywhere.
+- The talk panel: oak from near black to orange-tan with a heavy speckle;
+  the topics cream, yellow only for the one asked, as MM6's; no rule under
+  the words. The face: a keyed material is also painted
+  (`paint` uniform in `src/render/materials.ts`): its light quantised into
+  three flat tones and its colour deepened, so the head reads as a
+  portrait and not a render.
+- The sky as MM6 painted it: an ultramarine field in flat bands and cirrus
+  brushed level across it, mapped on a cylinder so the strokes run along
+  the horizon, ragged at their edges, dithered along their undersides,
+  thinning toward the horizon; no sun disc.
+- The world's textures painted (16.13), the ground texels at four metres a
+  tile, the sun harder (ambient 1.15, light 1.15) so each box has a lit and
+  a shaded face.
+
+Round 4 (the build of 16.13 with the painted world): 3, 3 and 3. The
+automap now draws in sepia ink on the book's page. Where the loop stands
+after four rounds: the HUD went from 2.5 to 3.5 and back to 3, the screens
+and the talk panel held at 3. The critics' asks have begun to contradict
+one another between rounds (a gold wire on the frames, then none; grain in
+the marble, then none, then "fine grain"; heavier type, then thinner;
+plank seams, then a seamless slab; real-time shading, then none) and what
+remains on every list is artwork, not painting rules: portraits painted by
+hand per villager, item sprites spanning cells, a paper doll, embossed
+emblems, Corinthian capitals, a one-bit bitmap face cut by hand, tree
+billboards, baked building faces, screens laid out to fit without
+scrolling and without tabs. Those are the owner's call: they are days of
+pixel art or purchased sprite sets, not another pass of the brushes here.
+The loop is paused at this build for that decision.
+
+### 16.13 Painted textures (2026-10-17)
+
+The world's textures were photographs: the CC0 scans of `npm run textures`
+(ashlar, planks, grass, a path) at 256 pixels, which under the posteriser
+read as "smooth 3D with a filter" (critics, round 2) and sat oddly beside
+the rule that the shell uses no photographed texture (16.5). MM6's ground,
+walls and roofs were small bitmaps a painter speckled and ruled by hand.
+`src/world/painted-textures.ts` now paints every material role at startup
+with the shell's brushes (`src/render/brush.ts`, shared with the paint
+shop), 128 pixels to a tile, sampled nearest so the texels show:
+
+- Grass, dirt, sand, snow and scree as fields of specks over soft blobs in
+  four or five tones; the dirt with pebbles, each a dark dot with a lit
+  crown.
+- Flagstones and ashlar drawn stone by stone on a grid: mortar between,
+  every stone its own tone, lit along its top and left, in shade along its
+  bottom and right, a chip or two of wear; the ashlar and sandstone in
+  running courses, the flagstones staggered.
+- Planks as boards with grain lines and knots; bark as vertical ridges;
+  plaster as cream with broad soft patches and a hairline crack; rock with
+  the beds of a cliff running a little downhill; iron as plates with seams
+  and rivets; a cool white marble; a moulded trim; leaves as clumps over
+  dark gaps.
+
+The role's metres per tile stay as the manifest had them. The CC0 files
+remain in `assets/textures` for the pipeline's record but nothing loads
+them; a later cleanup can drop them.
 
 ## 13. Decision log
 

@@ -93,7 +93,9 @@ export function installScreens(
 ): Screens {
   const rng = hooks.rng ?? mulberry32((state.seed ^ Math.floor(hooks.now() * 1000)) >>> 0 || 1);
   const shelf = el('div', 'ui-shelf');
-  shelf.dataset['paint'] = 'alcove';
+  const books = el('div', 'ui-shelf-books');
+  books.dataset['paint'] = 'alcove';
+  shelf.appendChild(books);
   for (const name of SCREEN_NAMES) {
     // Book spines with gold glyphs, as MM6's shelf; rest is the round gold button.
     const b = button('', () => open(name), {
@@ -105,10 +107,10 @@ export function installScreens(
     b.innerHTML =
       name === 'rest'
         ? `<svg viewBox="0 0 24 24" aria-hidden="true"><g class="lit" transform="translate(0 1)">${glyph}</g><g class="ink">${glyph}</g></svg>`
-        : `<svg viewBox="0 0 24 24" aria-hidden="true"><g class="shade" transform="translate(0.6 0.9)">${glyph}</g><g class="gilt">${glyph}</g></svg><span class="ui-shelf-label">${SCREEN_LABELS[name]}</span>`;
+        : `<svg viewBox="0 0 24 24" aria-hidden="true"><g class="shade" transform="translate(0.7 0.9)">${glyph}</g><g class="gilt">${glyph}</g><g class="sheen" transform="translate(-0.4 -0.5)">${glyph}</g></svg><span class="ui-shelf-label">${SCREEN_LABELS[name]}</span>`;
     b.title = SCREEN_LABELS[name];
     b.dataset['paint'] = name === 'rest' ? 'gold' : 'spine';
-    shelf.appendChild(b);
+    (name === 'rest' ? shelf : books).appendChild(b);
   }
   uiLayer.appendChild(shelf);
   installPressFeel(uiLayer);
@@ -135,6 +137,11 @@ export function installScreens(
     const frame = createFrame(title, close);
     // The screen's own class, so the spellbook can be parchment and the sheet stone.
     frame.root.classList.add(`screen-${name}`);
+    // The spellbook and the quest log are open books, as MM6's (paint.ts `book`).
+    if (name === 'spells' || name === 'quests' || name === 'map') {
+      const panel = frame.root.querySelector<HTMLElement>('.ui-panel');
+      if (panel) panel.dataset['paint'] = 'book';
+    }
     render({ state, hooks, frame, rng, close });
     uiLayer.appendChild(frame.root);
     open_ = { name, root: frame.root };

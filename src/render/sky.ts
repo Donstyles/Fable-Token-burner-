@@ -60,28 +60,30 @@ void main(void) {
   vec3 sky = mix(horizon, zenith, band);
   // Cumulus: the cloud field cut hard into a body, with a lit edge where it thins upward and
   // toward the sun and a grey underside where it thins toward the horizon.
-  vec2 uv = d.xz / (d.y + 0.25) * 1.5 + vec2(time * 0.01, time * 0.004);
-  float n = fbm(uv);
-  float t0 = 0.62 - cloudAmount * 0.22;
-  float body = step(t0, n);
-  vec2 outward = normalize(d.xz + vec2(1e-4)) * 0.05;
-  vec2 sunward = normalize(sunDir.xz + vec2(1e-4)) * 0.05;
-  float nTop = fbm(uv - outward + sunward * 0.5);
-  float nBot = fbm(uv + outward - sunward * 0.5);
-  float top = body * step(nTop, n - 0.03);
-  float bot = body * step(nBot, n - 0.03) * (1.0 - top);
-  vec3 cream = min(cloudColor, vec3(0.95));
+  // Cirrus brushed across the sky, as MM6 painted it: long streaks along the horizon, ragged
+  // at their edges and dithered along their undersides, thinning toward the horizon. The
+  // sky is mapped as a cylinder so the strokes run level.
+  float az = atan(d.x, d.z);
+  vec2 uv = vec2(az * 1.3 + time * 0.004, up * 9.0 + time * 0.002);
+  float n = fbm(uv) + (noise(uv * vec2(5.0, 14.0)) - 0.5) * 0.12;
+  float dither = mod(floor(gl_FragCoord.x) + floor(gl_FragCoord.y), 2.0) * 0.05 - 0.025;
+  float t0 = 0.66 - cloudAmount * 0.18 + dither * step(fbm(uv + vec2(0.0, 0.2)), n);
+  float body = step(t0, n) * step(0.04, up);
+  // Lit along the top (toward the sun's side of the sky), shaded along the underside.
+  float nUp = fbm(uv + vec2(0.0, 0.25));
+  float nDown = fbm(uv - vec2(0.0, 0.25));
+  float top = body * step(nUp, n - 0.02);
+  float bot = body * step(nDown, n - 0.02) * (1.0 - top);
+  vec3 cream = min(cloudColor * vec3(1.0, 0.98, 0.9), vec3(0.96));
   vec3 bodyTone = cloudColor * 0.86;
-  vec3 grey = cloudColor * 0.68;
+  vec3 grey = mix(cloudColor * 0.62, zenith, 0.3);
   vec3 cloud = mix(mix(bodyTone, cream, top), grey, bot);
-  float hf = up < 0.05 ? 0.0 : up < 0.12 ? 0.5 : 1.0;
-  float cover = body * hf;
+  float cover = body * (up < 0.1 ? 0.5 : 1.0);
   vec3 c = mix(sky, cloud, cover);
-  // The sun: a hard disc and a stepped corona, dimmed behind cloud.
+  // No sun disc: MM6 painted none; a faint warmth toward it only.
   float s = max(dot(d, sunDir), 0.0);
-  float disc = step(0.99975, s);
-  float glow = s > 0.998 ? 0.45 : s > 0.992 ? 0.18 : s > 0.975 ? 0.07 : 0.0;
-  c += sunColor * (disc * 1.2 + glow) * (1.0 - cover * 0.7);
+  float glow = s > 0.995 ? 0.12 : s > 0.98 ? 0.05 : 0.0;
+  c += sunColor * glow * (1.0 - cover);
   if (night > 0.0 && d.y > 0.02) {
     // Stars: a sparse hash over the dome, a few bright, the rest faint, never through cloud.
     vec3 sd = d * 90.0;

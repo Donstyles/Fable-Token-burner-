@@ -8,7 +8,7 @@ import { type Character, maxSp } from '../game/character';
 import type { MagicSchool } from '../game/skills';
 import type { SpellId } from '../game/spells';
 import type { ScreenContext } from './context';
-import { bar, button, el, heading, kv, memberTabs, note, tabRow } from './dom';
+import { button, el, heading, kv, memberTabs, note, tabRow } from './dom';
 import { cast, castMessage, type SchoolTab, schoolTabs, spellRows } from './spellbook-model';
 
 function schoolColumn(
@@ -19,7 +19,7 @@ function schoolColumn(
 ): HTMLElement {
   const col = el('div', 'ui-col narrow');
   const max = maxSp(c);
-  col.append(kv('Spell points', `${c.sp} / ${max}`), bar(c.sp, max, 'sp'));
+  col.appendChild(kv('Spell points', `${c.sp} / ${max}`));
   col.appendChild(heading('Schools'));
   if (tabs.length === 0) col.appendChild(note(`${c.name} knows no magic.`));
   for (const t of tabs) {

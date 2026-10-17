@@ -57,7 +57,7 @@ const FILES: Record<string, string> = {
   sandstone: sandstoneUrl,
 };
 
-function lampPane(scene: Scene): DynamicTexture {
+export function lampPane(scene: Scene): DynamicTexture {
   const size = 32;
   const tex = new DynamicTexture('lamp-pane', { width: size, height: size }, scene, false);
   const ctx = tex.getContext();
@@ -74,7 +74,7 @@ function lampPane(scene: Scene): DynamicTexture {
   return tex;
 }
 
-function stillWater(scene: Scene): DynamicTexture {
+export function stillWater(scene: Scene): DynamicTexture {
   const size = 64;
   const tex = new DynamicTexture('still-water', { width: size, height: size }, scene, false);
   const ctx = tex.getContext();

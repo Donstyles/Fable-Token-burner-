@@ -161,6 +161,9 @@ uniform float lightKnee;
 uniform float priorityLights;
 // Hit flash: 1 paints the surface white (DESIGN.md 14.4).
 uniform float flash;
+// The painter's hand (DESIGN.md 16.12): 1 quantises the light into four flat tones and
+// deepens the colour, so the talking head reads as a painted portrait, not a render.
+uniform float paint;
 // Weather (DESIGN.md 15.7): drifting cloud shadows and the desert's mirage and glint.
 uniform float time;
 uniform float cloudShadow;
@@ -238,6 +241,13 @@ void main(void) {
 #else
   vec3 albedo = texture2D(diffuseSampler, vUV).rgb;
 #endif
+  if (paint > 0.5) {
+    float lum = max(dot(light, vec3(0.333)), 0.001);
+    float q = (floor(lum * 3.0) + 0.5) / 3.0;
+    light *= q / lum;
+    float grey = dot(albedo, vec3(0.299, 0.587, 0.114));
+    albedo = clamp(mix(vec3(grey), albedo, 1.45), 0.0, 1.0);
+  }
   vec3 c = mix(albedo * tint * light + emissive, vec3(1.0), flash);
   gl_FragColor = vec4(mix(fogColor, c, vFog), 1.0);
 }
@@ -283,6 +293,8 @@ export interface VertexLitOptions {
 export class RetroMaterials {
   private readonly materials = new Set<ShaderMaterial>();
   private readonly ambientOverride = new Map<ShaderMaterial, Color3>();
+  /** A key light of a material's own: the talking head is lit from the camera's upper left. */
+  private readonly keyOverride = new Map<ShaderMaterial, { direction: Vector3; color: Color3 }>();
   private readonly observer: Observer<Scene>;
   readonly lights: PointLightDesc[] = [];
   env: LightingEnvironment;
@@ -338,6 +350,7 @@ export class RetroMaterials {
         'pointRange',
         'splatScale',
         'flash',
+        'paint',
         'time',
         'wind',
         'heat',
@@ -359,6 +372,7 @@ export class RetroMaterials {
     mat.setFloat('lightKnee', this.lightKnee);
     mat.setFloat('priorityLights', 0);
     mat.setFloat('flash', 0);
+    mat.setFloat('paint', 0);
     mat.setFloat('time', this.time);
     mat.setFloat('wind', opts.wind ? 1 : 0);
     mat.setFloat('heat', this.weather.heat);
@@ -410,6 +424,17 @@ export class RetroMaterials {
     mat.setColor3('ambientColor', ambient);
   }
 
+  /**
+   * Light this material by its own key instead of the sun, or by the sun again (`null`); a
+   * keyed material is also painted: its light in flat tones, its colour deepened.
+   */
+  setKeyLight(mat: ShaderMaterial, key: { direction: Vector3; color: Color3 } | null): void {
+    if (key) this.keyOverride.set(mat, key);
+    else this.keyOverride.delete(mat);
+    mat.setFloat('paint', key ? 1 : 0);
+    this.pushEnv(mat);
+  }
+
   /** Register a point light; mutate the returned object to move or dim it. */
   addLight(light: PointLightDesc): PointLightDesc {
     this.lights.push(light);
@@ -441,8 +466,9 @@ export class RetroMaterials {
   }
 
   private pushEnv(mat: ShaderMaterial): void {
-    mat.setVector3('lightDirection', this.env.lightDirection);
-    mat.setColor3('lightColor', this.env.lightColor);
+    const key = this.keyOverride.get(mat);
+    mat.setVector3('lightDirection', key?.direction ?? this.env.lightDirection);
+    mat.setColor3('lightColor', key?.color ?? this.env.lightColor);
     mat.setColor3('ambientColor', this.ambientOverride.get(mat) ?? this.env.ambientColor);
     mat.setColor3('fogColor', this.env.fogColor);
     mat.setFloat('fogDensity', this.env.fogDensity);
@@ -504,5 +530,6 @@ export class RetroMaterials {
     for (const m of this.materials) m.dispose();
     this.materials.clear();
     this.ambientOverride.clear();
+    this.keyOverride.clear();
   }
 }

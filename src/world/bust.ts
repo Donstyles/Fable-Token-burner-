@@ -9,10 +9,11 @@ import { TargetCamera } from '@babylonjs/core/Cameras/targetCamera';
 import { Constants } from '@babylonjs/core/Engines/constants';
 import { Layer } from '@babylonjs/core/Layers/layer';
 import { RenderTargetTexture } from '@babylonjs/core/Materials/Textures/renderTargetTexture';
-import { Color4 } from '@babylonjs/core/Maths/math.color';
+import { Color3, Color4 } from '@babylonjs/core/Maths/math.color';
 import { Matrix, Vector2, Vector3 } from '@babylonjs/core/Maths/math.vector';
 import type { Scene } from '@babylonjs/core/scene';
 import { isForcedLandscape, toAppPoint } from '../app/orientation';
+import type { RetroMaterials } from '../render/materials';
 import { type Character, DEFAULT_CHARACTER_FILL } from './character';
 
 const SIZE = 256;
@@ -23,10 +24,11 @@ const FAR = 40;
 const FRAMED_HEIGHT = 0.25;
 /** The eyes sit here, as a fraction of the model's height. */
 const EYE_LINE = 0.9;
-/** Faces read better lit than the street: the fill while they talk. */
-const TALK_FILL = 0.6;
-/** The flat dark umber behind the face, as MM6's portraits sat on a dark ground. */
-const GROUND = new Color4(0.2, 0.15, 0.1, 1);
+/** The near-black ground behind the face, as MM6's portraits sat on one. */
+const GROUND = new Color4(0.05, 0.04, 0.03, 1);
+/** The key: a hard warm light from the camera's upper left, as a painted portrait's. */
+const KEY_COLOR = new Color3(1.25, 1.1, 0.9);
+const KEY_FILL = 0.3;
 
 export interface PageRect {
   x: number;
@@ -44,6 +46,7 @@ export class Bust {
   constructor(
     private readonly scene: Scene,
     private readonly canvas: HTMLCanvasElement,
+    private readonly materials: Pick<RetroMaterials, 'setKeyLight'>,
   ) {
     this.camera = new TargetCamera('bust', Vector3.Zero(), scene, false);
     this.camera.minZ = NEAR;
@@ -68,9 +71,9 @@ export class Bust {
 
   /** Show this character's head; `place` says where on the page. */
   show(character: Character): void {
-    if (this.subject && this.subject !== character) this.subject.setFill(DEFAULT_CHARACTER_FILL);
+    if (this.subject && this.subject !== character) this.unlight(this.subject);
     this.subject = character;
-    character.setFill(TALK_FILL);
+    character.setFill(KEY_FILL);
     this.target.renderList = [...character.meshes];
     if (!this.scene.customRenderTargets.includes(this.target)) {
       this.scene.customRenderTargets.push(this.target);
@@ -126,10 +129,29 @@ export class Bust {
     this.camera.position.copyFrom(eyes.add(forward.scale(distance)));
     this.camera.position.y += height * 0.03;
     this.camera.setTarget(eyes);
+    // The key light: from the camera's upper left, down onto the face.
+    const toFace = eyes.subtract(this.camera.position).normalize();
+    const right = Vector3.Cross(Vector3.Up(), toFace).normalize();
+    const dir = toFace
+      .add(right.scale(-0.7))
+      .add(new Vector3(0, -0.6, 0))
+      .normalize();
+    for (const m of s.meshes) {
+      const mat = m.material;
+      if (mat) this.materials.setKeyLight(mat as never, { direction: dir, color: KEY_COLOR });
+    }
+  }
+
+  private unlight(character: Character): void {
+    character.setFill(DEFAULT_CHARACTER_FILL);
+    for (const m of character.meshes) {
+      const mat = m.material;
+      if (mat) this.materials.setKeyLight(mat as never, null);
+    }
   }
 
   hide(): void {
-    if (this.subject) this.subject.setFill(DEFAULT_CHARACTER_FILL);
+    if (this.subject) this.unlight(this.subject);
     this.subject = null;
     this.target.renderList = [];
     const i = this.scene.customRenderTargets.indexOf(this.target);

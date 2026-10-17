@@ -6,12 +6,12 @@
 :root {
   --gold: #e2b84a;
   --gold-dark: #8a6a20;
-  --ink-yellow: #f0d060;
-  --ink-pale: #e8dcb0;
+  --ink-yellow: #f0d860;
+  --ink-pale: #f4f0e2;
   --ink-brown: #3a2608;
-  --ink-label: #e8d08a;
-  /* 13 UI pixels at the grid of pixel-text.ts; drawn slanted, roman and heavy. */
-  --serif-italic: italic 19.5px/1.2 'Tinos', Georgia, serif;
+  --ink-label: #f4f0e2;
+  /* 14 UI pixels at the grid of pixel-text.ts, as MM6's body: white italic, a hard shadow. */
+  --serif-italic: italic 21px/1.2 'Tinos', Georgia, serif;
 }
 /* Every painted surface and every bitmap glyph is shown pixel for pixel. */
 .ui-modal,
@@ -38,30 +38,32 @@
   white-space: nowrap;
 }
 .ui-shelf {
-  /* The book shelf: leather spines standing on the HUD's right end, gold glyphs on them,
-     and a round gold button for rest. */
+  /* The book shelf: leather spines in an alcove at the HUD's right end, gold emblems on
+     them, and the domed gold rest button standing on the marble beside it. */
   position: absolute;
-  right: calc(var(--sar) + 14px);
-  bottom: calc(var(--sab) + 10px);
+  right: calc(var(--sar) + 10px);
+  bottom: calc(var(--sab) + 4.5px);
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+  z-index: 30;
+}
+.ui-shelf-books {
   display: flex;
   align-items: flex-end;
   gap: 3px;
-  z-index: 30;
-  padding: 18px 6px 4.5px 6px;
+  padding: 15px 6px 4.5px 6px;
   /* The alcove: a dark recess under an arched marble lintel (paint.ts). */
   background: var(--paint) center / 100% 100% no-repeat;
   image-rendering: pixelated;
-  border: 0;
-  border-radius: 0;
-  box-shadow: none;
 }
 .ui-shelf.hidden {
   display: none;
 }
 .ui-shelf-btn {
   position: relative;
-  width: 44px;
-  min-height: 80px;
+  width: 40px;
+  min-height: 72px;
   padding: 4px 2px 2px;
   display: flex;
   flex-direction: column;
@@ -87,18 +89,22 @@
   stroke-linecap: round;
   stroke-linejoin: round;
 }
-/* The emblems gilded: gold over the same strokes a pixel down in dark bronze. */
+/* The emblems gilded in relief: gold over the same strokes a pixel down in dark bronze, a
+   thinner cream edge above. */
 .ui-shelf-btn svg .gilt {
-  stroke: #d8b858;
+  stroke: #c8a040;
 }
 .ui-shelf-btn svg .shade {
   stroke: #2a1a06;
 }
+.ui-shelf-btn svg .sheen {
+  stroke: #fff0b0;
+  stroke-width: 0.8;
+}
 .ui-shelf-btn.rest {
-  width: 46px;
-  min-height: 56px;
-  margin-left: 6px;
-  margin-bottom: 12px;
+  width: 42px;
+  min-height: 52px;
+  margin: 0 0 12px;
   padding: 4px;
   color: #3a2608;
 }
@@ -147,16 +153,16 @@
 .ui-btn.primary {
   color: #1a1004;
 }
-/* A button too wide for an oval is a dark slab with cream lettering (paint.ts). */
+/* A button too wide for an oval is MM6's dark green slab with white shadowed lettering. */
 .ui-btn.slab {
   border-radius: 0;
-  color: #f0e6c8;
+  color: #f4f0e2;
 }
 .ui-btn.slab:active {
-  color: #d8ccaa;
+  color: #ffffff;
 }
 .ui-btn.slab .ui-btn-note {
-  color: #c8b890;
+  color: #c8d0b8;
 }
 .ui-btn-note {
   font:
@@ -167,8 +173,9 @@
 }
 
 .ui-modal {
+  /* The panel replaces the view only; the portrait band stays, as MM6 kept its rail. */
   position: absolute;
-  inset: 0;
+  inset: 0 0 calc(var(--sab) + 100px);
   z-index: 60;
   padding: var(--sat) var(--sar) var(--sab) var(--sal);
   background: rgba(0, 0, 0, 0.5);
@@ -183,6 +190,7 @@
   flex-direction: column;
   /* A marble frame nine pixels wide round the slate (paint.ts `marble-frame`, painted at the
      panel's size), the slate recessed into it with a bevel. */
+  margin: 3px 6px 0;
   padding: 13.5px;
   background:
     var(--paint) center / 100% 100% no-repeat,
@@ -197,9 +205,9 @@
   align-items: center;
   gap: 8px;
   padding: 4px 8px;
-  min-height: 42px;
-  border-bottom: 1.5px solid rgba(16, 16, 12, 0.85);
-  box-shadow: 0 1.5px 0 rgba(160, 160, 150, 0.6);
+  min-height: 40px;
+  border-bottom: 1.5px solid rgba(0, 0, 0, 0.85);
+  box-shadow: 0 1.5px 0 rgba(250, 250, 240, 0.55);
 }
 .ui-title {
   /* MM6's titles are the italic in yellow, a size up. */
@@ -258,8 +266,9 @@
   filter: brightness(0.9);
 }
 .ui-tab.active {
+  /* The member in hand: the brighter gold, the ink still dark. */
   background-image: var(--btn-down);
-  color: #fff0b0;
+  color: #2a1a04;
 }
 .ui-tab.down {
   text-decoration: line-through;
@@ -276,12 +285,16 @@
   gap: 3px;
   padding: 6px 8px;
   background:
-    linear-gradient(rgba(0, 0, 0, 0.18), rgba(0, 0, 0, 0.18)),
+    linear-gradient(rgba(0, 0, 0, 0.26), rgba(0, 0, 0, 0.26)),
     var(--stone-dark) 0 0 / var(--stone-dark-size);
   border: 0;
+  /* MM6's boxes cut into the slate: a dark lip two pixels deep above and left, a pale one
+     below and right, a mid rim outside. */
   box-shadow:
-    inset 1.5px 1.5px 0 rgba(16, 16, 12, 0.85),
-    inset -1.5px -1.5px 0 rgba(160, 160, 150, 0.8);
+    inset 1.5px 1.5px 0 rgba(0, 0, 0, 0.85),
+    inset 3px 3px 0 rgba(0, 0, 0, 0.35),
+    inset -1.5px -1.5px 0 rgba(250, 250, 240, 0.75),
+    0 0 0 1.5px rgba(110, 110, 104, 0.7);
   touch-action: pan-y;
 }
 .ui-col.narrow {
@@ -301,7 +314,7 @@
 }
 .ui-v {
   font: var(--serif-italic);
-  color: var(--ink-yellow);
+  color: var(--ink-pale);
   white-space: pre;
 }
 .ui-kv.good .ui-v,
@@ -315,12 +328,10 @@
 .ui-h {
   margin: 4px 0 2px;
   font:
-    italic 21px/1.1 'Tinos',
+    italic 22.5px/1.1 'Tinos',
     Georgia,
     serif;
   color: var(--ink-yellow);
-  border-bottom: 1.5px solid rgba(16, 16, 12, 0.85);
-  box-shadow: 0 1.5px 0 rgba(160, 160, 150, 0.5);
 }
 .ui-note {
   margin: 2px 0;
@@ -413,7 +424,7 @@
   padding: 2px 0;
 }
 .sheet-bonus {
-  color: var(--ink-yellow);
+  color: var(--ink-pale);
   min-width: 2.5em;
   text-align: right;
 }
@@ -432,17 +443,66 @@
   padding: 2px 8px;
 }
 
-/* Parchment books: the spellbook, the quest log and the rest screen read on paper. */
+/* Parchment: the spellbook and the quest log are open books (paint.ts `book`), the title and
+   tabs on the leather band along the cover's top, the two columns its pages; the rest screen
+   reads on a sheet in the marble frame. */
 .screen-spells .ui-panel,
 .screen-quests .ui-panel,
+.screen-map .ui-panel {
+  padding: 4.5px 30px 22px 10.5px;
+  background: var(--paint) center / 100% 100% no-repeat;
+  box-shadow: none;
+  color: #3a2a10;
+}
+.screen-spells .ui-head,
+.screen-quests .ui-head,
+.screen-map .ui-head {
+  min-height: 40.5px;
+  border-bottom: 0;
+  box-shadow: none;
+}
+.screen-spells .ui-title,
+.screen-quests .ui-title,
+.screen-map .ui-title {
+  color: #f0e0b0;
+}
+.screen-spells .ui-body,
+.screen-quests .ui-body,
+.screen-map .ui-body {
+  gap: 24px;
+  padding: 10px 14px 8px 12px;
+}
+.screen-spells .ui-col,
+.screen-quests .ui-col,
+.screen-map .ui-col {
+  background: transparent;
+  box-shadow: none;
+}
+.screen-map .ui-panel {
+  color: #3a2a10;
+}
 .screen-rest .ui-panel {
   background:
     var(--paint) center / 100% 100% no-repeat,
     var(--parchment) 0 0 / var(--parchment-size);
   color: #3a2a10;
 }
-.screen-spells .ui-col,
-.screen-quests .ui-col,
+.ui-banner {
+  --engrave: 1;
+  margin: 2px 0 6px;
+  padding: 6px 24px 7px;
+  text-align: center;
+  font:
+    24px/1.1 'Pirata One',
+    'Tinos',
+    Georgia,
+    serif;
+  color: #2a2418;
+  border: 0;
+  box-shadow: none;
+  background: var(--paint) center / 100% 100% no-repeat;
+  image-rendering: pixelated;
+}
 .screen-rest .ui-col {
   background: rgba(255, 250, 235, 0.25);
   box-shadow:
@@ -456,7 +516,8 @@
 .screen-quests .ui-note,
 .screen-rest .ui-note,
 .screen-spells .ui-row .sub,
-.screen-quests .ui-row .sub {
+.screen-quests .ui-row .sub,
+.screen-rest .ui-row .sub {
   color: #4a3414;
 }
 .screen-spells .ui-v,
@@ -465,8 +526,6 @@
 .screen-spells .ui-h,
 .screen-quests .ui-h,
 .screen-rest .ui-h,
-.screen-spells .ui-title,
-.screen-quests .ui-title,
 .screen-rest .ui-title {
   color: #5a2a0a;
   text-shadow: none;

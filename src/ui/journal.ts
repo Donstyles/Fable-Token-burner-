@@ -9,7 +9,11 @@ import { type MapView, mapView, type QuestRow, questRows } from './journal-model
 
 function questList(title: string, rows: QuestRow[], empty: string): HTMLElement {
   const col = el('div', 'ui-col scroll');
-  col.appendChild(heading(title));
+  const head = heading(title);
+  // A carved stone banner across the page, as MM6's "Current Quests".
+  head.classList.add('ui-banner');
+  head.dataset['paint'] = 'banner';
+  col.appendChild(head);
   if (rows.length === 0) col.appendChild(note(empty));
   for (const q of rows) {
     const row = el('div', 'ui-row');
@@ -42,7 +46,8 @@ function drawMap(canvas: HTMLCanvasElement, v: MapView): void {
   if (!g) return;
   const { scale, offsetX, offsetY } = v.transform;
   g.clearRect(0, 0, canvas.width, canvas.height);
-  g.fillStyle = '#5a4a2a';
+  // Ink on the page: the walked cells in sepia, the party in dark red.
+  g.fillStyle = '#8a6a3a';
   for (const [cx, cy] of v.cells) {
     g.fillRect(
       offsetX + cx * scale,
@@ -58,7 +63,7 @@ function drawMap(canvas: HTMLCanvasElement, v: MapView): void {
   // Babylon's heading: forward is (sin yaw, cos yaw) on the ground, z down the canvas.
   const dx = Math.sin(v.party.yawDeg * DEG);
   const dy = Math.cos(v.party.yawDeg * DEG);
-  g.fillStyle = '#f0c050';
+  g.fillStyle = '#8a2a1a';
   g.beginPath();
   g.moveTo(px + dx * r, py + dy * r);
   g.lineTo(px - dy * r * 0.6 - dx * r * 0.6, py + dx * r * 0.6 - dy * r * 0.6);
@@ -83,6 +88,6 @@ export function renderMap(ctx: ScreenContext): void {
   canvas.style.height = `${MAP_HEIGHT}px`;
   canvas.style.maxWidth = '100%';
   drawMap(canvas, v);
-  col.append(canvas, note(`${v.levelId}: ${v.visited} of ${v.total} cells walked.`));
+  col.append(canvas);
   frame.body.replaceChildren(col);
 }

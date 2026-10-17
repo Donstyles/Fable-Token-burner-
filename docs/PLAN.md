@@ -471,9 +471,17 @@ waterfalls and deserts, walkable end to end.
     the hand-painted feel at the original's level. **Round 1 done
     2026-10-17** (DESIGN 16.12): scored 2.5 to 3 of 10; the gold ramp, the
     marble, the slots, the cells, the tubes, the shelf, the slabs, the
-    bevels, the talk panel and the sky repainted. Round 2 next; the world
-    (ground tiles, trees, building lines), the books and the item sprites
-    remain.
+    bevels, the talk panel and the sky repainted. **Round 2 done 2026-10-17**: still 3 of
+    10; stone edges in place of gold, soft marble, stone ovals, navy tube
+    wells, dark oak and a key light on the talk panel, open books, the
+    panel above the band. **Round 3 done 2026-10-17**: 3.5, 3,
+    3; three-pass marble and slate, chipped stone ovals, volute capitals,
+    an architrave frame, books with page edges and a watermark, a painted
+    face, level cirrus, painted world textures (DESIGN 16.13). **Round 4 done 2026-10-17**: 3, 3, 3; the loop
+    is paused for the owner's decision (DESIGN 16.12): what remains is
+    hand-made art (portraits, item sprites, a paper doll, embossed
+    emblems, a cut bitmap face, tree billboards, baked building faces)
+    and fixed non-scrolling layouts.
 18. Remaining, in order: lasting buffs and Jump; weather states (rain, a
     sandstorm); music; the smith's hammer and the temple bell.
 

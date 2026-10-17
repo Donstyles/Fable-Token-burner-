@@ -12,14 +12,9 @@
   max-height: calc(100% - var(--sat) - var(--sab) - 150px);
   z-index: 40;
   display: flex;
-  /* A gold border three pixels wide, bevelled: lit above and left, in shade below and right. */
-  border: 4.5px solid #b08a30;
-  border-top-color: #d8b858;
-  border-left-color: #d8b858;
-  border-bottom-color: #7a5a18;
-  border-right-color: #7a5a18;
-  outline: 1.5px solid #2a1a06;
-  box-shadow: inset 0 0 0 1.5px #2a1a06;
+  /* A dark edge and a lit sliver inside it, as MM6's panel: no gold border. */
+  border: 1.5px solid #120a04;
+  box-shadow: inset 0 0 0 1.5px #5a3c22;
   color: var(--ink-pale);
   font: var(--serif-italic);
 }
@@ -32,14 +27,7 @@
   grid-template-rows: 124px auto;
   gap: 6px 10px;
   padding: 8px;
-  background:
-    repeating-linear-gradient(
-      180deg,
-      rgba(0, 0, 0, 0) 0 27px,
-      rgba(0, 0, 0, 0.4) 27px 28px,
-      rgba(255, 220, 160, 0.1) 28px 29px
-    ),
-    var(--wood) 0 0 / var(--wood-size);
+  background: var(--wood) 0 0 / var(--wood-size);
   image-rendering: pixelated;
   /* The window is a hole in the planks: the mask keeps everything but it. */
   -webkit-mask-image: linear-gradient(#000 0 0), linear-gradient(#000 0 0);
@@ -68,7 +56,7 @@
   grid-row: 1;
   width: 124px;
   height: 124px;
-  padding: 10.5px;
+  padding: 7.5px;
   background: var(--paint) center / 100% 100% no-repeat;
   image-rendering: pixelated;
 }
@@ -83,20 +71,17 @@
   grid-column: 1;
   grid-row: 2;
   align-self: start;
-  padding: 4.5px 9px 6px;
+  padding: 3px 0 0;
   text-align: center;
-  background: var(--paint) center / 100% 100% no-repeat;
-  image-rendering: pixelated;
 }
 .dlg-name {
-  /* Engraved in the brass: dark ink with a pale line under each stroke (pixel-text.ts). */
-  --engrave: 1;
+  /* The name in the cyan MM6 set its names in, on the wood. */
   margin: 0;
   font:
     italic 21px/1.1 'Tinos',
     Georgia,
     serif;
-  color: #3a2608;
+  color: #86d4e4;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -106,7 +91,7 @@
     italic 18px/1.2 'Tinos',
     Georgia,
     serif;
-  color: #1a3a8a;
+  color: var(--ink-yellow);
 }
 
 .dlg-side {
@@ -136,8 +121,6 @@
   flex-direction: column;
   gap: 1px;
   padding-top: 4px;
-  border-top: 1.5px solid rgba(0, 0, 0, 0.6);
-  box-shadow: inset 0 1.5px 0 rgba(255, 220, 160, 0.16);
 }
 .dlg-topic {
   appearance: none;
@@ -149,8 +132,7 @@
     italic 19.5px/1.2 'Tinos',
     Georgia,
     serif;
-  color: var(--ink-yellow);
-  text-shadow: 0 1px 0 #000;
+  color: var(--ink-pale);
   text-align: center;
   cursor: pointer;
 }
@@ -159,7 +141,7 @@
 }
 .dlg-topic:active,
 .dlg-topic.said {
-  color: #fff6c0;
+  color: var(--ink-yellow);
 }
 .dlg-foot {
   display: flex;

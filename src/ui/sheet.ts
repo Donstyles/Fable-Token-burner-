@@ -5,7 +5,7 @@
  */
 import type { SkillId } from '../game/skills';
 import type { ScreenContext } from './context';
-import { bar, button, el, heading, kv, memberTabs, note } from './dom';
+import { button, el, kv, memberTabs, note } from './dom';
 import { raise, raiseMessage, type SheetView, sheetView, signed } from './sheet-model';
 
 function identityColumn(v: SheetView): HTMLElement {
@@ -17,11 +17,7 @@ function identityColumn(v: SheetView): HTMLElement {
   );
   col.appendChild(head);
   col.appendChild(kv('Hit points', `${v.hp} / ${v.maxHp}`));
-  col.appendChild(bar(v.hp, v.maxHp, 'hp'));
-  if (v.hasSp) {
-    col.appendChild(kv('Spell points', `${v.sp} / ${v.maxSp}`));
-    col.appendChild(bar(v.sp, v.maxSp, 'sp'));
-  }
+  if (v.hasSp) col.appendChild(kv('Spell points', `${v.sp} / ${v.maxSp}`));
   col.appendChild(kv('Level', v.level));
   col.appendChild(kv('Experience', `${v.xp} / ${v.xpNext}`));
   col.appendChild(
@@ -37,7 +33,6 @@ function identityColumn(v: SheetView): HTMLElement {
 
 /** The fighting numbers, under the statistics as MM6's sheet set them. */
 function combatBlock(v: SheetView, col: HTMLElement): void {
-  col.appendChild(heading('Combat'));
   col.appendChild(kv('Armour class', v.armorClass));
   col.appendChild(kv('Attack', `${signed(v.attack)}  ${v.damage}`));
   if (v.rangedAttack !== null) {
@@ -48,7 +43,6 @@ function combatBlock(v: SheetView, col: HTMLElement): void {
 
 function statsColumn(v: SheetView): HTMLElement {
   const col = el('div', 'ui-col narrow');
-  col.appendChild(heading('Statistics'));
   const table = el('div', 'sheet-stats');
   for (const row of v.stats) {
     const label = el('span', 'ui-k', row.label);
@@ -67,7 +61,6 @@ function statsColumn(v: SheetView): HTMLElement {
 
 function skillsColumn(v: SheetView, onRaise: (id: SkillId) => void): HTMLElement {
   const col = el('div', 'ui-col');
-  col.appendChild(heading('Skills'));
   col.appendChild(kv('Skill points', v.skillPoints, 'sheet-points'));
   for (const group of v.skills) {
     col.appendChild(el('div', 'sheet-group', group.label));

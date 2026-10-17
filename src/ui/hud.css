@@ -17,14 +17,24 @@
   image-rendering: pixelated;
 }
 .hud-rail {
-  /* The gold rail along the band's top edge. */
+  /* The band's stone lip along its top edge. */
   position: absolute;
   left: 0;
   right: 0;
   top: 0;
-  height: 9px;
+  height: 4.5px;
   background: var(--paint) 0 0 / auto 100% repeat-x;
   image-rendering: pixelated;
+}
+.hud-shadow {
+  /* The band's shadow falling onto the view above it. */
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: -4.5px;
+  height: 4.5px;
+  background: linear-gradient(rgba(0, 0, 0, 0), rgba(0, 0, 0, 0.5));
+  pointer-events: none;
 }
 .hud-clock {
   position: absolute;
@@ -56,7 +66,7 @@
   justify-content: center;
   gap: 8px;
   height: 100px;
-  padding: 7.5px 250px 0 88px;
+  padding: 7.5px 300px 0 88px;
 }
 .hud-cell {
   position: relative;
@@ -64,7 +74,7 @@
   display: flex;
   align-items: flex-start;
   gap: 6px;
-  width: 138px;
+  width: 130px;
   padding: 3px 4px;
   background: var(--paint) center / 100% 100% no-repeat;
   image-rendering: pixelated;
@@ -78,7 +88,8 @@
   filter: brightness(0.85);
 }
 .hud-cell.selected {
-  box-shadow: inset 0 0 0 1.5px #f0d880;
+  /* The member in hand: the frame's wire turns cream (paint.ts `ring-active`). */
+  box-shadow: none;
 }
 .hud-cell.recovering .hud-cameo {
   filter: brightness(0.55);
@@ -95,9 +106,9 @@
 .hud-frame {
   position: relative;
   box-sizing: border-box;
-  width: 51px;
-  height: 54px;
-  padding: 7.5px;
+  width: 48px;
+  height: 57px;
+  padding: 9px 7.5px;
   background: var(--paint) center / 100% 100% no-repeat;
   image-rendering: pixelated;
 }
@@ -111,8 +122,8 @@
   justify-content: center;
 }
 .hud-cameo svg {
-  width: 25px;
-  height: 25px;
+  width: 24px;
+  height: 24px;
   /* Pixels, not anti-aliased strokes. */
   shape-rendering: crispEdges;
 }
@@ -157,7 +168,7 @@
   position: absolute;
   left: 1.5px;
   right: 1.5px;
-  bottom: 1.5px;
+  bottom: 4.5px;
   height: 0;
   background: var(--paint) center / 100% 100% no-repeat;
   image-rendering: pixelated;
