@@ -18,7 +18,7 @@ import type { ShaderMaterial } from '@babylonjs/core/Materials/shaderMaterial';
 import type { Scene } from '@babylonjs/core/scene';
 import type { PointLightDesc, RetroMaterials } from '../render/materials';
 import { ROLE } from '../../kernel/elements/roles';
-import { treeMesh } from '../../kernel/terrain/trees';
+import { TREE_KINDS, treeMesh } from '../../kernel/terrain/trees';
 import { Matrix, Quaternion } from '@babylonjs/core/Maths/math.vector';
 import {
   PhysicsShapeContainer,
@@ -81,7 +81,7 @@ export interface LevelSidecar {
     cloudAmount: number;
   };
   lod?: { chunk: number; distances: [number, number]; forestFar: number };
-  /** Trees as [kind (0 pine, 1 broadleaf), x, y, z, yaw, scale] in kernel space. */
+  /** Trees as [kind (an index into TREE_KINDS), x, y, z, yaw, scale] in kernel space. */
   trees?: [number, number, number, number, number, number][];
   spawn: { position: V3; yawDeg: number };
   points: { name: string; position: V3; kind: string }[];
@@ -350,7 +350,7 @@ export async function loadLevel(
     );
     const regions = 4;
     const regionSize = (2 * half) / regions;
-    const kinds = ['pine', 'broadleaf'] as const;
+    const kinds = TREE_KINDS;
     const buckets = new Map<string, Matrix[]>();
     const trunkRoot = new TransformNode('level-trunks', scene);
     trunkRoot.parent = root;

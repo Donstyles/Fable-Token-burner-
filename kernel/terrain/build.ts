@@ -166,6 +166,16 @@ function buildValleyLevel(spec: TerrainSpec): TerrainLevel {
   const chunks = terrainChunks(valley, spec.chunkCells);
   const trees = placeTrees(valley, spec.forest);
   const forest = forestMeshes(trees);
+  // The navmesh takes only the trunks near the road and the gorge, where monsters roam:
+  // recast's solo builder drops polygons at the pass once the whole forest's trunks go in
+  // (a combination effect, not a tree on the road), and far trunks are physics-only.
+  const navTrunks = forestMeshes(
+    trees.filter(
+      (t) =>
+        valley.road.nearest(t.x, t.z).distance < 150 ||
+        valley.ravine.nearest(t.x, t.z).distance < 150,
+    ),
+  ).collider;
   const town = buildTown({
     centre: valley.town.centre,
     y: valley.town.y,
@@ -214,7 +224,7 @@ function buildValleyLevel(spec: TerrainSpec): TerrainLevel {
     town,
     forest: forest.visual,
     trees,
-    collider: navCollider(valley, forest.collider, solids),
+    collider: navCollider(valley, navTrunks, solids),
     solids,
     lights: [
       { position: cave.light, color: [1, 0.62, 0.3], range: 10, intensity: 2.5, kind: 'glow' },

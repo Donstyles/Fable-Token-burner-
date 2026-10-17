@@ -251,7 +251,9 @@ export class LevelWater {
       // Lighting stays on (see normalsLight); one light is enough and specular is black.
       mat.disableLighting = false;
       mat.maxSimultaneousLights = 1;
-      mat.backFaceCulling = false;
+      // Never drawn from below: a pool's underside would show as a sheet above a fall's lip
+      // from the terrace beneath; eyes under the surface get the underwater tint instead.
+      mat.backFaceCulling = true;
       mat.specularColor = Color3.Black();
       // No vertex waves: see WaterLook. Motion is the two ripple layers (the second at
       // another scale and speed, so the drift does not read as one sliding sheet).

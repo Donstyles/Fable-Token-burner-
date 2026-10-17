@@ -19,6 +19,7 @@ import { bakeVertexLight } from '../kernel/light/bake';
 import { buildNavMesh, checkReachability } from '../kernel/nav/navmesh';
 import { buildLevelGlb } from '../kernel/export/glb';
 import { buildTerrainLevel, type TerrainSpec } from '../kernel/terrain/build';
+import { TREE_KINDS } from '../kernel/terrain/trees';
 import { existsSync } from 'node:fs';
 
 export interface LevelBuildOptions {
@@ -74,6 +75,8 @@ async function buildTerrain(id: string, validate: boolean): Promise<boolean> {
     agentRadius: 0.45,
     agentMaxClimb: 1.8,
     agentMaxSlopeDeg: 48,
+    // 192 m tiles: a solo mesh overflows its 16-bit vertex indices on a region this size.
+    tileSize: 128,
   });
   const t2 = performance.now();
   const report = checkReachability(
@@ -110,7 +113,7 @@ async function buildTerrain(id: string, validate: boolean): Promise<boolean> {
     environment: level.environment,
     lod: { chunk: chunkMetres, distances: [chunkMetres * 2.2, chunkMetres * 5], forestFar: 700 },
     trees: level.trees.map((t) => [
-      t.kind === 'pine' ? 0 : 1,
+      TREE_KINDS.indexOf(t.kind),
       round(t.x),
       round(t.y),
       round(t.z),

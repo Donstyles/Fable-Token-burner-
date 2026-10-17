@@ -667,14 +667,17 @@ generated from a seed by `kernel/terrain/` and compiled by
   faces), grass as the remainder. The material blends four Poly Haven
   textures (`leafy_grass`, `dirt_floor`, `rocky_terrain`, `snow_02`) by
   those weights, UVs in world metres from the shader.
-- Forests: a jittered 8 m grid over a mask (slope under 30°, between the
-  floor and 205 m, clear of road, river and ravine, noise over 0.1), half
-  the candidates kept; pines above 110 m and a third of the rest, broadleaf
-  otherwise. Trees are generated low-polygon models (about 110 triangles: a
-  lathed trunk with `pine_bark`, cones or an ellipsoid with
-  `forest_leaves_02`) carried in the sidecar as instances and drawn as thin
-  instances in sixteen regions, switched off beyond 700 m; a cylinder per
-  trunk in one static physics body.
+- Forests: a jittered 6 m grid over a mask (slope under 30°, between the
+  floor and 205 m, clear of road, river and ravine, noise over 0.1), 72 %
+  of the candidates kept (about 5,500 trees); conifers above 110 m and a
+  third of the rest, broadleaf otherwise. Four generated low-polygon
+  models (about 110 to 200 triangles each: a lathed trunk with
+  `pine_bark`; a three-tier pine, a five-tier spruce, a broadleaf with an
+  ellipsoid crown and a broad flat-topped oak with `forest_leaves_02`),
+  picked at random within each class, varied by yaw and scale, carried in
+  the sidecar as instances and drawn as thin instances in sixteen regions,
+  switched off beyond 700 m; a cylinder per trunk in one static physics
+  body.
 - Chunks: 32 cells per side, three detail levels (every vertex, every
   second, every fourth) with 6 m skirts so cracks between levels never show
   the sky; the loader enables one level per chunk by distance (2.2 and 5
@@ -743,10 +746,12 @@ generated from a seed by `kernel/terrain/` and compiled by
   parabolically to 75 m out) whose floor climbs 0.15 m per metre toward
   the head. A brook runs down its middle in terraces 60 m long
   (`kernel/terrain/stream.ts`): each terrace is a level pool 7 m wide in a
-  trough cut 2.5 m under the water, the water at the height of the banks
-  at the terrace's foot, so it spills over the lip there, and sitting ever
-  deeper below the banks toward its head, where the fall from the terrace
-  above lands. A
+  trough cut 2.5 m under the water (shallowing to a 0.5 m sill at the
+  lip, so nothing shows under the water from the terrace below), the water
+  at the height of the banks at the terrace's foot, so it spills over the
+  lip there, and sitting ever deeper below the banks toward its head, where
+  the fall from the terrace above lands. Water surfaces are never drawn
+  from below. A
   waterfall sheet (Phase 3's ribbon, shared with the dungeons through
   `kernel/elements/waterfall.ts`) joins each terrace to the one below,
   about 9 m high, and the lowest drops 5 m into a plunge pool 20 m across
@@ -1171,6 +1176,20 @@ Phase 6 content comes; creatures per region.
   work: the brook reads as a trench, the cave knoll as a bunker, the
   village walls as plain boxes, the scree smear on gorge walls, salmon
   tint on paths under the palette filter, inventory label truncation.
+- 2026-10-17 – **Last pass before the owner looks.** The valley is the
+  dev build's default level. The backdrop ring was wound inside out (only
+  its back faces drew) and now opens onto the desert at the pass. Four
+  tree kinds (pine, spruce, broadleaf, oak) at 6 m spacing: 5,900 trees.
+  The full forest's trunks in the navmesh made recast drop the road's
+  polygons at the pass, a combination effect no single tree explains; the
+  navmesh now takes only trunks within 150 m of the road or the gorge,
+  physics keeps them all, and the build's reachability check guards it.
+  The river ribbon is narrower than its bed; pools have a sill at the lip
+  and water is never drawn from below. Not done: Meshy trees (none of the
+  900 credits spent; twenty low-poly trees at about 15 credits each would
+  have been the better call), MM6's wooden HUD frame and parchment
+  screens (the books are plain dark panels), the brook's trench look, the
+  cave knoll's bunker look.
 - 2026-10-15 – **Owner's look tuning becomes the default** (sent from the
   dev panel after playing the water build, "looks moody"): posterize filter
   on at 5 levels with dither 0.45 (cell 2), bloom off, vignette 0.6, contrast

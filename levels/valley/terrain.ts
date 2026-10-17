@@ -10,7 +10,7 @@ const spec: TerrainSpec = {
   width: 1600,
   cell: 5,
   chunkCells: 32,
-  forest: { spacing: 8, density: 0.55, pineAbove: 110 },
+  forest: { spacing: 6, density: 0.72, pineAbove: 110 },
 };
 
 export default spec;

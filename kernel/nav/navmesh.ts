@@ -5,7 +5,7 @@ import {
   init,
   type NavMesh,
 } from '@recast-navigation/core';
-import { generateSoloNavMesh } from '@recast-navigation/generators';
+import { generateSoloNavMesh, generateTiledNavMesh } from '@recast-navigation/generators';
 import { v3, type Vec3 } from '../core/math';
 import type { MeshData } from '../core/mesh';
 
@@ -20,6 +20,14 @@ export interface NavOptions {
   cellHeight?: number;
   agentHeight?: number;
   agentRadius?: number;
+  /**
+   * Tile side in cells. A solo mesh keeps its polygon vertices in 16-bit indices, so a
+   * region kilometres wide with thousands of trunks overflows it and the last-built corner
+   * (the pass, at the west edge) silently loses its polygons; tiles keep each count small.
+   */
+  tileSize?: number;
+  /** Smallest walkable island kept, m²; trunk tops and pebbles below it are dropped. */
+  minRegionArea?: number;
   /** Highest ledge the agent steps over. */
   agentMaxClimb?: number;
   agentMaxSlopeDeg?: number;
@@ -46,7 +54,7 @@ export async function buildNavMesh(collider: MeshData, o: NavOptions = {}): Prom
   // ledge filter depending on where the grid happens to fall; 0.1 m keeps them whole.
   const cs = o.cellSize ?? 0.1;
   const ch = o.cellHeight ?? 0.05;
-  const result = generateSoloNavMesh(collider.positions, collider.indices, {
+  const config = {
     cs,
     ch,
     walkableSlopeAngle: o.agentMaxSlopeDeg ?? 50,
@@ -55,12 +63,18 @@ export async function buildNavMesh(collider: MeshData, o: NavOptions = {}): Prom
     walkableRadius: Math.ceil((o.agentRadius ?? 0.35) / cs),
     maxEdgeLen: Math.round(12 / cs),
     maxSimplificationError: 1.3,
-    minRegionArea: Math.round(0.5 / (cs * cs)),
+    minRegionArea: Math.round((o.minRegionArea ?? 0.5) / (cs * cs)),
     mergeRegionArea: Math.round(2 / (cs * cs)),
     maxVertsPerPoly: 6,
     detailSampleDist: 6,
     detailSampleMaxError: 1,
-  });
+  };
+  const result = o.tileSize
+    ? generateTiledNavMesh(collider.positions, collider.indices, {
+        ...config,
+        tileSize: o.tileSize,
+      })
+    : generateSoloNavMesh(collider.positions, collider.indices, config);
   if (!result.success) throw new Error(`navmesh generation failed: ${result.error}`);
   const [positions, indices] = getNavMeshPositionsAndIndices(result.navMesh);
   return {

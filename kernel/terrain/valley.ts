@@ -166,8 +166,12 @@ export function generateValley(spec: ValleySpec): ValleyResult {
       const u = Math.max(0, r.distance - 13) / rw;
       h = Math.min(h, bottom + 75 * u * u);
       const t = terraceAt(r.along);
-      // Deep enough that the surface between 5 m vertices never rises through the water.
-      if (t && r.distance < 7) h = Math.min(h, t.y - 2.5);
+      // Deep enough that the surface between 5 m vertices never rises through the water,
+      // shallowing to a sill at the lip so nothing can be seen under the water from below.
+      if (t && r.distance < 7) {
+        const depth = 0.5 + 2 * smoothstep(0, 12, r.along - t.from);
+        h = Math.min(h, t.y - depth);
+      }
       const dp = Math.hypot(x - poolCentre[0], z - poolCentre[1]);
       if (dp < POOL_R) h = Math.min(h, poolY - 1.6 + 1.6 * (dp / POOL_R) * (dp / POOL_R));
     }
@@ -294,7 +298,8 @@ export function generateValley(spec: ValleySpec): ValleyResult {
     splat,
     forest,
     river,
-    riverWidth: 2 * RIVER_BED_HALF * 0.85,
+    // Narrower than the bed, so the ribbon's edge meets the bank under the water line.
+    riverWidth: 2 * RIVER_BED_HALF * 0.72,
     waterLevel: WATER_LEVEL,
     road,
     roadWidth: ROAD_WIDTH,

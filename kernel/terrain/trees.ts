@@ -1,13 +1,16 @@
 /**
  * Forests (DESIGN.md 15): low-polygon trees in the late-nineties manner, a textured trunk
  * and a solid textured canopy, placed on the valley's forest mask with a jittered grid.
- * Two kinds: pines above the broadleaf line, broadleaf below.
+ * Four kinds: pines and spruces above the broadleaf line, broadleaf and oak below, with
+ * conifers mixed in lower down.
  */
 import { ROLE } from '../elements/roles';
 import type { MeshData } from '../core/mesh';
 import type { ValleyResult } from './valley';
 
-export type TreeKind = 'pine' | 'broadleaf';
+/** Kinds in sidecar order: a tree's kind travels as its index here. */
+export const TREE_KINDS = ['pine', 'broadleaf', 'spruce', 'oak'] as const;
+export type TreeKind = (typeof TREE_KINDS)[number];
 
 export interface TreeInstance {
   kind: TreeKind;
@@ -61,7 +64,14 @@ export function placeTrees(v: ValleyResult, o: ForestOptions = {}): TreeInstance
       if (v.river.nearest(jx, jz).distance < v.riverWidth / 2 + 8) continue;
       if (Math.hypot(jx - v.town.centre[0], jz - v.town.centre[1]) < v.town.radius + 12) continue;
       const y = hf.sample(jx, jz);
-      const kind: TreeKind = y > pineAbove || rng() < 0.3 ? 'pine' : 'broadleaf';
+      const conifer = y > pineAbove || rng() < 0.3;
+      const kind: TreeKind = conifer
+        ? rng() < 0.5
+          ? 'pine'
+          : 'spruce'
+        : rng() < 0.6
+          ? 'broadleaf'
+          : 'oak';
       trees.push({ kind, x: jx, y, z: jz, yaw: rng() * Math.PI * 2, scale: 0.8 + rng() * 0.5 });
     }
   }
@@ -124,6 +134,65 @@ function lathe(
 /** Tree geometry at unit scale, trunk base at the origin. */
 export function treeMesh(kind: TreeKind): MeshData {
   const b = newBuilder();
+  if (kind === 'spruce') {
+    // Tall and narrow: five short tiers up a slim trunk.
+    lathe(
+      b,
+      [
+        { y: 0, r: 0.28 },
+        { y: 3, r: 0.18 },
+        { y: 6, r: 0.08 },
+      ],
+      6,
+      ROLE.bark,
+      1,
+    );
+    for (let i = 0; i < 5; i++) {
+      const y0 = 1.2 + i * 1.7;
+      const r = 1.9 - i * 0.3;
+      lathe(
+        b,
+        [
+          { y: y0, r: 0.05 },
+          { y: y0 + 0.05, r },
+          { y: y0 + 2.4, r: 0.05 },
+        ],
+        6,
+        ROLE.leaves,
+        3,
+      );
+    }
+    return b;
+  }
+  if (kind === 'oak') {
+    // Broad and low: a thick trunk under a wide flat-topped crown.
+    lathe(
+      b,
+      [
+        { y: 0, r: 0.55 },
+        { y: 1.8, r: 0.38 },
+        { y: 3.2, r: 0.22 },
+      ],
+      7,
+      ROLE.bark,
+      1,
+    );
+    lathe(
+      b,
+      [
+        { y: 2.2, r: 0.05 },
+        { y: 2.9, r: 2.6 },
+        { y: 4.2, r: 3.8 },
+        { y: 5.8, r: 3.4 },
+        { y: 6.8, r: 1.6 },
+        { y: 7.2, r: 0.05 },
+      ],
+      9,
+      ROLE.leaves,
+      4,
+    );
+    return b;
+  }
   if (kind === 'pine') {
     lathe(
       b,
@@ -185,7 +254,10 @@ export function treeMesh(kind: TreeKind): MeshData {
 
 /** All trees as one mesh, plus their trunks alone for the collider. */
 export function forestMeshes(trees: TreeInstance[]): { visual: MeshData; collider: MeshData } {
-  const proto = { pine: treeMesh('pine'), broadleaf: treeMesh('broadleaf') };
+  const proto = Object.fromEntries(TREE_KINDS.map((k) => [k, treeMesh(k)])) as Record<
+    TreeKind,
+    MeshData
+  >;
   const visual = newBuilder();
   const collider = newBuilder();
   const place = (into: Builder, mesh: MeshData, t: TreeInstance, onlyRole?: number): void => {
