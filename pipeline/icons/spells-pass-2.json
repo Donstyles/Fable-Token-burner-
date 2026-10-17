@@ -1,0 +1,48 @@
+[
+  {
+    "id": "protection-from-fire",
+    "subject": "A slim soldier kneeling on one knee at the lower right, seen from the side, in a coif and hauberk of pale silver-grey mail under a sleeveless off-white linen tabard, with a brown leather belt and boots, holding a long kite shield up at a slant above his head toward the upper left, where a burst of white-hot yellow fire with orange and deep-red tongues breaks against the shield and bathes him in warm orange light."
+  },
+  {
+    "id": "fire-bolt",
+    "aspect": "16:9",
+    "subject": "A single bolt of fire shaped like a jagged zig-zag of lightning, flying from the upper left to the lower right across the whole picture and out past both sides, its core white-hot pale yellow, its edges flickering orange and deep red, with a soft yellow glow along its length."
+  },
+  {
+    "id": "sparks",
+    "subject": "A burst of electric sparks filling the picture: a white-hot star of light at the centre in a soft pale-cyan glow, and a dozen thick, jagged forks of cyan lightning with darker steel-blue edges shooting out in every direction to the edges of the picture, each fork ending in a small bright white spark, with a few loose sparks scattered between them."
+  },
+  {
+    "id": "water-walk",
+    "subject": "A slim soldier walking from left to right, seen full-length from the side, in a coif and hauberk of pale silver-grey mail under an off-white linen tabard, with brown leather boots, striding on the surface of a flat band of rippling deep-blue water with pale-blue and white wave crests that runs across the whole width of the picture under his feet, the figure washed in cool blue-grey light; nothing under him but that band of water, no shore, no ground."
+  },
+  {
+    "id": "stun",
+    "subject": "A slim soldier standing full-length and reeling backwards, in a coif and hauberk of pale silver-grey mail under an off-white linen tabard, with rust-brown leather sleeves and boots and olive-green hose, his sword arm flung out so the blade slants across his body, the whole figure washed in warm orange-brown light and traced all round, a little way out from his silhouette, by one thin glowing line of white light."
+  },
+  {
+    "id": "bless",
+    "subject": "A wide, shallow, footed bowl of polished pale gold with lavender-tinted shadows, seen from a little above so its glowing rose-pink contents show as a bright oval, and rising out of it a tall, slender four-pointed star of white light with long thin rays and a soft white glow."
+  },
+  {
+    "id": "resurrection",
+    "subject": "A dead soldier in a coif and hauberk of pale silver-grey mail under an off-white linen tabard lying in an open, lidless coffin of reddish-brown wood, the coffin seen from above on a steep diagonal with its head end at the upper left and a small dark-red cross on its foot end, the soldier sitting up out of it into a soft white glow."
+  },
+  {
+    "id": "meditation",
+    "subject": "A head-and-shoulders bust seen straight from the front, perfectly symmetrical, of a calm middle-aged man with his eyes closed, a close-fitting coif of pale grey mail covering his head and falling over his shoulders, a brown leather strap on each shoulder, and on his brow a jewel set in a radiant eight-pointed gold star with short pale-blue rays of light, the whole bust in soft, pale sepia tones like tinted plaster."
+  },
+  {
+    "id": "cure-wounds",
+    "subject": "A wounded soldier half-lying on the ground, propped on one elbow at the left with his legs stretched out to the lower right, in a coif and hauberk of pale silver-grey mail under an off-white linen tabard, with tan leather gloves and boots, looking up at a round glass potion flask with a short neck floating at the upper right, about the size of his chest, full of glowing amber-peach liquid inside a large soft halo of white light."
+  },
+  {
+    "id": "cure-wounds-cut",
+    "removeBackground": true,
+    "subject": "A wounded soldier half-lying on the ground, propped on one elbow at the left with his legs stretched out to the lower right, in a coif and hauberk of pale silver-grey mail under an off-white linen tabard, with tan leather gloves and boots, looking up at a round glass potion flask with a short neck floating at the upper right, about the size of his chest, full of glowing amber-peach liquid inside a large soft halo of white light."
+  },
+  {
+    "id": "heal",
+    "subject": "A large heart-shaped glass flask with a short neck and a small stopper, filled with glowing pale-green liquid, a pale silver winged emblem on its front, bright white highlights on the glass, inside a large soft halo of white light."
+  }
+]

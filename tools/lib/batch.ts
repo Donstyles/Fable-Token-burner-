@@ -207,23 +207,39 @@ export interface IconSpec {
   model?: keyof typeof CREDITS.textToImage;
   /** The style text appended to the subject; ICON_STYLE unless a pass tries another. */
   style?: string;
+  /** The picture's shape: MM6's oval is about 4:3; a bolt across the page is wider. */
+  aspect?: '1:1' | '4:3' | '3:4' | '16:9' | '9:16';
+  /**
+   * Meshy's background removal (icon critic, pass 1: it strips halos and translucent magic).
+   * Off by default: the picture stands on a plain parchment ground that tools/lib/icon.ts
+   * keys out by colour, keeping the glow.
+   */
+  removeBackground?: boolean;
 }
 
 /**
- * The look of MM6's spell icons, from the 99 reference icons (pipeline/style.md "Spell
- * icons"): small late-1990s pre-rendered CG vignettes, steel-grey mail, tan cloth and aged
- * bronze under a soft key light, the magic as bright glowing light, isolated so the game
- * lays them on its own parchment oval.
+ * The look of MM6's spell icons (pipeline/style.md "Spell icons"; icon critic, pass 1, from
+ * the 99 reference icons): small 1998 pre-rendered models with plain textures, high-key and
+ * pale with warm mid-tone shadows, slim adults, the magic painted on as light with a white-hot
+ * core and a halo, on a plain parchment ground with no floor or shadow, so the halo survives
+ * the matte (tools/lib/icon.ts).
  */
 export const ICON_STYLE =
-  'A tiny spell icon for the spellbook of a 1998 fantasy PC role-playing game, made as a ' +
-  'late-1990s pre-rendered 3D computer-graphics illustration in the style of 3D Studio ' +
-  'renders of the time. Simple, chunky, readable shapes; smooth CG shading under a soft ' +
-  'studio light from the upper left; muted earthy colours, steel-grey chainmail, tan and ' +
-  'brown cloth, aged bronze, with the magic as bright glowing light. One subject, centred, ' +
-  'seen slightly from above and filling most of the frame, isolated on a plain flat white ' +
-  'background. No text, no letters, no border, no frame, no outline, no painterly ' +
-  'brushwork, not photorealistic, not modern.';
+  'A tiny spell icon from the spellbook of a 1998 fantasy PC role-playing game: a small ' +
+  'pre-rendered 3D picture made in 3D Studio, a low-polygon model with plain, simple texture ' +
+  'maps and smooth shading, with the magic painted over it as glowing 2D light. High-key and ' +
+  'pale: bright, even light from the front and above with strong ambient fill, so every ' +
+  'shadow stays a soft, warm mid-tone and nothing is black, and the lightest parts are almost ' +
+  'white. Slightly faded, warm colours: pale silver-grey mail, off-white linen, tan and ' +
+  'mid-brown leather, pale gold; the whole subject takes on the colour of its magic. People ' +
+  'are slim adults with realistic proportions, small heads and simple faces. Magic is light: ' +
+  'a white-hot core, saturated colour towards its edges, deeper colour at its tips, and a ' +
+  'soft halo that fades out into the background. One subject, centred, filling most of the ' +
+  'picture with a narrow margin all round, on a plain, flat, evenly lit, light greyish-beige ' +
+  'background the colour of old parchment, with no ground, floor, base, platform or cast ' +
+  'shadow. No text, no letters, no border, no frame, no outlines, no black, no cartoon or ' +
+  'chibi proportions, no fine detail such as single chainmail rings or skin pores, not ' +
+  'photorealistic, not modern.';
 
 export function iconItems(spec: IconSpec): BatchItem[] {
   const model = spec.model ?? 'nano-banana-2-lite';
@@ -235,8 +251,8 @@ export function iconItems(spec: IconSpec): BatchItem[] {
         prompt: `${spec.subject.trim()} ${spec.style ?? ICON_STYLE}`,
         subject: spec.subject.trim(),
         ai_model: model,
-        aspect_ratio: '4:3',
-        remove_background: true,
+        aspect_ratio: spec.aspect ?? '4:3',
+        remove_background: spec.removeBackground ?? false,
       },
       estimatedCredits: CREDITS.textToImage[model],
       estimateBasis: `documented (DESIGN.md 10.0), ${model}`,

@@ -83,14 +83,26 @@ describe('batches', () => {
     expect(formatBatch(batch)).toContain('awaiting approval');
   });
 
-  it('plans an icon as one background-removed picture on the cheapest model', () => {
+  it('plans an icon as one picture on its parchment ground on the cheapest model', () => {
     const items = iconItems({ id: 'fire-bolt', subject: 'a bolt of fire.' });
     expect(items).toHaveLength(1);
     expect(items[0]!.step).toBe('text-to-image');
     expect(items[0]!.params['ai_model']).toBe('nano-banana-2-lite');
-    expect(items[0]!.params['remove_background']).toBe(true);
+    expect(items[0]!.params['remove_background']).toBe(false);
+    expect(items[0]!.params['aspect_ratio']).toBe('4:3');
     expect(items[0]!.params['prompt']).toBe(`a bolt of fire. ${ICON_STYLE}`);
     expect(items[0]!.estimatedCredits).toBe(CREDITS.textToImage['nano-banana-2-lite']);
+  });
+
+  it('takes a wider picture and Meshy background removal when a spec asks', () => {
+    const [item] = iconItems({
+      id: 'fire-bolt',
+      subject: 'a bolt of fire.',
+      aspect: '16:9',
+      removeBackground: true,
+    });
+    expect(item!.params['aspect_ratio']).toBe('16:9');
+    expect(item!.params['remove_background']).toBe(true);
   });
 
   it('tells image-only assets from humanoids', () => {

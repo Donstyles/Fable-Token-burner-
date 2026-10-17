@@ -259,7 +259,8 @@ async function batch(args: string[]): Promise<void> {
     return;
   }
   if (sub === 'icons') {
-    // `batch icons <name> <specs.json> [--grant <purpose>]`: { id, subject, model?, style? }
+    // `batch icons <name> <specs.json> [--grant <purpose>]`: { id, subject, model?, style?,
+    // aspect?, removeBackground? }
     // each; one picture per icon, no 3D (owner, 2026-10-17: spell icons).
     const grantAt = rest.indexOf('--grant');
     const grant = grantAt >= 0 ? rest[grantAt + 1] : undefined;
@@ -275,6 +276,10 @@ async function batch(args: string[]): Promise<void> {
         fail(`bad icon spec ${JSON.stringify(spec)}`);
       if (spec.model !== undefined && !(spec.model in CREDITS.textToImage))
         fail(`${spec.id}: model must be one of ${Object.keys(CREDITS.textToImage).join(', ')}`);
+      if (spec.aspect !== undefined && !['1:1', '4:3', '3:4', '16:9', '9:16'].includes(spec.aspect))
+        fail(`${spec.id}: aspect must be 1:1, 4:3, 3:4, 16:9 or 9:16`);
+      if (spec.removeBackground !== undefined && typeof spec.removeBackground !== 'boolean')
+        fail(`${spec.id}: removeBackground must be true or false`);
       items.push(...iconItems(spec));
     }
     const b = makeBatch(await nextBatchNumber(), name, items);
