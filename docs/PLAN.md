@@ -513,8 +513,12 @@ waterfalls and deserts, walkable end to end.
     2026-10-17**: 5, 5, 5 (talk), 5 (world), no; values and layout are
     MM6's, the brushwork is not. **Round 11 done 2026-10-17** (DESIGN
     16.21): no light dither, blended clouds, continuous veins, cosine
-    pillars, a one-pixel pen, fractured-plate stone, hue-zoned crazing;
-    the round-11 scoring follows.
+    pillars, a one-pixel pen, fractured-plate stone, hue-zoned crazing.
+    **Round 11 scored 2026-10-17**: 6, 5, 6 (talk), 6 (world), no.
+    **Round 12** (DESIGN 16.22): MM6's spellbook spread with bookmarks,
+    spell icons dialled in under the owner's 100-credit grant (pass 1
+    27 credits, pass 2 33), the shell on one pixel grid; the world's
+    texels, wood, clouds, portrait and scree follow, then the scoring.
 18. Remaining, in order: lasting buffs and Jump; weather states (rain, a
     sandstorm); music; the smith's hammer and the temple bell.
 

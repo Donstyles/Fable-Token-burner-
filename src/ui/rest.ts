@@ -14,7 +14,7 @@ export function renderRest(ctx: ScreenContext): void {
     const v = restView(state);
     const left = el('div', 'ui-col narrow');
     const well = el('div', 'rest-well');
-    well.dataset['paint'] = 'plaque';
+    well.dataset['paint'] = 'plaque-rest';
     well.append(el('div', 'rest-clock', v.time), el('div', 'rest-date', v.date));
     left.append(
       well,

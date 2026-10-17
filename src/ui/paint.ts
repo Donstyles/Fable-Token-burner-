@@ -16,13 +16,11 @@ import {
   canvas,
   chroma,
   cloudy,
-  cracks,
   crazed2,
   dab,
   die,
   dither,
   mix,
-  plates,
   posterise,
   px,
   quantise,
@@ -30,11 +28,15 @@ import {
   ramp,
   speck,
   stroke,
-  tails,
   valueNoise,
-  veinWalk,
+  type VeinOptions,
+  noise1,
+  roseVeins,
+  stoneField,
+  veinField,
   wisps,
 } from '../render/brush';
+import { arc, fill, polyline, quad, type Pt } from '../render/pen';
 import { PX } from './pixel-text';
 
 /** The one gold of the shell, darkest to lightest. */
@@ -54,19 +56,35 @@ export const GOLD = {
  * stone with warm and cool drifts, dark veins, nothing near white; twelve tones.
  */
 
+/** One pass of veins over a marble: how many per pixel, how long, how deep. */
+interface VeinPass {
+  density: number;
+  length: [number, number];
+  centre: number;
+  side: number;
+  heading?: number;
+  spread?: number;
+}
+
+/** The HUD marble's veins (critics, round 11): continuous ones, and half as many faint one-pixel ones. */
+const MARBLE_VEINS: VeinPass[] = [
+  { density: 1 / 1200, length: [60, 160], centre: 0.82, side: 0.91 },
+  { density: 1 / 2400, length: [30, 90], centre: 0.95, side: 1 },
+];
+
 /**
- * MM6's HUD marble, to the critics' measured recipe (round 9): a base of (165,156,149), a
- * mottle at fourteen pixels of fourteen levels and at six pixels of seven, a warm-cool tint
- * at sixteen pixels (eight red, four blue), veins as two-pixel random walks stamped three
- * pixels wide as a multiply (twenty levels deep, soft), a Bayer checker, then RGB565 with
- * bit replication, so the highlights reach the 180s and the colours number in the dozens.
+ * MM6's HUD marble, to the critics' measured recipe (rounds 9 to 11): a base of
+ * (170,160,152), a mottle at fourteen pixels of forty levels and at six of fourteen, a
+ * warm-cool tint at sixteen, six levels of grain, continuous veins about twenty levels deep
+ * at the core, a Bayer checker, then RGB565 with bit replication.
  */
 function paintMarble(
   w: number,
   h: number,
   seed: number,
-  base: Rgb = [165, 156, 149],
+  base: Rgb = [170, 160, 152],
   spread = 1,
+  passes: readonly VeinPass[] = MARBLE_VEINS,
 ): HTMLCanvasElement {
   const [c, g] = canvas(w, h);
   const img = g.createImageData(w, h);
@@ -76,7 +94,7 @@ function paintMarble(
   const nT = valueNoise(w, h, 16, seed + 7);
   const r = die(seed + 13);
   for (let i = 0; i < w * h; i++) {
-    const l = (nA[i]! * 40 + nB[i]! * 14) * spread + (r() - 0.5) * 4;
+    const l = (nA[i]! * 40 + nB[i]! * 14) * spread + (r() - 0.5) * 12;
     const t = nT[i]! * 2;
     d[i * 4] = Math.max(0, Math.min(255, base[0] + l + 8 * t));
     d[i * 4 + 1] = Math.max(0, Math.min(255, base[1] + l));
@@ -84,18 +102,24 @@ function paintMarble(
     d[i * 4 + 3] = 255;
   }
   g.putImageData(img, 0, 0);
-  veinWalk(g, w, h, seed + 31, Math.round((w * h) / 1200), [60, 160]);
+  passes.forEach((p, k) => {
+    const o: VeinOptions = { centre: p.centre, side: p.side };
+    if (p.heading !== undefined) {
+      o.heading = p.heading;
+      o.spread = p.spread ?? 0.5;
+    }
+    veinField(g, w, h, seed + 31 + k * 16, Math.max(1, Math.round(w * h * p.density)), p.length, o);
+  });
   dither(g, w, h, 2);
   quantise565(g, w, h);
   return c;
 }
 
 /**
- * MM6's sheet stone (critics, rounds 8 to 10): cool green-grey about (71,71,68) broken into
- * plates of eighteen to thirty-six pixels, each a shade up or down with a slope across it,
- * fissures where they meet with a lit lip toward the upper left, lichen blotches and pits
- * on the tails, a one-pixel speckle of twelve levels, a jitter of red against blue, a
- * Bayer checker, 64 levels.
+ * MM6's sheet stone (critics, rounds 8 to 11): cool green-grey about (71,71,68) broken into
+ * plates of two sizes, each offset and sloped, the seams only partly drawn, each drawn stretch
+ * light or dark and never both, light streaks and smudges of their own, a jitter of red
+ * against blue, 64 levels with no checker inside the plates.
  */
 function paintSlate(w: number, h: number, seed: number): HTMLCanvasElement {
   const c = cloudy(w, h, seed, {
@@ -106,14 +130,18 @@ function paintSlate(w: number, h: number, seed: number): HTMLCanvasElement {
       [10, 4],
     ],
     tint: 3,
-    grain: 12,
+    grain: 10,
   });
   const g = c.getContext('2d')!;
-  plates(g, w, h, seed + 5, 27, 9, 6, 22);
-  tails(g, w, h, seed + 21, 30, 18);
-  cracks(g, w, h, seed + 9, Math.round((w * h) / 12000), [12, 30], 'rgb(92,95,90)', 0.9);
-  chroma(g, w, h, seed + 2, 3);
-  dither(g, w, h, 2);
+  stoneField(g, w, h, seed + 5, {
+    offset: 9,
+    slope: 6,
+    light: 16,
+    dark: 12,
+    streaks: Math.round((w * h) / 150),
+    smudges: Math.round((w * h * 0.06) / 25),
+  });
+  chroma(g, w, h, seed + 2, 8);
   quantise(g, w, h, 4);
   return c;
 }
@@ -191,11 +219,12 @@ function paintWood(w: number, h: number, seed: number): HTMLCanvasElement {
 }
 
 /**
- * Mahogany for the talk panel (DESIGN.md 16.15; critics, round 10): one slab of broad,
- * near-vertical bands that never cross, forty to sixty curves sharing one wobble, two to
- * six pixels wide, sixty to two hundred long, the dark ones near black and the light ones
- * a chestnut; a one-pixel grain of fourteen levels laid over the posterised colour so it
- * survives; eye-shaped knots.
+ * Mahogany for the talk panel (DESIGN.md 16.15; critics, rounds 10 and 11): one slab of broad
+ * vertical bands that never cross, fifty curves sharing one gentle wobble, three to eight
+ * pixels wide, a third of them the slab's full height and the rest eighty to two hundred
+ * long, the dark ones near black and the light ones landing on the ramp's top three tones,
+ * a mid tone of (74,47,31) and a top of (150,110,80); the grain after the colour as short
+ * vertical specks, so it reads as grain and not static, then RGB565.
  */
 function paintMahogany(w: number, h: number, seed: number): HTMLCanvasElement {
   const r = die(seed);
@@ -223,14 +252,15 @@ function paintMahogany(w: number, h: number, seed: number): HTMLCanvasElement {
   for (let i = 0; i < bands; i++) {
     const x0 = ((i + r() * 0.6) * w) / bands;
     const slope = (r() - 0.5) * 0.3;
-    const len = 60 + r() * 140;
-    const y0 = r() * h;
+    const full = r() < 1 / 3;
+    const len = full ? Math.max(150, Math.min(400, h + 20)) : 80 + r() * 120;
+    const y0 = full ? -10 : r() * h;
     const dark = r() < 0.6;
     const tone = dark ? 18 + r() * 30 : 170 + r() * 40;
-    const width = 2 + r() * 4;
+    const width = 3 + r() * 5;
     const pts: [number, number][] = [];
     for (let y = y0; y <= y0 + len; y += 3) {
-      pts.push([x0 + slope * (y - y0) + 3 * Math.sin(y / 40 + phi) + Math.sin(y / 11), y]);
+      pts.push([x0 + slope * (y - y0) + 1.5 * Math.sin(y / 60 + phi), y]);
     }
     stroke(g, w, h, pts, grey(tone), width);
   }
@@ -252,41 +282,74 @@ function paintMahogany(w: number, h: number, seed: number): HTMLCanvasElement {
     g,
     w,
     h,
-    ramp('#000000', '#080000', '#210c08', '#2e1408', '#3c1c0c', '#4e2812', '#5e3418', '#73452a'),
+    ramp('#000000', '#0c0402', '#211008', '#33190e', '#4a2f1f', '#6a4630', '#875f43', '#966e50'),
     null,
     24,
     220,
   );
-  // The grain after the colour, so it shows: fourteen levels on every pixel, then RGB565.
-  speck(g, w, h, seed + 41, 14);
+  // The grain after the colour (critics, round 11: per-pixel specks read as static, MM6's
+  // grain runs with the wood): fourteen levels, smeared four pixels down.
+  const img = g.getImageData(0, 0, w, h);
+  const d = img.data;
+  const noise = new Float32Array(w * (h + 3));
+  for (let i = 0; i < noise.length; i++) noise[i] = (r() - 0.5) * 28;
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      let v = 0;
+      for (let k = 0; k < 4; k++) v += noise[(y + k) * w + x]!;
+      v /= 2;
+      const i = (y * w + x) * 4;
+      for (let ch = 0; ch < 3; ch++) d[i + ch] = Math.max(0, Math.min(255, d[i + ch]! + v));
+    }
+  }
+  g.putImageData(img, 0, 0);
   quantise565(g, w, h);
   return c;
 }
 
 /**
- * MM6's inventory hide (critics, rounds 8 and 9): near-black (38,13,1), luminance 5 to 49, a
- * one-pixel mottle under a slow one of eight levels, worn patches blending toward a tan
- * (120,72,28) where the hide has rubbed.
+ * MM6's inventory hide (critics, rounds 8 to 11): near-black (38,13,1), half the pixel grain of
+ * before over a mottle of six to twelve pixels, bright flecks on a tenth, worn patches of
+ * twenty-five to fifty pixels a step lighter, a jitter of red against blue.
  */
 function paintLeather(w: number, h: number, seed: number): HTMLCanvasElement {
   const c = cloudy(w, h, seed, {
     base: [35, 12, 0],
     octaves: [
       [32, 8],
-      [8, 6],
-      [3, 5],
+      [9, 12],
+      [3, 4],
     ],
     tint: 2,
-    grain: 10,
+    grain: 5,
   });
   const g = c.getContext('2d')!;
-  // Bright flecks over a tenth of the hide (critics, round 10); no worn patches (retracted).
+  const img = g.getImageData(0, 0, w, h);
+  const d = img.data;
+  const r = die(seed + 23);
+  for (let p = 0; p < Math.round((w * h) / 365); p++) {
+    const cx = r() * w;
+    const cy = r() * h;
+    const rad = Math.sqrt((25 + r() * 25) / Math.PI);
+    const rx = rad * 1.3;
+    const ry = rad * 0.8;
+    for (let y = Math.floor(cy - ry); y <= cy + ry; y++) {
+      for (let x = Math.floor(cx - rx); x <= cx + rx; x++) {
+        if (((x - cx) / rx) ** 2 + ((y - cy) / ry) ** 2 > 1) continue;
+        const i = ((((y % h) + h) % h) * w + (((x % w) + w) % w)) * 4;
+        d[i] = Math.min(255, d[i]! + 10);
+        d[i + 1] = Math.min(255, d[i + 1]! + 10);
+        d[i + 2] = Math.min(255, d[i + 2]! + 10);
+      }
+    }
+  }
+  g.putImageData(img, 0, 0);
   const fr = die(seed + 17);
   for (let i = 0; i < (w * h) / 10; i++) {
     g.fillStyle = fr() < 0.5 ? 'rgba(120,72,40,0.35)' : 'rgba(90,50,24,0.4)';
     g.fillRect(Math.floor(fr() * w), Math.floor(fr() * h), 1, 1);
   }
-  dither(g, w, h, 2);
+  chroma(g, w, h, seed + 3, 7);
   quantise(g, w, h, 4);
   return c;
 }
@@ -308,31 +371,41 @@ function paintParchment(w: number, h: number, seed: number): HTMLCanvasElement {
 }
 
 /**
- * MM6's rest-screen marble (critics, rounds 8 to 10): zones of forty to sixty pixels
- * swinging from a rust (168,108,76) to a pale pink (196,150,130) at fourteen levels, a
- * finer mottle over them, crazed by pale cracks that broaden and fade with a dark
- * (120,80,56) vein along the lower right of the stronger ones and a few of their own.
+ * MM6's rest-screen marble (critics, rounds 8 to 11): zones of twenty to thirty pixels from a
+ * rust (168,108,76) to a pale pink (196,150,130), ten levels darker than before, a mottle of
+ * eighteen; the crazing network, pale veins whose cores flare forty-five to seventy-five
+ * levels bright, dark (120,80,56) veins along the stronger pale ones and a few of their own, a
+ * jitter of red against blue.
  */
 function paintRose(w: number, h: number, seed: number): HTMLCanvasElement {
   const [c, g] = canvas(w, h);
   const img = g.createImageData(w, h);
   const d = img.data;
-  const zone = valueNoise(w, h, 50, seed + 3);
-  const nA = valueNoise(w, h, 30, seed + 5);
-  const nB = valueNoise(w, h, 12, seed + 9);
+  const zone = valueNoise(w, h, 25, seed + 3);
+  const nA = valueNoise(w, h, 12, seed + 5);
+  const nB = valueNoise(w, h, 5, seed + 9);
   const r = die(seed + 1);
   for (let i = 0; i < w * h; i++) {
-    const base = mix([168, 108, 76], [196, 150, 130], 0.5 + zone[i]!);
-    const l = nA[i]! * 18 + nB[i]! * 10 + (r() - 0.5) * 6;
+    const base = mix(
+      [168, 108, 76],
+      [196, 150, 130],
+      Math.max(0, Math.min(1, 0.5 + zone[i]! * 1.6)),
+    );
+    const l = nA[i]! * 36 + nB[i]! * 10 + (r() - 0.5) * 8 - 10;
     d[i * 4] = Math.max(0, Math.min(255, base[0] + l));
     d[i * 4 + 1] = Math.max(0, Math.min(255, base[1] + l));
     d[i * 4 + 2] = Math.max(0, Math.min(255, base[2] + l));
     d[i * 4 + 3] = 255;
   }
   g.putImageData(img, 0, 0);
-  crazed2(g, w, h, seed + 11, 62, [200, 160, 140], [120, 80, 56], 6);
-  cracks(g, w, h, seed + 19, Math.round((w * h) / 9000), [20, 50], 'rgba(120,80,56,0.6)', 0.7);
-  dither(g, w, h, 2);
+  crazed2(g, w, h, seed + 11, 62, [205, 165, 145], [120, 80, 56], 6);
+  roseVeins(g, w, h, seed + 19, {
+    pale: Math.round((w * h) / 400),
+    dark: Math.round((w * h) / 1500),
+    paleTint: [1, 0.86, 0.8],
+    darkColor: [120, 80, 56],
+  });
+  chroma(g, w, h, seed + 2, 6);
   quantise(g, w, h, 4);
   return c;
 }
@@ -380,28 +453,239 @@ export function installPaint(): Surfaces {
   return surfaces;
 }
 
-/** A spine's emblem: a line drawing in a 24 by 40 box, and a solid part where the object is solid. */
-export interface Emblem {
-  line: string;
-  fill?: string;
-}
+/**
+ * The shelf's emblems, as MM6's reference shelf drew its sword, leaf, globe and key (critics,
+ * rounds 9 to 11): one-pixel lines on the grid of an 18 by 28 box, solid only where the object
+ * is solid; a rapier on the diagonal, a satchel, a leaf, a key, a latticed globe.
+ */
+export const EMBLEM_ART: Record<string, () => Pt[]> = {
+  sheet: () => [
+    ...polyline([
+      [14, 1],
+      [6, 20],
+    ]),
+    ...polyline([
+      [3, 18],
+      [9, 22],
+    ]),
+    ...polyline([
+      [6, 20],
+      [4, 25],
+    ]),
+    ...polyline(quad([9, 22], [9, 26], [5, 26])),
+    ...fill([
+      [2.5, 24.5],
+      [5.5, 24.5],
+      [5.5, 27.5],
+      [2.5, 27.5],
+    ]),
+  ],
+  items: () => [
+    ...polyline([
+      [3, 10],
+      [14, 10],
+      [16, 26],
+      [1, 26],
+      [3, 10],
+    ]),
+    ...polyline([
+      [3, 10],
+      [8.5, 16],
+      [14, 10],
+    ]),
+    ...polyline(quad([6, 10], [8.5, 2], [11, 10])),
+    ...fill([
+      [7.5, 15.5],
+      [9.5, 15.5],
+      [9.5, 17.5],
+      [7.5, 17.5],
+    ]),
+  ],
+  spells: () => [
+    ...polyline(quad([3, 26], [1, 8], [15, 1])),
+    ...polyline(quad([3, 26], [17, 17], [15, 1])),
+    ...polyline(quad([3, 26], [8, 13], [15, 1])),
+    ...polyline([
+      [3, 26],
+      [1, 27],
+    ]),
+  ],
+  quests: () => [
+    ...polyline(arc(6, 6, 4, 4, 0, Math.PI * 2, 32)),
+    ...polyline([
+      [8.8, 8.8],
+      [14.5, 26],
+    ]),
+    ...polyline([
+      [12.7, 22.3],
+      [15.5, 21.3],
+    ]),
+    ...polyline([
+      [13.7, 25.2],
+      [16.5, 24.2],
+    ]),
+  ],
+  map: () => [
+    ...polyline(arc(8.5, 14, 8, 8, 0, Math.PI * 2, 48)),
+    ...polyline([
+      [0.5, 14],
+      [16.5, 14],
+    ]),
+    ...polyline(quad([2, 9.5], [8.5, 10.8], [15, 9.5])),
+    ...polyline(quad([2, 18.5], [8.5, 19.8], [15, 18.5])),
+    ...polyline([
+      [8.5, 6],
+      [8.5, 22],
+    ]),
+    ...polyline(arc(8.5, 14, 4, 8, -Math.PI / 2, Math.PI / 2, 24)),
+    ...polyline(arc(8.5, 14, 4, 8, Math.PI / 2, (Math.PI * 3) / 2, 24)),
+  ],
+};
+
+/** The class sigils in the portrait ovals, the same one-pixel gold on an 18-pixel box. */
+export const SIGIL_ART: Record<string, () => Pt[]> = {
+  knight: () => [
+    ...polyline([
+      [9, 1],
+      [9, 11],
+    ]),
+    ...polyline([
+      [5, 11],
+      [13, 11],
+    ]),
+    ...polyline([
+      [9, 12],
+      [9, 15],
+    ]),
+    ...fill([
+      [7.5, 15.5],
+      [10.5, 15.5],
+      [10.5, 17.5],
+      [7.5, 17.5],
+    ]),
+  ],
+  paladin: () => [
+    ...polyline([
+      [3, 2],
+      [15, 2],
+      [15, 8],
+    ]),
+    ...polyline(quad([15, 8], [15, 14], [9, 17])),
+    ...polyline(quad([9, 17], [3, 14], [3, 8])),
+    ...polyline([
+      [3, 8],
+      [3, 2],
+    ]),
+    ...polyline([
+      [9, 4],
+      [9, 13],
+    ]),
+    ...polyline([
+      [6, 7],
+      [12, 7],
+    ]),
+  ],
+  archer: () => [
+    ...polyline(quad([5, 1], [14, 9], [5, 17])),
+    ...polyline([
+      [5, 1],
+      [5, 17],
+    ]),
+    ...polyline([
+      [2, 9],
+      [16, 9],
+    ]),
+    ...polyline([
+      [13, 6],
+      [16, 9],
+      [13, 12],
+    ]),
+  ],
+  cleric: () => [
+    ...polyline(arc(9, 4.5, 3, 3, 0, Math.PI * 2, 24)),
+    ...polyline([
+      [9, 8],
+      [9, 17],
+    ]),
+    ...polyline([
+      [5, 11],
+      [13, 11],
+    ]),
+  ],
+  sorcerer: () => {
+    const pts: Pt[] = [];
+    for (let i = 0; i <= 10; i++) {
+      const a = -Math.PI / 2 + (i * Math.PI) / 5;
+      const rr = i % 2 === 0 ? 8 : 3.3;
+      pts.push([9 + rr * Math.cos(a), 9.5 + rr * Math.sin(a)]);
+    }
+    return polyline(pts);
+  },
+  druid: () => [
+    ...polyline(quad([3, 16], [1, 4], [15, 2])),
+    ...polyline(quad([3, 16], [16, 14], [15, 2])),
+    ...polyline(quad([3, 16], [8, 9], [15, 2])),
+  ],
+};
 
 /**
- * The shelf's emblems, as MM6's reference shelf drew its sword, leaf, globe and key: gold
- * lines two pixels wide (critics, round 9). A sword, a satchel, an open book, a scroll, a
- * compass rose.
+ * Gold line art onto a canvas (critics, rounds 10 and 11): the shade (115,85,41) a pixel down
+ * and right wherever no gold falls, the gold (214,186,99) with six levels of noise, and every
+ * third gold pixel whose upper-left neighbour is not gold catching the light at (255,231,181).
  */
-export const EMBLEMS: Record<string, Emblem> = {
-  // A rapier on the diagonal with its guard and pommel, a satchel, a leaf of two arcs
-  // with a midrib, a key (ring, stem, bit), a globe with its lattice (critics, round 10).
-  sheet: { line: 'M5 37L19 3M11.5 10.5l5.5 2.3M7.5 32l-2.5 4', fill: 'M4 35h2.5v2.5H4z' },
-  items: { line: 'M5 14h14l3 22H2zM9 14v-4a3 3 0 0 1 6 0v4M5 22h14' },
-  spells: { line: 'M4 35C3 18 10 8 21 4C21 20 14 30 4 35M4 35L21 4' },
-  quests: { line: 'M8 9a4 4 0 1 1 0.1 0M11 12l9 19M18 27l3-2M15 22l3-2' },
-  map: {
-    line: 'M12 20m-9 0a9 9 0 1 0 18 0a9 9 0 1 0-18 0M3 20h18M12 11v18M12 11a5 9 0 0 0 0 18M12 11a5 9 0 0 1 0 18M4 16a9 3 0 0 0 16 0M4 24a9 3 0 0 1 16 0',
-  },
-};
+function drawGold(
+  g: CanvasRenderingContext2D,
+  w: number,
+  h: number,
+  pixels: readonly Pt[],
+  ox: number,
+  oy: number,
+  seed: number,
+): void {
+  const img = g.getImageData(0, 0, w, h);
+  const d = img.data;
+  const gold = new Uint8Array(w * h);
+  for (const [x, y] of pixels) {
+    const X = x + ox;
+    const Y = y + oy;
+    if (X >= 0 && X < w && Y >= 0 && Y < h) gold[Y * w + X] = 1;
+  }
+  const set = (i: number, r0: number, g0: number, b0: number): void => {
+    d[i * 4] = r0;
+    d[i * 4 + 1] = g0;
+    d[i * 4 + 2] = b0;
+    d[i * 4 + 3] = 255;
+  };
+  for (let y = 0; y < h - 1; y++) {
+    for (let x = 0; x < w - 1; x++) {
+      if (gold[y * w + x] && !gold[(y + 1) * w + x + 1]) set((y + 1) * w + x + 1, 115, 85, 41);
+    }
+  }
+  const r = die(seed);
+  let k = 0;
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      const i = y * w + x;
+      if (!gold[i]) continue;
+      const lit = x > 0 && y > 0 && !gold[(y - 1) * w + x - 1];
+      if (lit && k++ % 3 === 0) {
+        set(i, 255, 231, 181);
+        continue;
+      }
+      const n = (r() - 0.5) * 12;
+      set(i, 214 + n, 186 + n, Math.round(99 + n * 0.6));
+    }
+  }
+  g.putImageData(img, 0, 0);
+}
+
+/** A class sigil for a portrait oval until the portraits are painted. */
+export function paintSigil(w: number, h: number, classId: string): HTMLCanvasElement {
+  const [c, g] = canvas(w, h);
+  const art = SIGIL_ART[classId];
+  if (art) drawGold(g, w, h, art(), Math.floor((w - 18) / 2), Math.floor((h - 18) / 2), w * 3 + h);
+  return c;
+}
 
 /** A transparent speckle for the talk window (critics, round 10): two-pixel blocks of sixteen levels over the head and its ground. */
 export function paintSpeckle(w: number, h: number): HTMLCanvasElement {
@@ -454,11 +738,13 @@ export function paintButton(w: number, h: number, pressed: boolean): HTMLCanvasE
   for (let y = 0; y < h; y++) {
     for (let x = 0; x < w; x++) {
       if (!inOval(x, y, w, h, 0)) continue;
-      // The shadow outside the outline, fading into the stone.
+      // The shadow outside the outline at the lower right only, fading from a half into the
+      // stone over three pixels (critics, round 11: no ring all round).
       if (!inOval(x, y, w, h, margin)) {
+        if (litness(x, y, w, h) > -0.15) continue;
         let k = 0;
-        while (k < margin && !inOval(x, y, w, h, k + 1)) k++;
-        px(g, x, y, `rgba(0,0,0,${(0.6 * (k + 1)) / (margin + 1)})`);
+        while (k < margin && inOval(x, y, w, h, k + 1)) k++;
+        px(g, x, y, `rgba(0,0,0,${((0.5 * (k + 1)) / margin).toFixed(3)})`);
         continue;
       }
       if (!inOval(x, y, w, h, margin + 1)) {
@@ -658,13 +944,12 @@ export function paintPlate(w: number, h: number): HTMLCanvasElement {
 }
 
 /**
- * A leather spine, as MM6's (critics, round 9): flat (57,36,16) with a mottle of six levels
- * at one to three pixels, three-pixel edges darkening to near black, a bump of six at the
- * most down the middle, maroon bands ruled with gold; the emblem a gold line drawing two
- * pixels wide, its shade a pixel down and right, a thread of light a half up and left,
- * twelve levels of noise on the gold, the whole on RGB565.
+ * A leather spine, as MM6's (critics, rounds 9 to 11): flat (57,36,16) with a mottle of six
+ * levels, edges darkening to near black over two pixels, a bump of six at most down the
+ * middle, maroon bands ruled with gold, the emblem drawn as one-pixel gold line art on the grid
+ * (`EMBLEM_ART`), the whole on RGB565.
  */
-export function paintSpine(w: number, h: number, glyph: Emblem | null = null): HTMLCanvasElement {
+export function paintSpine(w: number, h: number, emblem: string | null = null): HTMLCanvasElement {
   const [c, g] = canvas(w, h);
   const r = die(w * 13 + h);
   const n2 = valueNoise(w, h, 2, w * 3 + h);
@@ -694,8 +979,6 @@ export function paintSpine(w: number, h: number, glyph: Emblem | null = null): H
   const bandTop = Math.round(h * 0.15) - 3;
   const bandBottom = Math.round(h * 0.85) - 3;
   for (const y of [bandTop, bandBottom]) {
-    // A gold line, four of MM6's dark red, a gold line (critics, round 9: (90,0,0) with
-    // (140,117,90) and (165,146,123)).
     g.fillStyle = '#8c755a';
     g.fillRect(2, y, w - 4, 1);
     g.fillStyle = '#5a0000';
@@ -705,51 +988,8 @@ export function paintSpine(w: number, h: number, glyph: Emblem | null = null): H
     g.fillStyle = '#a5927b';
     g.fillRect(2, y + 5, w - 4, 1);
   }
-  if (glyph) {
-    // The 24 by 40 drawing fitted between the bands, two pixels wide at the spine's scale.
-    const boxTop = bandTop + 8;
-    const boxBottom = bandBottom - 2;
-    const scale = Math.min((w - 8) / 24, (boxBottom - boxTop) / 40);
-    const ox = (w - 24 * scale) / 2;
-    const oy = boxTop + (boxBottom - boxTop - 40 * scale) / 2;
-    const line = new Path2D(glyph.line);
-    const fill = glyph.fill ? new Path2D(glyph.fill) : null;
-    const pass = (dx: number, dy: number, color: string, width: number): void => {
-      g.save();
-      g.translate(ox + dx, oy + dy);
-      g.scale(scale, scale);
-      g.lineWidth = width / scale;
-      g.lineCap = 'round';
-      g.lineJoin = 'round';
-      g.strokeStyle = color;
-      g.fillStyle = color;
-      g.stroke(line);
-      if (fill) {
-        g.fill(fill);
-        g.lineWidth = 1 / scale;
-        g.stroke(fill);
-      }
-      g.restore();
-    };
-    // A one-pixel pen (critics, round 10): the shade a pixel down and right, the gold, and
-    // a thread of light as dots every third step.
-    pass(1, 1, 'rgb(115,85,41)', 1);
-    pass(0, 0, 'rgb(214,186,99)', 1);
-    pass(-0.5, -0.5, 'rgba(255,223,115,0.55)', 1);
-    const gold = g.getImageData(0, 0, w, h);
-    const gd = gold.data;
-    const rr = die(w * 17 + h);
-    for (let i = 0; i < w * h; i++) {
-      const o = i * 4;
-      if (gd[o]! > 150 && gd[o + 2]! < 150 && gd[o]! > gd[o + 2]! + 40) {
-        const n = (rr() - 0.5) * 12;
-        gd[o] = Math.max(0, Math.min(255, gd[o]! + n));
-        gd[o + 1] = Math.max(0, Math.min(255, gd[o + 1]! + n));
-        gd[o + 2] = Math.max(0, Math.min(255, gd[o + 2]! + n * 0.6));
-      }
-    }
-    g.putImageData(gold, 0, 0);
-  }
+  const art = emblem ? EMBLEM_ART[emblem] : undefined;
+  if (art) drawGold(g, w, h, art(), Math.floor((w - 18) / 2), bandTop + 6, w * 17 + h);
   dither(g, w, h, 2);
   quantise565(g, w, h);
   return c;
@@ -847,41 +1087,71 @@ export function paintGem(w: number, h: number, kind: string): HTMLCanvasElement 
 }
 
 /**
- * A marble pillar as MM6 shaded it (critics, round 10): a convex profile, 96 plus 75 times
- * the cosine of a quarter turn over t to the 0.7, the highlight one pixel in from a 165
- * edge, over a marble of a 150 base, on RGB565; the right pillar is this one mirrored.
+ * A marble pillar as MM6 shaded it (critics, rounds 9 to 11): veins running down the shaft
+ * within thirty degrees of upright, painted on a wider tile and cropped, then every column
+ * scaled to the convex profile 96 plus 75 times the cosine of a quarter turn over t to the
+ * 0.7, the highlight 171 one pixel in; on RGB565. The right pillar is this one mirrored.
  */
 export function paintPillar(w: number, h: number, marble: HTMLCanvasElement): HTMLCanvasElement {
   void marble;
-  const c = paintMarble(w, h, w * 7 + h, [150, 141, 136], 1.2);
-  const g = c.getContext('2d')!;
+  const tw = Math.max(w, 64);
+  const tile = paintMarble(tw, h, w * 7 + h, [150, 141, 136], 1.2, [
+    {
+      density: 7 / (tw * h),
+      length: [h / 3, h],
+      centre: 0.82,
+      side: 0.91,
+      heading: Math.PI / 2,
+      spread: Math.PI / 6,
+    },
+    {
+      density: 4 / (tw * h),
+      length: [h / 6, h / 2],
+      centre: 0.95,
+      side: 1,
+      heading: Math.PI / 2,
+      spread: Math.PI / 6,
+    },
+  ]);
+  const [c, g] = canvas(w, h);
+  g.drawImage(tile, Math.floor((tw - w) / 2), 0, w, h, 0, 0, w, h);
+  const img = g.getImageData(0, 0, w, h);
+  const d = img.data;
+  let sum = 0;
+  for (let i = 0; i < w * h; i++)
+    sum += 0.299 * d[i * 4]! + 0.587 * d[i * 4 + 1]! + 0.114 * d[i * 4 + 2]!;
+  const mean = sum / (w * h);
   for (let x = 0; x < w; x++) {
-    const t = x / Math.max(1, w - 1);
-    const lum = x === 0 ? 165 : 96 + 75 * Math.cos((Math.PI / 2) * Math.pow(t, 0.7));
-    const k = lum / 150;
-    g.globalCompositeOperation = k > 1 ? 'screen' : 'multiply';
-    const v = k > 1 ? Math.round((k - 1) * 255 * 0.7) : Math.round(k * 255);
-    g.fillStyle = `rgb(${v},${v},${v})`;
-    g.fillRect(x, 0, 1, h);
+    const t = Math.max(0, x - 1) / Math.max(1, w - 2);
+    const f = (96 + 75 * Math.cos((Math.PI / 2) * Math.pow(t, 0.7))) / mean;
+    for (let y = 0; y < h; y++) {
+      const i = (y * w + x) * 4;
+      d[i] = Math.min(255, d[i]! * f);
+      d[i + 1] = Math.min(255, d[i + 1]! * f);
+      d[i + 2] = Math.min(255, d[i + 2]! * f);
+    }
   }
-  g.globalCompositeOperation = 'source-over';
+  g.putImageData(img, 0, 0);
   quantise565(g, w, h);
   return c;
 }
 
 /**
- * The band's top edge, as MM6's (critics, rounds 8 to 10): a lip of (173,154,148) two rows
- * deep, a groove of (41,40,33), then a trough of the marble painted at twice the spread,
- * taken to sixty-two percent, veined after.
+ * The band's top edge, as MM6's (critics, rounds 8 to 11): a lip of (173,154,148) two rows
+ * deep, a groove of (41,40,33), then a trough of the marble at twice the spread taken to
+ * sixty-two percent, veined deep after.
  */
 export function paintRail(w: number, h: number): HTMLCanvasElement {
-  const c = paintMarble(w, h, w * 5 + h, [165, 156, 149], 2);
+  const c = paintMarble(w, h, w * 5 + h, [170, 160, 152], 2, []);
   const g = c.getContext('2d')!;
   g.globalCompositeOperation = 'multiply';
   g.fillStyle = 'rgb(158,158,158)';
   g.fillRect(0, 0, w, h);
   g.globalCompositeOperation = 'source-over';
-  veinWalk(g, w, h, w * 9 + h, Math.round((w * h) / 900), [30, 90]);
+  veinField(g, w, h, w * 9 + h, Math.max(1, Math.round((w * h) / 900)), [60, 160], {
+    centre: 0.8,
+    side: 0.9,
+  });
   quantise565(g, w, h);
   g.fillStyle = '#ad9a94';
   g.fillRect(0, 0, w, 2);
@@ -891,10 +1161,11 @@ export function paintRail(w: number, h: number): HTMLCanvasElement {
 }
 
 /**
- * A capital or a plinth: for the capital, an abacus over a bell that flares out with a
- * volute curling at each corner and a leaf between; for the plinth, two steps. A gold collar
- * six pixels tall where it meets the shaft: mustard edges, a bright line near the top, a
- * dark olive line at the foot.
+ * A capital or a plinth. The capital (critics, rounds 9 to 11): an abacus of three rows, lit
+ * on top and dark beneath; a bell of two rows of acanthus lobes, each a rounded four by five
+ * blob lit at its upper left with a dark pixel to its right and below, the lower row half a
+ * lobe over; a volute spiral at each upper corner; the collar MM6's five row bands turned
+ * with the shaft's cosine. The plinth: two steps. On RGB565.
  */
 export function paintCapital(
   w: number,
@@ -927,50 +1198,57 @@ export function paintCapital(
     g.drawImage(marble, 12 + x, 40 + y, rw, 1, x, y, rw, 1);
   });
   if (ring === 'below') {
-    // The bell (critics, round 10): a mid grey (99,93,90), three leaf tips outlined in
-    // (41,40,41) with a (165,158,148) line along their upper left, a volute spiral at each
-    // corner, a grain of ten, on RGB565.
     const bell = h - collar;
-    g.fillStyle = '#635d5a';
+    g.fillStyle = 'rgba(255,250,240,0.35)';
+    g.fillRect(0, 0, w, 1);
+    g.fillStyle = 'rgba(20,16,12,0.6)';
+    g.fillRect(0, 2, w, 1);
+    g.fillStyle = '#423e3a';
     g.fillRect(0, 3, w, Math.max(1, bell - 3));
-    const tips = 3;
-    for (let i = 0; i < tips; i++) {
-      const cx = ((i + 0.5) * w) / tips;
-      const tw = (w / tips) * 0.42;
-      const ty = 5;
-      const by = bell - 1;
-      g.fillStyle = '#7a7470';
-      g.beginPath();
-      g.moveTo(cx, ty);
-      g.lineTo(cx + tw, by);
-      g.lineTo(cx - tw, by);
-      g.closePath();
-      g.fill();
-      g.strokeStyle = '#292829';
-      g.lineWidth = 1;
-      g.stroke();
-      g.strokeStyle = '#a59e94';
-      g.beginPath();
-      g.moveTo(cx - 0.5, ty + 1.5);
-      g.lineTo(cx - tw + 1.5, by - 1);
-      g.stroke();
-    }
-    for (const cx of [3, w - 4]) {
-      for (let k = 3; k >= 1; k--) {
-        g.strokeStyle = k === 3 ? '#a59e94' : '#292829';
-        g.beginPath();
-        g.arc(cx, 6, k, 0, Math.PI * 1.5);
-        g.stroke();
+    const shadow = '#181410';
+    const lobe = (x0: number, y0: number): void => {
+      for (let dy = 0; dy < 5; dy++) {
+        for (let dx = 0; dx < 4; dx++) {
+          if ((dy === 0 || dy === 4) && (dx === 0 || dx === 3)) continue;
+          const x = x0 + dx;
+          const y = y0 + dy;
+          if (x < 0 || x >= w || y < 3 || y >= bell) continue;
+          const k = dy <= 1 ? 16 : dy >= 3 ? -28 : 0;
+          const lit = (dy === 0 && dx >= 1 && dx <= 2) || (dx === 0 && dy >= 1 && dy <= 2);
+          px(g, x, y, lit ? '#ada6a5' : `rgb(${140 + k},${134 + k},${132 + k})`);
+        }
       }
+      for (let dy = 1; dy < 5; dy++) {
+        const y = y0 + dy;
+        if (x0 + 4 < w && y >= 3 && y < bell) px(g, x0 + 4, y, shadow);
+      }
+      for (let dx = 1; dx < 4; dx++) {
+        if (y0 + 5 < bell && x0 + dx < w) px(g, x0 + dx, y0 + 5, shadow);
+      }
+    };
+    for (let x0 = 0; x0 < w; x0 += 6) lobe(x0, 3);
+    for (let x0 = 3; x0 < w; x0 += 6) lobe(x0, Math.min(bell - 5, 7));
+    const spiral = (cx: number, dir: number, color: string, off: number): void => {
+      const pts: Pt[] = [];
+      for (let i = 0; i <= 40; i++) {
+        const a = (i / 40) * Math.PI * 4;
+        const rr = 0.4 + (i / 40) * 2.6;
+        pts.push([cx + off + dir * rr * Math.cos(a), 4 + off + rr * Math.sin(a)]);
+      }
+      for (const [x, y] of polyline(pts))
+        if (x >= 0 && x < w && y >= 0 && y < bell) px(g, x, y, color);
+    };
+    for (const [cx, dir] of [
+      [3, 1],
+      [w - 4, -1],
+    ] as const) {
+      spiral(cx, dir, '#ada6a5', -1);
+      spiral(cx, dir, shadow, 0);
     }
     speck(g, w, bell, w * 7 + h, 10);
   }
   const [rx, rw] = rows[ring === 'below' ? h - 1 : 0]!;
   const y0 = ring === 'below' ? h - collar : 0;
-  // MM6's collar (critics, round 10): ten rows in five bands, (192,172,122), four of
-  // (170,147,92), three of (175,154,101), (190,173,123), (199,184,139), each column
-  // turned with the shaft's cosine from a tenth brighter at the left to seven tenths at
-  // the right; on RGB565.
   const bands: Rgb[] = [
     [192, 172, 122],
     [170, 147, 92],
@@ -987,12 +1265,12 @@ export function paintCapital(
     const band = bands[Math.min(bands.length - 1, y)]!;
     for (let x = rx; x < rx + rw; x++) {
       const t = (x - rx) / Math.max(1, rw - 1);
-      const k = 0.7 + 0.37 * Math.cos((Math.PI / 2) * Math.pow(t, 0.7));
+      const k = 0.78 + 0.32 * Math.cos((Math.PI / 2) * Math.pow(t, 0.7));
       px(
         g,
         x,
         y0 + y,
-        `rgb(${Math.round(band[0] * k)},${Math.round(band[1] * k)},${Math.round(band[2] * k)})`,
+        `rgb(${Math.min(255, Math.round(band[0] * k))},${Math.min(255, Math.round(band[1] * k))},${Math.min(255, Math.round(band[2] * k))})`,
       );
     }
   }
@@ -1000,12 +1278,16 @@ export function paintCapital(
   return c;
 }
 
-/** The lintel over the view (critics, round 10): the marble painted at its own size with a wider spread, a dark line along its foot. */
+/** The lintel over the view (critics, round 11): a lighter marble with faint one-pixel veins, its top row (158,149,145) and its foot (154,146,143). */
 export function paintLintel(w: number, h: number, marble: HTMLCanvasElement): HTMLCanvasElement {
   void marble;
-  const c = paintMarble(w, h, w * 3 + h, [165, 156, 149], 1.5);
+  const c = paintMarble(w, h, w * 3 + h, [178, 168, 161], 1, [
+    { density: 1 / 2400, length: [30, 90], centre: 0.93, side: 1 },
+  ]);
   const g = c.getContext('2d')!;
-  g.fillStyle = '#292821';
+  g.fillStyle = '#9e9591';
+  g.fillRect(0, 0, w, 1);
+  g.fillStyle = '#9a928f';
   g.fillRect(0, h - 1, w, 1);
   return c;
 }
@@ -1035,14 +1317,15 @@ export function paintAlcove(w: number, h: number, marble: HTMLCanvasElement): HT
 }
 
 /**
- * The rest button, as MM6's oval (critics, round 10): a muted gold of (140,114,71) with a
- * three-pixel mottle of sixteen levels and six of grain, a specular blob eight pixels wide
- * peaking at (230,215,170) a fifth of the way down, the bottom third sunk toward
- * (41,36,16), a (74,69,57) edge, RGB565; the moon glyph sits on it near black.
+ * The rest button, as MM6's oval (critics, rounds 10 and 11): a muted gold body of
+ * (140,114,71) with a three-pixel mottle of sixteen levels and ten of grain, a (240,228,186)
+ * specular a fifth of the way down, a bevel three pixels wide lit at the upper left with a
+ * rim of light at the lower left and sinking toward (41,36,16) on the right, a (74,69,57)
+ * edge; the moon near black on it with a warm edge at its lower right only. RGB565.
  */
 export function paintCartouche(w: number, h: number, pressed: boolean): HTMLCanvasElement {
   const [c, g] = canvas(w, h);
-  const base: Rgb = pressed ? [160, 132, 86] : [140, 114, 71];
+  const base: Rgb = pressed ? [158, 130, 84] : [140, 114, 71];
   const n3 = valueNoise(w, h, 3, w * 5 + h);
   const r = die(w * 11 + h);
   for (let y = 0; y < h; y++) {
@@ -1052,15 +1335,48 @@ export function paintCartouche(w: number, h: number, pressed: boolean): HTMLCanv
         px(g, x, y, '#4a4539');
         continue;
       }
-      const l = n3[y * w + x]! * 32 + (r() - 0.5) * 12;
-      const dx = (x + 0.5 - w * 0.5) / 4;
-      const dy = (y + 0.5 - h * (pressed ? 0.45 : 0.2)) / 3;
-      const spec = Math.exp(-(dx * dx + dy * dy) / 2);
-      let col = mix([base[0] + l, base[1] + l, base[2] + l], [230, 215, 170], Math.min(1, spec));
-      const ty = (y + 0.5) / h;
-      const sink = ty < 0.7 ? 0 : (ty - 0.7) / 0.3;
-      col = mix(col, [41, 36, 16], sink * sink * (3 - 2 * sink) * 0.85);
-      px(g, x, y, `rgb(${Math.round(col[0])},${Math.round(col[1])},${Math.round(col[2])})`);
+      let col: Rgb;
+      const ang = Math.atan2((y + 0.5 - h / 2) / h, (x + 0.5 - w / 2) / w);
+      if (!inOval(x, y, w, h, 4)) {
+        const k =
+          1 +
+          0.45 * Math.cos(ang + (3 * Math.PI) / 4) +
+          0.3 * Math.max(0, Math.cos(ang - (3 * Math.PI) / 4));
+        col = mix(
+          [base[0] * k, base[1] * k, base[2] * k],
+          [41, 36, 16],
+          Math.max(0, Math.cos(ang)) ** 1.5 * 0.7,
+        );
+      } else {
+        const l = n3[y * w + x]! * 32 + (r() - 0.5) * 20;
+        col = [base[0] + l, base[1] + l, base[2] + l];
+        const dx = (x + 0.5 - w * 0.5) / 4;
+        const dy = (y + 0.5 - h * (pressed ? 0.45 : 0.2)) / 3;
+        col = mix(col, [240, 228, 186], Math.min(1, Math.exp(-(dx * dx + dy * dy) / 2)));
+      }
+      px(
+        g,
+        x,
+        y,
+        `rgb(${Math.max(0, Math.min(255, Math.round(col[0])))},${Math.max(0, Math.min(255, Math.round(col[1])))},${Math.max(0, Math.min(255, Math.round(col[2])))})`,
+      );
+    }
+  }
+  const mr = Math.min(w, h) * 0.26;
+  const mx = w * 0.5;
+  const my = h * 0.54;
+  const moon = new Uint8Array(w * h);
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      const inA = Math.hypot(x + 0.5 - mx, y + 0.5 - my) < mr;
+      const inB = Math.hypot(x + 0.5 - (mx + mr * 0.45), y + 0.5 - (my - mr * 0.3)) < mr * 0.85;
+      if (inA && !inB) moon[y * w + x] = 1;
+    }
+  }
+  for (let y = 1; y < h; y++) {
+    for (let x = 1; x < w; x++) {
+      if (moon[y * w + x]) px(g, x, y, '#080800');
+      else if (moon[(y - 1) * w + x - 1]) px(g, x, y, '#634d29');
     }
   }
   quantise565(g, w, h);
@@ -1119,11 +1435,11 @@ export function paintTile(w: number, h: number): HTMLCanvasElement {
 }
 
 /**
- * A screen's frame (critics, round 10): down each side a pillar of the rose marble at half
- * its saturation and a quarter brighter, turned with a cosine from full at the outer edge
- * to six tenths at the inner one, with a two-row gold band at its head and foot; along the
- * top and bottom the light marble; no outline, no line into the stone; the stone within
- * under a dark line and a half-dark one.
+ * A screen's frame, as MM6's (critics, rounds 9 to 11): the lintel along the top and the foot
+ * the light marble, bevelled twelve levels down on its outer row and fifteen on its inner one
+ * and twelve up between; down each side a pillar of the rose marble at a quarter of its
+ * saturation and a quarter brighter, turned with a cosine and stirred a little row by row,
+ * with a two-row gold band at its head and foot; no line where it meets the stone.
  */
 export function paintMarbleFrame(
   w: number,
@@ -1139,28 +1455,44 @@ export function paintMarbleFrame(
     g.drawImage(s.marble, x, 0);
     g.drawImage(s.marble, x, h - b);
   }
+  const img = g.getImageData(0, 0, w, h);
+  const d = img.data;
+  const band = (y0: number): void => {
+    for (let y = 0; y < b; y++) {
+      const k = y === 0 ? -12 : y === b - 1 ? -15 : 12;
+      for (let x = 0; x < w; x++) {
+        const i = ((y0 + y) * w + x) * 4;
+        d[i] = Math.max(0, Math.min(255, d[i]! + k));
+        d[i + 1] = Math.max(0, Math.min(255, d[i + 1]! + k));
+        d[i + 2] = Math.max(0, Math.min(255, d[i + 2]! + k));
+      }
+    }
+  };
+  band(0);
+  band(h - b);
   const rose = s.rose.getContext('2d')!.getImageData(0, 0, s.rose.width, s.rose.height).data;
   const rw = s.rose.width;
   const rh = s.rose.height;
+  const rr = die(w * 5 + h);
   for (let y = 0; y < h; y++) {
+    const stir = (rr() - 0.5) * 8;
     for (let i = 0; i < b; i++) {
-      const t = i / Math.max(1, b - 1);
-      const k = 0.6 + 0.4 * Math.cos((Math.PI / 2) * t);
+      const k = 0.6 + 0.4 * Math.cos((Math.PI / 2) * (i / Math.max(1, b - 1)));
       for (const x of [i, w - 1 - i]) {
         const o = ((y % rh) * rw + (x % rw)) * 4;
         const r0 = rose[o]!;
         const g0 = rose[o + 1]!;
         const b0 = rose[o + 2]!;
         const lum = 0.299 * r0 + 0.587 * g0 + 0.114 * b0;
-        const col: Rgb = [
-          (lum + (r0 - lum) * 0.5 + 25) * k,
-          (lum + (g0 - lum) * 0.5 + 25) * k,
-          (lum + (b0 - lum) * 0.5 + 25) * k,
-        ];
-        px(g, x, y, `rgb(${Math.round(col[0])},${Math.round(col[1])},${Math.round(col[2])})`);
+        const di = (y * w + x) * 4;
+        d[di] = Math.max(0, Math.min(255, (lum + (r0 - lum) * 0.25 + 25 + stir) * k));
+        d[di + 1] = Math.max(0, Math.min(255, (lum + (g0 - lum) * 0.25 + 25 + stir) * k));
+        d[di + 2] = Math.max(0, Math.min(255, (lum + (b0 - lum) * 0.25 + 25 + stir) * k));
+        d[di + 3] = 255;
       }
     }
   }
+  g.putImageData(img, 0, 0);
   for (const y of [b + 2, h - b - 4]) {
     g.fillStyle = '#ad9652';
     g.fillRect(0, y, b, 1);
@@ -1170,32 +1502,211 @@ export function paintMarbleFrame(
     g.fillRect(w - b, y + 1, b, 1);
   }
   g.clearRect(b, b, w - 2 * b, h - 2 * b);
-  g.fillStyle = 'rgba(8,8,6,0.85)';
-  g.fillRect(b, b, w - 2 * b, 1);
-  g.fillRect(b, b, 1, h - 2 * b);
-  g.fillStyle = 'rgba(8,8,6,0.45)';
-  g.fillRect(b + 1, b + 1, w - 2 * b - 2, 1);
-  g.fillRect(b + 1, b + 1, 1, h - 2 * b - 2);
   quantise565(g, w, h);
   return c;
 }
 
+/** True when a point lies inside a polygon (even-odd). */
+function inPolygon(x: number, y: number, pts: readonly Pt[]): boolean {
+  let inside = false;
+  for (let i = 0, j = pts.length - 1; i < pts.length; j = i++) {
+    const a = pts[i]!;
+    const b = pts[j]!;
+    if (a[1] > y !== b[1] > y && x < ((b[0] - a[0]) * (y - a[1])) / (b[1] - a[1]) + a[0])
+      inside = !inside;
+  }
+  return inside;
+}
+
 /**
- * An open book filling a screen, as MM6's spellbook and quest log (critics, rounds 8 and
- * 9): a green leather cover (28,80,60) with a two-band rim, one parchment spread with a
- * crease near its left edge sixty levels deep and a hump across the right page falling
- * toward the edge, the page stack along the right as MM6's irregular band of greys and
- * along the foot a dark crease then a ramp, and `tabs` page-coloured bookmarks with a
- * slanted outer corner and a black mark; no brackets, no shadows, no colour caps.
+ * The bookmarks' school pictures (critics, round 11: MM6's tab icons are painted sprites, not
+ * glyphs): a shape in a fourteen by sixteen box, a one-pixel dark edge, lit from the upper
+ * left through three tones to a highlight; five or six colours.
+ */
+const SCHOOL_SPRITES: Record<string, { ramp: Rgb[]; inside: (x: number, y: number) => boolean }> = {
+  fire: {
+    ramp: [
+      [110, 20, 8],
+      [200, 50, 10],
+      [245, 120, 20],
+      [252, 200, 60],
+      [255, 245, 190],
+    ],
+    inside: (x, y) =>
+      Math.hypot(x - 7, y - 11) < 4.6 ||
+      (y < 11 && y >= 0 && Math.abs(x - 7 - 1.3 * Math.sin(y / 2.4)) < (y / 11) * 4.6),
+  },
+  air: {
+    ramp: [
+      [70, 90, 130],
+      [130, 160, 200],
+      [190, 210, 235],
+      [225, 235, 248],
+      [255, 255, 255],
+    ],
+    inside: (x, y) =>
+      Math.hypot(x - 4, y - 9) < 3.6 ||
+      Math.hypot(x - 8, y - 7) < 4.2 ||
+      Math.hypot(x - 11, y - 10) < 3 ||
+      (y > 9 && y < 13 && x > 1 && x < 13),
+  },
+  water: {
+    ramp: [
+      [15, 35, 90],
+      [30, 70, 170],
+      [50, 120, 220],
+      [120, 180, 245],
+      [230, 245, 255],
+    ],
+    inside: (x, y) =>
+      Math.hypot(x - 7, y - 10) < 4.6 ||
+      (y >= 1 && y < 10 && Math.abs(x - 7) < ((y - 1) / 9) * 4.6),
+  },
+  earth: {
+    ramp: [
+      [45, 35, 25],
+      [95, 75, 50],
+      [135, 110, 75],
+      [175, 150, 105],
+      [215, 200, 160],
+    ],
+    inside: (x, y) =>
+      inPolygon(x + 0.5, y + 0.5, [
+        [2, 13],
+        [1, 8],
+        [4, 4],
+        [9, 3],
+        [13, 6],
+        [13, 12],
+        [9, 15],
+        [4, 15],
+      ]),
+  },
+  spirit: {
+    ramp: [
+      [120, 80, 20],
+      [190, 140, 40],
+      [235, 195, 80],
+      [250, 230, 140],
+      [255, 255, 220],
+    ],
+    inside: (x, y) => {
+      const r = Math.hypot(x - 7, y - 8);
+      return r < 3.8 || (r < 6.8 && Math.abs(Math.sin(4 * Math.atan2(y - 8, x - 7))) > 0.92);
+    },
+  },
+  mind: {
+    ramp: [
+      [60, 30, 80],
+      [110, 60, 150],
+      [160, 110, 200],
+      [205, 170, 235],
+      [250, 240, 255],
+    ],
+    inside: (x, y) => {
+      const t = (x - 7) / 6.5;
+      return Math.abs(t) < 1 && Math.abs(y - 8) < 4.2 * Math.sqrt(1 - t * t);
+    },
+  },
+  body: {
+    ramp: [
+      [90, 10, 10],
+      [160, 30, 30],
+      [210, 60, 55],
+      [240, 130, 120],
+      [255, 220, 215],
+    ],
+    inside: (x, y) => {
+      const X = (x - 7) / 5.6;
+      const Y = (9 - y) / 5.6;
+      return (X * X + Y * Y - 1) ** 3 - X * X * Y ** 3 < 0;
+    },
+  },
+};
+
+function paintSchoolIcon(
+  g: CanvasRenderingContext2D,
+  x0: number,
+  y0: number,
+  school: string,
+): void {
+  const sprite = SCHOOL_SPRITES[school];
+  if (!sprite) return;
+  const W = 14;
+  const H = 16;
+  const inside = (x: number, y: number): boolean =>
+    x >= 0 && x < W && y >= 0 && y < H && sprite.inside(x, y);
+  let cx = 0;
+  let cy = 0;
+  let n = 0;
+  for (let y = 0; y < H; y++)
+    for (let x = 0; x < W; x++)
+      if (inside(x, y)) {
+        cx += x;
+        cy += y;
+        n++;
+      }
+  if (!n) return;
+  cx /= n;
+  cy /= n;
+  const rgb = (c: Rgb): string => `rgb(${c[0]},${c[1]},${c[2]})`;
+  let best: Pt = [0, 0];
+  let bestN = -Infinity;
+  for (let y = 0; y < H; y++) {
+    for (let x = 0; x < W; x++) {
+      if (!inside(x, y)) continue;
+      const rim = !inside(x - 1, y) || !inside(x + 1, y) || !inside(x, y - 1) || !inside(x, y + 1);
+      const lit = (-(x - cx) - (y - cy)) / 7;
+      if (!rim && lit > bestN) {
+        bestN = lit;
+        best = [x, y];
+      }
+      const tone = rim
+        ? sprite.ramp[0]!
+        : lit > 0.35
+          ? sprite.ramp[3]!
+          : lit < -0.3
+            ? sprite.ramp[1]!
+            : sprite.ramp[2]!;
+      px(g, x0 + x, y0 + y, rgb(tone));
+    }
+  }
+  px(g, x0 + best[0], y0 + best[1], rgb(sprite.ramp[4]!));
+  if (school === 'mind') {
+    for (let y = 0; y < H; y++)
+      for (let x = 0; x < W; x++)
+        if (Math.hypot(x - 7, y - 8) < 2.4) px(g, x0 + x, y0 + y, rgb(sprite.ramp[1]!));
+    px(g, x0 + 7, y0 + 8, '#000000');
+    px(g, x0 + 6, y0 + 7, rgb(sprite.ramp[4]!));
+  }
+}
+
+/**
+ * An open book filling a screen, as MM6's spellbook and quest log (critics, rounds 8 to 11):
+ * inside the screen's frame (the view's pillar down each side, its lintel above), a green
+ * leather cover with a two-band rim under the lintel; one parchment page from the pillar to
+ * the stack, with a crease near its left edge (a ridge, then a valley nearly half down, warm
+ * in its depth, narrow on its left and wide on its right) and a hump over the right page;
+ * the page stack down the right as eight separate one-pixel edges each with its own tone and
+ * wander, the top corner cut on a diagonal; along the foot seven edges bowing with the page;
+ * page-coloured bookmarks cut on the slant, one per school known, each with its painted
+ * school picture.
  */
 export function paintBook(
   w: number,
   h: number,
   parchment: HTMLCanvasElement,
-  tabs = 4,
+  schools: readonly string[] = [],
+  open: string | null = null,
+  lift = 0,
 ): HTMLCanvasElement {
   const [c, g] = canvas(w, h);
-  const cover = cloudy(w, h, w * 3 + h, {
+  const s = surfaces ?? installPaint();
+  const B = 8;
+  g.drawImage(paintMarbleFrame(w, h, s.marbleDark, B), 0, 0);
+  const iw = Math.max(1, w - 2 * B);
+  const ih = Math.max(1, h - 2 * B);
+  const cover = cloudy(iw, ih, w * 3 + h, {
     base: [28, 80, 60],
     octaves: [
       [24, 7],
@@ -1204,23 +1715,18 @@ export function paintBook(
     tint: 2,
     grain: 6,
   });
-  g.drawImage(cover, 0, 0);
+  quantise(cover.getContext('2d')!, iw, ih, 4);
+  g.drawImage(cover, B, B);
   g.fillStyle = '#184131';
-  g.fillRect(0, 0, w, 2);
-  g.fillRect(0, 0, 2, h);
-  g.fillRect(0, h - 2, w, 2);
-  g.fillRect(w - 2, 0, 2, h);
+  g.fillRect(B, B, iw, 2);
   g.fillStyle = '#215542';
-  g.fillRect(2, 2, w - 4, 1);
-  g.fillRect(2, 2, 1, h - 4);
-  g.fillRect(2, h - 3, w - 4, 1);
-  g.fillRect(w - 3, 2, 1, h - 4);
-  const top = 9;
-  const left = 2;
-  const right = w - 34;
-  const bottom = h - 16;
-  const pw = right - left;
-  const ph = bottom - top;
+  g.fillRect(B, B + 2, iw, 1);
+  const top = B + 10;
+  const left = B;
+  const right = w - B - 34;
+  const bottom = h - B - 22;
+  const pw = Math.max(1, right - left);
+  const ph = Math.max(1, bottom - top);
   g.save();
   g.beginPath();
   g.rect(left, top, pw, ph);
@@ -1231,13 +1737,12 @@ export function paintBook(
   g.restore();
   const img = g.getImageData(left, top, pw, ph);
   const d = img.data;
-  // The crease (critics, round 10): a ridge twelve levels up ten pixels before the valley,
-  // the valley nearly half down, warm in its depth.
   const gx = pw * 0.09;
   for (let x = 0; x < pw; x++) {
     const t = x / Math.max(1, pw - 1);
+    const width = x < gx ? 5 : 14;
+    const valley = Math.exp(-(((x - gx) / width) * ((x - gx) / width)));
     const ridge = 12 * Math.exp(-(((x - gx + 10) / 5) * ((x - gx + 10) / 5)));
-    const valley = Math.exp(-(((x - gx) / 5) * ((x - gx) / 5)));
     const hump = t > 0.55 ? 25 * Math.sin((Math.PI * (t - 0.55)) / 0.45) : 0;
     const fall = t > 0.85 ? -20 * ((t - 0.85) / 0.15) : 0;
     for (let y = 0; y < ph; y++) {
@@ -1246,55 +1751,58 @@ export function paintBook(
         const warm = k === 0 ? 6 * valley : k === 2 ? -8 * valley : 0;
         d[i + k] = Math.max(
           0,
-          Math.min(255, d[i + k]! * (1 - 0.45 * valley) + ridge + hump + fall + warm),
+          Math.min(255, (d[i + k]! + lift) * (1 - 0.45 * valley) + ridge + hump + fall + warm),
         );
       }
     }
   }
   g.putImageData(img, left, top);
-  // The page stack: along the right MM6's band of greys, column by column; along the foot
-  // a dark crease then a ramp of ten rows.
-  // The stack irregular (critics, round 10): each column's start shifts a pixel or two
-  // every few rows, the top-right corner cut over ten pixels, the foot's crease and ramp
-  // wandering a row or two.
-  const stack = [156, 115, 107, 148, 132, 107, 156, 115, 90, 66, 82, 57, 57];
+  g.fillStyle = 'rgba(60,40,16,0.4)';
+  g.fillRect(left, top, pw, 1);
   const sr = die(w * 13 + h);
-  const shifts: number[] = [];
-  for (let y = 0; y < ph + 16; y++) {
-    if (y % (4 + Math.floor(sr() * 5)) === 0 || shifts.length === 0) {
-      shifts.push(Math.round((sr() - 0.5) * 3));
-    } else shifts.push(shifts[shifts.length - 1]!);
-  }
-  stack.forEach((l, i) => {
-    g.fillStyle = `rgb(${l},${Math.round(l * 0.94)},${Math.round(l * 0.82)})`;
-    for (let y = 0; y < ph; y++) {
-      const cut = y < 10 ? 10 - y : 0;
-      if (i < cut) continue;
-      g.fillRect(right + i + shifts[y]!, top + 2 + y, 1, 1);
+  const edgeTone = (l: number): string =>
+    `rgb(${Math.round(l)},${Math.round(l * 0.94)},${Math.round(l * 0.82)})`;
+  // The stack: a dark backing, then eight edges, each its own tone and wander.
+  g.fillStyle = '#292c21';
+  g.fillRect(right, top, 12, ph + 1);
+  [156, 115, 148, 132, 107, 156, 90, 66].forEach((L, i) => {
+    const n = noise1(ph + 1, 30, w * 7 + i * 31);
+    for (let y = 0; y <= ph; y++) {
+      if (y < Math.round(((i + 1) * 12) / 8)) continue;
+      const x = Math.max(right, right + i + Math.round(n[y]! * 5));
+      px(g, x, top + y, edgeTone(L + (sr() - 0.5) * 10));
     }
   });
-  const wobble: number[] = [];
-  for (let x = 0; x < pw + 6; x++) {
-    if (x % 6 === 0 || wobble.length === 0) wobble.push(Math.round((sr() - 0.5) * 3));
-    else wobble.push(wobble[wobble.length - 1]!);
-  }
-  for (let x = 0; x < pw + 4; x++) {
-    const o = wobble[x]!;
-    g.fillStyle = 'rgb(107,100,88)';
-    g.fillRect(left + x, bottom + o, 1, 1);
-    for (let i = 0; i < 10; i++) {
-      const l = Math.round(115 + (173 - 115) * (i / 9));
-      g.fillStyle = `rgb(${l},${Math.round(l * 0.94)},${Math.round(l * 0.82)})`;
-      g.fillRect(left + x, bottom + 1 + i + o, 1, 1);
+  // The foot: the page carried down to the first edge, a dark backing, seven edges bowing.
+  const sweep = (x: number): number =>
+    Math.sin((Math.PI * Math.min(x, pw - 1)) / Math.max(1, pw - 1));
+  const common = noise1(pw + 12, 40, w * 11 + h);
+  const last = g.getImageData(left, bottom - 1, pw, 1).data;
+  const footL = [165, 140, 107, 115, 123, 140, 156];
+  for (let x = 0; x < pw + 10; x++) {
+    const base = bottom + Math.round(8 * sweep(x) + common[x]! * 6);
+    if (x < pw) {
+      for (let y = bottom; y < base; y++) {
+        px(g, left + x, y, `rgb(${last[x * 4]},${last[x * 4 + 1]},${last[x * 4 + 2]})`);
+      }
     }
+    g.fillStyle = '#292c21';
+    g.fillRect(left + x, base, 1, footL.length + 1);
   }
-  // Bookmarks: page-coloured squares with the outer corner cut on the slant, a thin edge,
-  // a black mark on each.
+  footL.forEach((L, j) => {
+    const n = noise1(pw + 12, 40, w * 17 + j * 13);
+    for (let x = 0; x < pw + 10; x++) {
+      const base = bottom + Math.round(8 * sweep(x) + common[x]! * 6);
+      px(g, left + x, base + j + Math.round(n[x]! * 2), edgeTone(L + (sr() - 0.5) * 10));
+    }
+  });
+  // Bookmarks: page-coloured, the outer corner cut on the slant, a thin edge, the school's picture.
   const tw = 20;
   const th = 24;
-  const tx = right + 14;
-  for (let i = 0; i < tabs; i++) {
-    const ty = top + 8 + i * (th + 8);
+  const tx = right + 13;
+  schools.forEach((school, i) => {
+    const ty = top + 8 + i * (th + 6);
+    if (ty + th > h - B) return;
     const shape = (): void => {
       g.beginPath();
       g.moveTo(tx, ty);
@@ -1310,88 +1818,12 @@ export function paintBook(
     g.save();
     shape();
     g.clip();
-    g.fillStyle = '#bdb29c';
+    // The open school's bookmark is the page's own tone; the others a step darker.
+    g.fillStyle = school === open ? '#cec4ad' : '#ada28c';
     g.fillRect(tx + 1, ty + 1, tw - 2, th - 2);
     g.restore();
-    // The icon (critics, round 10): a painted figure in three or four colours, no black:
-    // a flame, a gust, a wave, a stone, one per school.
-    const mx = tx + 5;
-    const my = ty + 6;
-    const pxs = (color: string, cells: [number, number, number?][]): void => {
-      g.fillStyle = color;
-      for (const [cx, cy, cw] of cells) g.fillRect(mx + cx, my + cy, cw ?? 1, 1);
-    };
-    if (i % 4 === 0) {
-      pxs('#d61c18', [
-        [2, 10, 6],
-        [1, 8, 8],
-        [1, 6, 7],
-        [2, 4, 5],
-        [3, 2, 3],
-        [4, 0, 1],
-      ]);
-      pxs('#f75d10', [
-        [3, 9, 4],
-        [2, 7, 5],
-        [3, 5, 3],
-        [4, 3, 2],
-      ]);
-      pxs('#f7a629', [
-        [4, 8, 2],
-        [4, 6, 1],
-        [5, 4, 1],
-      ]);
-    } else if (i % 4 === 1) {
-      pxs('#a5c6e6', [
-        [0, 3, 7],
-        [2, 6, 8],
-        [0, 9, 6],
-      ]);
-      pxs('#ffffff', [
-        [1, 2, 5],
-        [3, 5, 6],
-        [1, 8, 4],
-      ]);
-      pxs('#6b8cb5', [
-        [6, 4, 2],
-        [9, 7, 1],
-        [5, 10, 2],
-      ]);
-    } else if (i % 4 === 2) {
-      pxs('#184a9c', [
-        [0, 10, 10],
-        [0, 8, 3],
-        [5, 7, 4],
-      ]);
-      pxs('#3c8cd6', [
-        [1, 6, 3],
-        [6, 5, 3],
-        [0, 9, 10],
-      ]);
-      pxs('#9cd6f7', [
-        [2, 5, 2],
-        [7, 4, 2],
-      ]);
-    } else {
-      pxs('#5a4028', [
-        [1, 10, 8],
-        [0, 8, 10],
-        [1, 6, 8],
-        [2, 4, 6],
-        [3, 2, 4],
-      ]);
-      pxs('#8a6a44', [
-        [2, 8, 4],
-        [3, 6, 3],
-        [4, 4, 2],
-      ]);
-      pxs('#4a7a3a', [
-        [6, 3, 2],
-        [7, 5, 2],
-        [1, 7, 1],
-      ]);
-    }
-  }
+    paintSchoolIcon(g, tx + 3, ty + 4, school);
+  });
   return c;
 }
 
@@ -1532,23 +1964,48 @@ export function paintTablet(w: number, h: number, marble: HTMLCanvasElement): HT
 }
 
 /**
- * The clock's well, as MM6's (critics, round 10): near-black green marble (13,25,19) with a
- * mottle of four, thirty-odd wisps of one or two pixels in (57,69,57) fading along their
- * length, a (198,146,123) highlight over a two-row (82,32,24)/(74,24,16) lip above and
- * left, a (165,154,148) line below and right, for white type.
+ * A clock's well. The HUD's (critics, round 11): MM6's recess, a (16,28,24) floor with
+ * hardly a mottle, lips of (41,44,41) then (74,69,66) above and left and (165,154,148) below
+ * and right, on RGB565, for white type. The rest screen's (critics, rounds 10 and 11): near-
+ * black green marble (10,18,13) with thirty-odd separate wisps of two to twelve pixels fading
+ * from 0.8 to 0.4, under a (198,146,123) highlight on a (82,32,24)/(74,24,16) lip.
  */
-export function paintPlaque(w: number, h: number): HTMLCanvasElement {
+export function paintPlaque(w: number, h: number, kind: 'hud' | 'rest' = 'hud'): HTMLCanvasElement {
+  if (kind === 'hud') {
+    const c = cloudy(w, h, w * 7 + h, { base: [16, 28, 24], octaves: [[12, 2]], grain: 1 });
+    const g = c.getContext('2d')!;
+    g.fillStyle = '#292c29';
+    g.fillRect(0, 0, w, 1);
+    g.fillRect(0, 0, 1, h);
+    g.fillStyle = '#4a4542';
+    g.fillRect(1, 1, w - 1, 1);
+    g.fillRect(1, 1, 1, h - 1);
+    g.fillStyle = '#a59a94';
+    g.fillRect(0, h - 1, w, 1);
+    g.fillRect(w - 1, 0, 1, h);
+    quantise565(g, w, h);
+    return c;
+  }
   const c = cloudy(w, h, w * 7 + h, {
-    base: [13, 25, 19],
+    base: [10, 18, 13],
     octaves: [
-      [16, 4],
-      [5, 2],
+      [16, 5],
+      [5, 3],
     ],
-    grain: 3,
+    grain: 2,
   });
   const g = c.getContext('2d')!;
-  wisps(g, w, h, w * 3 + h, Math.max(12, Math.round((w * h) / 110)), [8, 36], [57, 69, 57], 0.9);
-  wisps(g, w, h, w * 5 + h, Math.max(6, Math.round((w * h) / 300)), [6, 20], [33, 52, 41], 0.8);
+  wisps(
+    g,
+    w,
+    h,
+    w * 3 + h,
+    Math.max(30, Math.min(40, Math.round((w * h) / 120))),
+    [2, 12],
+    [57, 69, 57],
+    0.8,
+    0.4,
+  );
   g.fillStyle = '#c6927b';
   g.fillRect(0, 0, w, 1);
   g.fillRect(0, 0, 1, h);
@@ -1591,32 +2048,23 @@ export function paintTubeSlot(w: number, h: number): HTMLCanvasElement {
   return c;
 }
 
-/** A spell's slot in the book (critics, round 5): a grey ellipse with a dark line and a lit crown. */
-export function paintEllipse(
-  w: number,
-  h: number,
-  parchment: HTMLCanvasElement,
-): HTMLCanvasElement {
+/**
+ * MM6's parchment inside a spell's oval (icon critic, pass 1: (184,172,150), flat), the same
+ * in an empty slot as in every icon (tools/lib/icon.ts ICON_PARCHMENT).
+ */
+export const SLOT_PARCHMENT: Rgb = [184, 172, 150];
+
+/** An empty spell slot: MM6's flat parchment oval, 68 by 52, centred in its box. */
+export function paintEllipse(w: number, h: number): HTMLCanvasElement {
   const [c, g] = canvas(w, h);
-  // MM6's slot (critics, round 8): the page's own mottle twenty-six levels darker, flat, a
-  // two-pixel edge half as dark, no outline, no emboss.
-  g.drawImage(parchment, 40, 60, w, h, 0, 0, w, h);
-  const img = g.getImageData(0, 0, w, h);
-  const d = img.data;
-  for (let y = 0; y < h; y++) {
-    for (let x = 0; x < w; x++) {
-      const i = (y * w + x) * 4;
-      if (!inOval(x, y, w, h, 0)) {
-        d[i + 3] = 0;
-        continue;
-      }
-      const k = !inOval(x, y, w, h, 2) ? 13 : 26;
-      d[i] = d[i]! - k;
-      d[i + 1] = d[i + 1]! - k;
-      d[i + 2] = d[i + 2]! - k;
-    }
+  const ow = Math.min(w, 68);
+  const oh = Math.min(h, 52);
+  const ox = Math.floor((w - ow) / 2);
+  const oy = Math.floor((h - oh) / 2);
+  g.fillStyle = `rgb(${SLOT_PARCHMENT.join(',')})`;
+  for (let y = 0; y < oh; y++) {
+    for (let x = 0; x < ow; x++) if (inOval(x, y, ow, oh, 0)) g.fillRect(ox + x, oy + y, 1, 1);
   }
-  g.putImageData(img, 0, 0);
   return c;
 }
 
@@ -1659,11 +2107,13 @@ function pieceUrl(kind: string, w: number, h: number): string | null {
   else if (kind === 'trough') c = paintTrough(w, h);
   else if (kind === 'pilaster') c = paintPilaster(w, h, s.marble);
   else if (kind === 'tablet') c = paintTablet(w, h, s.marble);
-  else if (kind === 'ellipse') c = paintEllipse(w, h, s.parchment);
-  else if (kind === 'plaque') c = paintPlaque(w, h);
+  else if (kind === 'ellipse') c = paintEllipse(w, h);
+  else if (kind === 'plaque') c = paintPlaque(w, h, 'hud');
+  else if (kind === 'plaque-rest') c = paintPlaque(w, h, 'rest');
   else if (kind === 'tube-slot') c = paintTubeSlot(w, h);
   else if (kind === 'spine') c = paintSpine(w, h);
-  else if (kind.startsWith('spine-')) c = paintSpine(w, h, EMBLEMS[kind.slice(6)] ?? null);
+  else if (kind.startsWith('spine-')) c = paintSpine(w, h, kind.slice(6));
+  else if (kind.startsWith('sigil-')) c = paintSigil(w, h, kind.slice(6));
   else if (kind === 'tube-caps') c = paintTubeCaps(w, h);
   else if (kind === 'speckle') c = paintSpeckle(w, h);
   else if (kind === 'gold') c = paintCartouche(w, h, false);
@@ -1682,9 +2132,12 @@ function pieceUrl(kind: string, w: number, h: number): string | null {
   else if (kind === 'lintel') c = paintLintel(w, h, s.marble);
   else if (kind === 'alcove') c = paintAlcove(w, h, s.marble);
   else if (kind === 'marble-frame') c = paintMarbleFrame(w, h, s.marbleDark, 8);
-  else if (kind === 'book' || kind.startsWith('book-'))
-    c = paintBook(w, h, s.parchment, kind === 'book' ? 4 : Number(kind.slice(5)) || 0);
-  else if (kind === 'banner') c = paintBanner(w, h);
+  else if (kind === 'book' || kind.startsWith('book:')) {
+    // `book:<school>,<school>@<open school>`: the bookmarks of the schools known.
+    // The spellbook's page is MM6's lighter one (L about 205, its ovals about 173).
+    const [known = '', open = null] = kind.slice(5).split('@');
+    c = paintBook(w, h, s.parchment, known ? known.split(',') : [], open, 28);
+  } else if (kind === 'banner') c = paintBanner(w, h);
   else if (kind === 'bevel-in') c = paintBevel(w, h, 'in');
   else if (kind === 'bevel-out') c = paintBevel(w, h, 'out');
   if (!c) return null;

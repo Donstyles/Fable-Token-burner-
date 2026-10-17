@@ -75,7 +75,9 @@ void main(void) {
   // MM6's cloud edges carry intermediate tones, not a cliff), the strip's stippled edges
   // giving the steps their ragged run.
   float thr = 0.5 + (0.5 - cloudAmount) * 0.5;
-  float cov = smoothstep(thr - 0.18, thr + 0.18, strip.r) * step(0.03, up);
+  // Feathered a third wider (critics, round 11: four to seven per cent of the sky's pixels
+  // intermediate, as MM6's).
+  float cov = smoothstep(thr - 0.24, thr + 0.24, strip.r) * step(0.03, up);
   float body = floor(cov * 4.0 + 0.5) / 4.0;
   float tone = strip.g;
   // Lit top to shaded underside as one soft run (critics, round 6: beige-white 166,157,140

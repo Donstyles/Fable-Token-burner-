@@ -11,7 +11,18 @@ import { DynamicTexture } from '@babylonjs/core/Materials/Textures/dynamicTextur
 import { Color3 } from '@babylonjs/core/Maths/math.color';
 import type { Scene } from '@babylonjs/core/scene';
 import { ROLE } from '../../kernel/elements/roles';
-import { canvas, dab, die, grain, posterise, ramp, snap, stroke, type Tone } from '../render/brush';
+import {
+  canvas,
+  dab,
+  die,
+  expand,
+  grain,
+  posterise,
+  ramp,
+  snap,
+  stroke,
+  type Tone,
+} from '../render/brush';
 import { applyRetroSampling } from '../render/materials';
 import { palettise } from '../render/palette';
 import { lampPane, stillWater, type RoleTextures } from './textures';
@@ -19,12 +30,13 @@ import { lampPane, stillWater, type RoleTextures } from './textures';
 const T = 128;
 
 function grass(): HTMLCanvasElement {
-  // MM6's turf (critics, round 9: (61,84,45), green twenty levels over red).
-  return grain(T, T, 31, ramp('#2c4420', '#365228', '#416030', '#4c6e38', '#5b7d3e', '#6a8c44'), {
+  // MM6's turf (critics, round 9: (61,84,45), green twenty levels over red; round 11: a step
+  // darker, so the hill lands on (60,80,45), and clumps of eight to twelve texels).
+  return grain(T, T, 31, ramp('#223a18', '#2c4420', '#365228', '#416030', '#4c6e38', '#5b7d3e'), {
     marks: 3200,
-    clods: 54,
-    clodSize: 10,
-    base: 6,
+    clods: 120,
+    clodSize: 5,
+    base: 7,
   });
 }
 
@@ -54,30 +66,29 @@ function dirt(): HTMLCanvasElement {
     }
     stroke(g, T, T, pts, '#3a1c10', 1);
   }
-  // Pits and pebbles (critics, round 10): dark clusters of two to eight texels over about
-  // four percent of the tile, light pebbles over two, each a blob, not a dot.
-  for (let i = 0; i < 70; i++) {
+  // Pits and pebbles (critics, rounds 10 and 11): dark pits a step below the ramp
+  // (38,16,8) over four per cent of the tile, light pebbles (120,88,66) and (135,105,80)
+  // over two, each a blob of one to four texels, kept by the snap with sixteen steps of
+  // the ramp so the ground keeps its colours.
+  const blob = (x: number, y: number, n: number, colour: string): void => {
+    g.fillStyle = colour;
+    let bx = x;
+    let by = y;
+    for (let k = 0; k < n; k++) {
+      g.fillRect(((Math.floor(bx) % T) + T) % T, ((Math.floor(by) % T) + T) % T, 1, 1);
+      if (r() < 0.5) bx += r() < 0.5 ? -1 : 1;
+      else by += r() < 0.5 ? -1 : 1;
+    }
+  };
+  for (let i = 0; i < 260; i++) blob(r() * T, r() * T, 1 + Math.floor(r() * 4), '#261008');
+  for (let i = 0; i < 130; i++) {
     const x = r() * T;
     const y = r() * T;
-    const s = 1 + r() * 1.6;
-    g.fillStyle = '#391c10';
-    for (const dx of [-T, 0, T]) {
-      for (const dy of [-T, 0, T]) {
-        g.beginPath();
-        g.ellipse(x + dx, y + dy, s, s * (0.5 + r() * 0.6), r() * Math.PI, 0, Math.PI * 2);
-        g.fill();
-      }
-    }
+    const n = 1 + Math.floor(r() * 4);
+    blob(x, y, n, '#785842');
+    if (n > 1) blob(x, y, 1, '#876950');
   }
-  for (let i = 0; i < 40; i++) {
-    const x = Math.floor(r() * T);
-    const y = Math.floor(r() * T);
-    g.fillStyle = '#7a5845';
-    g.fillRect(x, y, 1 + Math.floor(r() * 2), 1);
-    g.fillStyle = '#8a6a50';
-    g.fillRect(x, y, 1, 1);
-  }
-  snap(g, T, T, tones);
+  snap(g, T, T, [...expand(tones, 16), ...ramp('#261008', '#785842', '#876950')]);
   return c;
 }
 
@@ -98,9 +109,9 @@ function snow(): HTMLCanvasElement {
 }
 
 function scree(): HTMLCanvasElement {
-  // Steep faces in an olive scree (critics, round 9: the grey made the hills grey; MM6's
-  // hills stay green (61,84,45) with brown scars).
-  return grain(T, T, 36, ramp('#3a3c20', '#484e2a', '#566034', '#64703e', '#728048'), {
+  // Steep faces as MM6's brown scars (critics, round 11: the olive scree read as grass; the
+  // earth's browns (57,28,16) to (107,73,57)).
+  return grain(T, T, 36, ramp('#391c10', '#45251a', '#513023', '#5d3b2d', '#6b4939'), {
     marks: 2600,
     clods: 130,
     clodSize: 5,
@@ -138,6 +149,18 @@ function cobbles(
       g.fillStyle = `rgb(${tone - 44},${tone - 44},${tone - 44})`;
       g.fillRect(sx + inset, y + inset + h - 1, w, 1);
       g.fillRect(sx + inset + w - 1, y + inset, 1, h);
+      // A grain inside the block (critics, round 11: MM6's stones are speckled, not flat):
+      // one-texel marks twelve levels up or down over two fifths of its face.
+      for (let k = 0; k < w * h * 0.4; k++) {
+        const v = Math.round(tone + (r() < 0.5 ? -12 : 12) * (0.5 + r() * 0.5));
+        g.fillStyle = `rgb(${v},${v},${v})`;
+        g.fillRect(
+          sx + inset + 1 + Math.floor(r() * (w - 2)),
+          y + inset + 1 + Math.floor(r() * (h - 2)),
+          1,
+          1,
+        );
+      }
       // A chip or two of wear.
       for (let k = 0; k < 2; k++) {
         if (r() < 0.5) continue;
@@ -156,7 +179,8 @@ function cobbles(
       }
     }
   }
-  posterise(g, T, T, tones, null, 50, 200);
+  // Fourteen tones, so the grain survives (critics, round 11: 4 colours in 20 by 20).
+  posterise(g, T, T, expand(tones, 14), null, 50, 200);
   return c;
 }
 
@@ -487,15 +511,62 @@ export const PAINTERS: Record<string, { paint: () => HTMLCanvasElement; metresPe
   rock: { paint: rock, metresPerTile: 4 },
   marble: { paint: marble, metresPerTile: 2 },
   trim: { paint: trim, metresPerTile: 1 },
-  grass: { paint: grass, metresPerTile: 14 },
-  path: { paint: dirt, metresPerTile: 14 },
+  // Five metres to a tile (critics, round 11: about four centimetres a texel, MM6's two
+  // or three screen pixels at the foot of the view).
+  grass: { paint: grass, metresPerTile: 5 },
+  path: { paint: dirt, metresPerTile: 5 },
   scree: { paint: scree, metresPerTile: 6 },
   snow: { paint: snow, metresPerTile: 6 },
   bark: { paint: bark, metresPerTile: 1 },
   leaves: { paint: leaves, metresPerTile: 1.5 },
   sand: { paint: sand, metresPerTile: 8 },
-  sandstone: { paint: sandstone, metresPerTile: 4 },
+  sandstone: { paint: sandstone, metresPerTile: 2 },
 };
+
+/**
+ * Mip levels that keep the tile's tones (critics, round 11: averaged levels smeared the far
+ * ground into a few colours): each level takes one texel of every two by two of the level
+ * above, chosen by a hash so no lattice shows, instead of their mean. Uploaded straight into
+ * the WebGL texture after Babylon generated its chain; elsewhere the generated chain stays.
+ */
+function pickMips(scene: Scene, texture: DynamicTexture, picture: HTMLCanvasElement): void {
+  const engine = scene.getEngine() as unknown as {
+    _gl?: WebGL2RenderingContext;
+    _bindTextureDirectly?(target: number, texture: unknown, forUpdate?: boolean): boolean;
+  };
+  const gl = engine._gl;
+  const internal = texture.getInternalTexture();
+  if (!gl || !internal || !engine._bindTextureDirectly) return;
+  let w = picture.width;
+  let h = picture.height;
+  let data = picture.getContext('2d')!.getImageData(0, 0, w, h).data;
+  engine._bindTextureDirectly(gl.TEXTURE_2D, internal, true);
+  gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
+  for (let level = 1; w > 1 || h > 1; level++) {
+    const nw = Math.max(1, w >> 1);
+    const nh = Math.max(1, h >> 1);
+    const next = new Uint8ClampedArray(nw * nh * 4);
+    for (let y = 0; y < nh; y++) {
+      for (let x = 0; x < nw; x++) {
+        const k =
+          Math.imul((x * 73856093) ^ (y * 19349663) ^ (level * 83492791), 2654435761) >>> 30;
+        const sx = Math.min(w - 1, 2 * x + (k & 1));
+        const sy = Math.min(h - 1, 2 * y + (k >> 1));
+        const s0 = (sy * w + sx) * 4;
+        const d0 = (y * nw + x) * 4;
+        next[d0] = data[s0]!;
+        next[d0 + 1] = data[s0 + 1]!;
+        next[d0 + 2] = data[s0 + 2]!;
+        next[d0 + 3] = data[s0 + 3]!;
+      }
+    }
+    gl.texSubImage2D(gl.TEXTURE_2D, level, 0, 0, nw, nh, gl.RGBA, gl.UNSIGNED_BYTE, next);
+    data = next;
+    w = nw;
+    h = nh;
+  }
+  engine._bindTextureDirectly(gl.TEXTURE_2D, null);
+}
 
 /** Paint every role's texture; `mipmaps` selects the sampling mode of the retro look. */
 export function paintRoleTextures(scene: Scene, mipmaps = true): RoleTextures {
@@ -509,6 +580,7 @@ export function paintRoleTextures(scene: Scene, mipmaps = true): RoleTextures {
     const texture = new DynamicTexture(`painted-${role}`, { width: T, height: T }, scene, mips);
     texture.getContext().drawImage(picture, 0, 0);
     texture.update(false);
+    if (mips) pickMips(scene, texture, picture);
     // A tile repeats across the world; a dynamic texture clamps unless told otherwise, and
     // clamped it paints the whole ground in its corner texel.
     texture.wrapU = Constants.TEXTURE_WRAP_ADDRESSMODE;

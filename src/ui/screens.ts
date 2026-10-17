@@ -46,9 +46,6 @@ export const SCREEN_LABELS: Record<ScreenName, string> = {
   map: 'Map',
 };
 
-/** The rest button's moon, a black glyph on the gold oval. */
-const MOON = '<path d="M14 3a8 8 0 1 0 7 11 7 7 0 0 1-7-11z"/>';
-
 const SCREEN_TITLES: Record<ScreenName, string> = {
   sheet: 'Character',
   items: 'Inventory',
@@ -95,12 +92,9 @@ export function installScreens(
     const b = button('', () => open(name), {
       className: `ui-shelf-btn ${name === 'rest' ? 'rest' : ''}`.trim(),
     });
-    // The emblems are painted on the spines (paint.ts `spine-<name>`, EMBLEMS); the rest
-    // button's moon is a black glyph with a lit lower edge.
-    b.innerHTML =
-      name === 'rest'
-        ? `<svg viewBox="0 0 24 24" aria-hidden="true"><g class="lit" transform="translate(0 1)">${MOON}</g><g class="ink">${MOON}</g></svg>`
-        : `<span class="ui-shelf-label">${SCREEN_LABELS[name]}</span>`;
+    // The emblems are painted on the spines (paint.ts `spine-<name>`) and the moon on the
+    // rest button's gold (paint.ts `gold`); the label is for the reader alone.
+    b.innerHTML = `<span class="ui-shelf-label">${SCREEN_LABELS[name]}</span>`;
     b.title = SCREEN_LABELS[name];
     b.dataset['paint'] = name === 'rest' ? 'gold' : `spine-${name}`;
     (name === 'rest' ? shelf : books).appendChild(b);

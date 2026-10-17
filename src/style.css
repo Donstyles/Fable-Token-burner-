@@ -99,6 +99,32 @@ html.forced-landscape body {
   transform: rotate(90deg) translateY(-100%);
 }
 
+/* One pixel grid for the whole shell (critics, round 11: every piece at the same phase): the
+   layer is a whole number of UI pixels (1.5 CSS px, src/ui/pixel-text.ts) wide and tall, its
+   right and bottom edge a fraction past the screen's, and the safe areas are rounded up to
+   whole UI pixels, so right- and bottom-anchored pieces land on the grid as the left do. */
+@supports (width: round(up, 1px, 1.5px)) {
+  :root {
+    --sat: round(up, env(safe-area-inset-top, 0px), 1.5px);
+    --sar: round(up, env(safe-area-inset-right, 0px), 1.5px);
+    --sab: round(up, env(safe-area-inset-bottom, 0px), 1.5px);
+    --sal: round(up, env(safe-area-inset-left, 0px), 1.5px);
+  }
+  html.forced-landscape {
+    --sat: round(up, env(safe-area-inset-right, 0px), 1.5px);
+    --sar: round(up, env(safe-area-inset-bottom, 0px), 1.5px);
+    --sab: round(up, env(safe-area-inset-left, 0px), 1.5px);
+    --sal: round(up, env(safe-area-inset-top, 0px), 1.5px);
+  }
+  .ui-layer {
+    box-sizing: border-box;
+    right: auto;
+    bottom: auto;
+    width: round(up, 100%, 1.5px);
+    height: round(up, 100%, 1.5px);
+  }
+}
+
 /* Development overlay. */
 .dev-overlay {
   position: absolute;

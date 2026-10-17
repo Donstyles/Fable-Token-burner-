@@ -1,18 +1,17 @@
 /**
  * The HUD (DESIGN.md 9): MM6's marble band along the foot of the view. Four gold oval frames
- * hold the party, each with the member's class sigil in gold line art (portrait art comes
- * from the owner later and drops into the same frame), the name on a plate, a green hit
- * point bar and a blue spell point bar standing beside the frame, and a condition gem above
- * them. A tap on a frame selects that member; a second tap opens their sheet.
+ * hold the party, each with the member's class sigil painted in gold pixels (paint.ts
+ * `sigil-<class>`; portrait art comes from the owner later and drops into the same frame), a
+ * green hit point tube and a blue spell point tube standing beside the frame, and a condition
+ * gem above them. A tap on a frame selects that member; a second tap opens their sheet.
  */
 import type { Party } from '../game/party';
 import { maxSp } from '../game/character';
 import { worstCondition, type ConditionId } from '../game/conditions';
-import type { ClassId } from '../game/classes';
 import { formatDate, formatTime } from '../game/time';
 import { el } from './dom';
 import { installPaint, installPaintedButtons } from './paint';
-import { installPixelText } from './pixel-text';
+import { installPixelText, PX } from './pixel-text';
 import './hud.css';
 
 export interface Hud {
@@ -29,24 +28,6 @@ export interface HudHooks {
   onSelect?(index: number): void;
 }
 
-/** Gold line-art sigils, one per class, 24-unit boxes. */
-const SIGILS: Record<ClassId, string> = {
-  knight: '<path d="M12 2v15M9 6h6M8 17h8M12 17v4"/><path d="M10.5 21h3" />',
-  paladin:
-    '<path d="M12 2l8 3v6c0 5-3.5 8.5-8 11-4.5-2.5-8-6-8-11V5z"/><path d="M12 7v9M8.5 10.5h7"/>',
-  archer:
-    '<path d="M6 3c6 3 6 15 0 18"/><path d="M6 3v18"/><path d="M6 12h14"/><path d="M17 9l3 3-3 3"/>',
-  cleric: '<circle cx="12" cy="6.5" r="3.5"/><path d="M12 10v12M7 14h10"/>',
-  sorcerer: '<path d="M12 2l2.6 6.6L22 9.3l-5.5 4.6 1.8 7.1L12 17l-6.3 4 1.8-7.1L2 9.3l7.4-.7z"/>',
-  druid:
-    '<path d="M20 4c-9 0-15 5-15 13 0 1.5.3 3 1 4 1-6 5-10 11-12-5 3-8 7-9 12 8 1 13-5 12-17z"/>',
-};
-
-function sigil(classId: ClassId): string {
-  // Gilded: the strokes in gold over the same strokes a pixel down in dark bronze.
-  return `<svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><g stroke="#2a1a06" transform="translate(0.6 0.9)">${SIGILS[classId]}</g><g stroke="#d8b858">${SIGILS[classId]}</g></svg>`;
-}
-
 /** The gem's colour for the member's worst condition. */
 function gemClass(id: ConditionId): string {
   if (id === 'good') return 'good';
@@ -54,6 +35,17 @@ function gemClass(id: ConditionId): string {
   if (id === 'unconscious' || id === 'paralyzed') return 'out';
   if (id === 'diseased' || id === 'poisoned') return 'ill';
   return 'weak';
+}
+
+/**
+ * A tube's fill for a fraction full, in whole UI pixels of its track (critics, round 11: every
+ * edge on the one grid), so the painted fill is never stretched by a fraction of a pixel.
+ */
+function fillHeight(fill: HTMLElement, fraction: number): string {
+  const track = fill.parentElement?.offsetHeight ?? 0;
+  const units = Math.round(track / PX);
+  const f = Math.max(0, Math.min(1, Number.isFinite(fraction) ? fraction : 0));
+  return units > 0 ? `${Math.round(units * f) * PX}px` : `${100 * f}%`;
 }
 
 export function createHud(parent: HTMLElement, party: Party, hooks: HudHooks): Hud {
@@ -77,7 +69,7 @@ export function createHud(parent: HTMLElement, party: Party, hooks: HudHooks): H
   const root = el('div', 'hud');
   const rail = el('div', 'hud-rail');
   rail.dataset['paint'] = 'rail';
-  root.append(el('div', 'hud-shadow'), rail);
+  root.appendChild(rail);
   const clock = el('div', 'hud-clock');
   clock.dataset['paint'] = 'plaque';
   const clockTime = el('div', 'hud-clock-time');
@@ -94,7 +86,7 @@ export function createHud(parent: HTMLElement, party: Party, hooks: HudHooks): H
     const frame = el('div', 'hud-frame');
     frame.dataset['paint'] = 'ring';
     const cameo = el('div', 'hud-cameo');
-    cameo.innerHTML = m.character ? sigil(m.character.classId) : sigil('knight');
+    cameo.dataset['paint'] = `sigil-${m.character?.classId ?? 'knight'}`;
     frame.appendChild(cameo);
     const bars = el('div', 'hud-bars');
     const gem = el('div', 'hud-gem good');
@@ -154,9 +146,9 @@ export function createHud(parent: HTMLElement, party: Party, hooks: HudHooks): H
       party.members.forEach((m, i) => {
         const x = cells[i]!;
         const c = m.character;
-        x.hpFill.style.height = `${Math.max(0, Math.min(100, (100 * m.hp) / m.maxHp))}%`;
+        x.hpFill.style.height = fillHeight(x.hpFill, m.hp / m.maxHp);
         const spMax = c ? maxSp(c) : 0;
-        x.spFill.style.height = `${spMax > 0 && c ? Math.max(0, Math.min(100, (100 * c.sp) / spMax)) : 0}%`;
+        x.spFill.style.height = fillHeight(x.spFill, spMax > 0 && c ? c.sp / spMax : 0);
         const cond = c ? worstCondition(c.conditions) : m.alive ? 'good' : 'dead';
         x.gem.className = `hud-gem ${gemClass(cond)}`;
         x.gem.dataset['paint'] = `gem-${gemClass(cond)}`;

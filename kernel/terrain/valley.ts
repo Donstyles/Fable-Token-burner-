@@ -296,9 +296,12 @@ export function generateValley(spec: ValleySpec): ValleyResult {
       }
       // MM6's hills are grass with brown dirt scars on the steeper ground, scree only where
       // the slope is a cliff, and no snow (critics, round 6).
-      // Scars at a third over the steeper ground (critics, round 10: the hills read khaki at
-      // seven tenths; MM6's are green with brown scars).
-      path = Math.max(path, 0.35 * smoothstep(30, 42, s) * (1 - smoothstep(50, 60, s)));
+      // Scars in patches (critics, round 10: a seven-tenths blend read khaki; round 11: a
+      // third everywhere read green, brown pixels 0% where MM6's hill bands run 21 to 69%):
+      // the earth shows nearly bare in patches some twenty metres across over the slopes
+      // past 26 degrees, the grass whole between them.
+      const patch = smoothstep(0.05, 0.3, fbm(x, z, 24, seed + 17));
+      path = Math.max(path, 0.85 * patch * smoothstep(24, 34, s) * (1 - smoothstep(50, 60, s)));
       let scree =
         smoothstep(52, 64, s) + 0.6 * smoothstep(6, 2, dRiver) * (h < FLOOR + 0.5 ? 1 : 0);
       let snow = 0;

@@ -1754,7 +1754,69 @@ Round 11:
   highlight; the leather's shadow below and right of its rust line,
   more flecks.
 
+### 16.22 Round 12: MM6's book and its pictures (2026-10-17)
+
+Round 11 scored HUD 6, screens 5, talk 6, world 6, verdict no. Round 12
+acts on its asks and adds the spell pictures (owner, 2026-10-17: a 100
+credit grant to dial in the icons' style, one or two per school).
+
+- **Spellbook**: one spread as MM6's: the school's plate (its name, the
+  member's rank and spell points) in the first place, then a place for
+  each of the school's eleven spells by level, in two rows of six on the
+  phone's wide page right of the crease; a known spell shows its picture
+  and name, dim when it cannot be cast (a tap gives the reason and the
+  cost in the book's foot line), a place not yet learnt is the bare oval.
+  The schools are bookmarks down the book's right edge, painted with
+  their pictures (`book:<schools>@<open>`), the open one lighter, clear
+  buttons over them. No title; the close is a gold oval on the foot. The
+  spellbook's page is MM6's lighter one (lifted 28 levels). The ovals are
+  MM6's: flat (184,172,150), 68 by 52.
+- **Spell icons** (pipeline/style.md "Spell icons"): one text-to-image
+  picture each on the cheapest model, generated on a plain parchment
+  ground and keyed by colour (Meshy's background removal strips halos),
+  composited by its soft alpha onto the same oval as an empty slot, 255
+  colours, a bolt overhanging the oval. Pass 1 (batch 006, 27 credits)
+  scored 2 to 4: dark, saturated, hard-edged, no glow, a chibi dwarf.
+  Pass 2 (batch 007, 33 credits) took the critic's style text (high-key,
+  warm mid-tone shadows, slim adults, magic as light with a halo, no
+  floor) and subject sentences; every subject came out light enough
+  without the lift. The grant's spend is in pipeline/budget.json.
+- **HUD**: the class sigils painted in gold pixels (`sigil-<class>`), no
+  SVG; the shadow strip under the band dropped; the tube fills in whole
+  UI pixels of their track; the rest button's moon painted on its gold.
+- **One grid**: the UI layer is a whole number of UI pixels wide and tall
+  (CSS `round()`), the safe areas rounded up to whole UI pixels, the band
+  100.5 px (67 UI pixels) tall, so right- and bottom-anchored pieces sit
+  on the same pixel phase as the left (the round-11 critic found five
+  phases).
+- **Rest screen**: its own plaque (`plaque-rest`): wisps over a dark
+  well with the rose lip.
+- **World** (the round-11 world critic's five changes): grass and road
+  tiles five metres (about four centimetres a texel) and the sandstone
+  two; the dirt snapped to sixteen steps of its ramp plus a pit tone
+  (38,16,8) over four per cent and two pebble tones over two; a
+  one-texel grain inside each cobble with fourteen tones; mip levels that
+  pick one texel in four by a hash instead of averaging, uploaded into
+  the WebGL texture, so the far ground keeps its grain; the grass a step
+  darker in clumps of eight to twelve texels; the hill's scars as
+  patches of nearly bare earth past 26 degrees, the scree in the earth's
+  browns. Clouds: three masses in four wind-swept streaks, the tone lit
+  at a mass's top and falling to the body over a third of its own
+  height, the grey a rim along its foot, the mottle four to one with
+  striations two texels tall, the edge feathered a third wider. The
+  talk portrait aimed at the rig's head bone, the head three fifths of
+  the window, a painted room behind it on a layer only the portrait's
+  camera sees. The mahogany: fifty bands three to eight pixels wide, a
+  third the slab's full height, one gentle wobble, a chestnut top
+  (150,110,80), the grain as short vertical specks after the colour.
+
 ## 13. Decision log
+
+- 2026-10-17 – Round 12 (16.22): the spellbook as MM6's one spread with
+  bookmarks and a place per spell level; spell icons as one bitmap on
+  MM6's parchment oval, generated on a parchment ground and keyed; the
+  shell on one pixel grid; five-metre ground tiles with picked mips,
+  patchy scars, streaked clouds, a centred portrait in a painted room.
 
 - 2026-10-17 – Round 11 (16.21): no dither on the light steps (the
   critic's reversal); blended clouds lit from above; continuous veins,

@@ -82,57 +82,12 @@
   transform: translateY(2px);
   filter: brightness(0.8);
 }
-.ui-shelf-btn svg {
-  /* Filled gold objects spanning most of the spine (critics, rounds 6 and 8). */
-  width: 30px;
-  height: 54px;
-  fill: none;
-  shape-rendering: crispEdges;
-  stroke-width: 1;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-}
-/* MM6's emblems (critics, round 8): solid objects in a three-tone gold, (173,146,74) with
-   lights to (214,186,99), the (255,223,115) only along a one-pixel top-left edge, a
-   (115,85,41) shade below and right. */
-.ui-shelf-btn svg .gilt {
-  fill: url('#giltGrad');
-  stroke: url('#giltGrad');
-  stroke-width: 2;
-}
-.ui-shelf-btn svg .shade {
-  fill: #735529;
-  stroke: #735529;
-  stroke-width: 2.4;
-}
-.ui-shelf-btn svg .sheen {
-  fill: #ffdf73;
-  stroke: #ffdf73;
-  stroke-width: 2.2;
-}
-/* The line parts are strokes alone; a closed path stays open in the middle. */
-.ui-shelf-btn svg .line {
-  fill: none;
-}
-.ui-shelf-btn svg .gilt .solid {
-  stroke-width: 0.8;
-}
 .ui-shelf-btn.rest {
   width: 42px;
   min-height: 52.5px;
   margin: 0 0 12px;
   padding: 4px;
   color: #3a2608;
-}
-/* The moon near black on the gold (critics, round 10: (8,8,0) with a (99,77,41) edge at
-   its lower right only, no light rim). */
-.ui-shelf-btn.rest svg .ink {
-  fill: #080800;
-  stroke: none;
-}
-.ui-shelf-btn.rest svg .lit {
-  fill: #634d29;
-  stroke: none;
 }
 .ui-shelf-label {
   /* MM6's books carried no labels; the glyph on the spine says which. */
@@ -197,7 +152,7 @@
 .ui-modal {
   /* The panel replaces the view only; the portrait band stays, as MM6 kept its rail. */
   position: absolute;
-  inset: 0 0 calc(var(--sab) + 100px);
+  inset: 0 0 calc(var(--sab) + 100.5px);
   z-index: 60;
   padding: var(--sat) var(--sar) var(--sab) var(--sal);
   background: rgba(0, 0, 0, 0.5);
@@ -513,8 +468,9 @@
 .screen-spells .ui-panel,
 .screen-quests .ui-panel,
 .screen-map .ui-panel {
-  /* The pages fill the boards; the tabs stand off the right edge (paint.ts `book`). */
-  padding: 13.5px 40px 24px 13.5px;
+  /* The page (paint.ts `book`): eight UI pixels of marble, ten of cover above, the stack and
+     the bookmarks forty-two pixels down the right, the foot thirty at the bottom. */
+  padding: 27px 66px 42px 18px;
   background: var(--paint) center / 100% 100% no-repeat;
   box-shadow: none;
   color: #3a2a10;
