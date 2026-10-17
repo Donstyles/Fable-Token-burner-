@@ -32,10 +32,11 @@ export const DEFAULT_GRADE: GradeSettings = {
   bloomWeight: 0,
   bloomKernel: 48,
   bloomScale: 0.5,
-  vignette: 0.6,
+  // Neutral (round 9): MM6 graded nothing; the frame carries the colours as drawn.
+  vignette: 0,
   contrast: 1.0,
-  exposure: 0.85,
-  splitTone: 11,
+  exposure: 1.0,
+  splitTone: 0,
   saturation: 0,
 };
 
@@ -54,6 +55,9 @@ export class GradePass {
     this.pipeline.imageProcessing.colorCurves = this.curves;
     this.pipeline.imageProcessing.colorCurvesEnabled = true;
     this.pipeline.imageProcessing.toneMappingEnabled = false;
+    // The world is drawn in gamma already; a linear-to-gamma step on top lifted every
+    // mid-tone (the sky from 56,77,140 to 74,99,166; critics, round 8).
+    this.pipeline.imageProcessing.fromLinearSpace = false;
     this.push();
   }
 

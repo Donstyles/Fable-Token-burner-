@@ -9,6 +9,7 @@ import { DynamicTexture } from '@babylonjs/core/Materials/Textures/dynamicTextur
 import type { Texture } from '@babylonjs/core/Materials/Textures/texture';
 import type { Scene } from '@babylonjs/core/scene';
 import { applyRetroSampling } from './materials';
+import { snapToPalette } from './palette';
 
 export interface BitmapOptions {
   /** Pixels on the long side. */
@@ -67,6 +68,7 @@ export function bitmapPixels(
       out[o + 3] = a / n >= 128 ? 255 : 0;
     }
   }
+  snapToPalette(out);
   return out;
 }
 

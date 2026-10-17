@@ -13,6 +13,7 @@ import type { Scene } from '@babylonjs/core/scene';
 import { ROLE } from '../../kernel/elements/roles';
 import { canvas, dab, die, grain, posterise, ramp, snap, stroke, type Tone } from '../render/brush';
 import { applyRetroSampling } from '../render/materials';
+import { palettise } from '../render/palette';
 import { lampPane, stillWater, type RoleTextures } from './textures';
 
 const T = 128;
@@ -23,7 +24,7 @@ function grass(): HTMLCanvasElement {
     marks: 3200,
     clods: 54,
     clodSize: 10,
-    base: 2,
+    base: 6,
   });
 }
 
@@ -34,7 +35,7 @@ function dirt(): HTMLCanvasElement {
     marks: 2600,
     clods: 80,
     clodSize: 7,
-    base: 3,
+    base: 8,
   });
   const g = c.getContext('2d')!;
   const r = die(33);
@@ -484,7 +485,7 @@ export function paintRoleTextures(scene: Scene, mipmaps = true): RoleTextures {
   const out: RoleTextures = new Map();
   for (const [role, { paint, metresPerTile }] of Object.entries(PAINTERS)) {
     const id = ROLE[role as keyof typeof ROLE];
-    const picture = paint();
+    const picture = palettise(paint());
     // Mipmaps on the ground too: a magnified texel is a block whether or not the texture
     // has mipmaps, and without them the distance shimmered into colour noise (round 7).
     const mips = mipmaps;

@@ -25,9 +25,10 @@ export interface FilterSettings {
 
 /** Off by default since the look re-target (2026-10-14); the MM6 modes stay available. */
 export const DEFAULT_FILTER: FilterSettings = {
-  // MM6's own 256 colours (tools/palette.ts, from the reference shots), not a posteriser.
-  mode: 'palette',
-  levels: 12,
+  // The bitmaps carry MM6's palette (render/palette.ts); the frame is MM6's sixteen-bit one,
+  // thirty-two levels a channel (round 9).
+  mode: 'posterize',
+  levels: 32,
   // MM6 drew flat colour; on a phone the dither read as static over everything (owner,
   // 2026-10-17), so it is off by default and stays a dial.
   dither: 0,

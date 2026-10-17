@@ -28,6 +28,21 @@ export function mix(a: Rgb, b: Rgb, t: number): Rgb {
   return [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t];
 }
 
+/** A ramp of `n` tones interpolated through the given ones. */
+export function expand(tones: Tone[], n: number): Tone[] {
+  const out: Tone[] = [];
+  for (let k = 0; k < n; k++) {
+    const t = (k / (n - 1)) * (tones.length - 1);
+    const i = Math.min(tones.length - 2, Math.floor(t));
+    const f = t - i;
+    out.push({
+      cool: mix(tones[i]!.cool, tones[i + 1]!.cool, f),
+      warm: mix(tones[i]!.warm, tones[i + 1]!.warm, f),
+    });
+  }
+  return out;
+}
+
 /** A plain ramp of tones, the same warm and cool. */
 export function ramp(...hexes: string[]): Tone[] {
   return hexes.map((h) => {
@@ -306,15 +321,18 @@ export function grain(
 ): HTMLCanvasElement {
   const r = die(seed);
   const [c, g] = canvas(w, h);
+  // Sixteen steps through the ramp (critics, round 8: MM6's dirt has hundreds of colours
+  // in runs of two pixels, not five in runs of eight).
+  tones = tones.length < 16 ? expand(tones, 16) : tones;
   const n = tones.length;
   const hex = (t: Tone): string => `rgb(${t.warm.map(Math.round).join(',')})`;
-  const base = o.base ?? Math.floor(n / 2);
+  const base = o.base !== undefined ? Math.round((o.base / (n - 1)) * (n - 1)) : Math.floor(n / 2);
   g.fillStyle = hex(tones[base]!);
   g.fillRect(0, 0, w, h);
   const clods = o.clods ?? 40;
   const clodSize = o.clodSize ?? 8;
   for (let i = 0; i < clods; i++) {
-    const step = (r() < 0.5 ? -1 : 1) * (r() < 0.75 ? 1 : 2);
+    const step = (r() < 0.5 ? -1 : 1) * (r() < 0.75 ? 3 : 6);
     const k = Math.max(0, Math.min(n - 1, base + step));
     const x = r() * w;
     const y = r() * h;
@@ -335,7 +353,7 @@ export function grain(
       }
     }
   }
-  const marks = o.marks ?? 2500;
+  const marks = (o.marks ?? 2500) * 2;
   for (let i = 0; i < marks; i++) {
     const k = Math.min(n - 1, Math.floor(r() * n));
     g.fillStyle = hex(tones[k]!);
@@ -435,4 +453,182 @@ export function paintSkyStrip(w: number, h: number, seed: number): HTMLCanvasEle
   }
   g.putImageData(img, 0, 0);
   return c;
+}
+
+/**
+ * Round every channel to a multiple of `step` (8: the five-bit grid of a 1998 frame buffer,
+ * where three quarters of MM6's channel values sit; critics, round 8). Smooth clouds step
+ * into patches, and a surface counts its colours in the hundreds, not the thousands.
+ */
+export function quantise(g: CanvasRenderingContext2D, w: number, h: number, step = 8): void {
+  const img = g.getImageData(0, 0, w, h);
+  const d = img.data;
+  for (let i = 0; i < d.length; i += 4) {
+    if (d[i + 3] === 0) continue;
+    d[i] = Math.min(255, Math.round(d[i]! / step) * step);
+    d[i + 1] = Math.min(255, Math.round(d[i + 1]! / step) * step);
+    d[i + 2] = Math.min(255, Math.round(d[i + 2]! / step) * step);
+  }
+  g.putImageData(img, 0, 0);
+}
+
+/**
+ * Veins as the isolines of a noise field: wherever the field crosses one of `levels`, a
+ * one-pixel line of `color`, closed loops that wander and tile, two to four across a hand's
+ * width at the period MM6's marble shows (critics, round 8).
+ */
+export function veins(
+  g: CanvasRenderingContext2D,
+  w: number,
+  h: number,
+  seed: number,
+  period: number,
+  levels: number[],
+  color: string,
+): void {
+  const n = valueNoise(w, h, period, seed);
+  const n2 = valueNoise(w, h, Math.max(3, period * 0.31), seed + 5);
+  const f = (x: number, y: number): number => {
+    const i = (((y % h) + h) % h) * w + (((x % w) + w) % w);
+    return n[i]! + 0.3 * n2[i]!;
+  };
+  const band = (v: number): number => {
+    let k = 0;
+    for (const l of levels) if (v > l) k++;
+    return k;
+  };
+  g.fillStyle = color;
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      const k = band(f(x, y));
+      if (k !== band(f(x + 1, y)) || k !== band(f(x, y + 1))) g.fillRect(x, y, 1, 1);
+    }
+  }
+}
+
+/**
+ * Hairline cracks: one-pixel random walks of twenty to sixty pixels, a pixel at a time so no
+ * edge is anti-aliased, wrapped across the tile; MM6's stone fissures (critics, round 8).
+ */
+export function cracks(
+  g: CanvasRenderingContext2D,
+  w: number,
+  h: number,
+  seed: number,
+  count: number,
+  length: [number, number],
+  color: string,
+  wobble = 0.6,
+  halo: string | null = null,
+): void {
+  const r = die(seed);
+  for (let v = 0; v < count; v++) {
+    let x = r() * w;
+    let y = r() * h;
+    let ang = r() * Math.PI * 2;
+    const len = length[0] + r() * (length[1] - length[0]);
+    const pts: [number, number][] = [];
+    for (let t = 0; t < len; t++) {
+      ang += (r() - 0.5) * wobble;
+      x += Math.cos(ang);
+      y += Math.sin(ang);
+      pts.push([Math.floor(((x % w) + w) % w), Math.floor(((y % h) + h) % h)]);
+    }
+    // A vein (MM6's marble): a soft darker halo three pixels wide under the crisp core.
+    if (halo) {
+      g.fillStyle = halo;
+      for (const [px0, py0] of pts) g.fillRect(px0 - 1, py0 - 1, 3, 3);
+    }
+    g.fillStyle = color;
+    for (const [px0, py0] of pts) g.fillRect(px0, py0, 1, 1);
+  }
+}
+
+/**
+ * Crazed marble as MM6's rest screen (critics, round 8): the surface broken into cells, each
+ * a shade lighter or darker, their boundaries crisp one-pixel pale cracks with a dark pixel
+ * along one side; the cells from the nearest of `count` points on the torus of the tile.
+ */
+export function crazed(
+  g: CanvasRenderingContext2D,
+  w: number,
+  h: number,
+  seed: number,
+  count: number,
+  line: string,
+  shade: string,
+  tone: number,
+): void {
+  const r = die(seed);
+  // Cells of uneven size (each point carries a weight) with boundaries bent by a noise
+  // field, so the cracks curve and the slab reads as broken stone, not a honeycomb.
+  const pts: [number, number, number, number][] = [];
+  for (let i = 0; i < count; i++) {
+    pts.push([r() * w, r() * h, (r() - 0.5) * 2 * tone, r() * r() * 900]);
+  }
+  const bendX = valueNoise(w, h, 18, seed + 3);
+  const bendY = valueNoise(w, h, 18, seed + 4);
+  const cell = new Int16Array(w * h);
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      const i0 = y * w + x;
+      const sx = x + bendX[i0]! * 10;
+      const sy = y + bendY[i0]! * 10;
+      let best = 0;
+      let bestD = Infinity;
+      for (let i = 0; i < pts.length; i++) {
+        let dx = Math.abs(sx - pts[i]![0]);
+        let dy = Math.abs(sy - pts[i]![1]);
+        if (dx > w / 2) dx = w - dx;
+        if (dy > h / 2) dy = h - dy;
+        const dd = dx * dx * 0.85 + dy * dy * 1.2 - pts[i]![3];
+        if (dd < bestD) {
+          bestD = dd;
+          best = i;
+        }
+      }
+      cell[i0] = best;
+    }
+  }
+  const img = g.getImageData(0, 0, w, h);
+  const d = img.data;
+  for (let i = 0; i < w * h; i++) {
+    const t = pts[cell[i]!]![2];
+    d[i * 4] = Math.max(0, Math.min(255, d[i * 4]! + t));
+    d[i * 4 + 1] = Math.max(0, Math.min(255, d[i * 4 + 1]! + t));
+    d[i * 4 + 2] = Math.max(0, Math.min(255, d[i * 4 + 2]! + t));
+  }
+  g.putImageData(img, 0, 0);
+  const at = (x: number, y: number): number => cell[(((y % h) + h) % h) * w + (((x % w) + w) % w)]!;
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      const k = at(x, y);
+      if (k !== at(x + 1, y) || k !== at(x, y + 1)) {
+        g.fillStyle = shade;
+        g.fillRect((x + 1) % w, (y + 1) % h, 1, 1);
+        g.fillStyle = line;
+        g.fillRect(x, y, 1, 1);
+      }
+    }
+  }
+}
+
+/** Per-pixel speckle, unblurred: every pixel nudged by up to `amp` either way in luminance. */
+export function speck(
+  g: CanvasRenderingContext2D,
+  w: number,
+  h: number,
+  seed: number,
+  amp: number,
+): void {
+  const r = die(seed);
+  const img = g.getImageData(0, 0, w, h);
+  const d = img.data;
+  for (let i = 0; i < d.length; i += 4) {
+    const t = (r() - 0.5) * 2 * amp;
+    d[i] = Math.max(0, Math.min(255, d[i]! + t));
+    d[i + 1] = Math.max(0, Math.min(255, d[i + 1]! + t));
+    d[i + 2] = Math.max(0, Math.min(255, d[i + 2]! + t));
+  }
+  g.putImageData(img, 0, 0);
 }

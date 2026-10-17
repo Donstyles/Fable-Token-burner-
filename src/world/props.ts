@@ -145,8 +145,9 @@ async function spriteOf(
   paint.setFloat('wind', 0);
   paint.setVector3('cameraPosition', camera.position);
   paint.setVector3('lightDirection', new Vector3(0.45, -0.6, 0.65).normalize());
-  paint.setColor3('lightColor', new Color3(0.22, 0.22, 0.22));
-  paint.setColor3('ambientColor', new Color3(0.72, 0.72, 0.72));
+  // A strong key (critics, round 8: MM6's crowns run from lum 18 to 95).
+  paint.setColor3('lightColor', new Color3(0.6, 0.6, 0.6));
+  paint.setColor3('ambientColor', new Color3(0.4, 0.4, 0.4));
   paint.setArray3('pointColor', new Array<number>(12).fill(0));
   mesh.isVisible = true;
   target.render(false, false);
@@ -176,11 +177,12 @@ async function spriteOf(
     x1 = n - 1;
     y1 = n - 1;
   }
-  const sprite = new DynamicTexture(`sprite:${id}`, { width: n, height: n }, scene, true);
+  const sprite = new DynamicTexture(`sprite:${id}`, { width: n, height: n }, scene, false);
   sprite.getContext().putImageData(new ImageData(px, n, n), 0, 0);
   sprite.hasAlpha = true;
   sprite.update(true);
-  sprite.updateSamplingMode(Constants.TEXTURE_NEAREST_NEAREST_MIPLINEAR);
+  // Nearest, no mipmaps: a crown's edge stays a hard edge at any distance (critics, round 8).
+  sprite.updateSamplingMode(Constants.TEXTURE_NEAREST_NEAREST);
   target.dispose();
   camera.dispose();
   const metres = side / n;
@@ -237,7 +239,7 @@ export async function loadPropModels(
       // Meshy paints buildings and stones a shade dark for daylight; a little lift reads
       // as sun on plaster rather than a cellar wall.
       // Meshy's plaster is a bright cream; MM6's walls sat at a luminance near 120 (critics).
-      const lift = sways ? 1 : 0.82;
+      const lift = sways ? 1 : 0.62;
       const material = materials.create({
         name: `prop-${id}`,
         texture: bitmap,
