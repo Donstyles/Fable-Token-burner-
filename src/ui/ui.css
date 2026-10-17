@@ -6,10 +6,11 @@
 :root {
   --gold: #e2b84a;
   --gold-dark: #8a6a20;
-  --ink-yellow: #f0d860;
-  --ink-pale: #f4f0e2;
+  /* MM6's inks (critics, round 6): pure white body, pale lemon titles, a black shadow. */
+  --ink-yellow: #ffff9c;
+  --ink-pale: #ffffff;
   --ink-brown: #3a2608;
-  --ink-label: #f4f0e2;
+  --ink-label: #ffffff;
   /* 14 UI pixels at the grid of pixel-text.ts, as MM6's body: white italic, a hard shadow. */
   --serif-italic: italic 21px/1.2 'Tinos', Georgia, serif;
 }
@@ -52,8 +53,8 @@
   display: flex;
   align-items: flex-end;
   gap: 3px;
-  padding: 15px 6px 4.5px 6px;
-  /* The alcove: a dark recess under an arched marble lintel (paint.ts). */
+  padding: 10.5px 6px 6px 6px;
+  /* The shelf: a light lip, a black shadow, the books, a ledge (paint.ts `alcove`). */
   background: var(--paint) center / 100% 100% no-repeat;
   image-rendering: pixelated;
 }
@@ -81,11 +82,12 @@
   filter: brightness(0.8);
 }
 .ui-shelf-btn svg {
-  width: 28px;
-  height: 28px;
+  /* Filled gold silhouettes spanning most of the spine (critics, round 6). */
+  width: 30px;
+  height: 54px;
   fill: none;
   shape-rendering: crispEdges;
-  stroke-width: 2;
+  stroke-width: 1;
   stroke-linecap: round;
   stroke-linejoin: round;
 }
@@ -93,19 +95,18 @@
    strokes gold, the same strokes wider and dark beneath for the outline, a thin cream edge
    above and to the left for the relief. */
 .ui-shelf-btn svg .gilt {
-  /* Thin gold line art (critics, round 5), a dark line beside it for the relief. */
-  stroke: #e0c060;
-  stroke-width: 1.6;
-  fill: none;
+  fill: #c8a040;
+  stroke: #2a1a06;
+  stroke-width: 0.8;
 }
 .ui-shelf-btn svg .shade {
-  stroke: #1a0e04;
-  stroke-width: 2.4;
-  fill: none;
+  fill: #1a0e04;
+  stroke: none;
 }
 .ui-shelf-btn svg .sheen {
-  stroke: #fff4c0;
-  stroke-width: 0.7;
+  fill: none;
+  stroke: #fff0b0;
+  stroke-width: 1;
 }
 .ui-shelf-btn.rest {
   width: 42px;
@@ -161,14 +162,15 @@
 }
 /* A button too wide for an oval is MM6's dark green slab with white shadowed lettering. */
 .ui-btn.slab {
+  /* A marble slab with a one-pixel bevel (paint.ts `paintSlab`), dark ink on it. */
   border-radius: 0;
-  color: #f4f0e2;
+  color: #2a2018;
 }
 .ui-btn.slab:active {
-  color: #ffffff;
+  color: #1a1008;
 }
 .ui-btn.slab .ui-btn-note {
-  color: #c8d0b8;
+  color: #5a4a30;
 }
 .ui-btn-note {
   font:
@@ -308,16 +310,16 @@
   flex-direction: column;
   gap: 3px;
   padding: 6px 8px;
-  background:
-    linear-gradient(rgba(0, 0, 0, 0.08), rgba(0, 0, 0, 0.08)),
-    var(--stone-dark) 0 0 / var(--stone-dark-size);
+  background: var(--stone-dark) 0 0 / var(--stone-dark-size);
   border: 0;
-  /* MM6's boxes cut into the stone (critics, round 5): a near-black groove two pixels deep
-     above and left, a light line one pixel wide below and right, the stone inside a shade
-     darker, the boxes nearly touching. */
+  /* MM6's boxes are carved, not outlined (critics, round 6): a line of #101010, one of
+     #292c29 and a highlight of #737171 inside the top and left, a light line below and
+     right, the stone the same on both sides of the cut, no band outside. */
   box-shadow:
-    inset 3px 3px 0 rgba(8, 8, 8, 0.9),
-    inset -1.5px -1.5px 0 rgba(230, 230, 224, 0.8);
+    inset 1.5px 1.5px 0 #101010,
+    inset 3px 3px 0 #292c29,
+    inset 4.5px 4.5px 0 #737171,
+    inset -1.5px -1.5px 0 rgba(230, 230, 224, 0.7);
   touch-action: pan-y;
 }
 .ui-col.narrow {
@@ -506,10 +508,11 @@
   color: #3a2a10;
 }
 .screen-rest .ui-panel {
+  /* MM6's rest screen is a pink marble (critics, round 6: ~172,121,97). */
   background:
     var(--paint) center / 100% 100% no-repeat,
-    var(--parchment) 0 0 / var(--parchment-size);
-  color: #3a2a10;
+    var(--rose) 0 0 / var(--rose-size);
+  color: #fff;
 }
 .ui-banner {
   /* White script with a dark outline on a ribbon with rounded ends (critics, round 5). */
@@ -527,29 +530,24 @@
   image-rendering: pixelated;
 }
 .screen-rest .ui-col {
-  background: rgba(255, 250, 235, 0.25);
+  background: rgba(0, 0, 0, 0.08);
   box-shadow:
-    inset 1.5px 1.5px 0 rgba(90, 60, 24, 0.6),
-    inset -1.5px -1.5px 0 rgba(255, 250, 235, 0.8);
+    inset 1.5px 1.5px 0 #2a1810,
+    inset 3px 3px 0 #4a2c20,
+    inset -1.5px -1.5px 0 rgba(255, 240, 230, 0.7);
 }
 .screen-spells .ui-k,
 .screen-quests .ui-k,
-.screen-rest .ui-k,
 .screen-spells .ui-note,
 .screen-quests .ui-note,
-.screen-rest .ui-note,
 .screen-spells .ui-row .sub,
-.screen-quests .ui-row .sub,
-.screen-rest .ui-row .sub {
+.screen-quests .ui-row .sub {
   color: #4a3414;
 }
 .screen-spells .ui-v,
 .screen-quests .ui-v,
-.screen-rest .ui-v,
 .screen-spells .ui-h,
-.screen-quests .ui-h,
-.screen-rest .ui-h,
-.screen-rest .ui-title {
+.screen-quests .ui-h {
   color: #5a2a0a;
   text-shadow: none;
 }

@@ -231,12 +231,13 @@ export async function loadPropModels(
       const sways = spec.kind === 'tree' || spec.kind === 'bush';
       // The skin as a 1998 bitmap (DESIGN.md 16.14): buildings at 256 pixels, the rest smaller.
       const bitmap = await bitmapTexture(full.texture, scene, {
-        size: spec.kind === 'building' ? 512 : 192,
+        size: spec.kind === 'building' ? 1024 : 256,
         levels: 10,
       });
       // Meshy paints buildings and stones a shade dark for daylight; a little lift reads
       // as sun on plaster rather than a cellar wall.
-      const lift = sways ? 1 : 1.05;
+      // Meshy's plaster is a bright cream; MM6's walls sat at a luminance near 120 (critics).
+      const lift = sways ? 1 : 0.82;
       const material = materials.create({
         name: `prop-${id}`,
         texture: bitmap,

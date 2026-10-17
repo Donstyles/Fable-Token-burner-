@@ -12,7 +12,8 @@
 /** CSS pixels per UI pixel: 932 CSS px across becomes 621 columns, MM6's 640. */
 export const PX = 1.5;
 
-const SHADOW = [26, 16, 8];
+// MM6's shadow is black, a pixel down and right (critics, round 6).
+const SHADOW = [0, 0, 0];
 const EXCLUDE = 'input, textarea, select, canvas, script, style, svg, [data-native]';
 
 interface Face {

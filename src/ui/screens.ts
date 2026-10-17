@@ -48,13 +48,15 @@ export const SCREEN_LABELS: Record<ScreenName, string> = {
 
 /** Gold line-art glyphs on the spines, 24-unit boxes. */
 const SHELF_GLYPHS: Record<ScreenName, string> = {
-  sheet: '<path d="M12 3v16M9 7h6M8 19h8"/><path d="M12 19v2"/>',
-  items: '<path d="M8 8h8l2 12H6z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/>',
-  spells:
-    '<path d="M4 5h6a2 2 0 0 1 2 2v13a2 2 0 0 0-2-2H4zM20 5h-6a2 2 0 0 0-2 2v13a2 2 0 0 1 2-2h6z"/>',
+  // Filled silhouettes, as MM6's gold emblems (critics, round 6): a sword, a satchel, an
+  // open book, a scroll, a compass rose; 24 units wide, 40 tall.
+  sheet: '<path d="M12 1l2 4v22l-2 3-2-3V5zM5 27h14v2h-5v9l-2 2-2-2v-9H5z"/>',
+  items: '<path d="M6 12h12l3 24H3zM9 12V8a3 3 0 0 1 6 0v4h-2V8a1 1 0 0 0-2 0v4z"/>',
+  spells: '<path d="M2 8c4-2 7-2 10 1v24c-3-3-6-3-10-1zM22 8c-4-2-7-2-10 1v24c3-3 6-3 10-1z"/>',
   rest: '<path d="M14 3a8 8 0 1 0 7 11 7 7 0 0 1-7-11z"/>',
-  quests: '<path d="M7 3h10v18H7z"/><path d="M9 7h6M9 11h6M9 15h4"/>',
-  map: '<circle cx="12" cy="12" r="8"/><path d="M12 4v16M4 12h16"/><path d="M12 7l2 5-2 5-2-5z"/>',
+  quests:
+    '<path d="M5 4h14v26a3 3 0 0 1-3 3H8a3 3 0 0 1-3-3zM3 30a2 2 0 0 0 4 0v-1H3zM17 33a2 2 0 0 0 4 0v-1h-4z"/>',
+  map: '<path d="M12 2l3 12 9 3-9 3-3 12-3-12-9-3 9-3z"/><circle cx="12" cy="17" r="3"/>',
 };
 
 const SCREEN_TITLES: Record<ScreenName, string> = {
@@ -109,7 +111,7 @@ export function installScreens(
     b.innerHTML =
       name === 'rest'
         ? `<svg viewBox="0 0 24 24" aria-hidden="true"><g class="lit" transform="translate(0 1)">${glyph}</g><g class="ink">${glyph}</g></svg>`
-        : `<svg viewBox="0 0 24 24" aria-hidden="true"><g class="shade" transform="translate(0.7 0.9)">${glyph}</g><g class="gilt">${glyph}</g><g class="sheen" transform="translate(-0.4 -0.5)">${glyph}</g></svg><span class="ui-shelf-label">${SCREEN_LABELS[name]}</span>`;
+        : `<svg viewBox="0 0 24 40" aria-hidden="true"><g class="shade" transform="translate(1 1.2)">${glyph}</g><g class="gilt">${glyph}</g><g class="sheen" transform="translate(-0.6 -0.6) scale(0.96)">${glyph}</g></svg><span class="ui-shelf-label">${SCREEN_LABELS[name]}</span>`;
     b.title = SCREEN_LABELS[name];
     b.dataset['paint'] = name === 'rest' ? 'gold' : 'spine';
     (name === 'rest' ? shelf : books).appendChild(b);

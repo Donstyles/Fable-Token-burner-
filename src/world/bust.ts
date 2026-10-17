@@ -21,14 +21,14 @@ const FOV = 0.42;
 const NEAR = 0.05;
 const FAR = 40;
 /** The window frames this much of the model's height: the head fills it, the shoulders at its foot. */
-const FRAMED_HEIGHT = 0.2;
+const FRAMED_HEIGHT = 0.19;
 /** The eyes sit here, as a fraction of the model's height. */
 const EYE_LINE = 0.9;
 /** The near-black ground behind the face, as MM6's portraits sat on one. */
-const GROUND = new Color4(0.14, 0.09, 0.06, 1);
+const GROUND = new Color4(0.02, 0.015, 0.01, 1);
 /** The key: a hard warm light from the camera's upper left, as a painted portrait's. */
 const KEY_COLOR = new Color3(1.25, 1.1, 0.9);
-const KEY_FILL = 0.3;
+const KEY_FILL = 0.15;
 
 export interface PageRect {
   x: number;

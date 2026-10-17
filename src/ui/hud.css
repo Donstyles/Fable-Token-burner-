@@ -51,17 +51,17 @@
 }
 .hud-clock-time {
   font:
-    bold 19.5px/1.1 'Tinos',
+    19.5px/1.1 'Tinos',
     Georgia,
     serif;
-  color: #f0c838;
+  color: #ffff00;
 }
 .hud-clock-date {
   font:
-    bold italic 18px/1.1 'Tinos',
+    italic 18px/1.1 'Tinos',
     Georgia,
     serif;
-  color: #e8c860;
+  color: #ffff00;
 }
 .hud-band {
   /* The four members in rectangles recessed into the marble (paint.ts `recess`), a gutter
@@ -143,10 +143,11 @@
   image-rendering: pixelated;
 }
 .hud-tubes {
-  /* Both tubes in one recessed slot (paint.ts `tube-slot`). */
+  /* The tubes on the marble, a shadow at the left and a highlight at the right (paint.ts
+     `tube-slot`), three pixels of marble between them. */
   display: flex;
-  gap: 3px;
-  padding: 4.5px;
+  gap: 4.5px;
+  padding: 0 4.5px;
   background: var(--paint) center / 100% 100% no-repeat;
   image-rendering: pixelated;
 }

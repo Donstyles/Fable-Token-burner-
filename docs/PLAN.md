@@ -491,7 +491,10 @@ waterfalls and deserts, walkable end to end.
     talk panel. **Round 5 scored 2026-10-17**: 3, 3, 4 (talk) and 3
     (world), no; the critics measured MM6 pixel by pixel and the asks
     reversed round 4's. **Round 6 done 2026-10-17** (DESIGN 16.16): the
-    measurements followed; the round-6 scoring follows.
+    measurements followed. **Round 6 scored 2026-10-17**: 4, 4, 5
+    (talk), 3 (world), no. **Round 7 done 2026-10-17** (DESIGN 16.17):
+    the palette filter by default, figured marble, measured tones
+    throughout, carved boxes, white type; the round-7 scoring follows.
 18. Remaining, in order: lasting buffs and Jump; weather states (rain, a
     sandstorm); music; the smith's hammer and the temple bell.
 

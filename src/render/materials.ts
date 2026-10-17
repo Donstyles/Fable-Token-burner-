@@ -255,12 +255,12 @@ void main(void) {
   float steep = smoothstep(0.18, 0.45, 1.0 - abs(n.y));
   vec2 wall = abs(n.x) > abs(n.z) ? vec2(vWorldPos.z, vWorldPos.y) : vec2(-vWorldPos.x, vWorldPos.y);
   vec2 screeUV = mix(vUV, wall, steep) * splatScale.z;
-  // Sampled a level sharper than the grazing ground asks for, so the grain shows down the
-  // road as it did in 1998, at the price of a little shimmer far off.
-  vec3 albedo = texture2D(diffuseSampler, vUV * splatScale.x, -1.0).rgb * g +
-    texture2D(pathSampler, vUV * splatScale.y, -1.0).rgb * w.r +
-    texture2D(screeSampler, screeUV, -1.0).rgb * w.g +
-    texture2D(snowSampler, vUV * splatScale.w, -1.0).rgb * w.b;
+  // Sampled half a level sharper than the grazing ground asks for, so the grain shows a
+  // little further down the road, as it did in 1998.
+  vec3 albedo = texture2D(diffuseSampler, vUV * splatScale.x, -0.5).rgb * g +
+    texture2D(pathSampler, vUV * splatScale.y, -0.5).rgb * w.r +
+    texture2D(screeSampler, screeUV, -0.5).rgb * w.g +
+    texture2D(snowSampler, vUV * splatScale.w, -0.5).rgb * w.b;
   if (heat > 0.0) {
     // Mirage: seen at a grazing angle the far sand mirrors the sky; the sun glints off it.
     vec3 v = normalize(cameraPosition - vWorldPos);

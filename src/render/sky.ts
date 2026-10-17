@@ -72,10 +72,11 @@ void main(void) {
   vec2 strip = texture2D(skySampler, suv).rg;
   float body = step(0.5 + (0.5 - cloudAmount) * 0.5, strip.r) * step(0.03, up);
   float tone = strip.g;
-  vec3 cream = min(cloudColor * vec3(1.08, 1.05, 1.0), vec3(0.92));
-  vec3 bodyTone = cloudColor * 0.94;
-  vec3 grey = mix(cloudColor * 0.7, zenith, 0.3);
-  vec3 cloud = tone > 0.75 ? cream : tone < 0.25 ? grey : bodyTone;
+  // Lit top to shaded underside as one soft run (critics, round 6: beige-white 166,157,140
+  // to violet-grey 131,125,140), no outline; the palette steps it.
+  vec3 cream = cloudColor;
+  vec3 grey = cloudColor * vec3(0.79, 0.79, 1.02);
+  vec3 cloud = mix(grey, cream, smoothstep(0.1, 0.9, tone));
   float cover = body;
   vec3 c = mix(sky, cloud, cover);
   // No sun disc: MM6 painted none; a faint warmth toward it only.

@@ -1514,8 +1514,56 @@ near-black wood. Round 6 follows the measurements:
   (a fifth of the model's height in frame) on a warm dark ground; the name
   in MM6's blue.
 
+### 16.17 Round 7: measured again (2026-10-17)
+
+Round 6 scored 4 (HUD), 4 (screens), 5 (talk) and 3 (world), verdict no,
+every shell score a point up on the measurements. Round 7 follows the
+next set:
+
+- **The view in MM6's own colours.** The retro filter's default is now
+  the palette mode: the 256-colour look-up table that `tools/palette.ts`
+  built from the 3D viewport of the reference shots (`public/filter/
+lut-mm6.png`, since Phase 1, never the default until now). Every frame
+  is quantised to the colours MM6 used, which is what "quantise
+  everything" meant.
+- **Marble as figure, not line**: the HUD marble in sixteen tones with
+  soft diagonal streaks three to six pixels wide, lighter and darker, a
+  pixel-wide grain over it; the pillars lit at the left edge sliding to
+  shade at the right; the band one continuous surface with a seam of a
+  dozen lum steps round each member; the oval a seven-pixel grey stone
+  bevel in MM6's measured tones, never white; the tubes six columns of
+  MM6's greens and blues on the marble with a shadow at the left and a
+  highlight at the right, no well; the clock a grey recess with yellow
+  numerals; the spines near-black leather with dark-red bands and a gold
+  line; the emblems filled gold silhouettes spanning the spine (a sword,
+  a satchel, an open book, a scroll, a compass rose); the shelf a light
+  lip over a black shadow with a ledge below.
+- **Screens**: the stone speckled and blotched with no linework in
+  sixteen greys; boxes carved with three lines inside their top and left
+  and nothing outside; pure white type with a black shadow and pale
+  lemon titles; the spell slots outline-less ovals a dozen steps darker
+  than the page; the wide buttons marble slabs with a one-pixel bevel;
+  gold ovals blooming to near white; inventory cells thirty pixels, dark
+  leather with grain, a rust line and a near-black shadow right and
+  below; the gutter darkening forty pixels each side; the rest screen on
+  a rose marble.
+- **World**: the hills grass with dirt scars, scree only on cliffs and no
+  snow (the valley rebuilt); the clouds one soft run from a beige-white
+  top to a violet-grey underside with no rim; the blue never above MM6's
+  measured dusk; fog thinner; walls at a thousand texels and a darker
+  plaster; the ground back on mipmaps (a magnified texel is a block
+  either way, and without mipmaps the distance was colour noise).
+- **Talk**: the wood's highlights raised toward MM6's chestnut with
+  knots; a thin dark-gold line round the face over black with a harder
+  key; "Greta the Goodwife" in MM6's blue.
+
 ## 13. Decision log
 
+- 2026-10-17 – Round 7 (16.17): the palette mode becomes the default
+  filter (MM6's 256 colours on every frame); marble as soft figure; the
+  ring, tubes, spines, emblems, clock and shelf in the critics' measured
+  tones; stone with no linework; carved boxes; white type; leather grid;
+  rose rest screen; grass hills without snow; soft clouds; the role back.
 - 2026-10-17 – Round 6 (16.16): the shell and world redone to the
   critics' pixel measurements of MM6 rather than their words: grey veined
   marble, recessed cells (no trough), tube slots, stone screens with

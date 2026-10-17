@@ -4,7 +4,7 @@
 
 /* Inventory */
 .inv-grid {
-  --cell: 32px;
+  --cell: 40.5px;
   display: grid;
   grid-template-columns: repeat(14, var(--cell));
   grid-template-rows: repeat(9, var(--cell));

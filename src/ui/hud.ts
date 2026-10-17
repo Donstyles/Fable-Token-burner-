@@ -79,7 +79,7 @@ export function createHud(parent: HTMLElement, party: Party, hooks: HudHooks): H
   rail.dataset['paint'] = 'rail';
   root.append(el('div', 'hud-shadow'), rail);
   const clock = el('div', 'hud-clock');
-  clock.dataset['paint'] = 'slot';
+  clock.dataset['paint'] = 'plaque';
   const clockTime = el('div', 'hud-clock-time');
   const clockDate = el('div', 'hud-clock-date');
   clock.append(clockTime, clockDate);

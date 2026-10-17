@@ -485,10 +485,9 @@ export function paintRoleTextures(scene: Scene, mipmaps = true): RoleTextures {
   for (const [role, { paint, metresPerTile }] of Object.entries(PAINTERS)) {
     const id = ROLE[role as keyof typeof ROLE];
     const picture = paint();
-    // The ground is sampled without mipmaps, as MM6 drew it: the foreground blows up into
-    // blocks and the distance shimmers (critics, round 5).
-    const ground = ['grass', 'path', 'scree', 'snow', 'sand'].includes(role);
-    const mips = mipmaps && !ground;
+    // Mipmaps on the ground too: a magnified texel is a block whether or not the texture
+    // has mipmaps, and without them the distance shimmered into colour noise (round 7).
+    const mips = mipmaps;
     const texture = new DynamicTexture(`painted-${role}`, { width: T, height: T }, scene, mips);
     texture.getContext().drawImage(picture, 0, 0);
     texture.update(false);

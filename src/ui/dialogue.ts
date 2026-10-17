@@ -104,8 +104,8 @@ export function createDialogue(
     const window_ = el('div', 'dlg-window');
     frame.appendChild(window_);
     const plate = el('div', 'dlg-plate');
-    // The name alone under the window, as MM6 set it; the calling is for the talk itself.
-    plate.append(el('h2', 'dlg-name', view.name));
+    // "Greta the Goodwife", as MM6 named its people, in one line under the window.
+    plate.append(el('h2', 'dlg-name', view.name), el('span', 'dlg-role', `the ${view.role}`));
     const side = el('div', 'dlg-side');
     const text = el('div', 'dlg-text');
     const topics = el('div', 'dlg-topics');

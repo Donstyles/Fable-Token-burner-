@@ -311,21 +311,23 @@ export function paintSkyStrip(w: number, h: number, seed: number): HTMLCanvasEle
     if (y < 0 || y >= h) return 0;
     return density[y * w + xx]!;
   };
+  // The tone runs down each mass from lit at its top to shaded at its underside, by where
+  // the pixel sits between the clear sky above and below it: no rim, no outline (critics,
+  // round 6), a soft gradient the palette steps on its own.
+  const reach = Math.max(8, Math.round(h / 12));
   for (let y = 0; y < h; y++) {
     for (let x = 0; x < w; x++) {
       const i = y * w + x;
       const dens = density[i]!;
       let tone = 0.5;
       if (dens >= 0.5) {
-        // Lit along the top (toward the zenith, up the strip), shaded along the underside.
-        let above = 0;
-        let below = 0;
-        const reach = Math.max(4, Math.round(h / 40));
+        let up = reach;
+        let down = reach;
         for (let k = 1; k <= reach; k++) {
-          if (at(x, y - k) < 0.5) above++;
-          if (at(x, y + k) < 0.5) below++;
+          if (up === reach && at(x, y - k) < 0.5) up = k;
+          if (down === reach && at(x, y + k) < 0.5) down = k;
         }
-        tone = above >= reach / 2 ? 1 : below >= reach / 2 ? 0 : 0.5;
+        tone = down / (up + down);
       }
       d[i * 4] = Math.round(dens * 255);
       d[i * 4 + 1] = Math.round(tone * 255);

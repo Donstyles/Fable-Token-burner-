@@ -294,9 +294,12 @@ export function generateValley(spec: ValleySpec): ValleyResult {
           path = Math.max(path, 0.7 * (1 - smoothstep(-1, 2.5, rectDistance(x, z, pad))));
         }
       }
+      // MM6's hills are grass with brown dirt scars on the steeper ground, scree only where
+      // the slope is a cliff, and no snow (critics, round 6).
+      path = Math.max(path, 0.7 * smoothstep(22, 34, s) * (1 - smoothstep(52, 64, s)));
       let scree =
-        smoothstep(32, 46, s) + 0.6 * smoothstep(6, 2, dRiver) * (h < FLOOR + 0.5 ? 1 : 0);
-      let snow = smoothstep(235, 268, h) * (1 - smoothstep(35, 50, s));
+        smoothstep(52, 64, s) + 0.6 * smoothstep(6, 2, dRiver) * (h < FLOOR + 0.5 ? 1 : 0);
+      let snow = 0;
       const total = path + scree + snow;
       if (total > 1) {
         path /= total;

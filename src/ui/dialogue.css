@@ -77,17 +77,27 @@
   padding: 3px 0 0;
   text-align: center;
 }
-.dlg-name {
-  /* The name in the cyan MM6 set its names in, on the wood. */
-  margin: 0;
+.dlg-plate {
+  text-align: center;
+}
+.dlg-role {
+  display: inline;
+  margin-left: 0.3em;
   font:
-    italic 21px/1.1 'Tinos',
+    italic 18px/1.1 'Tinos',
     Georgia,
     serif;
   color: #109aef;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+}
+.dlg-name {
+  /* "Greta the Goodwife" in MM6's blue under the window, wrapping when it must. */
+  display: inline;
+  margin: 0;
+  font:
+    italic 18px/1.1 'Tinos',
+    Georgia,
+    serif;
+  color: #109aef;
 }
 
 .dlg-side {
