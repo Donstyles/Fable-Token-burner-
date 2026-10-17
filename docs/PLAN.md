@@ -509,8 +509,12 @@ waterfalls and deserts, walkable end to end.
     valley's sidecar had been overriding the sky. **Round 10 done
     2026-10-17** (DESIGN 16.20): the `css` pitch, the sidecar sky, the
     critics' measured recipes for marble, cells, wells, pillars,
-    emblems, stone, page, crazing and gold; the round-10 scoring
-    follows.
+    emblems, stone, page, crazing and gold. **Round 10 scored
+    2026-10-17**: 5, 5, 5 (talk), 5 (world), no; values and layout are
+    MM6's, the brushwork is not. **Round 11 done 2026-10-17** (DESIGN
+    16.21): no light dither, blended clouds, continuous veins, cosine
+    pillars, a one-pixel pen, fractured-plate stone, hue-zoned crazing;
+    the round-11 scoring follows.
 18. Remaining, in order: lasting buffs and Jump; weather states (rain, a
     sandstorm); music; the smith's hammer and the temple bell.
 

@@ -58,9 +58,9 @@ float fbm(vec2 p) {
 void main(void) {
   vec3 d = normalize(vDir);
   float up = clamp(d.y, 0.0, 1.0);
-  // MM6's sky is one blue (critics, round 9: (41,69,140), no haze band), at most a step
-  // darker high above.
-  vec3 sky = up > 0.5 ? zenith : horizon;
+  // MM6's sky is one blue (critics, rounds 9 and 10: (41,69,140), no haze band, no darker
+  // step: the step showed as a bar across the top of the view).
+  vec3 sky = horizon + (zenith - horizon) * 0.0;
   // Cumulus: the cloud field cut hard into a body, with a lit edge where it thins upward and
   // toward the sun and a grey underside where it thins toward the horizon.
   // The painted strip (DESIGN.md 16.14), wrapped round the horizon and drifting with the
@@ -71,15 +71,20 @@ void main(void) {
   // horizon are not stretched into drips (round 10).
   vec2 suv = vec2(az / 6.2831853 + time * 0.0015, asin(clamp(up, 0.0, 1.0)) / 1.5707963);
   vec2 strip = texture2D(skySampler, suv).rg;
-  // The density cut at the weather's threshold; the strip's edges are stippled (brush.ts
-  // paintSkyStrip), so the cut lands ragged, as MM6's painted wisps (critics, round 9).
-  float body = step(0.5 + (0.5 - cloudAmount) * 0.5, strip.r) * step(0.03, up);
+  // The cover blended in four steps round the weather's threshold (critics, round 10:
+  // MM6's cloud edges carry intermediate tones, not a cliff), the strip's stippled edges
+  // giving the steps their ragged run.
+  float thr = 0.5 + (0.5 - cloudAmount) * 0.5;
+  float cov = smoothstep(thr - 0.18, thr + 0.18, strip.r) * step(0.03, up);
+  float body = floor(cov * 4.0 + 0.5) / 4.0;
   float tone = strip.g;
   // Lit top to shaded underside as one soft run (critics, round 6: beige-white 166,157,140
   // to violet-grey 131,125,140), no outline; the palette steps it.
   // Cream (170,160,140) with highlights toward 191 along the top, violet-grey beneath.
-  vec3 cream = min(cloudColor * 1.12, vec3(0.96));
-  vec3 grey = cloudColor * vec3(0.79, 0.79, 1.02);
+  // MM6's clouds (critics, round 10): lit (198,186,140), underside (132,117,140), blue
+  // pinned at 140 with the sky's.
+  vec3 cream = min(cloudColor * vec3(1.16, 1.16, 1.0), vec3(0.96));
+  vec3 grey = cloudColor * vec3(0.77, 0.73, 1.0);
   vec3 cloud = mix(grey, cream, smoothstep(0.15, 0.85, tone));
   float cover = body;
   vec3 c = mix(sky, cloud, cover);
@@ -142,7 +147,9 @@ export class SkyDome {
     strip.getContext().drawImage(paintSkyStrip(2048, 256, 23), 0, 0);
     strip.wrapU = Constants.TEXTURE_WRAP_ADDRESSMODE;
     strip.wrapV = Constants.TEXTURE_CLAMP_ADDRESSMODE;
-    strip.update(false);
+    // Flipped on upload, so the canvas's foot is the horizon as the painter laid it (round
+    // 10: unflipped, the masses hung lit from below).
+    strip.update(true);
     strip.updateSamplingMode(Constants.TEXTURE_NEAREST_SAMPLINGMODE);
     this.strip = strip;
     this.material.setTexture('skySampler', strip);

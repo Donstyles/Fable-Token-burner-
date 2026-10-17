@@ -30,7 +30,7 @@ const EYE_LINE = 0.9;
 // A dark brown behind the head (critics, round 9), speckled by the window's overlay.
 const GROUND = new Color4(0.118, 0.078, 0.047, 1);
 /** The key: a hard warm light from the camera's upper left, as a painted portrait's. */
-const KEY_COLOR = new Color3(0.68, 0.6, 0.51);
+const KEY_COLOR = new Color3(0.54, 0.48, 0.41);
 const KEY_FILL = 0.3;
 
 export interface PageRect {

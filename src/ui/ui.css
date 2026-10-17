@@ -42,7 +42,7 @@
   /* The book shelf: leather spines in an alcove at the HUD's right end, gold emblems on
      them, and the domed gold rest button standing on the marble beside it. */
   position: absolute;
-  right: calc(var(--sar) + 10px);
+  right: calc(var(--sar) + 10.5px);
   bottom: calc(var(--sab) + 4.5px);
   display: flex;
   align-items: flex-end;
@@ -52,7 +52,8 @@
 .ui-shelf-books {
   display: flex;
   align-items: flex-end;
-  gap: 3px;
+  /* MM6's spines stand a pixel or two apart (critics, round 10). */
+  gap: 1.5px;
   padding: 10.5px 6px 9px 6px;
   /* The shelf: a light lip, a black shadow, the books, a ledge (paint.ts `alcove`). */
   background: var(--paint) center / 100% 100% no-repeat;
@@ -63,7 +64,7 @@
 }
 .ui-shelf-btn {
   position: relative;
-  width: 40px;
+  width: 40.5px;
   min-height: 72px;
   padding: 4px 2px 2px;
   display: flex;
@@ -118,18 +119,19 @@
 }
 .ui-shelf-btn.rest {
   width: 42px;
-  min-height: 52px;
+  min-height: 52.5px;
   margin: 0 0 12px;
   padding: 4px;
   color: #3a2608;
 }
-/* The moon a black glyph on the gold (critics, round 8), a lit edge under it. */
+/* The moon near black on the gold (critics, round 10: (8,8,0) with a (99,77,41) edge at
+   its lower right only, no light rim). */
 .ui-shelf-btn.rest svg .ink {
-  fill: #000000;
+  fill: #080800;
   stroke: none;
 }
 .ui-shelf-btn.rest svg .lit {
-  fill: #fff0c0;
+  fill: #634d29;
   stroke: none;
 }
 .ui-shelf-label {
@@ -210,8 +212,9 @@
   flex-direction: column;
   /* A marble frame nine pixels wide round the slate (paint.ts `marble-frame`, painted at the
      panel's size), the slate recessed into it with a bevel. */
-  margin: 3px 6px 0;
-  padding: 13.5px;
+  /* The pillar is the outermost pixel (critics, round 10): no margin, no outline. */
+  margin: 0;
+  padding: 12px;
   background:
     var(--paint) center / 100% 100% no-repeat,
     var(--stone-dark) 0 0 / var(--stone-dark-size);

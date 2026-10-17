@@ -17,7 +17,7 @@ import catalogueJson from '../../assets/props/catalogue.json';
 import { PROPS, type PropCatalogue, type PropMeasure } from '../../kernel/terrain/props';
 import { type RetroMaterials } from '../render/materials';
 import { bitmapPixels, bitmapTexture } from '../render/bitmap';
-import { expand, ramp } from '../render/brush';
+import { die, expand, ramp } from '../render/brush';
 import { Camera } from '@babylonjs/core/Cameras/camera';
 import { TargetCamera } from '@babylonjs/core/Cameras/targetCamera';
 import { Constants } from '@babylonjs/core/Engines/constants';
@@ -160,20 +160,39 @@ async function spriteOf(
   const px = raw ? bitmapPixels(raw, n, n, n, n, 10, true) : new Uint8ClampedArray(n * n * 4);
   // Leaves in MM6's six greens and bark in its browns (critics, round 9): each opaque pixel
   // keeps its luminance and takes the ramp's tone.
-  const leaf = expand(ramp('#142814', '#1e3c1e', '#2c5428', '#3c6c32', '#528a40', '#6aa050'), 16);
+  // Crowns as a per-leaf stipple of MM6's six greens (critics, round 10: three in ten
+  // dark, four mid, three light, the lit side a step up), bark by luminance in its browns.
+  const leaf: [number, number, number][] = [
+    [8, 24, 16],
+    [16, 40, 16],
+    [33, 60, 33],
+    [33, 73, 33],
+    [49, 89, 41],
+    [57, 121, 57],
+  ];
   const bark = expand(ramp('#1c1208', '#2c1c0e', '#3e2a16', '#4e3620', '#5a4028'), 16);
+  const rr = die(n * 7 + 1);
   for (let i = 0; i < n * n; i++) {
     const o = i * 4;
     if (px[o + 3]! < 128) continue;
     const r0 = px[o]!;
     const g0 = px[o + 1]!;
     const b0 = px[o + 2]!;
-    const lum = (0.299 * r0 + 0.587 * g0 + 0.114 * b0) / 255;
-    const tones = g0 >= r0 * 0.95 ? leaf : bark;
-    const t = tones[Math.max(0, Math.min(15, Math.round(lum * 15)))]!.warm;
-    px[o] = Math.round(t[0]);
-    px[o + 1] = Math.round(t[1]);
-    px[o + 2] = Math.round(t[2]);
+    if (g0 >= r0 * 0.95) {
+      const u = rr();
+      let k = u < 0.3 ? (u < 0.15 ? 0 : 1) : u < 0.7 ? (u < 0.5 ? 2 : 3) : u < 0.85 ? 4 : 5;
+      if (i % n > n / 2 && rr() < 0.5) k = Math.min(5, k + 1);
+      const t = leaf[k]!;
+      px[o] = t[0];
+      px[o + 1] = t[1];
+      px[o + 2] = t[2];
+    } else {
+      const lum = (0.299 * r0 + 0.587 * g0 + 0.114 * b0) / 255;
+      const t = bark[Math.max(0, Math.min(15, Math.round(lum * 15)))]!.warm;
+      px[o] = Math.round(t[0]);
+      px[o + 1] = Math.round(t[1]);
+      px[o + 2] = Math.round(t[2]);
+    }
   }
   // The quad covers only the painted pixels: a spruce in its square is two thirds air, and
   // every transparent texel still costs a fragment on a phone (and a second on a CPU).

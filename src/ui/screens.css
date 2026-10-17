@@ -22,11 +22,13 @@
     0 0 0 1.5px #692608;
 }
 .inv-cell {
+  /* The rust line at the top left, its two-pixel shadow below and right of it (critics,
+     round 10). */
   background: none;
   border: 0;
   box-shadow:
     inset 1.5px 1.5px 0 #692608,
-    inset -1.5px -1.5px 0 #1a0600;
+    inset 4.5px 4.5px 0 #1a0600;
 }
 .inv-item {
   position: relative;

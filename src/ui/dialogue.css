@@ -26,8 +26,9 @@
   min-width: 0;
   min-height: 0;
   display: grid;
-  grid-template-columns: 124px minmax(0, 1fr);
-  grid-template-rows: 124px auto;
+  /* The window a tenth of the width, as MM6's (critics, round 10). */
+  grid-template-columns: 96px minmax(0, 1fr);
+  grid-template-rows: 96px auto;
   gap: 6px 10px;
   padding: 8px;
   background: var(--mahogany) 0 0 / var(--mahogany-size);
@@ -57,9 +58,9 @@
 .dlg-frame {
   grid-column: 1;
   grid-row: 1;
-  width: 124px;
-  height: 124px;
-  padding: 7.5px;
+  width: 96px;
+  height: 96px;
+  padding: 6px;
   background: var(--paint) center / 100% 100% no-repeat;
   image-rendering: pixelated;
 }

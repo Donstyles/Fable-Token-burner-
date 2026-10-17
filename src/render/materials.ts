@@ -20,8 +20,10 @@ import { DEFAULT_ENVIRONMENT, type LightingEnvironment } from './environment';
  * calm. Reference: `artwork/reference/look/`.
  */
 export function applyRetroSampling(texture: Texture, mipmaps: boolean): void {
+  // Nearest between the mip levels too (critics, round 10): a linear mip blend flattens
+  // the far texels into a smear.
   texture.updateSamplingMode(
-    mipmaps ? Constants.TEXTURE_NEAREST_NEAREST_MIPLINEAR : Constants.TEXTURE_NEAREST_NEAREST,
+    mipmaps ? Constants.TEXTURE_NEAREST_NEAREST_MIPNEAREST : Constants.TEXTURE_NEAREST_NEAREST,
   );
   texture.anisotropicFilteringLevel = 1;
 }
@@ -243,18 +245,10 @@ void main(void) {
     light *= (lightKnee + over / (1.0 + 2.0 * over)) / peak;
   }
   light = min(light + carried, vec3(1.6));
-  // The light in steps (DESIGN.md 16.14): every face lit or in shade as a painter laid it,
-  // five tones, each step split pixel by pixel by a four-by-four Bayer of a thirty-second,
-  // as MM6's light table dithered (critics, round 9).
-  if (toon > 0.5) {
-    vec2 bp = mod(floor(gl_FragCoord.xy), 4.0);
-    vec2 b2 = mod(bp, 2.0);
-    vec2 b4 = mod(floor(bp / 2.0), 2.0);
-    float m2 = 2.0 * b2.x + 3.0 * b2.y - 4.0 * b2.x * b2.y;
-    float m4 = 2.0 * b4.x + 3.0 * b4.y - 4.0 * b4.x * b4.y;
-    float bayer = ((4.0 * m2 + m4) + 0.5) / 16.0 - 0.5;
-    light = floor(light * 5.0 + 0.5 + bayer * 0.5) / 5.0;
-  }
+  // The light in steps (DESIGN.md 16.14): sixteen flat levels, no dither (critics, round
+  // 10: MM6 never dithered; a Bayer reads as a screen door over every wall; the colour
+  // variety comes from the texels).
+  if (toon > 0.5) light = floor(light * 16.0 + 0.5) / 16.0;
 #ifdef TERRAIN
   // Grass under path, scree and snow weights carried per vertex (DESIGN.md 15). Scree, the
   // texture of steep faces, is projected along the face's own horizontal axis where the

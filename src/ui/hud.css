@@ -41,10 +41,11 @@
   /* A recessed plaque with a dark border (paint.ts `slot`), the hour in bold gold with a dark
      outline (critics, round 5). */
   position: absolute;
-  left: calc(var(--sal) + 5px);
-  top: 16px;
-  width: 76px;
-  padding: 6px 0 5px;
+  /* On the UI pixel grid (critics, round 10): every box a whole number of UI pixels. */
+  left: calc(var(--sal) + 4.5px);
+  top: 16.5px;
+  width: 76.5px;
+  padding: 6px 0 4.5px;
   text-align: center;
   pointer-events: none;
   background: var(--paint) center / 100% 100% no-repeat;
@@ -71,12 +72,13 @@
      with the clock at the left and the shelf at the right. */
   position: relative;
   display: flex;
-  justify-content: center;
+  justify-content: flex-start;
   align-items: stretch;
   gap: 4.5px;
-  height: 88px;
-  margin: 12px 280px 0 88px;
-  padding: 0;
+  height: 88.5px;
+  margin: 12px 0 0 88.5px;
+  /* The cells start a whole number of UI pixels in (critics, round 10: one grid). */
+  padding: 0 0 0 64.5px;
 }
 .hud-band::before {
   content: '';
@@ -265,6 +267,8 @@
 }
 .view-pillar.right {
   right: var(--sar);
+  /* Lit from the same side as the left one, mirrored (critics, round 10). */
+  transform: scaleX(-1);
 }
 .view-capital,
 .view-plinth {

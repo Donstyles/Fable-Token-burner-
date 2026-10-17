@@ -54,13 +54,27 @@ function dirt(): HTMLCanvasElement {
     }
     stroke(g, T, T, pts, '#3a1c10', 1);
   }
-  // Pebbles: a dark pit with a lit crown.
-  for (let i = 0; i < 30; i++) {
+  // Pits and pebbles (critics, round 10): dark clusters of two to eight texels over about
+  // four percent of the tile, light pebbles over two, each a blob, not a dot.
+  for (let i = 0; i < 70; i++) {
+    const x = r() * T;
+    const y = r() * T;
+    const s = 1 + r() * 1.6;
+    g.fillStyle = '#391c10';
+    for (const dx of [-T, 0, T]) {
+      for (const dy of [-T, 0, T]) {
+        g.beginPath();
+        g.ellipse(x + dx, y + dy, s, s * (0.5 + r() * 0.6), r() * Math.PI, 0, Math.PI * 2);
+        g.fill();
+      }
+    }
+  }
+  for (let i = 0; i < 40; i++) {
     const x = Math.floor(r() * T);
     const y = Math.floor(r() * T);
-    g.fillStyle = '#3a1c10';
-    g.fillRect(x, y, 2, 2);
-    g.fillStyle = '#6b4939';
+    g.fillStyle = '#7a5845';
+    g.fillRect(x, y, 1 + Math.floor(r() * 2), 1);
+    g.fillStyle = '#8a6a50';
     g.fillRect(x, y, 1, 1);
   }
   snap(g, T, T, tones);
@@ -473,8 +487,8 @@ export const PAINTERS: Record<string, { paint: () => HTMLCanvasElement; metresPe
   rock: { paint: rock, metresPerTile: 4 },
   marble: { paint: marble, metresPerTile: 2 },
   trim: { paint: trim, metresPerTile: 1 },
-  grass: { paint: grass, metresPerTile: 7 },
-  path: { paint: dirt, metresPerTile: 7 },
+  grass: { paint: grass, metresPerTile: 14 },
+  path: { paint: dirt, metresPerTile: 14 },
   scree: { paint: scree, metresPerTile: 6 },
   snow: { paint: snow, metresPerTile: 6 },
   bark: { paint: bark, metresPerTile: 1 },

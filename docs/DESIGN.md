@@ -1708,7 +1708,58 @@ of rounds 7 to 9 never reached the screen. Round 10:
   shaded column straight into the stone; rows on the bare stone with a
   rule; the clock's well a dark green marble with veins.
 
+### 16.21 Round 11: brushwork (2026-10-17)
+
+Round 10 scored 5 on all four (HUD, screens, talk, world), verdict no.
+The values, layout and edges are MM6's; what remains is the brushwork
+on the surfaces. The world critic reversed its round-9 ask for a Bayer
+on the light steps (a screen door over every wall) and the screens
+critic retracted the leather's worn patches (they were item sprites).
+Round 11:
+
+- **World**: sixteen flat light steps, no dither; the cloud cover
+  blended in four steps round the weather's threshold in MM6's tones
+  (lit (198,186,140), underside (132,117,140), blue pinned at 140), the
+  strip uploaded flipped so the masses are lit from above, its mottle
+  stretched two to one; one blue with no darker step; tiles back at
+  fourteen metres with pits and pebbles as blobs; mips sampled nearest;
+  hill scars at a third over 30 to 50 degrees (the valley rebuilt);
+  crowns as a per-leaf stipple of six greens, the lit side a step up;
+  a dimmer key, a two-pixel speckle of sixteen levels over the talk
+  window, the window a tenth of the width; the mahogany as forty to
+  sixty parallel bands sharing one wobble, grain after the colour.
+- **HUD**: veins as one-pixel walks with overlapping stamps (continuous,
+  twenty levels deep), twice as many, the mottle deeper, the trough and
+  lintel painted at their own size with a wider spread; the pillar on
+  the cosine profile over a 150-base marble with the highlight one
+  pixel in, the right pillar mirrored; the collar MM6's five row bands
+  turned with the cosine; the capital with volute spirals and outlined
+  leaf tips and no washes; the rest oval a muted (140,114,71) gold with
+  a three-pixel mottle, a (230,215,170) specular and a sunk foot, the
+  moon near black with a lower-right edge only; the emblems a one-pixel
+  pen (a diagonal rapier, a satchel, a leaf, a key, a globe) with a
+  half-strength thread; the spines a pixel apart; the band, clock and
+  shelf on whole UI pixels.
+- **Screens**: the stone as fractured plates (a Worley field of
+  eighteen to thirty-six pixel cells, each offset and sloped, fissures
+  with a lit lip where they meet) with lichen and pits, a red-blue
+  jitter, a Bayer and 64 levels; the rose marble in zones swinging rust
+  to pale pink with dark veins along the stronger cracks and a few of
+  their own; the book's crease with a ridge and a warm valley, an
+  irregular page stack with a cut corner and a wandering foot, tab
+  icons in three or four colours, the page to the left edge; the frame
+  as pillars of desaturated rose marble with gold bands straight into
+  the stone; the gold ovals with a 247 peak and a dark socket, no rim
+  rings; the clock's well with fading wisps and a red-brown lip under a
+  highlight; the leather's shadow below and right of its rust line,
+  more flecks.
+
 ## 13. Decision log
+
+- 2026-10-17 – Round 11 (16.21): no dither on the light steps (the
+  critic's reversal); blended clouds lit from above; continuous veins,
+  cosine pillars, a one-pixel pen for the emblems; fractured-plate
+  stone; hue-zoned crazing; the HUD on whole UI pixels.
 
 - 2026-10-17 – Round 10 (16.20): the view at MM6's pitch (the `css`
   preset, default); the valley's sidecar sky one deep blue; measured

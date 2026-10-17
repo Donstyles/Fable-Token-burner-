@@ -449,7 +449,14 @@ export function paintSkyStrip(w: number, h: number, seed: number): HTMLCanvasEle
   // of value noise through it (critics, round 9: one top-light gradient over the mass plus
   // a mottle, not a vertical ramp per column).
   const reach = Math.max(8, Math.round(h / 10));
-  const mottle = valueNoise(w, h, Math.max(4, Math.round(w / 90)), seed + 77);
+  // Three to four texels, stretched two to one along the sky (critics, round 10: MM6's
+  // cloud runs are twice as long across as up).
+  const hw = Math.max(1, Math.floor(w / 2));
+  const mottleHalf = valueNoise(hw, h, 3, seed + 77);
+  const mottle = new Float32Array(w * h);
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) mottle[y * w + x] = mottleHalf[y * hw + Math.min(hw - 1, x >> 1)]!;
+  }
   for (let y = 0; y < h; y++) {
     for (let x = 0; x < w; x++) {
       const i = y * w + x;
@@ -463,7 +470,7 @@ export function paintSkyStrip(w: number, h: number, seed: number): HTMLCanvasEle
             break;
           }
         }
-        tone = Math.max(0, Math.min(1, 1 - (0.8 * up) / reach + mottle[i]! * 0.5));
+        tone = Math.max(0, Math.min(1, 1 - (0.8 * up) / reach + mottle[i]! * 0.7));
       }
       d[i * 4] = Math.round(dens * 255);
       d[i * 4 + 1] = Math.round(tone * 255);
@@ -841,9 +848,12 @@ export function veinWalk(
   seed: number,
   count: number,
   length: [number, number],
-  centre = 0.86,
-  side = 0.93,
+  centre = 0.95,
+  side = 0.975,
 ): void {
+  // One-pixel steps and no memory (critics, round 10): the stamps overlap along the walk,
+  // so a vein is a continuous smudge, about twenty levels deep at the core, not a chain of
+  // beads.
   const r = die(seed);
   const img = g.getImageData(0, 0, w, h);
   const d = img.data;
@@ -852,11 +862,10 @@ export function veinWalk(
     let y = r() * h;
     let ang = r() * Math.PI * 2;
     const len = length[0] + r() * (length[1] - length[0]);
-    const seen = new Set<number>();
-    for (let t = 0; t < len; t += 2) {
-      ang += (r() - 0.5) * 1.05;
-      x += Math.cos(ang) * 2;
-      y += Math.sin(ang) * 2;
+    for (let t = 0; t < len; t++) {
+      ang += (r() - 0.5) * 0.5;
+      x += Math.cos(ang);
+      y += Math.sin(ang);
       const cx = Math.floor(((x % w) + w) % w);
       const cy = Math.floor(((y % h) + h) % h);
       for (let dy = -1; dy <= 1; dy++) {
@@ -864,8 +873,6 @@ export function veinWalk(
           const px0 = (cx + dx + w) % w;
           const py0 = (cy + dy + h) % h;
           const k = py0 * w + px0;
-          if (seen.has(k)) continue;
-          seen.add(k);
           const f = dx === 0 && dy === 0 ? centre : side;
           d[k * 4] = d[k * 4]! * f;
           d[k * 4 + 1] = d[k * 4 + 1]! * f;
@@ -873,6 +880,146 @@ export function veinWalk(
         }
       }
     }
+  }
+  g.putImageData(img, 0, 0);
+}
+
+/**
+ * Fractured plates, as MM6's sheet stone (critics, round 10): a Worley field of cells
+ * eighteen to thirty-six pixels across on a jittered grid, each plate a random offset of
+ * up to `offset` levels with a linear gradient of up to `slope` across it in its own
+ * direction, a fissure `fissure` levels dark where two plates meet with a lit lip one
+ * pixel toward the upper left.
+ */
+export function plates(
+  g: CanvasRenderingContext2D,
+  w: number,
+  h: number,
+  seed: number,
+  pitch: number,
+  offset: number,
+  slope: number,
+  fissure: number,
+): void {
+  const r = die(seed);
+  const nx = Math.max(1, Math.round(w / pitch));
+  const ny = Math.max(1, Math.round(h / pitch));
+  const pts: [number, number, number, number, number][] = [];
+  for (let j = 0; j < ny; j++) {
+    for (let i = 0; i < nx; i++) {
+      const ang = r() * Math.PI * 2;
+      pts.push([
+        ((i + 0.5 + (r() - 0.5) * 1.2) * w) / nx,
+        ((j + 0.5 + (r() - 0.5) * 1.2) * h) / ny,
+        (r() - 0.5) * 2 * offset,
+        Math.cos(ang) * slope,
+        Math.sin(ang) * slope,
+      ]);
+    }
+  }
+  const img = g.getImageData(0, 0, w, h);
+  const d = img.data;
+  const crack = new Uint8Array(w * h);
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      let best = 0;
+      let d1 = Infinity;
+      let d2 = Infinity;
+      let bdx = 0;
+      let bdy = 0;
+      for (let i = 0; i < pts.length; i++) {
+        let dx = x - pts[i]![0];
+        let dy = y - pts[i]![1];
+        if (dx > w / 2) dx -= w;
+        if (dx < -w / 2) dx += w;
+        if (dy > h / 2) dy -= h;
+        if (dy < -h / 2) dy += h;
+        const dd = dx * dx + dy * dy;
+        if (dd < d1) {
+          d2 = d1;
+          d1 = dd;
+          best = i;
+          bdx = dx;
+          bdy = dy;
+        } else if (dd < d2) d2 = dd;
+      }
+      const p = pts[best]!;
+      const lift = p[2] + (bdx * p[3] + bdy * p[4]) / pitch;
+      const o = (y * w + x) * 4;
+      d[o] = Math.max(0, Math.min(255, d[o]! + lift));
+      d[o + 1] = Math.max(0, Math.min(255, d[o + 1]! + lift));
+      d[o + 2] = Math.max(0, Math.min(255, d[o + 2]! + lift));
+      if (Math.sqrt(d2) - Math.sqrt(d1) < 1.2) crack[y * w + x] = 1;
+    }
+  }
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      if (!crack[y * w + x]) continue;
+      const o = (y * w + x) * 4;
+      d[o] = Math.max(0, d[o]! - fissure);
+      d[o + 1] = Math.max(0, d[o + 1]! - fissure);
+      d[o + 2] = Math.max(0, d[o + 2]! - fissure);
+      const lx = (x - 1 + w) % w;
+      const ly = (y - 1 + h) % h;
+      if (!crack[ly * w + lx]) {
+        const lo = (ly * w + lx) * 4;
+        d[lo] = Math.min(255, d[lo]! + fissure * 0.45);
+        d[lo + 1] = Math.min(255, d[lo + 1]! + fissure * 0.45);
+        d[lo + 2] = Math.min(255, d[lo + 2]! + fissure * 0.45);
+      }
+    }
+  }
+  g.putImageData(img, 0, 0);
+}
+
+/**
+ * Wisps: separate one- to two-pixel random walks whose strength fades from `alpha` at the
+ * start toward a fifth of it at the end, as MM6's green marble veins (critics, round 10).
+ */
+export function wisps(
+  g: CanvasRenderingContext2D,
+  w: number,
+  h: number,
+  seed: number,
+  count: number,
+  length: [number, number],
+  color: Rgb,
+  alpha: number,
+): void {
+  const r = die(seed);
+  for (let v = 0; v < count; v++) {
+    let x = r() * w;
+    let y = r() * h;
+    let ang = r() * Math.PI * 2;
+    const len = length[0] + r() * (length[1] - length[0]);
+    const wide = r() < 0.4;
+    for (let t = 0; t < len; t++) {
+      ang += (r() - 0.5) * 0.7;
+      x += Math.cos(ang);
+      y += Math.sin(ang);
+      const a = alpha * (1 - (0.8 * t) / len);
+      g.fillStyle = `rgba(${color[0]},${color[1]},${color[2]},${a.toFixed(2)})`;
+      const px0 = Math.floor(((x % w) + w) % w);
+      const py0 = Math.floor(((y % h) + h) % h);
+      g.fillRect(px0, py0, wide ? 2 : 1, 1);
+    }
+  }
+}
+
+/** Independent per-channel noise on red and blue, so the warm-cool jitter MM6's scans carried shows. */
+export function chroma(
+  g: CanvasRenderingContext2D,
+  w: number,
+  h: number,
+  seed: number,
+  amp: number,
+): void {
+  const r = die(seed);
+  const img = g.getImageData(0, 0, w, h);
+  const d = img.data;
+  for (let i = 0; i < d.length; i += 4) {
+    d[i] = Math.max(0, Math.min(255, d[i]! + (r() - 0.5) * 2 * amp));
+    d[i + 2] = Math.max(0, Math.min(255, d[i + 2]! + (r() - 0.5) * 2 * amp));
   }
   g.putImageData(img, 0, 0);
 }
