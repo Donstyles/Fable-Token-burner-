@@ -1,0 +1,368 @@
+{
+  "number": 5,
+  "name": "creatures",
+  "created": "2026-10-17",
+  "approved": true,
+  "items": [
+    {
+      "assetId": "goblin-scout",
+      "step": "text-to-image",
+      "input": "goblin-scout.png",
+      "params": {
+        "prompt": "A goblin scout: a small wiry humanoid with mottled green skin, large pointed ears, a hooked nose and yellow eyes, wearing a ragged brown leather jerkin, a dark hood pushed back, wrapped cloth leggings and bare feet, a crude notched dagger hanging at the belt. Full-body front view, standing straight in an A-pose with the arms held slightly out from the sides and the feet apart, the whole figure centred and visible from head to foot, plain white background, no ground shadow, nothing else in the frame. The look of a late-1990s first-person RPG character: simple readable shapes, painted textures, flat even lighting, muted natural colours.",
+        "ai_model": "nano-banana-2-lite",
+        "pose_mode": "a-pose",
+        "aspect_ratio": "1:1",
+        "remove_background": true
+      },
+      "estimatedCredits": 3,
+      "estimateBasis": "documented (DESIGN.md 10.0); the cheapest image model"
+    },
+    {
+      "assetId": "goblin-scout",
+      "step": "image-to-3d",
+      "input": "goblin-scout.png",
+      "params": {
+        "model_type": "smart-topology",
+        "ai_model": "meshy-t2.5",
+        "target_polycount": 4000,
+        "pose_mode": "a-pose",
+        "should_texture": true,
+        "texture_resolution": "2k",
+        "enable_pbr": false,
+        "auto_size": true,
+        "origin_at": "bottom",
+        "target_formats": ["glb"]
+      },
+      "estimatedCredits": 15,
+      "estimateBasis": "reported by Meshy for batch 001 (2026-10-15)"
+    },
+    {
+      "assetId": "goblin-scout",
+      "step": "rig",
+      "params": {
+        "height_meters": 1.3
+      },
+      "estimatedCredits": 5,
+      "estimateBasis": "reported by Meshy for batch 001 (2026-10-15)"
+    },
+    {
+      "assetId": "goblin-scout",
+      "step": "animate",
+      "params": {
+        "clips": [
+          "idle",
+          "walk",
+          "run",
+          "attack_1",
+          "attack_2",
+          "hit",
+          "death",
+          "cast",
+          "talk",
+          "block"
+        ],
+        "action_ids": [0, 30, 14, 97, 240, 178, 188, 125, 313, 138]
+      },
+      "estimatedCredits": 30,
+      "estimateBasis": "10 actions, documented (DESIGN.md 10.0), confirmed by batch 001"
+    },
+    {
+      "assetId": "skeleton-warrior",
+      "step": "text-to-image",
+      "input": "skeleton-warrior.png",
+      "params": {
+        "prompt": "A skeleton warrior: an undead human skeleton of yellowed bone, wearing a dented rusted iron breastplate, a cracked round wooden shield strapped to the left forearm, torn chainmail scraps and a tattered dark red loincloth, a notched longsword in the right hand pointing down, empty black eye sockets with a faint red glow. Full-body front view, standing straight in an A-pose with the arms held slightly out from the sides and the feet apart, the whole figure centred and visible from head to foot, plain white background, no ground shadow, nothing else in the frame. The look of a late-1990s first-person RPG character: simple readable shapes, painted textures, flat even lighting, muted natural colours.",
+        "ai_model": "nano-banana-2-lite",
+        "pose_mode": "a-pose",
+        "aspect_ratio": "1:1",
+        "remove_background": true
+      },
+      "estimatedCredits": 3,
+      "estimateBasis": "documented (DESIGN.md 10.0); the cheapest image model"
+    },
+    {
+      "assetId": "skeleton-warrior",
+      "step": "image-to-3d",
+      "input": "skeleton-warrior.png",
+      "params": {
+        "model_type": "smart-topology",
+        "ai_model": "meshy-t2.5",
+        "target_polycount": 4000,
+        "pose_mode": "a-pose",
+        "should_texture": true,
+        "texture_resolution": "2k",
+        "enable_pbr": false,
+        "auto_size": true,
+        "origin_at": "bottom",
+        "target_formats": ["glb"]
+      },
+      "estimatedCredits": 15,
+      "estimateBasis": "reported by Meshy for batch 001 (2026-10-15)"
+    },
+    {
+      "assetId": "skeleton-warrior",
+      "step": "rig",
+      "params": {
+        "height_meters": 1.75
+      },
+      "estimatedCredits": 5,
+      "estimateBasis": "reported by Meshy for batch 001 (2026-10-15)"
+    },
+    {
+      "assetId": "skeleton-warrior",
+      "step": "animate",
+      "params": {
+        "clips": [
+          "idle",
+          "walk",
+          "run",
+          "attack_1",
+          "attack_2",
+          "hit",
+          "death",
+          "cast",
+          "talk",
+          "block"
+        ],
+        "action_ids": [0, 30, 14, 97, 240, 178, 188, 125, 313, 138]
+      },
+      "estimatedCredits": 30,
+      "estimateBasis": "10 actions, documented (DESIGN.md 10.0), confirmed by batch 001"
+    },
+    {
+      "assetId": "nomad-raider",
+      "step": "text-to-image",
+      "input": "nomad-raider.png",
+      "params": {
+        "prompt": "A desert nomad raider: a lean man in sand-coloured layered robes with a dark blue sash, a wrapped head cloth and scarf covering the lower face, leather bracers and boots, a curved scimitar sheathed at the hip, a small round shield on the back. Full-body front view, standing straight in an A-pose with the arms held slightly out from the sides and the feet apart, the whole figure centred and visible from head to foot, plain white background, no ground shadow, nothing else in the frame. The look of a late-1990s first-person RPG character: simple readable shapes, painted textures, flat even lighting, muted natural colours.",
+        "ai_model": "nano-banana-2-lite",
+        "pose_mode": "a-pose",
+        "aspect_ratio": "1:1",
+        "remove_background": true
+      },
+      "estimatedCredits": 3,
+      "estimateBasis": "documented (DESIGN.md 10.0); the cheapest image model"
+    },
+    {
+      "assetId": "nomad-raider",
+      "step": "image-to-3d",
+      "input": "nomad-raider.png",
+      "params": {
+        "model_type": "smart-topology",
+        "ai_model": "meshy-t2.5",
+        "target_polycount": 4000,
+        "pose_mode": "a-pose",
+        "should_texture": true,
+        "texture_resolution": "2k",
+        "enable_pbr": false,
+        "auto_size": true,
+        "origin_at": "bottom",
+        "target_formats": ["glb"]
+      },
+      "estimatedCredits": 15,
+      "estimateBasis": "reported by Meshy for batch 001 (2026-10-15)"
+    },
+    {
+      "assetId": "nomad-raider",
+      "step": "rig",
+      "params": {
+        "height_meters": 1.75
+      },
+      "estimatedCredits": 5,
+      "estimateBasis": "reported by Meshy for batch 001 (2026-10-15)"
+    },
+    {
+      "assetId": "nomad-raider",
+      "step": "animate",
+      "params": {
+        "clips": [
+          "idle",
+          "walk",
+          "run",
+          "attack_1",
+          "attack_2",
+          "hit",
+          "death",
+          "cast",
+          "talk",
+          "block"
+        ],
+        "action_ids": [0, 30, 14, 97, 240, 178, 188, 125, 313, 138]
+      },
+      "estimatedCredits": 30,
+      "estimateBasis": "10 actions, documented (DESIGN.md 10.0), confirmed by batch 001"
+    },
+    {
+      "assetId": "villager-man",
+      "step": "text-to-image",
+      "input": "villager-man.png",
+      "params": {
+        "prompt": "A mountain village farmer: a stocky middle-aged man with a weathered face and short brown beard, a coarse undyed linen shirt with rolled sleeves, a dark green wool vest, brown trousers held by a rope belt, muddy leather boots, a felt hat with a narrow brim. Full-body front view, standing straight in an A-pose with the arms held slightly out from the sides and the feet apart, the whole figure centred and visible from head to foot, plain white background, no ground shadow, nothing else in the frame. The look of a late-1990s first-person RPG character: simple readable shapes, painted textures, flat even lighting, muted natural colours.",
+        "ai_model": "nano-banana-2-lite",
+        "pose_mode": "a-pose",
+        "aspect_ratio": "1:1",
+        "remove_background": true
+      },
+      "estimatedCredits": 3,
+      "estimateBasis": "documented (DESIGN.md 10.0); the cheapest image model"
+    },
+    {
+      "assetId": "villager-man",
+      "step": "image-to-3d",
+      "input": "villager-man.png",
+      "params": {
+        "model_type": "smart-topology",
+        "ai_model": "meshy-t2.5",
+        "target_polycount": 4000,
+        "pose_mode": "a-pose",
+        "should_texture": true,
+        "texture_resolution": "2k",
+        "enable_pbr": false,
+        "auto_size": true,
+        "origin_at": "bottom",
+        "target_formats": ["glb"]
+      },
+      "estimatedCredits": 15,
+      "estimateBasis": "reported by Meshy for batch 001 (2026-10-15)"
+    },
+    {
+      "assetId": "villager-man",
+      "step": "rig",
+      "params": {
+        "height_meters": 1.75
+      },
+      "estimatedCredits": 5,
+      "estimateBasis": "reported by Meshy for batch 001 (2026-10-15)"
+    },
+    {
+      "assetId": "villager-man",
+      "step": "animate",
+      "params": {
+        "clips": ["idle", "walk", "talk"],
+        "action_ids": [0, 30, 313]
+      },
+      "estimatedCredits": 9,
+      "estimateBasis": "3 actions, documented (DESIGN.md 10.0), confirmed by batch 001"
+    },
+    {
+      "assetId": "villager-woman",
+      "step": "text-to-image",
+      "input": "villager-woman.png",
+      "params": {
+        "prompt": "A mountain village woman: a woman in her thirties with braided dark hair under a white linen kerchief, a long russet wool dress with a white apron, a brown bodice laced at the front, a shawl over the shoulders, plain leather shoes. Full-body front view, standing straight in an A-pose with the arms held slightly out from the sides and the feet apart, the whole figure centred and visible from head to foot, plain white background, no ground shadow, nothing else in the frame. The look of a late-1990s first-person RPG character: simple readable shapes, painted textures, flat even lighting, muted natural colours.",
+        "ai_model": "nano-banana-2-lite",
+        "pose_mode": "a-pose",
+        "aspect_ratio": "1:1",
+        "remove_background": true
+      },
+      "estimatedCredits": 3,
+      "estimateBasis": "documented (DESIGN.md 10.0); the cheapest image model"
+    },
+    {
+      "assetId": "villager-woman",
+      "step": "image-to-3d",
+      "input": "villager-woman.png",
+      "params": {
+        "model_type": "smart-topology",
+        "ai_model": "meshy-t2.5",
+        "target_polycount": 4000,
+        "pose_mode": "a-pose",
+        "should_texture": true,
+        "texture_resolution": "2k",
+        "enable_pbr": false,
+        "auto_size": true,
+        "origin_at": "bottom",
+        "target_formats": ["glb"]
+      },
+      "estimatedCredits": 15,
+      "estimateBasis": "reported by Meshy for batch 001 (2026-10-15)"
+    },
+    {
+      "assetId": "villager-woman",
+      "step": "rig",
+      "params": {
+        "height_meters": 1.65
+      },
+      "estimatedCredits": 5,
+      "estimateBasis": "reported by Meshy for batch 001 (2026-10-15)"
+    },
+    {
+      "assetId": "villager-woman",
+      "step": "animate",
+      "params": {
+        "clips": ["idle", "walk", "talk"],
+        "action_ids": [0, 30, 313]
+      },
+      "estimatedCredits": 9,
+      "estimateBasis": "3 actions, documented (DESIGN.md 10.0), confirmed by batch 001"
+    }
+  ],
+  "estimatedCredits": 223,
+  "runs": [
+    {
+      "started": "2026-10-17T10:43:35.511Z",
+      "taskIds": [
+        "01a14975-d036-7216-a77c-9734ac40744b",
+        "01a14976-20e1-774e-9057-63de4c1b4df2",
+        "01a14976-7784-718d-9350-543c414be065",
+        "01a14976-dd52-705e-86af-23a64d76bccd",
+        "01a14977-338f-77cb-b369-d69e29c09fee"
+      ],
+      "tasks": {
+        "goblin-scout": {
+          "text-to-image": {
+            "taskId": "01a14975-d036-7216-a77c-9734ac40744b",
+            "status": "SUCCEEDED",
+            "consumedCredits": 3,
+            "operationId": "b005-goblin-scout-text-to-image-r1-a1"
+          }
+        },
+        "skeleton-warrior": {
+          "text-to-image": {
+            "taskId": "01a14976-20e1-774e-9057-63de4c1b4df2",
+            "status": "SUCCEEDED",
+            "consumedCredits": 3,
+            "operationId": "b005-skeleton-warrior-text-to-image-r1-a1"
+          }
+        },
+        "nomad-raider": {
+          "text-to-image": {
+            "taskId": "01a14976-7784-718d-9350-543c414be065",
+            "status": "SUCCEEDED",
+            "consumedCredits": 3,
+            "operationId": "b005-nomad-raider-text-to-image-r1-a1"
+          }
+        },
+        "villager-man": {
+          "text-to-image": {
+            "taskId": "01a14976-dd52-705e-86af-23a64d76bccd",
+            "status": "SUCCEEDED",
+            "consumedCredits": 3,
+            "operationId": "b005-villager-man-text-to-image-r1-a1"
+          }
+        },
+        "villager-woman": {
+          "text-to-image": {
+            "taskId": "01a14977-338f-77cb-b369-d69e29c09fee",
+            "status": "SUCCEEDED",
+            "consumedCredits": 3,
+            "operationId": "b005-villager-woman-text-to-image-r1-a1"
+          }
+        }
+      },
+      "balanceBefore": 2210,
+      "attempts": {
+        "goblin-scout/text-to-image": 1,
+        "skeleton-warrior/text-to-image": 1,
+        "nomad-raider/text-to-image": 1,
+        "villager-man/text-to-image": 1,
+        "villager-woman/text-to-image": 1
+      },
+      "balanceAfter": 2195,
+      "consumedCredits": 15,
+      "finished": "2026-10-17T10:45:36.480Z"
+    }
+  ],
+  "imagesReviewed": true
+}

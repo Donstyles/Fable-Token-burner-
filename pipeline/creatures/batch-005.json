@@ -1,0 +1,29 @@
+[
+  {
+    "id": "goblin-scout",
+    "height": 1.3,
+    "prompt": "A goblin scout: a small wiry humanoid with mottled green skin, large pointed ears, a hooked nose and yellow eyes, wearing a ragged brown leather jerkin, a dark hood pushed back, wrapped cloth leggings and bare feet, a crude notched dagger hanging at the belt."
+  },
+  {
+    "id": "skeleton-warrior",
+    "height": 1.75,
+    "prompt": "A skeleton warrior: an undead human skeleton of yellowed bone, wearing a dented rusted iron breastplate, a cracked round wooden shield strapped to the left forearm, torn chainmail scraps and a tattered dark red loincloth, a notched longsword in the right hand pointing down, empty black eye sockets with a faint red glow."
+  },
+  {
+    "id": "nomad-raider",
+    "height": 1.75,
+    "prompt": "A desert nomad raider: a lean man in sand-coloured layered robes with a dark blue sash, a wrapped head cloth and scarf covering the lower face, leather bracers and boots, a curved scimitar sheathed at the hip, a small round shield on the back."
+  },
+  {
+    "id": "villager-man",
+    "height": 1.75,
+    "set": "civilian",
+    "prompt": "A mountain village farmer: a stocky middle-aged man with a weathered face and short brown beard, a coarse undyed linen shirt with rolled sleeves, a dark green wool vest, brown trousers held by a rope belt, muddy leather boots, a felt hat with a narrow brim."
+  },
+  {
+    "id": "villager-woman",
+    "height": 1.65,
+    "set": "civilian",
+    "prompt": "A mountain village woman: a woman in her thirties with braided dark hair under a white linen kerchief, a long russet wool dress with a white apron, a brown bodice laced at the front, a shawl over the shoulders, plain leather shoes."
+  }
+]

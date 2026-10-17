@@ -26,7 +26,12 @@ import { actionIds, clipSet, type ClipSet } from '../../kernel/characters/clips'
  * 2026-10-15 (smart topology meshy-t2.5 at 4,000 triangles with a 2k texture; rigging).
  */
 export const CREDITS = {
-  textToImage: { 'nano-banana': 3, 'nano-banana-2': 6, 'nano-banana-pro': 9 } as const,
+  textToImage: {
+    'nano-banana-2-lite': 3,
+    'nano-banana': 3,
+    'nano-banana-2': 6,
+    'nano-banana-pro': 9,
+  } as const,
   imageTo3d: { credits: 15, basis: 'reported by Meshy for batch 001 (2026-10-15)' },
   rig: { credits: 5, basis: 'reported by Meshy for batch 001 (2026-10-15)' },
   animatePerAction: { credits: 3, basis: 'documented (DESIGN.md 10.0), confirmed by batch 001' },
@@ -78,6 +83,11 @@ export interface Batch {
   name: string;
   created: string;
   approved: boolean;
+  /**
+   * Creatures start as text-to-image concepts (owner, 2026-10-17: never text-to-3D). A run
+   * stops after the images until they are looked at and `batch approve-images` sets this.
+   */
+  imagesReviewed?: boolean;
   items: BatchItem[];
   estimatedCredits: number;
   runs: BatchRun[];
@@ -141,6 +151,45 @@ export function humanoidItems(
       estimatedCredits: CREDITS.animatePerAction.credits * clips.length,
       estimateBasis: `${clips.length} actions, ${CREDITS.animatePerAction.basis}`,
     },
+  ];
+}
+
+/** A creature or villager made image first: a prompt, then the humanoid's three steps. */
+export interface CreatureSpec {
+  id: string;
+  /** Standing height in metres, for the rig. */
+  height: number;
+  /** The concept image's description; the pose, framing and look are added here. */
+  prompt: string;
+  set?: ClipSet;
+}
+
+export const CONCEPT_STYLE =
+  'Full-body front view, standing straight in an A-pose with the arms held slightly out ' +
+  'from the sides and the feet apart, the whole figure centred and visible from head to ' +
+  'foot, plain white background, no ground shadow, nothing else in the frame. The look of ' +
+  'a late-1990s first-person RPG character: simple readable shapes, painted textures, flat ' +
+  'even lighting, muted natural colours.';
+
+/** Text-to-image through Meshy's cheapest model, then image-to-3D, rig and clips. */
+export function creatureItems(spec: CreatureSpec, pose: PoseMode = 'a-pose'): BatchItem[] {
+  const input = `${spec.id}.png`;
+  return [
+    {
+      assetId: spec.id,
+      step: 'text-to-image',
+      input,
+      params: {
+        prompt: `${spec.prompt} ${CONCEPT_STYLE}`,
+        ai_model: 'nano-banana-2-lite',
+        pose_mode: pose,
+        aspect_ratio: '1:1',
+        remove_background: true,
+      },
+      estimatedCredits: CREDITS.textToImage['nano-banana-2-lite'],
+      estimateBasis: 'documented (DESIGN.md 10.0); the cheapest image model',
+    },
+    ...humanoidItems(spec.id, spec.height, input, spec.set ?? 'combat', pose),
   ];
 }
 

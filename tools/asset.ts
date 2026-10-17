@@ -20,6 +20,8 @@ import {
   humanoidItems,
   propItems,
   type PropSpec,
+  creatureItems,
+  type CreatureSpec,
   makeBatch,
   nextBatchNumber,
   writeBatch,
@@ -221,8 +223,29 @@ async function batch(args: string[]): Promise<void> {
     console.info(`${formatBatch(b)}\nwrote ${path}; awaiting the owner's approval by number`);
     return;
   }
+  if (sub === 'creatures') {
+    // `batch creatures <name> <specs.json>`: { id, height, prompt, set? } each; the concept
+    // image is generated first (owner, 2026-10-17) and reviewed before the 3D steps.
+    const [name, file] = rest;
+    if (!name || !isValidId(name) || !file) fail('batch creatures <name> <specs.json>');
+    const specs = JSON.parse(await readFile(file, 'utf8')) as CreatureSpec[];
+    if (!Array.isArray(specs) || !specs.length) fail(`${file}: a non-empty JSON list`);
+    const items = [];
+    for (const spec of specs) {
+      if (!isValidId(spec.id) || typeof spec.prompt !== 'string' || !spec.prompt.trim())
+        fail(`bad creature spec ${JSON.stringify(spec)}`);
+      if (!(spec.height > 0.3 && spec.height < 4)) fail(`${spec.id}: height 0.3..4 m`);
+      if (spec.set !== undefined && spec.set !== 'combat' && spec.set !== 'civilian')
+        fail(`${spec.id}: set combat|civilian`);
+      items.push(...creatureItems(spec));
+    }
+    const b = makeBatch(await nextBatchNumber(), name, items);
+    const path = await writeBatch(b);
+    console.info(`${formatBatch(b)}\nwrote ${path}; awaiting the owner's approval by number`);
+    return;
+  }
   const number = Number(rest[0]);
-  if (!Number.isInteger(number)) fail('batch show|approve <nnn>');
+  if (!Number.isInteger(number)) fail('batch show|approve|approve-images <nnn>');
   const found = await findBatch(number);
   if (!found) fail(`no batch ${number}`);
   if (sub === 'show') {
@@ -235,7 +258,13 @@ async function batch(args: string[]): Promise<void> {
     console.info(`batch ${number} approved (${found.batch.estimatedCredits} credits estimated)`);
     return;
   }
-  fail('batch new|show|approve');
+  if (sub === 'approve-images') {
+    found.batch.imagesReviewed = true;
+    await writeBatch(found.batch);
+    console.info(`batch ${number}: concept images approved; the next run builds the models`);
+    return;
+  }
+  fail('batch new|props|creatures|show|approve|approve-images');
 }
 
 async function run(args: string[]): Promise<void> {

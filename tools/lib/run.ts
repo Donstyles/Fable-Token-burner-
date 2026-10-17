@@ -4,7 +4,7 @@
  * every step, so an interrupted run resumes where it stopped and never submits a step twice.
  * Nothing runs for an unapproved batch, and a finished batch needs `--force` to run again.
  */
-import { access, mkdir, readFile } from 'node:fs/promises';
+import { access, copyFile, mkdir, readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import {
   HUMANOID_CLIPS,
@@ -30,7 +30,8 @@ export const CHARACTER_DIR = 'assets/characters';
 /** Meshy's paid plans grant the account holder full rights to generated output. */
 export const MESHY_LICENCE = 'Meshy output (paid plan): owner holds full rights';
 
-const RESOURCE: Record<Exclude<BatchStep, 'text-to-image'>, MeshyResource> = {
+const RESOURCE: Record<BatchStep, MeshyResource> = {
+  'text-to-image': 'text-to-image',
   'image-to-3d': 'image-to-3d',
   rig: 'rigging',
   animate: 'animate',
@@ -93,6 +94,19 @@ export function imageTo3dFlags(params: Record<string, unknown>, imagePath: strin
     '--target-formats',
     formats,
     ...(Object.keys(data).length ? ['--data', JSON.stringify(data)] : []),
+  ];
+}
+
+export function textToImageFlags(params: Record<string, unknown>): string[] {
+  const flag = (name: string, key: string): string[] =>
+    params[key] === undefined ? [] : [`--${name}`, String(params[key])];
+  return [
+    '--prompt',
+    String(params['prompt']),
+    ...flag('ai-model', 'ai_model'),
+    ...flag('pose-mode', 'pose_mode'),
+    ...flag('aspect-ratio', 'aspect_ratio'),
+    ...flag('remove-background', 'remove_background'),
   ];
 }
 
@@ -195,14 +209,14 @@ export async function runBatch(number: number, opts: RunOptions = {}): Promise<R
     for (const r of results) summary.assets.push(r);
   }
 
+  // Creatures whose concept images were made this run and await a look before the 3D steps.
+  const pendingReview: string[] = [];
   for (const assetId of assetIds) {
     const items = batch.items.filter((i) => i.assetId === assetId);
     const records = (run.tasks[assetId] ??= {});
     log(`${assetId}:`);
 
     const step = async (item: BatchItem, flags: () => string[]): Promise<TaskRecord> => {
-      if (item.step === 'text-to-image')
-        throw new Error(`${assetId}: text-to-image is not run here`);
       const resource = RESOURCE[item.step];
       const existing = records[item.step];
       // The CLI journals every submission by operation id and refuses to reuse one that was
@@ -256,7 +270,26 @@ export async function runBatch(number: number, opts: RunOptions = {}): Promise<R
       throw new Error(`${assetId}: a humanoid needs image-to-3d, rig and animate items`);
     }
     const image = join(INBOX_DIR, toModel.input ?? `${assetId}.png`);
-    if (!(await exists(image))) throw new Error(`${assetId}: ${image} missing`);
+    const toImage = items.find((i) => i.step === 'text-to-image');
+    if (toImage && !(await exists(image))) {
+      // Image first (owner, 2026-10-17): the concept is generated, saved to the inbox like an
+      // owner-supplied one, and the run stops there until the images have been looked at.
+      const concept = await step(toImage, () => textToImageFlags(toImage.params));
+      const dir = join(WORK_DIR, `batch-${pad(batch.number)}`, assetId);
+      if (!dryRun) await mkdir(dir, { recursive: true });
+      const files = await client.download('text-to-image', concept.taskId, 'image', dir);
+      const png = files.find((f) => /\.(png|jpe?g|webp)$/i.test(f));
+      if (!dryRun) {
+        if (!png) throw new Error(`${assetId}: the image download has no picture`);
+        await copyFile(png, image);
+        log(`  concept → ${image}`);
+      }
+    }
+    if (!(await exists(image)) && !dryRun) throw new Error(`${assetId}: ${image} missing`);
+    if (toImage && !batch.imagesReviewed) {
+      pendingReview.push(assetId);
+      continue;
+    }
 
     const model = await step(toModel, () => imageTo3dFlags(toModel.params, image));
     const rig = await step(toRig, () => rigFlags(toRig.params, model.taskId));
@@ -312,6 +345,12 @@ export async function runBatch(number: number, opts: RunOptions = {}): Promise<R
     summary.assets.push({ id: assetId, file: output, report, credits });
   }
 
+  if (pendingReview.length) {
+    log(
+      `concept images ready in ${INBOX_DIR}: ${pendingReview.join(', ')}. Look at them, then ` +
+        `\`asset batch approve-images ${batch.number}\` and run again for the models.`,
+    );
+  }
   const after = await client.balance();
   if (!dryRun) {
     run.balanceAfter = after.balance;
