@@ -152,6 +152,19 @@ describe('taps', () => {
     expect(z.consume().taps).toEqual([]);
   });
 
+  it('is a tap when the input clock says so though a stalled frame stretched the page clock', () => {
+    z.pointerDown(1, 150, 200, 0, 1000);
+    z.pointerUp(1, 150, 200, 900, 1080);
+    expect(z.consume().taps).toEqual([{ x: 150, y: 200, time: 900 }]);
+    expect(z.lastRelease?.durationMs).toBe(80);
+    // Held long by both clocks: no tap. A stamp on one end only is ignored.
+    z.pointerDown(2, 800, 100, 1000, 5000);
+    z.pointerUp(2, 800, 100, 1400, 5400);
+    z.pointerDown(3, 800, 100, 2000);
+    z.pointerUp(3, 800, 100, 2100, 9000);
+    expect(z.consume().taps).toEqual([{ x: 800, y: 100, time: 2100 }]);
+  });
+
   it('is not a tap if held too long or moved too far', () => {
     z.pointerDown(1, 150, 200, 0);
     z.pointerUp(1, 150, 200, 400);

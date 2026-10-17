@@ -63,6 +63,8 @@ interface Pointer {
   lastX: number;
   lastY: number;
   startTime: number;
+  /** The input's own clock at the press (event.timeStamp), when the source gives one. */
+  startStamp: number | undefined;
   maxTravel: number;
   /** Axis a move gesture committed to once it left the dead zone. */
   axis: 'none' | 'vertical' | 'horizontal';
@@ -101,7 +103,12 @@ export class InputZones {
     return this.effectiveMove() !== 0 || this.effectiveStrafe() !== 0;
   }
 
-  pointerDown(id: number, x: number, y: number, time: number): void {
+  /**
+   * `time` is the page's monotonic clock when the event was handled; `stamp` the input's
+   * own time of the press (event.timeStamp), which a frame that stalls the page cannot
+   * stretch, so a tap through a hitch still counts.
+   */
+  pointerDown(id: number, x: number, y: number, time: number, stamp?: number): void {
     if (this.pointers.has(id)) return;
     const wantsMove = x < this.config.width / 2;
     const role: Pointer['role'] = wantsMove
@@ -118,6 +125,7 @@ export class InputZones {
       lastX: x,
       lastY: y,
       startTime: time,
+      startStamp: stamp,
       maxTravel: 0,
       axis: 'none',
     });
@@ -165,7 +173,7 @@ export class InputZones {
     }
   }
 
-  pointerUp(id: number, x: number, y: number, time: number): void {
+  pointerUp(id: number, x: number, y: number, time: number, stamp?: number): void {
     const p = this.pointers.get(id);
     if (!p) return;
     this.pointers.delete(id);
@@ -175,11 +183,17 @@ export class InputZones {
     }
     if (p.role === 'look') this.lookReleased = true;
     const travel = Math.max(p.maxTravel, Math.hypot(x - p.startX, y - p.startY));
+    // The shorter of the two clocks: the page's, or the input's own when both ends have it
+    // (a long frame between the press and the release stretches only the page's).
+    const byPage = time - p.startTime;
+    const byInput =
+      stamp !== undefined && p.startStamp !== undefined && stamp >= p.startStamp
+        ? stamp - p.startStamp
+        : Infinity;
+    const durationMs = Math.min(byPage, byInput);
     const tap =
-      p.role !== 'ignored' &&
-      time - p.startTime <= this.config.tapMaxMs &&
-      travel <= this.config.tapMaxPx;
-    this.lastRelease = { role: p.role, durationMs: time - p.startTime, travelPx: travel, tap };
+      p.role !== 'ignored' && durationMs <= this.config.tapMaxMs && travel <= this.config.tapMaxPx;
+    this.lastRelease = { role: p.role, durationMs, travelPx: travel, tap };
     if (tap) this.taps.push({ x: p.startX, y: p.startY, time });
   }
 

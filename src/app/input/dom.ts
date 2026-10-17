@@ -9,8 +9,9 @@ export function bindInput(canvas: HTMLCanvasElement, zones: InputZones): () => v
   const rect = (): DOMRect => canvas.getBoundingClientRect();
   const local = (e: PointerEvent): [number, number] => toAppPoint(e.clientX, e.clientY, rect());
 
-  // Use the monotonic clock rather than event.timeStamp: synthetic and injected events do
-  // not always share the page's time origin, and tap detection depends on the difference.
+  // The monotonic clock is the judge of a tap; event.timeStamp goes along as the input's
+  // own clock, which a stalled frame cannot stretch. (Synthetic and injected events do not
+  // always share the page's time origin, so the stamp never stands alone.)
   const now = (): number => performance.now();
 
   const onDown = (e: PointerEvent): void => {
@@ -18,7 +19,7 @@ export function bindInput(canvas: HTMLCanvasElement, zones: InputZones): () => v
     e.preventDefault();
     canvas.setPointerCapture(e.pointerId);
     const [x, y] = local(e);
-    zones.pointerDown(e.pointerId, x, y, now());
+    zones.pointerDown(e.pointerId, x, y, now(), e.timeStamp);
   };
   const onMove = (e: PointerEvent): void => {
     const [x, y] = local(e);
@@ -26,7 +27,7 @@ export function bindInput(canvas: HTMLCanvasElement, zones: InputZones): () => v
   };
   const onUp = (e: PointerEvent): void => {
     const [x, y] = local(e);
-    zones.pointerUp(e.pointerId, x, y, now());
+    zones.pointerUp(e.pointerId, x, y, now(), e.timeStamp);
   };
   const onCancel = (e: PointerEvent): void => zones.pointerCancel(e.pointerId);
   const onResize = (): void => {
