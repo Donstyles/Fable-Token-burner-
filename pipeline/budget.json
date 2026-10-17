@@ -2,5 +2,11 @@
   "granted": 900,
   "grantedOn": "2026-10-16",
   "note": "Owner, 2026-10-16 evening: up to 900 Meshy credits for models and images without further approval, overnight. Free CC0 models and textures preferred.",
-  "spent": []
+  "spent": [
+    {
+      "batch": 3,
+      "credits": 300,
+      "date": "2026-10-17"
+    }
+  ]
 }

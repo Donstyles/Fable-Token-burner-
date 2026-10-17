@@ -854,8 +854,8 @@
           },
           "text-to-3d-refine": {
             "taskId": "01a14947-4695-7428-8117-f55c65640afe",
-            "status": "PENDING",
-            "consumedCredits": null,
+            "status": "SUCCEEDED",
+            "consumedCredits": 10,
             "operationId": "b003-tree-palm-01-text-to-3d-refine-r1-a1"
           }
         },
@@ -868,8 +868,8 @@
           },
           "text-to-3d-refine": {
             "taskId": "01a14947-4937-761c-a127-1bf2146c53bd",
-            "status": "PENDING",
-            "consumedCredits": null,
+            "status": "SUCCEEDED",
+            "consumedCredits": 10,
             "operationId": "b003-tree-palm-02-text-to-3d-refine-r1-a1"
           }
         }
@@ -916,7 +916,10 @@
         "bush-02/text-to-3d-refine": 1,
         "tree-palm-01/text-to-3d-refine": 1,
         "tree-palm-02/text-to-3d-refine": 1
-      }
+      },
+      "balanceAfter": 2540,
+      "consumedCredits": 300,
+      "finished": "2026-10-17T09:54:10.511Z"
     }
   ]
 }
