@@ -241,8 +241,9 @@
   position: absolute;
   top: 0;
   bottom: calc(var(--sab) + 100px);
-  /* MM6's shaft is narrow (critics, round 8): ten pixels, lit left to shade right. */
-  width: 15px;
+  /* MM6's shaft (reference mm6-outdoor-field: fifteen of 640 columns): fifteen pixels, lit
+     at the left to shade at the right. */
+  width: 22.5px;
   pointer-events: none;
   z-index: 24;
   background: var(--paint) 0 0 / 100% auto repeat-y;

@@ -60,8 +60,9 @@ export const ENVIRONMENTS: Record<EnvironmentPreset, LightingEnvironment> = {
     // MM6's sky (critics, round 7: 55,77,140 flat to the treeline, no fog, no glow).
     fogColor: c(0.24, 0.32, 0.56),
     fogDensity: 0.002,
-    skyZenith: c(0.22, 0.3, 0.55),
-    skyHorizon: c(0.24, 0.32, 0.56),
+    // Deep at the zenith, paler toward the treeline (reference: mm6-outdoor-field).
+    skyZenith: c(0.17, 0.28, 0.56),
+    skyHorizon: c(0.32, 0.42, 0.68),
     cloudColor: c(0.67, 0.63, 0.55),
     cloudAmount: 0.4,
   },

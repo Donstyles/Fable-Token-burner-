@@ -61,9 +61,14 @@ export function bitmapPixels(
       const o = (y * dw + x) * 4;
       const cover = a / 255;
       if (cover > 0) {
-        out[o] = Math.round(r / cover / step) * step;
-        out[o + 1] = Math.round(g / cover / step) * step;
-        out[o + 2] = Math.round(b / cover / step) * step;
+        // A grain of half a step on every texel before the posterise, so smooth plaster
+        // breaks into speckle as a painted bitmap did, not into flat bands with stepped
+        // edges (the blocks on the village walls, round 9).
+        const hash = ((Math.imul(x, 73856093) ^ Math.imul(y, 19349663)) >>> 0) & 0xff;
+        const grain = (hash / 255 - 0.5) * step;
+        out[o] = Math.round((r / cover + grain) / step) * step;
+        out[o + 1] = Math.round((g / cover + grain) / step) * step;
+        out[o + 2] = Math.round((b / cover + grain) / step) * step;
       }
       out[o + 3] = a / n >= 128 ? 255 : 0;
     }

@@ -70,7 +70,10 @@ void main(void) {
   float az = atan(d.x, d.z);
   vec2 suv = vec2(az / 6.2831853 + time * 0.0015, clamp(up, 0.0, 1.0));
   vec2 strip = texture2D(skySampler, suv).rg;
-  float body = step(0.5 + (0.5 - cloudAmount) * 0.5, strip.r) * step(0.03, up);
+  // MM6's clouds are wisps with soft edges (reference: mm6-outdoor-field), not stencils: the
+  // density ramps over a band round the weather's threshold, and the palette steps it.
+  float t = 0.5 + (0.5 - cloudAmount) * 0.5;
+  float body = smoothstep(t - 0.22, t + 0.1, strip.r) * step(0.03, up);
   float tone = strip.g;
   // Lit top to shaded underside as one soft run (critics, round 6: beige-white 166,157,140
   // to violet-grey 131,125,140), no outline; the palette steps it.
@@ -139,7 +142,7 @@ export class SkyDome {
     strip.wrapU = Constants.TEXTURE_WRAP_ADDRESSMODE;
     strip.wrapV = Constants.TEXTURE_CLAMP_ADDRESSMODE;
     strip.update(false);
-    strip.updateSamplingMode(Constants.TEXTURE_NEAREST_SAMPLINGMODE);
+    strip.updateSamplingMode(Constants.TEXTURE_BILINEAR_SAMPLINGMODE);
     this.strip = strip;
     this.material.setTexture('skySampler', strip);
     this.material.backFaceCulling = false;
