@@ -17,7 +17,8 @@ import { Color3 } from '@babylonjs/core/Maths/math.color';
 import type { ShaderMaterial } from '@babylonjs/core/Materials/shaderMaterial';
 import { ONE_SHOT_CLIPS } from '../../kernel/characters/clips';
 import type { AnimationStepper } from '../render/animation-step';
-import { applyRetroSampling, type RetroMaterials } from '../render/materials';
+import { bitmapTexture } from '../render/bitmap';
+import { type RetroMaterials } from '../render/materials';
 
 /** Fill light on characters, so they read between lamps (MM6 never drew a black sprite). */
 export const DEFAULT_CHARACTER_FILL = 0.22;
@@ -158,11 +159,12 @@ export async function loadCharacter(
     const pbr = mesh.material as PBRMaterial | null;
     const texture = pbr?.albedoTexture as Texture | null;
     if (!texture) throw new Error(`${url}: ${mesh.name} has no base colour texture`);
-    applyRetroSampling(texture, true);
+    // The skin as a 1998 bitmap: 256 pixels, ten tones a channel (DESIGN.md 16.14).
+    const bitmap = await bitmapTexture(texture, scene, { size: 256, levels: 10 });
     // Meshy marks thin sheets (cloak, apron) double-sided; culling them cuts holes in the front.
     mesh.material = materials.create({
       name: `${opts.name}-${mesh.name}`,
-      texture,
+      texture: bitmap,
       doubleSided: pbr?.backFaceCulling === false,
       ambient: new Color3(DEFAULT_CHARACTER_FILL, DEFAULT_CHARACTER_FILL, DEFAULT_CHARACTER_FILL),
     });

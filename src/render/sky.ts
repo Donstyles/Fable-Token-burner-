@@ -3,6 +3,9 @@ import { ShaderMaterial } from '@babylonjs/core/Materials/shaderMaterial';
 import { ShaderStore } from '@babylonjs/core/Engines/shaderStore';
 import { Mesh } from '@babylonjs/core/Meshes/mesh';
 import type { Scene } from '@babylonjs/core/scene';
+import { Constants } from '@babylonjs/core/Engines/constants';
+import { DynamicTexture } from '@babylonjs/core/Materials/Textures/dynamicTexture';
+import { paintSkyStrip } from './brush';
 import type { LightingEnvironment } from './environment';
 
 const SHADER = 'ftbSky';
@@ -29,6 +32,7 @@ uniform float cloudAmount;
 uniform float time;
 uniform vec3 sunDir;
 uniform vec3 sunColor;
+uniform sampler2D skySampler;
 // How much of the night sky shows: stars come out as the day goes (DESIGN.md 16.3).
 uniform float night;
 
@@ -60,25 +64,19 @@ void main(void) {
   vec3 sky = mix(horizon, zenith, band);
   // Cumulus: the cloud field cut hard into a body, with a lit edge where it thins upward and
   // toward the sun and a grey underside where it thins toward the horizon.
-  // Cirrus brushed across the sky, as MM6 painted it: long streaks along the horizon, ragged
-  // at their edges and dithered along their undersides, thinning toward the horizon. The
-  // sky is mapped as a cylinder so the strokes run level.
+  // The painted strip (DESIGN.md 16.14), wrapped round the horizon and drifting with the
+  // wind; its red channel is the cloud's density, cut at a threshold the weather sets, its
+  // green the painter's tone: lit top, body, shaded underside.
   float az = atan(d.x, d.z);
-  vec2 uv = vec2(az * 1.3 + time * 0.004, up * 9.0 + time * 0.002);
-  float n = fbm(uv) + (noise(uv * vec2(5.0, 14.0)) - 0.5) * 0.12;
-  float dither = mod(floor(gl_FragCoord.x) + floor(gl_FragCoord.y), 2.0) * 0.05 - 0.025;
-  float t0 = 0.66 - cloudAmount * 0.18 + dither * step(fbm(uv + vec2(0.0, 0.2)), n);
-  float body = step(t0, n) * step(0.04, up);
-  // Lit along the top (toward the sun's side of the sky), shaded along the underside.
-  float nUp = fbm(uv + vec2(0.0, 0.25));
-  float nDown = fbm(uv - vec2(0.0, 0.25));
-  float top = body * step(nUp, n - 0.02);
-  float bot = body * step(nDown, n - 0.02) * (1.0 - top);
-  vec3 cream = min(cloudColor * vec3(1.0, 0.98, 0.9), vec3(0.96));
-  vec3 bodyTone = cloudColor * 0.86;
-  vec3 grey = mix(cloudColor * 0.62, zenith, 0.3);
-  vec3 cloud = mix(mix(bodyTone, cream, top), grey, bot);
-  float cover = body * (up < 0.1 ? 0.5 : 1.0);
+  vec2 suv = vec2(az / 6.2831853 + time * 0.0015, clamp(up, 0.0, 1.0));
+  vec2 strip = texture2D(skySampler, suv).rg;
+  float body = step(0.5 + (0.5 - cloudAmount) * 0.5, strip.r) * step(0.03, up);
+  float tone = strip.g;
+  vec3 cream = min(cloudColor * vec3(1.02, 1.0, 0.94), vec3(0.97));
+  vec3 bodyTone = cloudColor * 0.84;
+  vec3 grey = mix(cloudColor * 0.56, zenith, 0.35);
+  vec3 cloud = tone > 0.75 ? cream : tone < 0.25 ? grey : bodyTone;
+  float cover = body * (up < 0.08 ? 0.5 : 1.0);
   vec3 c = mix(sky, cloud, cover);
   // No sun disc: MM6 painted none; a faint warmth toward it only.
   float s = max(dot(d, sunDir), 0.0);
@@ -100,6 +98,7 @@ void main(void) {
 export class SkyDome {
   readonly mesh: Mesh;
   private readonly material: ShaderMaterial;
+  private readonly strip: DynamicTexture;
   private time = 0;
 
   constructor(
@@ -129,7 +128,18 @@ export class SkyDome {
         'sunColor',
         'night',
       ],
+      samplers: ['skySampler'],
     });
+    // The strip painted once: 4096 pixels round the horizon, 512 up to the zenith, so a
+    // texel is under two pixels of the view, as MM6's bitmap sky was.
+    const strip = new DynamicTexture('sky-strip', { width: 4096, height: 512 }, scene, false);
+    strip.getContext().drawImage(paintSkyStrip(4096, 512, 23), 0, 0);
+    strip.wrapU = Constants.TEXTURE_WRAP_ADDRESSMODE;
+    strip.wrapV = Constants.TEXTURE_CLAMP_ADDRESSMODE;
+    strip.update(false);
+    strip.updateSamplingMode(Constants.TEXTURE_NEAREST_SAMPLINGMODE);
+    this.strip = strip;
+    this.material.setTexture('skySampler', strip);
     this.material.backFaceCulling = false;
     this.material.disableDepthWrite = true;
     this.material.setFloat('night', 0);
@@ -158,5 +168,6 @@ export class SkyDome {
   dispose(): void {
     this.mesh.dispose();
     this.material.dispose();
+    this.strip.dispose();
   }
 }

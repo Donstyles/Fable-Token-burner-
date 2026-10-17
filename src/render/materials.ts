@@ -64,6 +64,8 @@ attribute vec4 color;
 #include<instancesDeclaration>
 uniform mat4 viewProjection;
 uniform vec3 cameraPosition;
+// The camera's right in the world: a sprite's quad turns about its foot to face the eye.
+uniform vec3 cameraRight;
 uniform vec3 lightDirection;
 uniform vec3 lightColor;
 uniform vec3 ambientColor;
@@ -89,7 +91,15 @@ attribute vec2 uv;
 void main(void) {
 #include<instancesVertex>
 #include<bonesVertex>
+#ifdef BILLBOARD
+  // A sprite (DESIGN.md 16.14): the quad stands on the instance's foot, scaled with it, and
+  // turns about the vertical to face the camera, as MM6's trees did.
+  vec3 foot = (finalWorld * vec4(0.0, 0.0, 0.0, 1.0)).xyz;
+  float spriteScale = length(finalWorld[0].xyz);
+  vec4 wp = vec4(foot + cameraRight * position.x * spriteScale + vec3(0.0, position.y * spriteScale, 0.0), 1.0);
+#else
   vec4 wp = finalWorld * vec4(position, 1.0);
+#endif
   if (wind > 0.0) {
     // Canopies sway: nothing at the foot, up to a dozen centimetres at the crown, each tree
     // on its own phase from its place in the world.
@@ -98,8 +108,18 @@ void main(void) {
       0.12 * sin(time * 1.7 + wp.x * 0.08 + wp.z * 0.05) + 0.04 * sin(time * 3.3 + wp.z * 0.3),
       0.05 * sin(time * 1.3 + wp.x * 0.07 + wp.z * 0.09));
   }
+#ifdef BILLBOARD
+  // A sprite is painted with its own light: lit as if it faced the sun a little.
+  vec3 n = vec3(0.0, 1.0, 0.0);
+#else
   vec3 n = normalize(mat3(finalWorld) * normal);
+#endif
   float ndl = max(dot(n, -lightDirection), 0.0);
+#ifdef TERRAIN
+  // The ground is lit nearly flat, as MM6's was: the texture carries the picture and a
+  // slope shows only a little, so hills read as painted ground, not shaded geometry.
+  ndl = mix(0.8, ndl, 0.35);
+#endif
   vec3 light = ambientColor + lightColor * ndl;
 #ifdef BAKED
   // Baked per-vertex light replaces the environment's key and ambient light.
@@ -164,6 +184,7 @@ uniform float flash;
 // The painter's hand (DESIGN.md 16.12): 1 quantises the light into four flat tones and
 // deepens the colour, so the talking head reads as a painted portrait, not a render.
 uniform float paint;
+uniform float toon;
 // Weather (DESIGN.md 15.7): drifting cloud shadows and the desert's mirage and glint.
 uniform float time;
 uniform float cloudShadow;
@@ -180,6 +201,9 @@ float noise2(vec2 p) {
 }
 void main(void) {
   if (clipEnabled > 0.5 && vClip > 0.0) discard;
+#ifdef ALPHATEST
+  if (texture2D(diffuseSampler, vUV).a < 0.5) discard;
+#endif
   vec3 n = normalize(vNormal);
 #ifdef TWOSIDED
   // Single sheets (a cloak, an apron) are lit on whichever side faces the camera.
@@ -216,6 +240,9 @@ void main(void) {
     light *= (lightKnee + over / (1.0 + 2.0 * over)) / peak;
   }
   light = min(light + carried, vec3(1.6));
+  // The light in steps (DESIGN.md 16.14): every face lit or in shade as a painter laid it,
+  // five tones, no gradients for the posteriser to smear.
+  if (toon > 0.5) light = floor(light * 5.0 + 0.5) / 5.0;
 #ifdef TERRAIN
   // Grass under path, scree and snow weights carried per vertex (DESIGN.md 15). Scree, the
   // texture of steep faces, is projected along the face's own horizontal axis where the
@@ -225,10 +252,12 @@ void main(void) {
   float steep = smoothstep(0.18, 0.45, 1.0 - abs(n.y));
   vec2 wall = abs(n.x) > abs(n.z) ? vec2(vWorldPos.z, vWorldPos.y) : vec2(-vWorldPos.x, vWorldPos.y);
   vec2 screeUV = mix(vUV, wall, steep) * splatScale.z;
-  vec3 albedo = texture2D(diffuseSampler, vUV * splatScale.x).rgb * g +
-    texture2D(pathSampler, vUV * splatScale.y).rgb * w.r +
-    texture2D(screeSampler, screeUV).rgb * w.g +
-    texture2D(snowSampler, vUV * splatScale.w).rgb * w.b;
+  // Sampled a level sharper than the grazing ground asks for, so the grain shows down the
+  // road as it did in 1998, at the price of a little shimmer far off.
+  vec3 albedo = texture2D(diffuseSampler, vUV * splatScale.x, -1.0).rgb * g +
+    texture2D(pathSampler, vUV * splatScale.y, -1.0).rgb * w.r +
+    texture2D(screeSampler, screeUV, -1.0).rgb * w.g +
+    texture2D(snowSampler, vUV * splatScale.w, -1.0).rgb * w.b;
   if (heat > 0.0) {
     // Mirage: seen at a grazing angle the far sand mirrors the sky; the sun glints off it.
     vec3 v = normalize(cameraPosition - vWorldPos);
@@ -267,6 +296,8 @@ export interface VertexLitOptions {
   doubleSided?: boolean;
   /** Canopy sway: vertices above a metre move with the wind (forest leaves). */
   wind?: boolean;
+  /** A sprite: the quad turns to face the camera and discards its clear pixels. */
+  billboard?: boolean;
   /**
    * Ambient light for this material instead of the environment's: characters carry a fill so
    * they never go black between lamps, like MM6's minimum sprite brightness.
@@ -300,6 +331,8 @@ export class RetroMaterials {
   env: LightingEnvironment;
   private bakedMix = 1;
   private time = 0;
+  /** The light in five steps (DESIGN.md 16.14); off for a smooth render. */
+  toon = true;
   /** Weather (DESIGN.md 15.7): 0 is still air and an even sky. */
   readonly weather: Weather = { heat: 0, cloudShadow: 0 };
 
@@ -320,6 +353,7 @@ export class RetroMaterials {
         : [];
     if (opts.doubleSided) defines.push('#define TWOSIDED');
     if (opts.splat) defines.push('#define TERRAIN');
+    if (opts.billboard) defines.push('#define BILLBOARD', '#define ALPHATEST');
     const attributes = [
       'position',
       'normal',
@@ -332,6 +366,7 @@ export class RetroMaterials {
         'world',
         'viewProjection',
         'cameraPosition',
+        'cameraRight',
         'lightDirection',
         'lightColor',
         'ambientColor',
@@ -351,6 +386,7 @@ export class RetroMaterials {
         'splatScale',
         'flash',
         'paint',
+        'toon',
         'time',
         'wind',
         'heat',
@@ -373,6 +409,8 @@ export class RetroMaterials {
     mat.setFloat('priorityLights', 0);
     mat.setFloat('flash', 0);
     mat.setFloat('paint', 0);
+    mat.setFloat('toon', this.toon ? 1 : 0);
+    mat.setVector3('cameraRight', Vector3.Right());
     mat.setFloat('time', this.time);
     mat.setFloat('wind', opts.wind ? 1 : 0);
     mat.setFloat('heat', this.weather.heat);
@@ -397,6 +435,7 @@ export class RetroMaterials {
     mat.setArray3('pointPos', new Array<number>(MAX_POINT_LIGHTS * 3).fill(0));
     mat.setArray3('pointColor', new Array<number>(MAX_POINT_LIGHTS * 3).fill(0));
     mat.setFloats('pointRange', new Array<number>(MAX_POINT_LIGHTS).fill(0));
+    mat.onDisposeObservable.add(() => this.materials.delete(mat));
     mat.backFaceCulling = !opts.doubleSided;
     if (opts.ambient) this.ambientOverride.set(mat, opts.ambient);
     this.materials.add(mat);
@@ -482,8 +521,10 @@ export class RetroMaterials {
     const pos = new Array<number>(MAX_POINT_LIGHTS * 3).fill(0);
     const col = new Array<number>(MAX_POINT_LIGHTS * 3).fill(0);
     const rng = new Array<number>(MAX_POINT_LIGHTS).fill(0);
+    const right = Vector3.TransformNormal(Vector3.Right(), cam.getWorldMatrix()).normalize();
     for (const m of this.materials) {
       m.setVector3('cameraPosition', p);
+      m.setVector3('cameraRight', right);
       m.setFloat('time', this.time);
       if (this.lights.length === 0) continue;
       // Nearest lights to the material's first mesh, measured to its bounding box rather

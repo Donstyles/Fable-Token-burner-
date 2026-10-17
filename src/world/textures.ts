@@ -70,6 +70,8 @@ export function lampPane(scene: Scene): DynamicTexture {
   ctx.fillStyle = 'rgba(40,20,10,0.9)';
   ctx.fillRect(size / 2 - 1, 0, 2, size);
   ctx.fillRect(0, size / 2 - 1, size, 2);
+  tex.wrapU = Texture.WRAP_ADDRESSMODE;
+  tex.wrapV = Texture.WRAP_ADDRESSMODE;
   tex.update(false);
   return tex;
 }
@@ -92,6 +94,8 @@ export function stillWater(scene: Scene): DynamicTexture {
     ctx.fillStyle = rnd() > 0.5 ? 'rgba(90,140,150,0.35)' : 'rgba(10,25,35,0.5)';
     ctx.fillRect(x, y, w, 1);
   }
+  tex.wrapU = Texture.WRAP_ADDRESSMODE;
+  tex.wrapV = Texture.WRAP_ADDRESSMODE;
   tex.update(false);
   return tex;
 }

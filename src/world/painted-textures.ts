@@ -6,77 +6,67 @@
  * these are drawn at startup with the shell's brushes, 128 pixels to a tile, and sampled
  * nearest so the texels show, as they did in 1998.
  */
+import { Constants } from '@babylonjs/core/Engines/constants';
 import { DynamicTexture } from '@babylonjs/core/Materials/Textures/dynamicTexture';
 import { Color3 } from '@babylonjs/core/Maths/math.color';
 import type { Scene } from '@babylonjs/core/scene';
 import { ROLE } from '../../kernel/elements/roles';
-import { canvas, dab, die, posterise, ramp, speckle, stroke, type Tone } from '../render/brush';
+import { canvas, dab, die, grain, posterise, ramp, stroke, type Tone } from '../render/brush';
 import { applyRetroSampling } from '../render/materials';
 import { lampPane, stillWater, type RoleTextures } from './textures';
 
 const T = 128;
 
 function grass(): HTMLCanvasElement {
-  return speckle(T, T, 31, ramp('#34542a', '#446a2e', '#567e36', '#6c9444'), {
-    fine: 3400,
-    fineTone: 56,
-    blobs: 50,
-    blobTone: 26,
-    blobSize: 12,
+  return grain(T, T, 31, ramp('#2a4620', '#3a5c2a', '#4a7232', '#5e8a3c', '#78a44a'), {
+    marks: 3200,
+    clods: 54,
+    clodSize: 10,
   });
 }
 
 function dirt(): HTMLCanvasElement {
-  const c = speckle(T, T, 32, ramp('#5c4228', '#745634', '#8c6a42', '#a07e52', '#b49466'), {
-    fine: 3000,
-    fineTone: 60,
-    blobs: 70,
-    blobTone: 28,
-    blobSize: 10,
+  const c = grain(T, T, 32, ramp('#3c2814', '#56391f', '#6e4c2c', '#88623c', '#a48052'), {
+    marks: 2800,
+    clods: 80,
+    clodSize: 7,
   });
-  // Pebbles: a dark dot with a lit crown.
+  // Pebbles: a dark pit with a lit crown.
   const g = c.getContext('2d')!;
   const r = die(33);
-  for (let i = 0; i < 26; i++) {
+  for (let i = 0; i < 30; i++) {
     const x = Math.floor(r() * T);
     const y = Math.floor(r() * T);
-    g.fillStyle = '#4a3420';
+    g.fillStyle = '#3c2814';
     g.fillRect(x, y, 2, 2);
-    g.fillStyle = '#b89c72';
+    g.fillStyle = '#a48052';
     g.fillRect(x, y, 1, 1);
   }
   return c;
 }
 
 function sand(): HTMLCanvasElement {
-  return speckle(T, T, 34, ramp('#b09660', '#c4ac74', '#d4be88', '#e0cc9c', '#ecdcb0'), {
-    fine: 3200,
-    fineTone: 44,
-    blobs: 40,
-    blobTone: 22,
-    blobSize: 14,
+  return grain(T, T, 34, ramp('#a68a56', '#baa06a', '#ccb47e', '#dcc892', '#ead8a8'), {
+    marks: 2200,
+    clods: 36,
+    clodSize: 12,
   });
 }
 
 function snow(): HTMLCanvasElement {
-  return speckle(T, T, 35, ramp('#b4c0d2', '#ccd6e2', '#e0e6ee', '#f2f4f8'), {
-    fine: 1200,
-    fineTone: 30,
-    blobs: 60,
-    blobTone: 30,
-    blobSize: 16,
+  return grain(T, T, 35, ramp('#a8b6ca', '#c2cedc', '#d8e0ea', '#ecf0f5', '#fcfdff'), {
+    marks: 1500,
+    clods: 44,
+    clodSize: 14,
   });
 }
 
 function scree(): HTMLCanvasElement {
-  const c = speckle(T, T, 36, ramp('#4a4844', '#625e58', '#7a766e', '#928c82', '#aaa498'), {
-    fine: 1600,
-    fineTone: 70,
-    blobs: 160,
-    blobTone: 56,
-    blobSize: 5,
+  return grain(T, T, 36, ramp('#3a3834', '#54504a', '#6e6860', '#888278', '#a29c90'), {
+    marks: 2600,
+    clods: 130,
+    clodSize: 5,
   });
-  return c;
 }
 
 /** Stones drawn one by one on a grid, mortar between, each lit at its top left. */
@@ -459,13 +449,13 @@ export const PAINTERS: Record<string, { paint: () => HTMLCanvasElement; metresPe
   rock: { paint: rock, metresPerTile: 4 },
   marble: { paint: marble, metresPerTile: 2 },
   trim: { paint: trim, metresPerTile: 1 },
-  grass: { paint: grass, metresPerTile: 4 },
-  path: { paint: dirt, metresPerTile: 4 },
-  scree: { paint: scree, metresPerTile: 4 },
-  snow: { paint: snow, metresPerTile: 4 },
+  grass: { paint: grass, metresPerTile: 10 },
+  path: { paint: dirt, metresPerTile: 10 },
+  scree: { paint: scree, metresPerTile: 6 },
+  snow: { paint: snow, metresPerTile: 6 },
   bark: { paint: bark, metresPerTile: 1 },
   leaves: { paint: leaves, metresPerTile: 1.5 },
-  sand: { paint: sand, metresPerTile: 4 },
+  sand: { paint: sand, metresPerTile: 8 },
   sandstone: { paint: sandstone, metresPerTile: 4 },
 };
 
@@ -475,10 +465,15 @@ export function paintRoleTextures(scene: Scene, mipmaps = true): RoleTextures {
   for (const [role, { paint, metresPerTile }] of Object.entries(PAINTERS)) {
     const id = ROLE[role as keyof typeof ROLE];
     const picture = paint();
-    const texture = new DynamicTexture(`painted-${role}`, { width: T, height: T }, scene, mipmaps);
+    const mips = mipmaps;
+    const texture = new DynamicTexture(`painted-${role}`, { width: T, height: T }, scene, mips);
     texture.getContext().drawImage(picture, 0, 0);
     texture.update(false);
-    applyRetroSampling(texture, mipmaps);
+    // A tile repeats across the world; a dynamic texture clamps unless told otherwise, and
+    // clamped it paints the whole ground in its corner texel.
+    texture.wrapU = Constants.TEXTURE_WRAP_ADDRESSMODE;
+    texture.wrapV = Constants.TEXTURE_WRAP_ADDRESSMODE;
+    applyRetroSampling(texture, mips);
     out.set(id, { texture, metresPerTile });
   }
   out.set(ROLE.glass, {

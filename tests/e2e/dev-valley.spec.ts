@@ -99,8 +99,9 @@ test.describe('valley region', () => {
     expect(info.terrain).toBe(300);
     expect(info.terrainOn).toBe(100);
     expect(info.forest).toBeGreaterThan(8);
-    // The ring of far mountains beyond the edge is drawn.
-    expect(info.backdrop).toBe(1);
+    // The ring of far mountains beyond the edge is built, and switched off: the painted
+    // sky strip and the fog meet the hills instead (DESIGN 16.14).
+    expect(info.backdrop).toBe(0);
     expect(info.backdropTriangles).toBeGreaterThan(1000);
     expect(info.pass).not.toBeNull();
     expect(info.summit!.y).toBeGreaterThan(300);

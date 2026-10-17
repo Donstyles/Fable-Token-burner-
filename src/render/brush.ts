@@ -169,3 +169,170 @@ export function speckle(
   posterise(g, w, h, tones, null, 70, 190);
   return c;
 }
+
+/** Snap every pixel to the nearest tone of a ramp: hard pixel art out of soft brushwork. */
+export function snap(g: CanvasRenderingContext2D, w: number, h: number, tones: Tone[]): void {
+  const img = g.getImageData(0, 0, w, h);
+  const d = img.data;
+  for (let i = 0; i < d.length; i += 4) {
+    let best = 0;
+    let bestD = Infinity;
+    for (let k = 0; k < tones.length; k++) {
+      const t = tones[k]!.warm;
+      const dd = (d[i]! - t[0]) ** 2 + (d[i + 1]! - t[1]) ** 2 + (d[i + 2]! - t[2]) ** 2;
+      if (dd < bestD) {
+        bestD = dd;
+        best = k;
+      }
+    }
+    const t = tones[best]!.warm;
+    d[i] = t[0];
+    d[i + 1] = t[1];
+    d[i + 2] = t[2];
+    d[i + 3] = 255;
+  }
+  g.putImageData(img, 0, 0);
+}
+
+/**
+ * Hard-edged pixel grain (DESIGN.md 16.14): clods a tone up or down, then single pixels and
+ * short dashes in every tone of the ramp, the extremes rarer, as a 1998 ground tile was
+ * dotted in by hand. No soft brush: every texel is one of the ramp's tones.
+ */
+export function grain(
+  w: number,
+  h: number,
+  seed: number,
+  tones: Tone[],
+  o: { marks?: number; clods?: number; clodSize?: number; base?: number },
+): HTMLCanvasElement {
+  const r = die(seed);
+  const [c, g] = canvas(w, h);
+  const n = tones.length;
+  const hex = (t: Tone): string => `rgb(${t.warm.map(Math.round).join(',')})`;
+  const base = o.base ?? Math.floor(n / 2);
+  g.fillStyle = hex(tones[base]!);
+  g.fillRect(0, 0, w, h);
+  const clods = o.clods ?? 40;
+  const clodSize = o.clodSize ?? 8;
+  for (let i = 0; i < clods; i++) {
+    const step = (r() < 0.5 ? -1 : 1) * (r() < 0.75 ? 1 : 2);
+    const k = Math.max(0, Math.min(n - 1, base + step));
+    const x = r() * w;
+    const y = r() * h;
+    const rx = clodSize * (0.5 + r());
+    const ry = rx * (0.4 + r() * 0.6);
+    const rot = r() * Math.PI;
+    g.fillStyle = hex(tones[k]!);
+    for (const dx of [-w, 0, w]) {
+      for (const dy of [-h, 0, h]) {
+        g.save();
+        g.translate(x + dx, y + dy);
+        g.rotate(rot);
+        g.scale(rx, ry);
+        g.beginPath();
+        g.arc(0, 0, 1, 0, Math.PI * 2);
+        g.fill();
+        g.restore();
+      }
+    }
+  }
+  const marks = o.marks ?? 2500;
+  for (let i = 0; i < marks; i++) {
+    const k = Math.min(n - 1, Math.floor(r() * n));
+    g.fillStyle = hex(tones[k]!);
+    const x = Math.floor(r() * w);
+    const y = Math.floor(r() * h);
+    const len = r() < 0.3 ? 2 : 1;
+    g.fillRect(x, y, len, 1);
+    if (x + len > w) g.fillRect(x - w, y, len, 1);
+  }
+  snap(g, w, h, tones);
+  return c;
+}
+
+/**
+ * A sky strip, as MM6 painted its skies (DESIGN.md 16.14): cumulus masses and long level
+ * streaks, chunky at the edges, thinning toward the horizon. The red channel holds the
+ * cloud's density (the sky shader cuts it at a threshold set by the weather), the green its
+ * tone: 0 the shaded underside, 0.5 the body, 1 the lit top. The strip wraps across its
+ * width round the horizon, bottom at the horizon, top at the zenith.
+ */
+export function paintSkyStrip(w: number, h: number, seed: number): HTMLCanvasElement {
+  const r = die(seed);
+  const [c, g] = canvas(w, h);
+  g.fillStyle = '#000000';
+  g.fillRect(0, 0, w, h);
+  // MM6's skies were streaked: long level strokes of cloud at every height, ragged along
+  // their edges, with a few small cumulus; never one mass across the view. The strokes
+  // slope a little, as a brush dragged across the sky does.
+  // Sixty strokes round the whole horizon, whatever the strip's size: the brush scales with
+  // the strip, so the cover stays the same.
+  const masses = 60;
+  for (let m = 0; m < masses; m++) {
+    const cx = r() * w;
+    const v = 0.1 + r() * 0.75;
+    const cy = h - v * h;
+    const streak = r() < 0.72;
+    const n = streak ? 5 + Math.floor(r() * 5) : 6 + Math.floor(r() * 6);
+    const spread = (streak ? 80 + r() * 140 : 20 + r() * 30) * (w / 1024);
+    const slope = (r() - 0.5) * 0.12;
+    for (let k = 0; k < n; k++) {
+      const t = (k / Math.max(1, n - 1) - 0.5) * spread;
+      const x = cx + t + (r() - 0.5) * 10;
+      const y = cy + t * slope + (r() - 0.5) * (streak ? 4 : 12) * (h / 192);
+      const rx = (streak ? 22 + r() * 40 : 7 + r() * 12) * (w / 1024);
+      const ry = (streak ? 2.5 + r() * 3 : 5 + r() * 8) * (h / 192);
+      dab(g, w, 0, x, y, rx, ry, slope, 255, 0.95);
+      // Lumps along the top edge, so the stroke's edge is ragged rather than ruled.
+      for (let j = 0; j < 2; j++) {
+        const lr = (2.5 + r() * 4) * (w / 1024);
+        dab(
+          g,
+          w,
+          0,
+          x + (r() - 0.5) * rx * 1.4,
+          y - ry * (0.5 + r() * 0.6),
+          lr,
+          lr * 0.8,
+          0,
+          255,
+          0.95,
+        );
+      }
+    }
+  }
+  const img = g.getImageData(0, 0, w, h);
+  const d = img.data;
+  const density = new Float32Array(w * h);
+  for (let i = 0; i < w * h; i++) density[i] = d[i * 4]! / 255;
+  const at = (x: number, y: number): number => {
+    const xx = ((x % w) + w) % w;
+    if (y < 0 || y >= h) return 0;
+    return density[y * w + xx]!;
+  };
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      const i = y * w + x;
+      const dens = density[i]!;
+      let tone = 0.5;
+      if (dens >= 0.5) {
+        // Lit along the top (toward the zenith, up the strip), shaded along the underside.
+        let above = 0;
+        let below = 0;
+        const reach = Math.max(4, Math.round(h / 40));
+        for (let k = 1; k <= reach; k++) {
+          if (at(x, y - k) < 0.5) above++;
+          if (at(x, y + k) < 0.5) below++;
+        }
+        tone = above >= reach / 2 ? 1 : below >= reach / 2 ? 0 : 0.5;
+      }
+      d[i * 4] = Math.round(dens * 255);
+      d[i * 4 + 1] = Math.round(tone * 255);
+      d[i * 4 + 2] = 0;
+      d[i * 4 + 3] = 255;
+    }
+  }
+  g.putImageData(img, 0, 0);
+  return c;
+}

@@ -343,6 +343,9 @@ export async function loadLevel(
     toVertexData(p).applyToMesh(mesh, false);
     mesh.material = materialFor(ROLE.terrain, false);
     mesh.parent = root;
+    // Off since the critic round of 2026-10-17: posterised, the ring read as flat lavender
+    // bands; the painted sky strip is the horizon now (DESIGN.md 16.14).
+    mesh.setEnabled(false);
     mesh.freezeWorldMatrix();
     mesh.doNotSyncBoundingInfo = true;
     mesh.isPickable = false;
