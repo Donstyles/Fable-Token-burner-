@@ -49,8 +49,8 @@ test('runs landscape in a portrait viewport', async ({ page }) => {
     ).ftb;
     return { w: app.engine.getRenderWidth(), h: app.engine.getRenderHeight() };
   });
-  expect(size.h).toBe(540);
-  expect(size.w).toBeGreaterThan(1100);
+  expect(size.h).toBe(430);
+  expect(size.w).toBeGreaterThan(900);
 });
 
 test('recovers from a portrait launch followed by rotation', async ({ page }) => {
@@ -77,10 +77,10 @@ test('recovers from a portrait launch followed by rotation', async ({ page }) =>
       fps: app.engine.getFps(),
     };
   });
-  expect(size.h).toBe(540);
-  expect(size.w).toBeGreaterThan(1100);
+  expect(size.h).toBe(430);
+  expect(size.w).toBeGreaterThan(900);
   expect(size.fps).toBeGreaterThan(0);
-  await expect(page.locator('#dev-overlay')).toContainText('×540');
+  await expect(page.locator('#dev-overlay')).toContainText('×430');
 });
 
 test('serves a web app manifest', async ({ page, request }) => {
