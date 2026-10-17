@@ -1,3 +1,4 @@
+@import './stone.css';
 /* The HUD band (src/ui/hud.ts): MM6's marble foot with four gold oval frames, name plates,
    green hit point and blue spell point bars, condition gems; the book shelf stands on its
    right end. Sized for 932 × 430 CSS px in landscape with the safe areas. */
@@ -11,37 +12,46 @@
   pointer-events: none;
   z-index: 25;
   background:
-    linear-gradient(rgba(60, 50, 40, 0.35), rgba(20, 16, 12, 0.55)),
-    url('../../assets/textures/marble.png') center / 320px auto;
-  border-top: 2px solid #b08a2e;
+    linear-gradient(rgba(40, 32, 24, 0.06), rgba(20, 16, 12, 0.18)),
+    var(--stone) center / 512px auto;
+  border-top: 1px solid #5a3e10;
   box-shadow:
-    inset 0 2px 0 rgba(255, 240, 200, 0.35),
-    inset 0 -3px 0 rgba(0, 0, 0, 0.45),
+    inset 0 1px 0 #f8e090,
+    inset 0 2px 0 #c89a3a,
+    inset 0 3px 0 #7a5416,
+    inset 0 4px 0 rgba(255, 255, 255, 0.45),
+    inset 0 -2px 0 rgba(0, 0, 0, 0.35),
     0 -2px 10px rgba(0, 0, 0, 0.5);
 }
 .hud-clock {
   position: absolute;
-  left: calc(var(--sal) + 6px);
-  top: 8px;
+  left: calc(var(--sal) + 5px);
+  top: 10px;
   width: 52px;
+  padding: 3px 0;
   text-align: center;
   pointer-events: none;
+  background: linear-gradient(#e8c860, #b8882a 55%, #d4a848);
+  border-radius: 3px;
+  box-shadow:
+    inset 0 1px 0 #fff2b0,
+    inset 0 -1px 0 #5a3e10,
+    0 1px 1px rgba(0, 0, 0, 0.6);
 }
 .hud-clock-time {
   font:
     15px/1.1 'Pirata One',
     Georgia,
     serif;
-  color: #f0d060;
-  text-shadow: 0 1px 1px #000;
+  color: #3a2608;
+  text-shadow: 0 1px 0 rgba(255, 245, 210, 0.6);
 }
 .hud-clock-date {
   font:
     italic 9px/1.2 'IM Fell English',
     Georgia,
     serif;
-  color: #e8dcb0;
-  text-shadow: 0 1px 1px #000;
+  color: #4a3414;
 }
 .hud-band {
   display: flex;
@@ -57,17 +67,22 @@
   gap: 6px;
   width: 150px;
   padding: 2px 4px;
-  background: linear-gradient(rgba(255, 250, 240, 0.08), rgba(0, 0, 0, 0.12));
-  border: 1px solid rgba(90, 70, 40, 0.5);
-  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.06);
+  border: 0;
+  border-radius: 3px;
+  box-shadow:
+    inset 1px 1px 0 rgba(0, 0, 0, 0.45),
+    inset -1px -1px 0 rgba(255, 255, 255, 0.5),
+    inset 2px 2px 3px rgba(0, 0, 0, 0.25);
   font: inherit;
   color: inherit;
 }
 .hud-cell.selected {
-  border-color: #f0c050;
   box-shadow:
-    0 0 0 1px #f0c050 inset,
-    0 0 10px rgba(240, 192, 80, 0.5);
+    inset 0 0 0 1px #f8e090,
+    inset 0 0 0 2px #7a5416,
+    inset 2px 2px 3px rgba(0, 0, 0, 0.25),
+    0 0 10px rgba(240, 192, 80, 0.45);
 }
 .hud-cell.recovering .hud-cameo {
   filter: brightness(0.55);
@@ -83,46 +98,79 @@
   gap: 2px;
 }
 .hud-frame {
-  width: 54px;
-  height: 62px;
-  border: 3px solid #d2a53c;
+  position: relative;
+  width: 56px;
+  height: 64px;
+  padding: 4px;
   border-radius: 50% / 46%;
-  background: radial-gradient(ellipse at 50% 35%, #4a3a2a, #1a1208 70%, #0a0806);
+  /* A turned metal ring: the sheen runs round it. */
+  background: conic-gradient(
+    from 200deg,
+    #7a5416,
+    #f8e090 15%,
+    #a87c28 32%,
+    #fff2b0 48%,
+    #8a6220 64%,
+    #e8c860 82%,
+    #7a5416
+  );
   box-shadow:
-    inset 0 0 0 1px #7a5a18,
-    inset 0 2px 4px rgba(0, 0, 0, 0.8),
-    0 1px 0 rgba(255, 240, 200, 0.35);
+    0 1px 0 rgba(255, 245, 210, 0.6),
+    0 -1px 0 rgba(0, 0, 0, 0.5),
+    0 2px 4px rgba(0, 0, 0, 0.5);
+}
+.hud-frame::after {
+  /* The crest's recess: dark leather under a glass dome. */
+  content: '';
+  position: absolute;
+  inset: 4px;
+  border-radius: 50% / 46%;
+  background:
+    radial-gradient(ellipse at 35% 25%, rgba(255, 255, 255, 0.18), transparent 45%),
+    radial-gradient(ellipse at 50% 60%, #3a2a1a, #1a1208 65%, #0a0806);
+  box-shadow:
+    inset 0 2px 4px rgba(0, 0, 0, 0.9),
+    inset 0 0 0 1px #5a3e10;
+}
+.hud-cameo {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
 }
-.hud-cameo {
-  width: 34px;
-  height: 34px;
-}
 .hud-cameo svg {
-  width: 100%;
-  height: 100%;
-  filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.9));
+  width: 32px;
+  height: 32px;
+  filter: drop-shadow(0 1px 0 rgba(0, 0, 0, 0.9)) drop-shadow(0 -1px 0 rgba(255, 240, 180, 0.25));
 }
 .hud-plate {
   min-width: 64px;
-  padding: 0 6px;
+  max-width: 84px;
+  margin-top: 1px;
+  padding: 1px 6px;
   font:
-    italic 13px/1.1 'IM Fell English',
+    italic 12px/1.1 'IM Fell English',
     Georgia,
     serif;
-  color: #f0d060;
+  color: #3a2608;
   text-align: center;
-  text-shadow: 0 1px 1px #000;
+  text-shadow: 0 1px 0 rgba(255, 245, 210, 0.6);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 84px;
+  background: linear-gradient(#e8c860, #b8882a 55%, #d4a848);
+  border-radius: 2px;
+  box-shadow:
+    inset 0 1px 0 #fff2b0,
+    inset 0 -1px 0 #5a3e10,
+    0 1px 1px rgba(0, 0, 0, 0.6);
 }
 .hud-bars {
   display: grid;
-  grid-template-columns: 9px 9px;
+  grid-template-columns: 11px 11px;
   grid-template-rows: 12px 60px;
   gap: 2px 4px;
   margin-top: 2px;
@@ -161,26 +209,31 @@
 .hud-bar {
   position: relative;
   height: 60px;
-  border: 1px solid #8a6a20;
-  border-radius: 2px;
-  background: linear-gradient(90deg, #14100a, #2a2016, #14100a);
-  box-shadow: inset 0 0 3px rgba(0, 0, 0, 0.8);
-  overflow: hidden;
+  border-radius: 5px;
+  background: linear-gradient(90deg, #0a0806, #26201a 40%, #14100a);
+  box-shadow:
+    inset 1px 0 2px rgba(0, 0, 0, 0.9),
+    inset -1px 0 1px rgba(255, 255, 255, 0.12),
+    0 0 0 1px #5a3e10;
 }
 .hud-bar::before,
 .hud-bar::after {
+  /* Gold beads at both ends of the tube. */
   content: '';
   position: absolute;
   left: -2px;
   right: -2px;
-  height: 3px;
-  background: #d2a53c;
+  height: 5px;
+  border-radius: 3px;
+  background: linear-gradient(#fff2b0, #c89a3a 60%, #7a5416);
+  box-shadow: 0 1px 1px rgba(0, 0, 0, 0.6);
+  z-index: 1;
 }
 .hud-bar::before {
-  top: -2px;
+  top: -3px;
 }
 .hud-bar::after {
-  bottom: -2px;
+  bottom: -3px;
 }
 .hud-fill {
   position: absolute;
@@ -188,13 +241,14 @@
   right: 0;
   bottom: 0;
   height: 0;
+  border-radius: 5px;
   transition: height 180ms ease-out;
 }
 .hud-bar.hp .hud-fill {
-  background: linear-gradient(90deg, #1c7a1c, #4ee04e 45%, #1c7a1c);
+  background: linear-gradient(90deg, #0e4a0e, #3ab83a 30%, #a8ff90 42%, #2a9a2a 60%, #0e4a0e);
 }
 .hud-bar.sp .hud-fill {
-  background: linear-gradient(90deg, #1c3a9a, #4e8cff 45%, #1c3a9a);
+  background: linear-gradient(90deg, #0e2a6a, #2a66d0 30%, #a0c8ff 42%, #2a5ab0 60%, #0e2a6a);
 }
 
 /* The status line (src/ui/status.ts): a narrow stone bar on the band's top edge. */
@@ -211,12 +265,15 @@
   pointer-events: none;
   z-index: 26;
   background:
-    linear-gradient(rgba(40, 32, 24, 0.55), rgba(20, 16, 12, 0.7)),
-    url('../../assets/textures/marble.png') center / 320px auto;
-  border: 1px solid #8a6a20;
-  border-bottom: none;
+    linear-gradient(rgba(40, 32, 24, 0.35), rgba(20, 16, 12, 0.5)),
+    var(--stone) center / 512px auto;
+  border: 0;
   border-radius: 4px 4px 0 0;
-  box-shadow: inset 0 1px 0 rgba(255, 240, 200, 0.25);
+  box-shadow:
+    inset 0 1px 0 #f8e090,
+    inset 0 2px 0 #7a5416,
+    inset 1px 0 0 #c89a3a,
+    inset -1px 0 0 #7a5416;
   opacity: 0;
   transition: opacity 200ms ease-out;
 }

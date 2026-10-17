@@ -94,6 +94,13 @@ const DEFAULT_FOG: Record<LevelSpace['kind'], FogTarget> = {
 
 /** Eases the level fog toward the preset of the space containing the party. */
 export class FogBySpace {
+  /** When set, the fog takes this colour instead of the space's (day and night outdoors). */
+  colorOverride: Color3 | null = null;
+
+  /** Jump to the override at once (a level loaded at night should not fade in from day). */
+  snapColor(): void {
+    if (this.colorOverride) this.current.color.copyFrom(this.colorOverride);
+  }
   private current: FogTarget;
   private lastSpace: string | null = null;
   rate = 1.2;
@@ -136,11 +143,14 @@ export class FogBySpace {
     this.lastSpace = best?.name ?? null;
     const target = best ? (best.fog ?? DEFAULT_FOG[best.kind]) : null;
     if (!target) return;
+    // Outdoors the day and night cycle owns the fog's colour (src/world/daylight.ts); the
+    // space still owns its density.
+    const color = this.colorOverride ?? target.color;
     const k = 1 - Math.exp(-this.rate * dt);
     this.current.density += (target.density * this.scale - this.current.density) * k;
-    this.current.color.r += (target.color.r - this.current.color.r) * k;
-    this.current.color.g += (target.color.g - this.current.color.g) * k;
-    this.current.color.b += (target.color.b - this.current.color.b) * k;
+    this.current.color.r += (color.r - this.current.color.r) * k;
+    this.current.color.g += (color.g - this.current.color.g) * k;
+    this.current.color.b += (color.b - this.current.color.b) * k;
     this.materials.setEnvironment({
       fogDensity: this.current.density,
       fogColor: this.current.color.clone(),

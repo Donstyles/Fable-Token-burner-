@@ -980,6 +980,31 @@ daylight fades (live lights scaled by the night) and the HUD band shows
 the hour and the date in its left corner. Tested: dawn, noon, dusk and
 two in the morning.
 
+### 16.4 The soundscape
+
+All synthesised through Babylon's audio engine like the impacts and the
+falls (`src/world/soundscape.ts`): a wind loop of brown noise through a
+lowpass whose cut-off and gain gust together over sixteen seconds, rising
+with the party's height above the floor and stronger in the desert; birds
+in the valley by day, three rising chirps placed up in the trees twenty to
+forty metres off every four to twelve seconds; the party's footsteps every
+0.78 m read from the ground under its feet (the terrain's splat weights on
+the face under a ray: grass, gravel for path and scree, snow; stone on
+walls and floors; a splash while wading), two takes per surface at a
+slightly random rate.
+
+### 16.5 Handcrafted (owner, 2026-10-17)
+
+"Nothing AI slop; true handcrafted everything; 1998 artisanal UI." The UI
+uses no generated or photographed texture: the marble is drawn in
+`src/ui/stone.css` with turbulence filters (cloudy tone, thin wandering
+veins, no tile seams), the crests, the shelf's glyphs and the ornaments
+are hand-drawn SVG paths, and every edge carries the period's bevel: a
+light top-left and a dark bottom-right line, gold rails as a bright line
+over a dark one, sunken recesses for the cells, turned metal rings round
+the crests, brass plates with engraved text, glass tube bars with gold
+beads. Portraits stay crests until painted ones exist; no generated faces.
+
 ## 13. Decision log
 
 - 2026-10-17 – First look pass under the owner's thirty-minute "wow"

@@ -1,9 +1,10 @@
 /* Screens (DESIGN.md 14.5, 16): MM6's books. Grey-green marble stone panels (the repo's
    marble_01 under a green-grey wash), gold-bordered inset boxes with a bevel, labels and
    numbers in IM Fell English italic in yellow, gold oval buttons. Sized for a phone in
-   landscape (932 × 430 CSS px with the safe areas) and tap targets of 36 px or more. */
+   landscape (932 × 430 CSS px with the safe areas) and tap targets of 36 px or more. The
+   marble itself is drawn in stone.css. */
+@import './stone.css';
 :root {
-  --stone: url('../../assets/textures/marble.png');
   --gold: #e2b84a;
   --gold-dark: #8a6a20;
   --ink-yellow: #f0d060;
@@ -25,15 +26,19 @@
   background: linear-gradient(#2a1a10, #140c06);
   border: 1px solid #6a4a20;
   border-radius: 3px;
-  box-shadow: inset 0 1px 0 rgba(255, 220, 160, 0.15);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 220, 160, 0.2),
+    inset 1px 0 0 rgba(255, 220, 160, 0.1),
+    inset -1px -1px 0 rgba(0, 0, 0, 0.6),
+    0 0 0 1px #3a2608;
 }
 .ui-shelf.hidden {
   display: none;
 }
 .ui-shelf-btn {
   position: relative;
-  width: 40px;
-  min-height: 72px;
+  width: 44px;
+  min-height: 80px;
   padding: 4px 2px 2px;
   display: flex;
   flex-direction: column;
@@ -57,8 +62,8 @@
   filter: brightness(1.2);
 }
 .ui-shelf-btn svg {
-  width: 24px;
-  height: 24px;
+  width: 28px;
+  height: 28px;
   fill: none;
   stroke: #e2b84a;
   stroke-width: 1.6;
@@ -100,8 +105,11 @@
   border: 1px solid #5a3e10;
   border-radius: 18px;
   box-shadow:
-    inset 0 2px 2px rgba(255, 245, 210, 0.7),
-    inset 0 -3px 3px rgba(0, 0, 0, 0.45),
+    inset 0 1px 0 #fff4c0,
+    inset 1px 0 0 #f8e090,
+    inset -1px 0 0 #7a5416,
+    inset 0 -2px 0 #5a3e10,
+    inset 0 -4px 3px rgba(0, 0, 0, 0.3),
     0 1px 2px rgba(0, 0, 0, 0.6);
   font:
     15px/1.1 'IM Fell English',
@@ -142,12 +150,13 @@
   display: flex;
   flex-direction: column;
   background:
-    linear-gradient(rgba(110, 120, 104, 0.55), rgba(70, 78, 66, 0.62)),
-    var(--stone) center / 420px auto;
-  border: 2px solid var(--gold-dark);
-  border-radius: 4px;
+    linear-gradient(rgba(80, 96, 78, 0.5), rgba(56, 68, 54, 0.58)),
+    var(--stone) center / 512px auto;
+  border: 3px solid transparent;
+  border-image: linear-gradient(170deg, #f8e090, #a87c28 40%, #fff2b0 60%, #7a5416) 1;
   box-shadow:
-    inset 0 0 0 1px rgba(255, 240, 200, 0.35),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.55),
+    inset 1px 1px 0 2px rgba(255, 245, 210, 0.3),
     inset 0 0 24px rgba(0, 0, 0, 0.35),
     0 0 24px rgba(0, 0, 0, 0.6);
   color: var(--ink-pale);
@@ -234,13 +243,15 @@
   gap: 3px;
   padding: 6px 8px;
   background:
-    linear-gradient(rgba(40, 46, 40, 0.5), rgba(30, 34, 30, 0.55)),
-    var(--stone) center / 420px auto;
-  border: 1px solid var(--gold-dark);
+    linear-gradient(rgba(36, 44, 36, 0.42), rgba(26, 32, 26, 0.48)),
+    var(--stone) center / 512px auto;
+  border: 1px solid #5a3e10;
   box-shadow:
-    inset 0 0 0 1px rgba(0, 0, 0, 0.5),
-    inset 0 2px 6px rgba(0, 0, 0, 0.5),
-    0 0 0 1px rgba(255, 240, 200, 0.18);
+    inset 1px 1px 0 rgba(0, 0, 0, 0.6),
+    inset -1px -1px 0 rgba(255, 245, 210, 0.3),
+    inset 0 2px 6px rgba(0, 0, 0, 0.45),
+    0 0 0 1px #c89a3a,
+    1px 1px 0 1px rgba(255, 245, 210, 0.25);
   touch-action: pan-y;
 }
 .ui-col.narrow {

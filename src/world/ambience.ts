@@ -98,7 +98,7 @@ async function renderWaterfallLoop(rate: number): Promise<AudioBuffer> {
  * Equal-power cross-fade of the loop's tail into its head (the filters and limiter in the
  * render undo any seam prepared in the noise itself), then the tail is dropped.
  */
-function seamless(buffer: AudioBuffer, ctx: BaseAudioContext): AudioBuffer {
+export function seamless(buffer: AudioBuffer, ctx: BaseAudioContext): AudioBuffer {
   const fade = Math.floor(buffer.sampleRate * SEAM_SECONDS);
   const length = buffer.length - fade;
   const out = ctx.createBuffer(buffer.numberOfChannels, length, buffer.sampleRate);

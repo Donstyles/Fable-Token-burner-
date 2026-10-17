@@ -50,6 +50,7 @@ import { dust } from '../world/particles';
 import { CATALOGUE, loadPropModels, propLabel } from '../world/props';
 import { createStatusLine } from '../ui/status';
 import { Npc } from '../world/npc';
+import { Soundscape } from '../world/soundscape';
 import { daylightAt, environmentAt, MINUTES_PER_REAL_SECOND } from '../world/daylight';
 import { advanceClock, minuteOfDay } from '../game/time';
 import { hideVeil, showVeil, veilProgress } from '../app/veil';
@@ -147,6 +148,7 @@ export async function startDev(app: App): Promise<DevHandle> {
   // The region's noon; the day and night cycle (src/world/daylight.ts) bends it by the hour.
   let dayEnvironment: typeof app.materials.env | null = null;
   let lastDaylightMinute = -1;
+  let daylightNow = 1;
   if (level.sidecar.outdoor) {
     // Outdoor look (DESIGN.md 15): a sun, a lit sky, fog that keeps the far ridges hazy; the
     // region's sidecar carries its own colours.
@@ -216,6 +218,12 @@ export async function startDev(app: App): Promise<DevHandle> {
   const wind = new Vector3(5.5, 0, 2.2);
   const sand = level.sidecar.region === 'desert' ? dust(scene, wind) : null;
   sand?.start();
+  // Wind, birds and footsteps, all synthesised (DESIGN.md 16.4).
+  const soundscape = new Soundscape(scene, {
+    outdoor: level.sidecar.outdoor === true,
+    region: level.sidecar.region ?? 'dungeon',
+  });
+  let lastPartyPos = new Vector3();
   // Babylon's listener rides the camera; sounds place themselves in scene space.
   void installAudio().then(() => attachListener(app.camera));
   let mipmapsOn = true;
@@ -619,17 +627,28 @@ export async function startDev(app: App): Promise<DevHandle> {
     if (dayEnvironment) {
       const minute = Math.floor(minuteOfDay(state.clock.minutes) * 4) / 4;
       if (minute !== lastDaylightMinute) {
+        const firstDaylightTick = lastDaylightMinute < 0;
         lastDaylightMinute = minute;
         const light = daylightAt(minute);
-        app.materials.setEnvironment(environmentAt(dayEnvironment, light));
+        const bent = environmentAt(dayEnvironment, light);
+        app.materials.setEnvironment(bent);
+        fog.colorOverride = bent.fogColor;
+        if (firstDaylightTick) fog.snapColor();
         app.sky.apply(app.materials.env);
         app.sky.setNight(light.night);
+        daylightNow = light.daylight;
         // Lanterns and the forge come up as the day goes; the cave's glow burns always.
         level.setLiveLights(true, 0.15 + 0.85 * (1 - light.daylight));
         strip.setClock(state.clock.minutes);
       }
     }
     for (const n of npcs) n.update(dt, party.position);
+    if (dt > 0 && !fly) {
+      const p = party.position;
+      const moved = Math.hypot(p.x - lastPartyPos.x, p.z - lastPartyPos.z);
+      lastPartyPos = p.clone();
+      soundscape.update(dt, p, moved < 2 ? moved : 0, daylightNow, party.waterDepth > 0.25);
+    }
     for (const m of handle.monsters) {
       m.update(dt, partyTarget, simTime);
       for (const ev of m.takeEvents()) {
