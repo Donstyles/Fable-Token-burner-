@@ -47,13 +47,29 @@ test.describe('talk', () => {
       const fz = Math.cos(yaw);
       d.teleport(p.x + fx * 2.6, p.y + 0.2, p.z + fz * 2.6, (Math.atan2(-fx, -fz) * 180) / Math.PI);
     });
-    await page.waitForTimeout(1500);
+    // The view must render from the new spot before a tap can pick him: wait for frames.
+    const t0 = await page.evaluate(() => (window as unknown as W).ftb!.dev!.simTime());
+    await page.waitForFunction(
+      (t) => (window as unknown as W).ftb!.dev!.simTime() > (t as number) + 0.1,
+      t0,
+      { timeout: 30_000 },
+    );
     if (info.project.name.startsWith('iphone')) {
-      // The tap path: he stands at the centre of the view.
-      await page.mouse.click(466, 215);
-      await page.waitForFunction(() => (window as unknown as W).ftb!.dev!.dialogue.isOpen(), null, {
-        timeout: 10_000,
-      });
+      // The tap path: he stands at the centre of the view. Software GL in CI draws a frame a
+      // second, so the tap is tried a few times until the pick lands.
+      let opened = false;
+      for (let i = 0; i < 6 && !opened; i++) {
+        await page.mouse.click(466, 215);
+        opened = await page
+          .waitForFunction(() => (window as unknown as W).ftb!.dev!.dialogue.isOpen(), null, {
+            timeout: 5_000,
+          })
+          .then(
+            () => true,
+            () => false,
+          );
+      }
+      expect(opened).toBe(true);
     } else {
       expect(
         await page.evaluate(() => (window as unknown as W).ftb!.dev!.talkTo('villager-man')),

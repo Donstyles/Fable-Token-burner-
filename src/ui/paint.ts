@@ -158,7 +158,7 @@ function paintMarble(w: number, h: number, o: MarbleOptions): HTMLCanvasElement 
       pts.push([x, y]);
     }
     stroke(g, w, pts, o.veinPale, 1, 1, 1);
-    stroke(g, w, pts, o.veinDark, r() < 0.4 ? 2 : 1);
+    stroke(g, w, pts, o.veinDark, r() < 0.55 ? 2 : 1);
   }
   // The tint field: a few broad patches, warm or cool.
   const patches: [number, number, number, number][] = [];
@@ -346,14 +346,14 @@ function paintParchment(w: number, h: number, seed: number): HTMLCanvasElement {
   return c;
 }
 
-/** MM6's HUD marble: cream to rose, grey-brown veins. */
+/** MM6's HUD marble: cream to rose with grey patches, veins a dark grey-brown. */
 const MARBLE: Tone[] = [
-  { cool: [104, 92, 96], warm: [120, 96, 92] },
-  { cool: [150, 138, 140], warm: [168, 140, 132] },
-  { cool: [188, 178, 178], warm: [204, 180, 168] },
-  { cool: [212, 204, 202], warm: [226, 206, 192] },
-  { cool: [228, 222, 220], warm: [238, 224, 210] },
-  { cool: [240, 236, 234], warm: [246, 236, 224] },
+  { cool: [78, 66, 70], warm: [94, 72, 68] },
+  { cool: [134, 122, 126], warm: [156, 126, 118] },
+  { cool: [176, 166, 168], warm: [198, 172, 158] },
+  { cool: [206, 198, 198], warm: [224, 202, 186] },
+  { cool: [226, 220, 218], warm: [238, 222, 206] },
+  { cool: [242, 238, 236], warm: [248, 238, 224] },
 ];
 /** The sheet's stone: grey-green, darker. */
 const STONE: Tone[] = [
@@ -382,8 +382,8 @@ export function installPaint(): Surfaces {
     marble: paintMarble(320, 160, {
       seed: 7,
       dabs: 110,
-      dabTone: 70,
-      veins: 8,
+      dabTone: 80,
+      veins: 10,
       veinDark: 'rgba(60,50,52,0.9)',
       veinPale: 'rgba(235,228,224,0.8)',
       ramp: MARBLE,
