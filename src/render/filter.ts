@@ -74,7 +74,8 @@ void main(void) {
   // centred threshold in [-0.5, 0.5)
   float d = (bayer4(px) + 1.0 / 32.0 - 0.5) * ditherStrength;
   if (mode < 1.5) {
-    float L = max(levels - 1.0, 1.0);
+    // Green keeps twice the levels (critics, round 9: MM6's 16-bit frame is 5-6-5).
+    vec3 L = vec3(max(levels - 1.0, 1.0), max(levels * 2.0 - 1.0, 1.0), max(levels - 1.0, 1.0));
     c = floor(c * L + d + 0.5) / L;
   } else {
     float n = lutSize - 1.0;

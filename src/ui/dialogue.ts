@@ -102,6 +102,7 @@ export function createDialogue(
     const frame = el('div', 'dlg-frame');
     frame.dataset['paint'] = 'frame';
     const window_ = el('div', 'dlg-window');
+    window_.dataset['paint'] = 'speckle';
     frame.appendChild(window_);
     const plate = el('div', 'dlg-plate');
     // "Greta the Goodwife", as MM6 named its people, in one line under the window.

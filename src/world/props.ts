@@ -17,6 +17,7 @@ import catalogueJson from '../../assets/props/catalogue.json';
 import { PROPS, type PropCatalogue, type PropMeasure } from '../../kernel/terrain/props';
 import { type RetroMaterials } from '../render/materials';
 import { bitmapPixels, bitmapTexture } from '../render/bitmap';
+import { expand, ramp } from '../render/brush';
 import { Camera } from '@babylonjs/core/Cameras/camera';
 import { TargetCamera } from '@babylonjs/core/Cameras/targetCamera';
 import { Constants } from '@babylonjs/core/Engines/constants';
@@ -147,7 +148,8 @@ async function spriteOf(
   paint.setVector3('lightDirection', new Vector3(0.45, -0.6, 0.65).normalize());
   // A strong key (critics, round 8: MM6's crowns run from lum 18 to 95).
   paint.setColor3('lightColor', new Color3(0.6, 0.6, 0.6));
-  paint.setColor3('ambientColor', new Color3(0.4, 0.4, 0.4));
+  // Low ambient (critics, round 9): crowns darker than the grass under them.
+  paint.setColor3('ambientColor', new Color3(0.15, 0.15, 0.15));
   paint.setArray3('pointColor', new Array<number>(12).fill(0));
   mesh.isVisible = true;
   target.render(false, false);
@@ -156,6 +158,23 @@ async function spriteOf(
   const raw = (await target.readPixels()) as Uint8Array | null;
   // readPixels gives the rows bottom first; the canvas wants them top first.
   const px = raw ? bitmapPixels(raw, n, n, n, n, 10, true) : new Uint8ClampedArray(n * n * 4);
+  // Leaves in MM6's six greens and bark in its browns (critics, round 9): each opaque pixel
+  // keeps its luminance and takes the ramp's tone.
+  const leaf = expand(ramp('#142814', '#1e3c1e', '#2c5428', '#3c6c32', '#528a40', '#6aa050'), 16);
+  const bark = expand(ramp('#1c1208', '#2c1c0e', '#3e2a16', '#4e3620', '#5a4028'), 16);
+  for (let i = 0; i < n * n; i++) {
+    const o = i * 4;
+    if (px[o + 3]! < 128) continue;
+    const r0 = px[o]!;
+    const g0 = px[o + 1]!;
+    const b0 = px[o + 2]!;
+    const lum = (0.299 * r0 + 0.587 * g0 + 0.114 * b0) / 255;
+    const tones = g0 >= r0 * 0.95 ? leaf : bark;
+    const t = tones[Math.max(0, Math.min(15, Math.round(lum * 15)))]!.warm;
+    px[o] = Math.round(t[0]);
+    px[o + 1] = Math.round(t[1]);
+    px[o + 2] = Math.round(t[2]);
+  }
   // The quad covers only the painted pixels: a spruce in its square is two thirds air, and
   // every transparent texel still costs a fragment on a phone (and a second on a CPU).
   let x0 = n;
@@ -239,7 +258,7 @@ export async function loadPropModels(
       // Meshy paints buildings and stones a shade dark for daylight; a little lift reads
       // as sun on plaster rather than a cellar wall.
       // Meshy's plaster is a bright cream; MM6's walls sat at a luminance near 120 (critics).
-      const lift = sways ? 1 : 0.62;
+      const lift = sways ? 1 : 0.5;
       const material = materials.create({
         name: `prop-${id}`,
         texture: bitmap,

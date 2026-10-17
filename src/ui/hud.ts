@@ -109,14 +109,18 @@ export function createHud(parent: HTMLElement, party: Party, hooks: HudHooks): H
     const hpFill = el('div', 'hud-fill');
     hpFill.dataset['paint'] = 'tube-hp';
     hpTrack.appendChild(hpFill);
-    hp.appendChild(hpTrack);
+    const hpCaps = el('div', 'hud-caps');
+    hpCaps.dataset['paint'] = 'tube-caps';
+    hp.append(hpTrack, hpCaps);
     const sp = el('div', 'hud-bar sp');
     sp.dataset['paint'] = 'tube';
     const spTrack = el('div', 'hud-track');
     const spFill = el('div', 'hud-fill');
     spFill.dataset['paint'] = 'tube-sp';
     spTrack.appendChild(spFill);
-    sp.appendChild(spTrack);
+    const spCaps = el('div', 'hud-caps');
+    spCaps.dataset['paint'] = 'tube-caps';
+    sp.append(spTrack, spCaps);
     tubes.append(hp, sp);
     bars.append(gem, tubes);
     // No name plate: MM6 named nobody in the band; the sheet carries the name.

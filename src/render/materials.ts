@@ -122,7 +122,7 @@ void main(void) {
   // slope shows only a little, so hills read as painted ground, not shaded geometry.
   ndl = mix(0.8, ndl, 0.35);
 #endif
-  ndl = mix(ndl, 0.72, flatLight);
+  ndl = mix(ndl, 0.5, flatLight);
   vec3 light = ambientColor + lightColor * ndl;
 #ifdef BAKED
   // Baked per-vertex light replaces the environment's key and ambient light.
@@ -244,8 +244,17 @@ void main(void) {
   }
   light = min(light + carried, vec3(1.6));
   // The light in steps (DESIGN.md 16.14): every face lit or in shade as a painter laid it,
-  // five tones, no gradients for the posteriser to smear.
-  if (toon > 0.5) light = floor(light * 5.0 + 0.5) / 5.0;
+  // five tones, each step split pixel by pixel by a four-by-four Bayer of a thirty-second,
+  // as MM6's light table dithered (critics, round 9).
+  if (toon > 0.5) {
+    vec2 bp = mod(floor(gl_FragCoord.xy), 4.0);
+    vec2 b2 = mod(bp, 2.0);
+    vec2 b4 = mod(floor(bp / 2.0), 2.0);
+    float m2 = 2.0 * b2.x + 3.0 * b2.y - 4.0 * b2.x * b2.y;
+    float m4 = 2.0 * b4.x + 3.0 * b4.y - 4.0 * b4.x * b4.y;
+    float bayer = ((4.0 * m2 + m4) + 0.5) / 16.0 - 0.5;
+    light = floor(light * 5.0 + 0.5 + bayer * 0.5) / 5.0;
+  }
 #ifdef TERRAIN
   // Grass under path, scree and snow weights carried per vertex (DESIGN.md 15). Scree, the
   // texture of steep faces, is projected along the face's own horizontal axis where the

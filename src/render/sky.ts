@@ -58,22 +58,22 @@ float fbm(vec2 p) {
 void main(void) {
   vec3 d = normalize(vDir);
   float up = clamp(d.y, 0.0, 1.0);
-  // The blue field in four flat bands, as a painted sky, not a gradient for the posteriser to
-  // cut into contour blobs (critics, 2026-10-17).
-  float band = up < 0.05 ? 0.0 : up < 0.14 ? 0.25 : up < 0.3 ? 0.5 : up < 0.55 ? 0.75 : 1.0;
-  vec3 sky = mix(horizon, zenith, band);
+  // MM6's sky is one blue (critics, round 9: (41,69,140), no haze band), at most a step
+  // darker high above.
+  vec3 sky = up > 0.5 ? zenith : horizon;
   // Cumulus: the cloud field cut hard into a body, with a lit edge where it thins upward and
   // toward the sun and a grey underside where it thins toward the horizon.
   // The painted strip (DESIGN.md 16.14), wrapped round the horizon and drifting with the
   // wind; its red channel is the cloud's density, cut at a threshold the weather sets, its
   // green the painter's tone: lit top, body, shaded underside.
   float az = atan(d.x, d.z);
-  vec2 suv = vec2(az / 6.2831853 + time * 0.0015, clamp(up, 0.0, 1.0));
+  // The strip's rows run with the elevation angle, not its sine, so the rows near the
+  // horizon are not stretched into drips (round 10).
+  vec2 suv = vec2(az / 6.2831853 + time * 0.0015, asin(clamp(up, 0.0, 1.0)) / 1.5707963);
   vec2 strip = texture2D(skySampler, suv).rg;
-  // MM6's clouds are wisps with soft edges (reference: mm6-outdoor-field), not stencils: the
-  // density ramps over a band round the weather's threshold, and the palette steps it.
-  float t = 0.5 + (0.5 - cloudAmount) * 0.5;
-  float body = smoothstep(t - 0.22, t + 0.1, strip.r) * step(0.03, up);
+  // The density cut at the weather's threshold; the strip's edges are stippled (brush.ts
+  // paintSkyStrip), so the cut lands ragged, as MM6's painted wisps (critics, round 9).
+  float body = step(0.5 + (0.5 - cloudAmount) * 0.5, strip.r) * step(0.03, up);
   float tone = strip.g;
   // Lit top to shaded underside as one soft run (critics, round 6: beige-white 166,157,140
   // to violet-grey 131,125,140), no outline; the palette steps it.
@@ -135,14 +135,15 @@ export class SkyDome {
       ],
       samplers: ['skySampler'],
     });
-    // The strip painted once: 4096 pixels round the horizon, 512 up to the zenith, so a
-    // texel is under two pixels of the view, as MM6's bitmap sky was.
-    const strip = new DynamicTexture('sky-strip', { width: 4096, height: 512 }, scene, false);
-    strip.getContext().drawImage(paintSkyStrip(4096, 512, 23), 0, 0);
+    // The strip painted once: 2048 pixels round the horizon, 256 up to the zenith, sampled
+    // nearest, so a cloud texel is about two pixels of the view, as MM6's bitmap sky was
+    // (critics, round 9).
+    const strip = new DynamicTexture('sky-strip', { width: 2048, height: 256 }, scene, false);
+    strip.getContext().drawImage(paintSkyStrip(2048, 256, 23), 0, 0);
     strip.wrapU = Constants.TEXTURE_WRAP_ADDRESSMODE;
     strip.wrapV = Constants.TEXTURE_CLAMP_ADDRESSMODE;
     strip.update(false);
-    strip.updateSamplingMode(Constants.TEXTURE_BILINEAR_SAMPLINGMODE);
+    strip.updateSamplingMode(Constants.TEXTURE_NEAREST_SAMPLINGMODE);
     this.strip = strip;
     this.material.setTexture('skySampler', strip);
     this.material.backFaceCulling = false;

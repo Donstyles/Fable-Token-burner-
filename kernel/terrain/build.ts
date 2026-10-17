@@ -141,15 +141,16 @@ function besidePath(
 }
 
 const VALLEY_ENV: RegionEnvironment = {
-  lightColor: [1.0, 0.92, 0.78],
-  // Ambient lifted so walls in shade still read (MM6 lit outdoors flat and bright); the fog
-  // is the sky's own horizon colour so the haze and the dome meet without a band.
-  ambientColor: [0.46, 0.48, 0.54],
-  fogColor: [0.6, 0.7, 0.85],
-  // Thin enough that the backdrop ridges two kilometres out still show through the haze.
-  fogDensity: 0.0009,
-  skyZenith: [0.15, 0.3, 0.7],
-  skyHorizon: [0.6, 0.7, 0.85],
+  // MM6's day (critics, rounds 7 to 9): a warm key, a flat ambient, the sky one deep blue
+  // (41,69,140) to the treeline with a step darker high above, the fog the sky's own blue
+  // and thin, so the far hills keep their green. This sidecar is what the runtime applies
+  // over `mm6-day`; the dome's haze band of earlier rounds came from here.
+  lightColor: [0.86, 0.8, 0.7],
+  ambientColor: [0.4, 0.4, 0.44],
+  fogColor: [0.16, 0.27, 0.55],
+  fogDensity: 0.0005,
+  skyZenith: [0.14, 0.25, 0.52],
+  skyHorizon: [0.16, 0.27, 0.55],
   cloudAmount: 0.4,
 };
 

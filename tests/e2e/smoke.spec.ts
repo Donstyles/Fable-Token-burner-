@@ -17,10 +17,11 @@ test('boots to a rendering canvas with no console errors', async ({ page }) => {
     return !!app && app.engine.getFps() > 0;
   });
 
-  // Dev overlay reports the default preset (540 lines since the phone pass, DESIGN 16.11).
+  // Dev overlay reports the default preset: the CSS pitch (DESIGN 16.20), 430 lines on this
+  // viewport.
   const overlay = page.locator('#dev-overlay');
-  await expect(overlay).toContainText('lines-540');
-  await expect(overlay).toContainText('×540');
+  await expect(overlay).toContainText('css');
+  await expect(overlay).toContainText('×430');
 
   // Landscape: the rotate overlay stays hidden.
   await expect(page.locator('#rotate')).toBeHidden();

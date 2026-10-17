@@ -4,19 +4,27 @@
  * The world renders at a fixed number of lines and is upscaled to the display with
  * nearest-neighbour sampling. UI and text are HTML at native resolution.
  */
-export type RenderPreset = 'lines-1080' | 'lines-720' | 'lines-540' | 'native';
+export type RenderPreset = 'css' | 'lines-1080' | 'lines-720' | 'lines-540' | 'native';
 
 export const RENDER_PRESETS: readonly RenderPreset[] = [
+  'css',
   'lines-1080',
   'lines-720',
   'lines-540',
   'native',
 ];
 
-export const DEFAULT_RENDER_PRESET: RenderPreset = 'lines-540';
+/**
+ * MM6's pitch (critics, round 9): the view renders at the CSS size (932 by 430 on the phone,
+ * about 330 lines of view above the band against MM6's 342) and the display's integer
+ * ratio upscales it, so every texel step, sprite edge and cloud outline is one even pixel.
+ */
+export const DEFAULT_RENDER_PRESET: RenderPreset = 'css';
 
 export function presetLines(preset: RenderPreset): number | null {
   switch (preset) {
+    case 'css':
+      return null;
     case 'lines-1080':
       return 1080;
     case 'lines-720':
@@ -59,7 +67,7 @@ export function computeRenderTarget(preset: RenderPreset, m: DisplayMetrics): Re
   const cssHeight = Number.isFinite(m.cssHeight) && m.cssHeight >= 1 ? m.cssHeight : 1;
   const physicalHeight = Math.max(1, Math.round(cssHeight * dpr));
   const physicalWidth = Math.max(1, Math.round(cssWidth * dpr));
-  const wanted = presetLines(preset);
+  const wanted = preset === 'css' ? Math.round(cssHeight) : presetLines(preset);
   const lines = Math.max(1, wanted === null ? physicalHeight : Math.min(wanted, physicalHeight));
   const upscale = physicalHeight / lines;
   // Babylon divides the CSS size by the scaling level to get the render size.

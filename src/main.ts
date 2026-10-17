@@ -42,10 +42,10 @@ installForcedLandscape();
 installServiceWorker(ui);
 
 const app = boot(canvas, ui);
-// `?lite`: cheap rendering for automated tests on software GL (no bloom, 720 lines).
+// `?lite`: cheap rendering for automated tests on software GL (no bloom, the CSS pitch).
 if (new URLSearchParams(location.search).has('lite')) {
   app.setGrade({ bloom: false, vignette: 0 });
-  app.setRenderPreset('lines-720');
+  app.setRenderPreset('css');
 }
 
 declare global {

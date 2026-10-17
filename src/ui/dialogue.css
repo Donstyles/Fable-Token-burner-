@@ -161,3 +161,9 @@
   min-height: 30px;
   padding: 2px 18px;
 }
+
+/* A grain over the head and its ground (paint.ts `speckle`, critics, round 9). */
+.dlg-window {
+  background: var(--paint) center / 100% 100% no-repeat;
+  image-rendering: pixelated;
+}

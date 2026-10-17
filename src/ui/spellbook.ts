@@ -96,6 +96,9 @@ export function renderSpellbook(ctx: ScreenContext): void {
     const c = state.party[active];
     if (!c) return;
     const tabs = schoolTabs(c);
+    // The book's bookmarks are the schools known (critics, round 9: MM6 shows only earned tabs).
+    const panel = frame.root.querySelector<HTMLElement>('.ui-panel');
+    if (panel) panel.dataset['paint'] = `book-${tabs.length}`;
     if (!tabs.some((t) => t.school === school)) school = tabs[0]?.school ?? null;
     const left = schoolColumn(c, tabs, school, (s) => {
       school = s;

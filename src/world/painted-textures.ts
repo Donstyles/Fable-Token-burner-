@@ -19,8 +19,8 @@ import { lampPane, stillWater, type RoleTextures } from './textures';
 const T = 128;
 
 function grass(): HTMLCanvasElement {
-  // Dark olive, as MM6's turf (critics, round 5: ~52,60,32).
-  return grain(T, T, 31, ramp('#1c2412', '#28321a', '#344020', '#404e28', '#4e5e30', '#5e6e3a'), {
+  // MM6's turf (critics, round 9: (61,84,45), green twenty levels over red).
+  return grain(T, T, 31, ramp('#2c4420', '#365228', '#416030', '#4c6e38', '#5b7d3e', '#6a8c44'), {
     marks: 3200,
     clods: 54,
     clodSize: 10,
@@ -29,8 +29,9 @@ function grass(): HTMLCanvasElement {
 }
 
 function dirt(): HTMLCanvasElement {
-  // Cracked earth (critics, round 5: ~79,48,33): near-black fissures through dark browns.
-  const tones = ramp('#1a0e06', '#2e1c10', '#43291a', '#56321f', '#6a4228', '#80522f');
+  // MM6's earth (critics, round 9: (57,28,16) to (107,73,57), its darkest common tone
+  // (57,28,16), no black confetti).
+  const tones = ramp('#391c10', '#45251a', '#513023', '#5d3b2d', '#644233', '#6b4939');
   const c = grain(T, T, 32, tones, {
     marks: 2600,
     clods: 80,
@@ -51,15 +52,15 @@ function dirt(): HTMLCanvasElement {
       y += Math.sin(ang) * 2;
       pts.push([x, y]);
     }
-    stroke(g, T, T, pts, '#1a0e06', 1);
+    stroke(g, T, T, pts, '#3a1c10', 1);
   }
   // Pebbles: a dark pit with a lit crown.
   for (let i = 0; i < 30; i++) {
     const x = Math.floor(r() * T);
     const y = Math.floor(r() * T);
-    g.fillStyle = '#1a0e06';
+    g.fillStyle = '#3a1c10';
     g.fillRect(x, y, 2, 2);
-    g.fillStyle = '#80522f';
+    g.fillStyle = '#6b4939';
     g.fillRect(x, y, 1, 1);
   }
   snap(g, T, T, tones);
@@ -83,7 +84,9 @@ function snow(): HTMLCanvasElement {
 }
 
 function scree(): HTMLCanvasElement {
-  return grain(T, T, 36, ramp('#3a3834', '#54504a', '#6e6860', '#888278', '#a29c90'), {
+  // Steep faces in an olive scree (critics, round 9: the grey made the hills grey; MM6's
+  // hills stay green (61,84,45) with brown scars).
+  return grain(T, T, 36, ramp('#3a3c20', '#484e2a', '#566034', '#64703e', '#728048'), {
     marks: 2600,
     clods: 130,
     clodSize: 5,
@@ -470,8 +473,8 @@ export const PAINTERS: Record<string, { paint: () => HTMLCanvasElement; metresPe
   rock: { paint: rock, metresPerTile: 4 },
   marble: { paint: marble, metresPerTile: 2 },
   trim: { paint: trim, metresPerTile: 1 },
-  grass: { paint: grass, metresPerTile: 14 },
-  path: { paint: dirt, metresPerTile: 14 },
+  grass: { paint: grass, metresPerTile: 7 },
+  path: { paint: dirt, metresPerTile: 7 },
   scree: { paint: scree, metresPerTile: 6 },
   snow: { paint: snow, metresPerTile: 6 },
   bark: { paint: bark, metresPerTile: 1 },

@@ -1651,7 +1651,69 @@ were smooth clouds counting two thousand colours. Round 9:
   mipmaps, nearest; the bust over black with a softer key; the
   mahogany with blacks, slanted grain and knots.
 
+### 16.20 Round 10: MM6's pitch (2026-10-17)
+
+Round 9 scored 4 (HUD), 4 (screens), 5 (talk) and 4 (world), verdict no.
+The world critic found the view rendering at 720 lines and upscaled
+1.194 times nearest: three times MM6's pixel density, with every fifth
+row doubled, so every texel step and sprite edge was finer and uneven.
+The valley's sidecar also turned out to carry its own sky and fog (a
+pale haze band) over the `mm6-day` preset, which is why the deep blue
+of rounds 7 to 9 never reached the screen. Round 10:
+
+- **Pitch**: a `css` render preset renders the view at the CSS size
+  (932 by 430 on the phone, about 330 lines of view above the band
+  against MM6's 342) and the display's integer ratio upscales it; it
+  is the default and the `?lite` preset. The talking head's target is
+  96 pixels, the window's size.
+- **Sky**: one blue (41,69,140), a step darker above 30 degrees, in the
+  valley's own sidecar (`kernel/terrain/build.ts`), the fog the same
+  blue and thin; the strip 2048 by 256 sampled nearest, its rows by the
+  elevation angle so the horizon's rows do not stretch, its masses
+  stippled at the edges so the weather's cut lands ragged, its tone a
+  top-light gradient with a mottle.
+- **Ground and light**: dirt (57,28,16) to (107,73,57) with no black
+  confetti, grass (61,84,45), olive scree, tiles half the size; the
+  five light steps split per pixel by a four-by-four Bayer; the
+  posterise in 5-6-5; flat light at 0.5 and the building lift at 0.5
+  (walls at a luminance near MM6's 65); tree sprites in six greens and
+  a bark ramp with low ambient; the bust's key fill 0.3, a dimmer key,
+  a dark brown ground, a speckle over the window; the mahogany with a
+  one-pixel grain stretched along the wood, steeper lines, knots as
+  eyes.
+- **HUD** (to the critic's measured recipe): marble as a mottle at
+  fourteen and six pixels with a warm-cool tint and veins as two-pixel
+  walks stamped three wide as a multiply, a Bayer checker, RGB565 with
+  bit replication (the highlights reach the 180s); MM6's cell edges
+  (groove, dark line, three rows of shadow, light right and foot); the
+  tubes in a well with walls and a line under the caps, the caps an
+  overlay over the fill; the trough and the lintel the marble itself;
+  the pillar on MM6's convex profile with the highlight one pixel in;
+  an eleven-row collar lit from below with a highlight column; the
+  capital three leaf lobes; the rest oval with a specular a fifth down
+  and a sunk foot; spines flat with a mottle and dark edges, the emblems
+  painted as two-pixel gold line drawings (sword, satchel, book,
+  scroll, compass) with a shade and a thread of light, as the reference
+  shelf's; the shelf's recess dark brown, not black.
+- **Screens**: 64 levels with a Bayer checker instead of 32; the stone
+  with both tails (lichen and pits); worn patches on the leather; the
+  page a tenth darker with a crease near the left edge, a hump across
+  the right page, MM6's page-stack greys down the right and a crease
+  and ramp along the foot, page-coloured bookmarks cut on the slant
+  with black marks, as many as the schools known; the rose marble
+  crazed by cracks that broaden and fade with uneven cells; the gold
+  ovals on the measured recipe (a body of (156,130,74) lifted by a
+  specular and sunk at the lower right, a dark rim, a black outline, a
+  shadow into the stone), the close oval two to one; the frame a
+  shaded column straight into the stone; rows on the bare stone with a
+  rule; the clock's well a dark green marble with veins.
+
 ## 13. Decision log
+
+- 2026-10-17 – Round 10 (16.20): the view at MM6's pitch (the `css`
+  preset, default); the valley's sidecar sky one deep blue; measured
+  marble, cell, well, pillar and emblem recipes on the HUD; 64-level
+  screens; 5-6-5 posterise; dithered light steps.
 
 - 2026-10-17 – Round 9 (16.19): the shell's surfaces as palettised
   paintings: five-bit quantise, per-pixel speckle, wandering veins,

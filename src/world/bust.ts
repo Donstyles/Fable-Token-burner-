@@ -16,7 +16,8 @@ import { isForcedLandscape, toAppPoint } from '../app/orientation';
 import type { RetroMaterials } from '../render/materials';
 import { type Character, DEFAULT_CHARACTER_FILL } from './character';
 
-const SIZE = 256;
+// The target at the window's size (critics, round 9), so the face composes at the view's pitch.
+const SIZE = 96;
 const FOV = 0.42;
 const NEAR = 0.05;
 const FAR = 40;
@@ -26,10 +27,11 @@ const FRAMED_HEIGHT = 0.19;
 const EYE_LINE = 0.9;
 /** The near-black ground behind the face, as MM6's portraits sat on one. */
 // Clear to nothing: the village behind the party shows through round the head (critics, round 7).
-const GROUND = new Color4(0, 0, 0, 1);
+// A dark brown behind the head (critics, round 9), speckled by the window's overlay.
+const GROUND = new Color4(0.118, 0.078, 0.047, 1);
 /** The key: a hard warm light from the camera's upper left, as a painted portrait's. */
-const KEY_COLOR = new Color3(0.9, 0.8, 0.68);
-const KEY_FILL = 0.12;
+const KEY_COLOR = new Color3(0.68, 0.6, 0.51);
+const KEY_FILL = 0.3;
 
 export interface PageRect {
   x: number;

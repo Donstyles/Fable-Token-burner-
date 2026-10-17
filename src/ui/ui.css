@@ -247,8 +247,9 @@
   touch-action: pan-x;
 }
 .ui-close {
-  width: 45px;
-  min-height: 33px;
+  /* MM6's oval is two to one (critics, round 9). */
+  width: 60px;
+  min-height: 30px;
   padding: 0;
 }
 .ui-close svg {
@@ -404,18 +405,17 @@
   image-rendering: pixelated;
 }
 .ui-row {
+  /* On the bare stone with a rule under it (critics, round 9): no translucent overlay. */
   display: flex;
   flex-shrink: 0;
   align-items: center;
   gap: 8px;
   padding: 3px 8px;
   min-height: 36px;
-  background: rgba(0, 0, 0, 0.2);
+  background: none;
   border: 0;
   border-radius: 0;
-  box-shadow:
-    inset 1.5px 1.5px 0 rgba(16, 16, 12, 0.7),
-    inset -1.5px -1.5px 0 rgba(160, 160, 150, 0.45);
+  box-shadow: inset 0 -1.5px 0 #292c29;
 }
 .ui-row.plain {
   background: none;
@@ -566,7 +566,7 @@
   image-rendering: pixelated;
 }
 .screen-rest .ui-col {
-  background: rgba(0, 0, 0, 0.08);
+  background: none;
   box-shadow:
     inset 1.5px 1.5px 0 #2a1810,
     inset 3px 3px 0 #4a2c20,
@@ -589,10 +589,8 @@
 }
 .screen-spells .ui-row,
 .screen-quests .ui-row {
-  background: rgba(255, 250, 235, 0.35);
-  box-shadow:
-    inset 1.5px 1.5px 0 rgba(90, 60, 24, 0.5),
-    inset -1.5px -1.5px 0 rgba(255, 250, 235, 0.8);
+  background: none;
+  box-shadow: inset 0 -1.5px 0 rgba(90, 60, 24, 0.5);
 }
 .screen-spells .ui-foot,
 .screen-quests .ui-foot,

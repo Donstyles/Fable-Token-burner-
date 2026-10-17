@@ -416,6 +416,24 @@ export function paintSkyStrip(w: number, h: number, seed: number): HTMLCanvasEle
           0.95,
         );
       }
+      // Stipple round the mass (critics, round 9): a few small faint dabs below the
+      // weather's threshold on their own, over it where they overlap the mass's edge, so
+      // the cut lands on a feathered edge, not a cliff.
+      for (let j = 0; j < 2; j++) {
+        const sr = (1 + r() * 2) * (w / 1024);
+        dab(
+          g,
+          w,
+          0,
+          x + (r() - 0.5) * rx * 2.4,
+          y + (r() - 0.5) * ry * 2.6,
+          sr,
+          sr * 0.7,
+          0,
+          255,
+          0.2 + r() * 0.15,
+        );
+      }
     }
   }
   const img = g.getImageData(0, 0, w, h);
@@ -427,23 +445,25 @@ export function paintSkyStrip(w: number, h: number, seed: number): HTMLCanvasEle
     if (y < 0 || y >= h) return 0;
     return density[y * w + xx]!;
   };
-  // The tone runs down each mass from lit at its top to shaded at its underside, by where
-  // the pixel sits between the clear sky above and below it: no rim, no outline (critics,
-  // round 6), a soft gradient the palette steps on its own.
-  const reach = Math.max(8, Math.round(h / 12));
+  // The tone: lit along each mass's top, shading down into it over `reach`, with a mottle
+  // of value noise through it (critics, round 9: one top-light gradient over the mass plus
+  // a mottle, not a vertical ramp per column).
+  const reach = Math.max(8, Math.round(h / 10));
+  const mottle = valueNoise(w, h, Math.max(4, Math.round(w / 90)), seed + 77);
   for (let y = 0; y < h; y++) {
     for (let x = 0; x < w; x++) {
       const i = y * w + x;
       const dens = density[i]!;
       let tone = 0.5;
-      if (dens >= 0.5) {
+      if (dens >= 0.3) {
         let up = reach;
-        let down = reach;
         for (let k = 1; k <= reach; k++) {
-          if (up === reach && at(x, y - k) < 0.5) up = k;
-          if (down === reach && at(x, y + k) < 0.5) down = k;
+          if (at(x, y - k) < 0.3) {
+            up = k;
+            break;
+          }
         }
-        tone = down / (up + down);
+        tone = Math.max(0, Math.min(1, 1 - (0.8 * up) / reach + mottle[i]! * 0.5));
       }
       d[i * 4] = Math.round(dens * 255);
       d[i * 4 + 1] = Math.round(tone * 255);
@@ -629,6 +649,230 @@ export function speck(
     d[i] = Math.max(0, Math.min(255, d[i]! + t));
     d[i + 1] = Math.max(0, Math.min(255, d[i + 1]! + t));
     d[i + 2] = Math.max(0, Math.min(255, d[i + 2]! + t));
+  }
+  g.putImageData(img, 0, 0);
+}
+
+/** A two-by-two Bayer dither of ±`amp` before a quantise, so steps break into a checker, not bands. */
+export function dither(g: CanvasRenderingContext2D, w: number, h: number, amp: number): void {
+  const img = g.getImageData(0, 0, w, h);
+  const d = img.data;
+  const bayer = [-0.375, 0.125, 0.375, -0.125];
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      const i = (y * w + x) * 4;
+      if (d[i + 3] === 0) continue;
+      const t = bayer[(y & 1) * 2 + (x & 1)]! * 2 * amp;
+      d[i] = Math.max(0, Math.min(255, d[i]! + t));
+      d[i + 1] = Math.max(0, Math.min(255, d[i + 1]! + t));
+      d[i + 2] = Math.max(0, Math.min(255, d[i + 2]! + t));
+    }
+  }
+  g.putImageData(img, 0, 0);
+}
+
+/**
+ * The tails of a painted surface (critics, round 9): where a slow noise field peaks the
+ * stone lightens (lichen, worn patches), where it dips it darkens (pits), each about eight
+ * percent of the pixels; `toward`, if given, blends the light tail toward a colour instead.
+ */
+export function tails(
+  g: CanvasRenderingContext2D,
+  w: number,
+  h: number,
+  seed: number,
+  period: number,
+  amp: number,
+  toward: Rgb | null = null,
+): void {
+  const n = valueNoise(w, h, period, seed);
+  const img = g.getImageData(0, 0, w, h);
+  const d = img.data;
+  for (let i = 0; i < w * h; i++) {
+    const v = n[i]!;
+    const o = i * 4;
+    if (v > 0.2) {
+      const k = Math.min(1, (v - 0.2) / 0.15);
+      if (toward) {
+        d[o] = d[o]! + (toward[0] - d[o]!) * 0.4 * k;
+        d[o + 1] = d[o + 1]! + (toward[1] - d[o + 1]!) * 0.4 * k;
+        d[o + 2] = d[o + 2]! + (toward[2] - d[o + 2]!) * 0.4 * k;
+      } else {
+        d[o] = Math.min(255, d[o]! + amp * k);
+        d[o + 1] = Math.min(255, d[o + 1]! + amp * k);
+        d[o + 2] = Math.min(255, d[o + 2]! + amp * k);
+      }
+    } else if (v < -0.2) {
+      const k = Math.min(1, (-0.2 - v) / 0.15);
+      d[o] = Math.max(0, d[o]! - amp * k);
+      d[o + 1] = Math.max(0, d[o + 1]! - amp * k);
+      d[o + 2] = Math.max(0, d[o + 2]! - amp * k);
+    }
+  }
+  g.putImageData(img, 0, 0);
+}
+
+/**
+ * Crazed marble as MM6's rest screen, second cut (critics, round 9): cells of fifty-five to
+ * seventy pixels on a jittered grid with bent boundaries, each a shade lighter or darker;
+ * the cracks pale polylines whose width (one to four) and strength (0.3 to 1) vary along
+ * them, three in ten dropped, a dark pixel along one side only where the crack is strong.
+ */
+export function crazed2(
+  g: CanvasRenderingContext2D,
+  w: number,
+  h: number,
+  seed: number,
+  pitch: number,
+  line: Rgb,
+  shade: Rgb,
+  tone: number,
+): void {
+  const r = die(seed);
+  const pts: [number, number, number][] = [];
+  const nx = Math.max(1, Math.round(w / pitch));
+  const ny = Math.max(1, Math.round(h / pitch));
+  for (let j = 0; j < ny; j++) {
+    for (let i = 0; i < nx; i++) {
+      pts.push([
+        ((i + 0.5 + (r() - 0.5)) * w) / nx,
+        ((j + 0.5 + (r() - 0.5)) * h) / ny,
+        (r() - 0.5) * 2 * tone,
+      ]);
+    }
+  }
+  const bendX = valueNoise(w, h, 22, seed + 3);
+  const bendY = valueNoise(w, h, 22, seed + 4);
+  const cell = new Int16Array(w * h);
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      const i0 = y * w + x;
+      const sx = x + bendX[i0]! * 14;
+      const sy = y + bendY[i0]! * 14;
+      let best = 0;
+      let bestD = Infinity;
+      for (let i = 0; i < pts.length; i++) {
+        let dx = Math.abs(sx - pts[i]![0]);
+        let dy = Math.abs(sy - pts[i]![1]);
+        if (dx > w / 2) dx = w - dx;
+        if (dy > h / 2) dy = h - dy;
+        const dd = dx * dx * 0.85 + dy * dy * 1.2;
+        if (dd < bestD) {
+          bestD = dd;
+          best = i;
+        }
+      }
+      cell[i0] = best;
+    }
+  }
+  const img = g.getImageData(0, 0, w, h);
+  const d = img.data;
+  for (let i = 0; i < w * h; i++) {
+    const t = pts[cell[i]!]![2];
+    d[i * 4] = Math.max(0, Math.min(255, d[i * 4]! + t));
+    d[i * 4 + 1] = Math.max(0, Math.min(255, d[i * 4 + 1]! + t));
+    d[i * 4 + 2] = Math.max(0, Math.min(255, d[i * 4 + 2]! + t));
+  }
+  g.putImageData(img, 0, 0);
+  const at = (x: number, y: number): number => cell[(((y % h) + h) % h) * w + (((x % w) + w) % w)]!;
+  // Each crack (a pair of cells) keeps its own fate: dropped, its strength, its phase.
+  const fate = new Map<number, [boolean, number, number]>();
+  const ofEdge = (a: number, b: number): [boolean, number, number] => {
+    const k = Math.min(a, b) * 65536 + Math.max(a, b);
+    let f = fate.get(k);
+    if (!f) {
+      f = [r() < 0.3, 0.3 + r() * 0.7, r() * 6.28];
+      fate.set(k, f);
+    }
+    return f;
+  };
+  const paleRgba = (a: number): string => `rgba(${line[0]},${line[1]},${line[2]},${a.toFixed(2)})`;
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      const k = at(x, y);
+      const kx = at(x + 1, y);
+      const ky = at(x, y + 1);
+      if (k === kx && k === ky) continue;
+      const [dropped, strength, phase] = ofEdge(k, kx !== k ? kx : ky);
+      if (dropped) continue;
+      const wave = 0.5 + 0.5 * Math.sin(x * 0.11 + y * 0.07 + phase);
+      const alpha = Math.min(1, strength * (0.55 + 0.45 * wave));
+      const width = 1 + Math.round(3 * wave * strength);
+      if (alpha > 0.7) {
+        g.fillStyle = `rgb(${shade[0]},${shade[1]},${shade[2]})`;
+        g.fillRect((x + 1) % w, (y + 1) % h, 1, 1);
+      }
+      g.fillStyle = paleRgba(alpha);
+      g.fillRect(x - Math.floor((width - 1) / 2), y - Math.floor((width - 1) / 2), width, width);
+    }
+  }
+}
+
+/**
+ * Quantise to RGB565 with bit replication, as MM6's 16-bit frame (critics, round 9): red
+ * and blue to 32 levels, green to 64, each level's low bits refilled from its high ones so
+ * the top value is 255 and the steps are not multiples of eight.
+ */
+export function quantise565(g: CanvasRenderingContext2D, w: number, h: number): void {
+  const img = g.getImageData(0, 0, w, h);
+  const d = img.data;
+  for (let i = 0; i < d.length; i += 4) {
+    if (d[i + 3] === 0) continue;
+    const r5 = d[i]! >> 3;
+    const g6 = d[i + 1]! >> 2;
+    const b5 = d[i + 2]! >> 3;
+    d[i] = (r5 << 3) | (r5 >> 2);
+    d[i + 1] = (g6 << 2) | (g6 >> 4);
+    d[i + 2] = (b5 << 3) | (b5 >> 2);
+  }
+  g.putImageData(img, 0, 0);
+}
+
+/**
+ * Marble veins as MM6 smudged them (critics, round 9): random walks of two-pixel steps
+ * turning up to thirty degrees, stamped as a three-pixel multiply, `centre` down the
+ * middle and `side` either side, so a vein is twenty levels deep and soft-edged, never a
+ * line.
+ */
+export function veinWalk(
+  g: CanvasRenderingContext2D,
+  w: number,
+  h: number,
+  seed: number,
+  count: number,
+  length: [number, number],
+  centre = 0.86,
+  side = 0.93,
+): void {
+  const r = die(seed);
+  const img = g.getImageData(0, 0, w, h);
+  const d = img.data;
+  for (let v = 0; v < count; v++) {
+    let x = r() * w;
+    let y = r() * h;
+    let ang = r() * Math.PI * 2;
+    const len = length[0] + r() * (length[1] - length[0]);
+    const seen = new Set<number>();
+    for (let t = 0; t < len; t += 2) {
+      ang += (r() - 0.5) * 1.05;
+      x += Math.cos(ang) * 2;
+      y += Math.sin(ang) * 2;
+      const cx = Math.floor(((x % w) + w) % w);
+      const cy = Math.floor(((y % h) + h) % h);
+      for (let dy = -1; dy <= 1; dy++) {
+        for (let dx = -1; dx <= 1; dx++) {
+          const px0 = (cx + dx + w) % w;
+          const py0 = (cy + dy + h) % h;
+          const k = py0 * w + px0;
+          if (seen.has(k)) continue;
+          seen.add(k);
+          const f = dx === 0 && dy === 0 ? centre : side;
+          d[k * 4] = d[k * 4]! * f;
+          d[k * 4 + 1] = d[k * 4 + 1]! * f;
+          d[k * 4 + 2] = d[k * 4 + 2]! * f;
+        }
+      }
+    }
   }
   g.putImageData(img, 0, 0);
 }
