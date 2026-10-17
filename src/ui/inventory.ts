@@ -43,7 +43,11 @@ function gridNode(
     if (b.selected) block.classList.add('selected');
     if (b.broken) block.classList.add('broken');
     block.style.gridArea = `${b.y + 1} / ${b.x + 1} / span ${b.h} / span ${b.w}`;
-    block.append(itemGlyph(b.kind), el('span', 'inv-name', b.name));
+    block.classList.add(`w${Math.min(b.w, 3)}`);
+    block.appendChild(itemGlyph(b.kind));
+    // One cell holds the glyph alone, as MM6's sprites stood alone; wider pieces carry a name.
+    if (b.w >= 2) block.appendChild(el('span', 'inv-name', b.name));
+    block.title = b.name;
     block.addEventListener('click', () => onTap(b.x, b.y));
     grid.appendChild(block);
   }

@@ -32,6 +32,11 @@ function identityColumn(v: SheetView): HTMLElement {
   const condition = kv('Condition', v.condition, v.condition === 'Good' ? 'good' : 'bad');
   col.appendChild(condition);
   if (v.afflictions.length > 1) col.appendChild(note(v.afflictions.join(', '), 'bad'));
+  return col;
+}
+
+/** The fighting numbers, under the statistics as MM6's sheet set them. */
+function combatBlock(v: SheetView, col: HTMLElement): void {
   col.appendChild(heading('Combat'));
   col.appendChild(kv('Armour class', v.armorClass));
   col.appendChild(kv('Attack', `${signed(v.attack)}  ${v.damage}`));
@@ -39,7 +44,6 @@ function identityColumn(v: SheetView): HTMLElement {
     col.appendChild(kv('Shoot', `${signed(v.rangedAttack)}  ${v.rangedDamage ?? ''}`));
   }
   col.appendChild(kv('Recovery', v.recovery));
-  return col;
 }
 
 function statsColumn(v: SheetView): HTMLElement {
@@ -57,6 +61,7 @@ function statsColumn(v: SheetView): HTMLElement {
     table.append(label, value, bonus);
   }
   col.appendChild(table);
+  combatBlock(v, col);
   return col;
 }
 
