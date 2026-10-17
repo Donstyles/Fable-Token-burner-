@@ -48,7 +48,7 @@ kernel, and the kernel showcase is the first consumer of real textures.
 ## Repository layout (created in Phase 0)
 
 ```
-docs/            DESIGN.md, PLAN.md, prompt-cards/
+docs/            DESIGN.md, PLAN.md, MM6-GAPS.md (what MM6 has that we lack), prompt-cards/
 src/
   app/           bootstrap, PWA glue, orientation, input zones
   render/        filter pipeline, animation stepping, material presets
