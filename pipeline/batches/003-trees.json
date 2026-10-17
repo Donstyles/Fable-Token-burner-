@@ -580,7 +580,17 @@
         "01a14943-5d5c-7657-8b01-5cce181ed6a8",
         "01a14943-5fd9-7151-a884-72b96ad7e32b",
         "01a14943-62c9-7489-9bb3-da21fc7b1515",
-        "01a14943-65a0-71d3-89e5-61fd54e97c95"
+        "01a14943-65a0-71d3-89e5-61fd54e97c95",
+        "01a14947-3352-7692-b717-712484ecc1a3",
+        "01a14947-3599-7782-ae38-61936aa977b7",
+        "01a14947-37d5-71ff-81f6-7e55339176f1",
+        "01a14947-39d7-7640-bce4-7feb91920cb9",
+        "01a14947-3c73-778f-a767-91745c304661",
+        "01a14947-3ef2-7305-976a-281f236273f5",
+        "01a14947-418a-7026-8132-0aa63daef373",
+        "01a14947-4422-779f-96e1-f32c5eabd602",
+        "01a14947-4695-7428-8117-f55c65640afe",
+        "01a14947-4937-761c-a127-1bf2146c53bd"
       ],
       "tasks": {
         "tree-spruce-01": {
@@ -729,6 +739,12 @@
             "status": "SUCCEEDED",
             "consumedCredits": 5,
             "operationId": "b003-tree-birch-01-text-to-3d-preview-r1-a2"
+          },
+          "text-to-3d-refine": {
+            "taskId": "01a14947-3352-7692-b717-712484ecc1a3",
+            "status": "SUCCEEDED",
+            "consumedCredits": 10,
+            "operationId": "b003-tree-birch-01-text-to-3d-refine-r1-a2"
           }
         },
         "tree-maple-01": {
@@ -737,6 +753,12 @@
             "status": "SUCCEEDED",
             "consumedCredits": 5,
             "operationId": "b003-tree-maple-01-text-to-3d-preview-r1-a1"
+          },
+          "text-to-3d-refine": {
+            "taskId": "01a14947-3599-7782-ae38-61936aa977b7",
+            "status": "SUCCEEDED",
+            "consumedCredits": 10,
+            "operationId": "b003-tree-maple-01-text-to-3d-refine-r1-a1"
           }
         },
         "tree-linden-01": {
@@ -745,6 +767,12 @@
             "status": "SUCCEEDED",
             "consumedCredits": 5,
             "operationId": "b003-tree-linden-01-text-to-3d-preview-r1-a1"
+          },
+          "text-to-3d-refine": {
+            "taskId": "01a14947-37d5-71ff-81f6-7e55339176f1",
+            "status": "SUCCEEDED",
+            "consumedCredits": 10,
+            "operationId": "b003-tree-linden-01-text-to-3d-refine-r1-a1"
           }
         },
         "tree-willow-01": {
@@ -753,6 +781,12 @@
             "status": "SUCCEEDED",
             "consumedCredits": 5,
             "operationId": "b003-tree-willow-01-text-to-3d-preview-r1-a1"
+          },
+          "text-to-3d-refine": {
+            "taskId": "01a14947-39d7-7640-bce4-7feb91920cb9",
+            "status": "SUCCEEDED",
+            "consumedCredits": 10,
+            "operationId": "b003-tree-willow-01-text-to-3d-refine-r1-a1"
           }
         },
         "tree-dead-01": {
@@ -761,6 +795,12 @@
             "status": "SUCCEEDED",
             "consumedCredits": 5,
             "operationId": "b003-tree-dead-01-text-to-3d-preview-r1-a1"
+          },
+          "text-to-3d-refine": {
+            "taskId": "01a14947-3c73-778f-a767-91745c304661",
+            "status": "SUCCEEDED",
+            "consumedCredits": 10,
+            "operationId": "b003-tree-dead-01-text-to-3d-refine-r1-a1"
           }
         },
         "tree-dead-02": {
@@ -769,6 +809,12 @@
             "status": "SUCCEEDED",
             "consumedCredits": 5,
             "operationId": "b003-tree-dead-02-text-to-3d-preview-r1-a1"
+          },
+          "text-to-3d-refine": {
+            "taskId": "01a14947-3ef2-7305-976a-281f236273f5",
+            "status": "SUCCEEDED",
+            "consumedCredits": 10,
+            "operationId": "b003-tree-dead-02-text-to-3d-refine-r1-a1"
           }
         },
         "bush-01": {
@@ -777,6 +823,12 @@
             "status": "SUCCEEDED",
             "consumedCredits": 5,
             "operationId": "b003-bush-01-text-to-3d-preview-r1-a1"
+          },
+          "text-to-3d-refine": {
+            "taskId": "01a14947-418a-7026-8132-0aa63daef373",
+            "status": "SUCCEEDED",
+            "consumedCredits": 10,
+            "operationId": "b003-bush-01-text-to-3d-refine-r1-a1"
           }
         },
         "bush-02": {
@@ -785,6 +837,12 @@
             "status": "SUCCEEDED",
             "consumedCredits": 5,
             "operationId": "b003-bush-02-text-to-3d-preview-r1-a2"
+          },
+          "text-to-3d-refine": {
+            "taskId": "01a14947-4422-779f-96e1-f32c5eabd602",
+            "status": "SUCCEEDED",
+            "consumedCredits": 10,
+            "operationId": "b003-bush-02-text-to-3d-refine-r1-a1"
           }
         },
         "tree-palm-01": {
@@ -793,6 +851,12 @@
             "status": "SUCCEEDED",
             "consumedCredits": 5,
             "operationId": "b003-tree-palm-01-text-to-3d-preview-r1-a1"
+          },
+          "text-to-3d-refine": {
+            "taskId": "01a14947-4695-7428-8117-f55c65640afe",
+            "status": "PENDING",
+            "consumedCredits": null,
+            "operationId": "b003-tree-palm-01-text-to-3d-refine-r1-a1"
           }
         },
         "tree-palm-02": {
@@ -801,6 +865,12 @@
             "status": "SUCCEEDED",
             "consumedCredits": 5,
             "operationId": "b003-tree-palm-02-text-to-3d-preview-r1-a1"
+          },
+          "text-to-3d-refine": {
+            "taskId": "01a14947-4937-761c-a127-1bf2146c53bd",
+            "status": "PENDING",
+            "consumedCredits": null,
+            "operationId": "b003-tree-palm-02-text-to-3d-refine-r1-a1"
           }
         }
       },
@@ -836,7 +906,16 @@
         "tree-oak-01/text-to-3d-refine": 1,
         "tree-oak-02/text-to-3d-refine": 1,
         "tree-beech-01/text-to-3d-refine": 1,
-        "tree-birch-01/text-to-3d-refine": 1
+        "tree-birch-01/text-to-3d-refine": 2,
+        "tree-maple-01/text-to-3d-refine": 1,
+        "tree-linden-01/text-to-3d-refine": 1,
+        "tree-willow-01/text-to-3d-refine": 1,
+        "tree-dead-01/text-to-3d-refine": 1,
+        "tree-dead-02/text-to-3d-refine": 1,
+        "bush-01/text-to-3d-refine": 1,
+        "bush-02/text-to-3d-refine": 1,
+        "tree-palm-01/text-to-3d-refine": 1,
+        "tree-palm-02/text-to-3d-refine": 1
       }
     }
   ]
