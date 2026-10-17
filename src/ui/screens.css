@@ -38,9 +38,8 @@
   gap: 1px;
   padding: 2px;
   overflow: hidden;
-  background: radial-gradient(ellipse at 40% 30%, #8a6a3a, #4a3418 70%, #2c2014);
-  border: 1px solid #d2a53c;
-  border-radius: 3px;
+  background: var(--paint) center / 100% 100% no-repeat;
+  image-rendering: pixelated;
   font:
     italic 18px/1.1 'Tinos',
     Georgia,
@@ -52,10 +51,7 @@
   transform: translateY(1px);
 }
 .inv-item.selected {
-  border-color: #fff0a0;
-  box-shadow:
-    0 0 0 1px #fff0a0 inset,
-    0 0 0 rgba(255, 220, 120, 0.6);
+  box-shadow: 0 0 0 1px #fff0a0 inset;
 }
 .inv-item.broken {
   color: #e06050;

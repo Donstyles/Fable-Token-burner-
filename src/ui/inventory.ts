@@ -40,6 +40,7 @@ function gridNode(
   }
   for (const b of gridBlocks(c, sel)) {
     const block = el('div', 'inv-item');
+    block.dataset['paint'] = 'tile';
     if (b.selected) block.classList.add('selected');
     if (b.broken) block.classList.add('broken');
     block.style.gridArea = `${b.y + 1} / ${b.x + 1} / span ${b.h} / span ${b.w}`;

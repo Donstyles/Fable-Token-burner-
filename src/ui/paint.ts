@@ -608,6 +608,43 @@ export function paintPillar(w: number, h: number, marble: HTMLCanvasElement): HT
   return c;
 }
 
+/** A gold window frame: a turned moulding five pixels wide round a clear middle. */
+export function paintFrame(w: number, h: number): HTMLCanvasElement {
+  const [c, g] = canvas(w, h);
+  const bands = ['#1a1008', '#7a5416', '#f4d878', '#c89a3a', '#a07428', '#5a3e10'];
+  bands.forEach((tone, i) => {
+    g.fillStyle = tone;
+    g.fillRect(i, i, w - 2 * i, h - 2 * i);
+  });
+  g.clearRect(bands.length, bands.length, w - 2 * bands.length, h - 2 * bands.length);
+  // The light falls from the top left: the lower and right faces go dark.
+  g.fillStyle = '#7a5416';
+  g.fillRect(2, h - 4, w - 4, 2);
+  g.fillRect(w - 4, 2, 2, h - 4);
+  g.fillStyle = '#fff2b0';
+  g.fillRect(2, 2, w - 5, 1);
+  g.fillRect(2, 2, 1, h - 5);
+  return c;
+}
+
+/** An inventory tile: dark hide lit at the top left, a gold rim. */
+export function paintTile(w: number, h: number): HTMLCanvasElement {
+  const [c, g] = canvas(w, h);
+  g.fillStyle = '#d2a53c';
+  g.fillRect(0, 0, w, h);
+  g.fillStyle = '#2c2014';
+  g.fillRect(1, 1, w - 2, h - 2);
+  g.fillStyle = '#4a3418';
+  g.fillRect(1, 1, w - 2, Math.max(1, Math.floor((h - 2) * 0.45)));
+  g.fillStyle = '#6a5030';
+  g.fillRect(1, 1, w - 2, 1);
+  g.fillRect(1, 1, 1, h - 2);
+  g.fillStyle = '#1a1208';
+  g.fillRect(1, h - 2, w - 2, 1);
+  g.fillRect(w - 2, 1, 1, h - 2);
+  return c;
+}
+
 /** The volute chiselled into a cell's corner, drawn as pixels: a pale cut and a dark one. */
 export function paintVolute(): HTMLCanvasElement {
   const w = 15;
@@ -671,6 +708,8 @@ function pieceUrl(kind: string, w: number, h: number): string | null {
   else if (kind === 'plate') c = paintPlate(w, h);
   else if (kind === 'spine') c = paintSpine(w, h);
   else if (kind === 'gold') c = paintButton(w, h, false);
+  else if (kind === 'frame') c = paintFrame(w, h);
+  else if (kind === 'tile') c = paintTile(w, h);
   else if (kind === 'tube') c = paintTube(w, h, 'empty');
   else if (kind === 'tube-hp') c = paintTube(w, h, 'hp');
   else if (kind === 'tube-sp') c = paintTube(w, h, 'sp');

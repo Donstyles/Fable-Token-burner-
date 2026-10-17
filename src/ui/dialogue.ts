@@ -98,9 +98,11 @@ export function createDialogue(
     const root = el('div', 'dlg');
     const wood = el('div', 'dlg-wood');
     const frame = el('div', 'dlg-frame');
+    frame.dataset['paint'] = 'frame';
     const window_ = el('div', 'dlg-window');
     frame.appendChild(window_);
     const plate = el('div', 'dlg-plate');
+    plate.dataset['paint'] = 'plate';
     plate.append(el('h2', 'dlg-name', view.name), el('div', 'dlg-role', view.role));
     const side = el('div', 'dlg-side');
     const text = el('div', 'dlg-text');
