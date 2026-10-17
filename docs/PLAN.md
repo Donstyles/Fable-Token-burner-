@@ -440,12 +440,17 @@ waterfalls and deserts, walkable end to end.
 11. Creatures image first (batch 005): goblin scout, skeleton warrior,
     nomad raider, two villagers, placed in the regions; villagers answer
     a tap. **Done 2026-10-17** (DESIGN 16.1, 16.2).
-12. Wow audit (2026-10-17) roadmap, remaining, in order: loading veil and dev chrome
-    day/night with a moving sun, stars and dusk lanterns; the screens in
-    marble, leather and parchment; autosave and the party carried through
-    portals; synthesised footsteps, wind, birds, smith and bell; dialogue
-    with a live-rendered bust and the first quest; spells with effects;
-    weather states; shops through the doors.
+12. Wow audit (2026-10-17): loading veil, day and night with a moving sun,
+    stars and dusk lanterns, the screens in marble, leather and parchment,
+    autosave through portals, the synthesised soundscape, doors opening the
+    shops. **Done 2026-10-17** (DESIGN 16.3 to 16.6).
+13. Talk and the first quests: the wooden talk panel with the villager's
+    living face, topics, rumours, Henrik's Sheep and the goblins at the
+    forest edge, experience for kills. **Done 2026-10-17** (DESIGN 16.7).
+14. Remaining, in order: the UI craft pass the owner asked for (the buttons'
+    press travel, the inventory, the colours, the type); spells with visible
+    effects; weather states (rain, a sandstorm); music; the smith's hammer and
+    the temple bell; performance measured on the owner's phone.
 
 **Status, night of 2026-10-16 (owner asleep, best judgement):** steps 1 to 6
 are in: the valley (village, road, pass, gorge with eight cascades, cave

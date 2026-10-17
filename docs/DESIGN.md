@@ -1026,8 +1026,66 @@ the world for over a second after a screen closed (CI run 93).
   cross between the valley, the dungeon and the desert instead of starting
   over on each load.
 
+### 16.7 Talk and the first quests (2026-10-17)
+
+- A tapped villager with a script opens the talk panel (`src/ui/dialogue.ts`):
+  MM6's wooden window at the right of the view, the villager's living face in
+  a square cut through the planks, their name and calling on a brass plate,
+  their words beside it and the topics below in the yellow italic, Farewell at
+  the foot. The world waits while they speak (the step is zero, as for a book)
+  but the clips keep stepping, so the villager mouths the talk clip.
+- The face is the model itself (`src/world/bust.ts`): a second camera held
+  before the eyes renders the character alone into a 256² texture each frame,
+  and a Babylon `Layer` composes it onto the view inside the window before the
+  retro filter, so it dithers and posterises like the world. No portrait is
+  generated or photographed (16.5); MM6 played film loops of its faces, ours
+  turn to the party and talk. A layer samples its texture by screen position,
+  so the texture matrix maps the window's span back onto the whole texture.
+- Dialogue data (`src/game/dialogue.ts`): a greeting and topics of three kinds,
+  plain talk, rumours told in turn (the turn kept in the state's flags) and a
+  quest, which carries its own stages: the offer takes the quest, the active
+  line adds the count so far, the ready line feeds the quest log the talk
+  event, ends the quest and pays the reward, the done line closes it. The
+  greeting changes when the party comes back with news. The view-model
+  (`src/ui/dialogue-model.ts`) is pure and tested.
+- First quests (`QUESTS`): Henrik's Sheep, three bandits on the valley road for
+  150 gold and 300 experience; Goblins at the Forest Edge, two goblin scouts
+  past the smithy for 80 gold and 150 experience. A kill now pays the
+  monster's experience to the party (14.3) and feeds the quest log; the status
+  line reports the count and the next objective; the quest log screen lists
+  the quests with their objectives.
+- Villagers without a script (none yet) keep their line in the status bar.
+
+### 16.8 The press, the leather and the type (owner, 2026-10-17)
+
+"The buttons, how they move when pressed, the inventory, the colour, the
+font: everything needs to be wow."
+
+- Every button clicks on the finger's touch, not the release (`src/ui/press.ts`,
+  one listener on the UI layer), a dry wooden tick synthesised like the
+  impacts (`src/app/audio.ts`). The CSS gives the travel: a gold button goes
+  down a pixel and its bevel turns over, light below and dark above, the gold
+  a shade deeper; a book spine pushes two pixels into the shelf; a HUD cell
+  sinks; a topic line dips. No fades, no glows: 1998 moved things.
+- The inventory's grid is MM6's hide: a mottled dark leather drawn in
+  `leather.css` with turbulence, painted once, orange cell lines, a dark rim
+  pressed into the top left. Items carry hand-drawn line art per kind
+  (`src/ui/glyphs.ts`: sword, cuirass, shield, helm, boots, belt, cloak,
+  gauntlets, ring, amulet, phial, scroll, pouch) in gold stroke on the leather
+  tile, until an artist paints the pieces; the two-letter marks are gone.
+- Type: the house italic is a size larger (16 px), and the labels are in a
+  yellow of their own beside the brighter values, as MM6's sheet set every
+  line in yellow italic rather than cream and gold.
+
 ## 13. Decision log
 
+- 2026-10-17 – Press feel: buttons click on touch and travel with a turned
+  bevel; the inventory on drawn leather with line-art item glyphs; the type a
+  size larger and the labels in yellow (16.8), on the owner's note.
+- 2026-10-17 – Talk: the villager's face in the talk panel is the model
+  itself, rendered live (16.7), never a generated portrait (16.5). The panel
+  is MM6's wooden window with its topics in the yellow italic; the first two
+  quests are the valley's bandits and goblin scouts, and kills pay experience.
 - 2026-10-17 – First look pass under the owner's thirty-minute "wow"
   deadline: a wow-idea review ranked ten ideas by effect per hour; the
   shader-only ones went in (15.7: wind in the canopies, drifting cloud

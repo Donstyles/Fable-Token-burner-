@@ -8,6 +8,7 @@ import type { Character } from '../game/character';
 import type { EquipSlot } from '../game/inventory';
 import type { ScreenContext } from './context';
 import { button, el, heading, kv, memberTabs } from './dom';
+import { itemGlyph } from './glyphs';
 import {
   actions,
   derived,
@@ -42,7 +43,7 @@ function gridNode(
     if (b.selected) block.classList.add('selected');
     if (b.broken) block.classList.add('broken');
     block.style.gridArea = `${b.y + 1} / ${b.x + 1} / span ${b.h} / span ${b.w}`;
-    block.append(el('span', 'inv-glyph', b.glyph), el('span', 'inv-name', b.name));
+    block.append(itemGlyph(b.kind), el('span', 'inv-name', b.name));
     block.addEventListener('click', () => onTap(b.x, b.y));
     grid.appendChild(block);
   }
@@ -57,7 +58,7 @@ function slotList(c: Character, sel: InvSelection, onTap: (slot: EquipSlot) => v
     if (!row.name) line.classList.add('dim');
     line.append(
       el('span', 'slot-name', row.label),
-      el('span', 'inv-glyph', row.glyph ?? ''),
+      row.kind ? itemGlyph(row.kind) : el('span', 'inv-glyph'),
       el('span', 'grow ui-v', row.name ?? '—'),
     );
     line.addEventListener('click', () => onTap(row.slot));

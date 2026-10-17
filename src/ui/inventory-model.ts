@@ -84,6 +84,7 @@ export interface GridBlock {
   h: number;
   name: string;
   glyph: string;
+  kind: ItemKind;
   selected: boolean;
   broken: boolean;
 }
@@ -93,6 +94,7 @@ export interface SlotRow {
   label: string;
   name: string | null;
   glyph: string | null;
+  kind: ItemKind | null;
   selected: boolean;
 }
 
@@ -129,6 +131,7 @@ export function gridBlocks(c: Character, sel: InvSelection): GridBlock[] {
       h: def.h,
       name: itemName(p.item),
       glyph: KIND_GLYPHS[def.kind],
+      kind: def.kind,
       selected: sel?.kind === 'grid' && sel.index === index,
       broken: p.item.broken,
     };
@@ -151,6 +154,7 @@ export function slotRows(c: Character, sel: InvSelection): SlotRow[] {
       label: SLOT_LABELS[slot],
       name: item ? itemName(item) : null,
       glyph: item ? KIND_GLYPHS[itemDef(item).kind] : null,
+      kind: item ? itemDef(item).kind : null,
       selected: sel?.kind === 'slot' && sel.slot === slot,
     });
   }

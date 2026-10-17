@@ -2,6 +2,8 @@
    inventory grid, the spellbook, the rest screen, the services, character creation and the
    automap. */
 
+@import './leather.css';
+
 /* Inventory */
 .inv-grid {
   --cell: 32px;
@@ -12,18 +14,20 @@
   padding: 3px;
   align-self: flex-start;
   flex: none;
-  /* MM6's brown leather with orange lines. */
+  /* MM6's brown leather with its orange lines: the hide drawn in leather.css, a glint of
+     wear at the top left, a dark rim pressed into it. */
   background:
-    radial-gradient(ellipse at 30% 20%, rgba(255, 220, 160, 0.12), transparent 60%),
-    linear-gradient(#5a3418, #3e2210);
+    radial-gradient(ellipse at 30% 20%, rgba(255, 220, 160, 0.1), transparent 60%),
+    var(--leather) center / 512px auto;
   border: 2px solid #8a5a24;
   box-shadow:
     inset 0 0 0 1px #c8762a,
-    inset 0 0 0 rgba(0, 0, 0, 0.6);
+    inset 2px 2px 0 1px rgba(0, 0, 0, 0.5),
+    inset -1px -1px 0 1px rgba(255, 200, 120, 0.2);
 }
 .inv-cell {
-  background: rgba(0, 0, 0, 0.1);
-  border: 1px solid rgba(220, 120, 40, 0.45);
+  background: rgba(0, 0, 0, 0.08);
+  border: 1px solid rgba(220, 120, 40, 0.55);
 }
 .inv-item {
   position: relative;
@@ -43,6 +47,9 @@
   color: #f0d060;
   text-shadow: 0 1px 1px #000;
 }
+.inv-item:active {
+  transform: translateY(1px);
+}
 .inv-item.selected {
   border-color: #fff0a0;
   box-shadow:
@@ -53,11 +60,30 @@
   color: #e06050;
 }
 .inv-glyph {
-  font:
-    13px/1 'Pirata One',
-    Georgia,
-    serif;
-  color: #ffe080;
+  display: inline-flex;
+  width: 22px;
+  height: 22px;
+  flex: none;
+}
+.inv-glyph svg {
+  width: 100%;
+  height: 100%;
+  fill: none;
+  stroke: #ffe080;
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.inv-item .inv-glyph {
+  width: 20px;
+  height: 20px;
+  align-self: flex-start;
+}
+.inv-item .inv-name {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .inv-side {
   flex: 1;

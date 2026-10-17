@@ -25,6 +25,7 @@ import { renderRest } from './rest';
 import { renderService, type ServiceRef } from './services';
 import { renderSheet } from './sheet';
 import { renderSpellbook } from './spellbook';
+import { installPressFeel } from './press';
 
 export type {
   CastEvent,
@@ -104,6 +105,7 @@ export function installScreens(
     shelf.appendChild(b);
   }
   uiLayer.appendChild(shelf);
+  installPressFeel(uiLayer);
 
   let open_: { name: ScreenName | ServiceKind; root: HTMLElement } | null = null;
 

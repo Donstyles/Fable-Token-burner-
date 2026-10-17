@@ -30,7 +30,7 @@ let beep: StaticSound | null = null;
 const impacts = new Map<ImpactKind, StaticSound>();
 
 /** Combat impacts (DESIGN.md 14.4): the blow that lands, the heavy one, the swing that misses. */
-export type ImpactKind = 'whack' | 'thud' | 'whoosh';
+export type ImpactKind = 'whack' | 'thud' | 'whoosh' | 'click';
 
 function applySessionType(type: string): void {
   const nav = navigator as Navigator & { audioSession?: { type: string } };
@@ -102,15 +102,20 @@ function noise(seed: number): () => number {
  */
 function impactBuffer(ctx: BaseAudioContext, kind: ImpactKind): AudioBuffer {
   const rate = ctx.sampleRate;
-  const seconds = kind === 'thud' ? 0.32 : kind === 'whack' ? 0.18 : 0.16;
+  const seconds = kind === 'thud' ? 0.32 : kind === 'whack' ? 0.18 : kind === 'click' ? 0.05 : 0.16;
   const buffer = ctx.createBuffer(1, Math.floor(rate * seconds), rate);
   const data = buffer.getChannelData(0);
-  const rnd = noise(kind === 'whack' ? 11 : kind === 'thud' ? 23 : 37);
+  const rnd = noise(kind === 'whack' ? 11 : kind === 'thud' ? 23 : kind === 'click' ? 53 : 37);
   let low = 0;
   for (let i = 0; i < data.length; i++) {
     const t = i / rate;
     let v: number;
-    if (kind === 'whoosh') {
+    if (kind === 'click') {
+      // A button's click, as MM6's: a dry wooden tick, a hair of noise on a short knock.
+      const tick = rnd() * Math.exp(-t / 0.003);
+      const knock = Math.sin(2 * Math.PI * 1900 * t) * Math.exp(-t / 0.012);
+      v = tick * 0.7 + knock * 0.5;
+    } else if (kind === 'whoosh') {
       // One-pole low-pass on noise, envelope rising then falling.
       low += (rnd() - low) * 0.12;
       const env = Math.sin(Math.min(1, t / seconds) * Math.PI);
@@ -160,11 +165,11 @@ export function installAudio(): Promise<AudioEngineV2 | null> {
         disableDefaultUI: true,
       });
       beep = await engine.createSoundAsync('test-beep', beepBuffer(context), { volume: 1 });
-      for (const kind of ['whack', 'thud', 'whoosh'] as const) {
+      for (const kind of ['whack', 'thud', 'whoosh', 'click'] as const) {
         impacts.set(
           kind,
           await engine.createSoundAsync(`impact-${kind}`, impactBuffer(context, kind), {
-            volume: kind === 'whoosh' ? 0.5 : 0.9,
+            volume: kind === 'whoosh' ? 0.5 : kind === 'click' ? 0.6 : 0.9,
           }),
         );
       }
@@ -203,6 +208,11 @@ export function installAudio(): Promise<AudioEngineV2 | null> {
 /** Puts the listener on a scene node, normally the camera. */
 export function attachListener(node: Node): void {
   engine?.listener.attach(node);
+}
+
+/** The click of a pressed button, on the press (DESIGN.md 16.8). */
+export function playClick(): void {
+  playImpact('click');
 }
 
 /** Play a combat impact; silent until the engine is ready or while the page is hidden. */

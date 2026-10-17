@@ -29,6 +29,7 @@ describe('inventory rows', () => {
         h: 1,
         name: 'Potion of Healing',
         glyph: 'Po',
+        kind: 'potion',
         selected: false,
         broken: false,
       },
@@ -41,6 +42,7 @@ describe('inventory rows', () => {
       label: 'Main hand',
       name: 'Long Sword',
       glyph: 'Wp',
+      kind: 'weapon',
       selected: false,
     });
     expect(rows[3]!.name).toBe('Leather Armor');
