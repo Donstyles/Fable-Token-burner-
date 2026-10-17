@@ -488,7 +488,10 @@ waterfalls and deserts, walkable end to end.
     2026-10-17** (DESIGN 16.15): one sunk band with pilasters, tubes in a
     trough, the clock on a tablet, acanthus capitals, outlined emblems,
     members by portrait, a glyph for Close, books with boards, mahogany
-    talk panel. The round-5 scoring follows.
+    talk panel. **Round 5 scored 2026-10-17**: 3, 3, 4 (talk) and 3
+    (world), no; the critics measured MM6 pixel by pixel and the asks
+    reversed round 4's. **Round 6 done 2026-10-17** (DESIGN 16.16): the
+    measurements followed; the round-6 scoring follows.
 18. Remaining, in order: lasting buffs and Jump; weather states (rain, a
     sandstorm); music; the smith's hammer and the temple bell.
 

@@ -93,17 +93,19 @@
    strokes gold, the same strokes wider and dark beneath for the outline, a thin cream edge
    above and to the left for the relief. */
 .ui-shelf-btn svg .gilt {
+  /* Thin gold line art (critics, round 5), a dark line beside it for the relief. */
   stroke: #e0c060;
-  fill: #b08a30;
+  stroke-width: 1.6;
+  fill: none;
 }
 .ui-shelf-btn svg .shade {
   stroke: #1a0e04;
-  stroke-width: 4;
-  fill: #1a0e04;
+  stroke-width: 2.4;
+  fill: none;
 }
 .ui-shelf-btn svg .sheen {
   stroke: #fff4c0;
-  stroke-width: 0.9;
+  stroke-width: 0.7;
 }
 .ui-shelf-btn.rest {
   width: 42px;
@@ -205,13 +207,14 @@
   font: var(--serif-italic);
 }
 .ui-head {
+  /* No title band (critics, round 5): the title sits on the stone, the exit oval beside it. */
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 4px 8px;
-  min-height: 40px;
-  border-bottom: 1.5px solid rgba(0, 0, 0, 0.85);
-  box-shadow: 0 1.5px 0 rgba(250, 250, 240, 0.55);
+  padding: 3px 8px 0;
+  min-height: 36px;
+  border-bottom: 0;
+  box-shadow: none;
 }
 .ui-title {
   /* MM6's titles are the italic in yellow, a size up. */
@@ -253,9 +256,9 @@
   flex: 1;
   min-height: 0;
   overflow: auto;
-  padding: 8px;
+  padding: 4px 8px 8px;
   display: flex;
-  gap: 10px;
+  gap: 4.5px;
   touch-action: pan-x pan-y;
 }
 .ui-foot {
@@ -306,16 +309,15 @@
   gap: 3px;
   padding: 6px 8px;
   background:
-    linear-gradient(rgba(0, 0, 0, 0.26), rgba(0, 0, 0, 0.26)),
+    linear-gradient(rgba(0, 0, 0, 0.08), rgba(0, 0, 0, 0.08)),
     var(--stone-dark) 0 0 / var(--stone-dark-size);
   border: 0;
-  /* MM6's boxes cut into the slate: a dark lip two pixels deep above and left, a pale one
-     below and right, a mid rim outside. */
+  /* MM6's boxes cut into the stone (critics, round 5): a near-black groove two pixels deep
+     above and left, a light line one pixel wide below and right, the stone inside a shade
+     darker, the boxes nearly touching. */
   box-shadow:
-    inset 1.5px 1.5px 0 rgba(0, 0, 0, 0.85),
-    inset 3px 3px 0 rgba(0, 0, 0, 0.35),
-    inset -1.5px -1.5px 0 rgba(250, 250, 240, 0.75),
-    0 0 0 1.5px rgba(110, 110, 104, 0.7);
+    inset 3px 3px 0 rgba(8, 8, 8, 0.9),
+    inset -1.5px -1.5px 0 rgba(230, 230, 224, 0.8);
   touch-action: pan-y;
 }
 .ui-col.narrow {
@@ -470,7 +472,8 @@
 .screen-spells .ui-panel,
 .screen-quests .ui-panel,
 .screen-map .ui-panel {
-  padding: 4.5px 30px 22px 10.5px;
+  /* The pages fill the boards; the tabs stand off the right edge (paint.ts `book`). */
+  padding: 13.5px 40px 24px 13.5px;
   background: var(--paint) center / 100% 100% no-repeat;
   box-shadow: none;
   color: #3a2a10;
@@ -478,14 +481,14 @@
 .screen-spells .ui-head,
 .screen-quests .ui-head,
 .screen-map .ui-head {
-  min-height: 40.5px;
+  min-height: 36px;
   border-bottom: 0;
   box-shadow: none;
 }
 .screen-spells .ui-title,
 .screen-quests .ui-title,
 .screen-map .ui-title {
-  color: #f0e0b0;
+  color: #5a2a0a;
 }
 .screen-spells .ui-body,
 .screen-quests .ui-body,
@@ -509,16 +512,15 @@
   color: #3a2a10;
 }
 .ui-banner {
-  --engrave: 1;
+  /* White script with a dark outline on a ribbon with rounded ends (critics, round 5). */
   margin: 2px 0 6px;
   padding: 6px 24px 7px;
   text-align: center;
   font:
-    24px/1.1 'Pirata One',
-    'Tinos',
+    italic 24px/1.1 'Tinos',
     Georgia,
     serif;
-  color: #2a2418;
+  color: #fbf6ea;
   border: 0;
   box-shadow: none;
   background: var(--paint) center / 100% 100% no-repeat;
@@ -558,14 +560,15 @@
     inset 1.5px 1.5px 0 rgba(90, 60, 24, 0.5),
     inset -1.5px -1.5px 0 rgba(255, 250, 235, 0.8);
 }
-.screen-spells .ui-head,
-.screen-quests .ui-head,
-.screen-rest .ui-head,
 .screen-spells .ui-foot,
 .screen-quests .ui-foot,
 .screen-rest .ui-foot {
   border-color: rgba(90, 60, 24, 0.6);
   box-shadow: 0 1.5px 0 rgba(255, 250, 235, 0.8);
+}
+.screen-quests .ui-banner,
+.screen-map .ui-banner {
+  color: #fbf6ea;
 }
 .screen-spells .ui-foot,
 .screen-quests .ui-foot,

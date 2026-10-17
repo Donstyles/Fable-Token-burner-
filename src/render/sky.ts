@@ -72,11 +72,11 @@ void main(void) {
   vec2 strip = texture2D(skySampler, suv).rg;
   float body = step(0.5 + (0.5 - cloudAmount) * 0.5, strip.r) * step(0.03, up);
   float tone = strip.g;
-  vec3 cream = min(cloudColor * vec3(1.02, 1.0, 0.94), vec3(0.97));
-  vec3 bodyTone = cloudColor * 0.84;
-  vec3 grey = mix(cloudColor * 0.56, zenith, 0.35);
+  vec3 cream = min(cloudColor * vec3(1.08, 1.05, 1.0), vec3(0.92));
+  vec3 bodyTone = cloudColor * 0.94;
+  vec3 grey = mix(cloudColor * 0.7, zenith, 0.3);
   vec3 cloud = tone > 0.75 ? cream : tone < 0.25 ? grey : bodyTone;
-  float cover = body * (up < 0.08 ? 0.5 : 1.0);
+  float cover = body;
   vec3 c = mix(sky, cloud, cover);
   // No sun disc: MM6 painted none; a faint warmth toward it only.
   float s = max(dot(d, sunDir), 0.0);

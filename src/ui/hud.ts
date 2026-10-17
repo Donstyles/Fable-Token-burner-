@@ -79,23 +79,18 @@ export function createHud(parent: HTMLElement, party: Party, hooks: HudHooks): H
   rail.dataset['paint'] = 'rail';
   root.append(el('div', 'hud-shadow'), rail);
   const clock = el('div', 'hud-clock');
-  clock.dataset['paint'] = 'tablet';
+  clock.dataset['paint'] = 'slot';
   const clockTime = el('div', 'hud-clock-time');
   const clockDate = el('div', 'hud-clock-date');
   clock.append(clockTime, clockDate);
   root.appendChild(clock);
-  // One sunk trough across the band, as MM6's, the members divided by marble pilasters.
+  // Each member in a rectangle recessed into the marble, a gutter of marble between, as
+  // MM6's band (critics, round 5): no trough, no pilasters.
   const band = el('div', 'hud-band');
-  band.dataset['paint'] = 'trough';
-  const pilaster = (): HTMLElement => {
-    const p = el('div', 'hud-pilaster');
-    p.dataset['paint'] = 'pilaster';
-    return p;
-  };
-  band.appendChild(pilaster());
   const cells = party.members.map((m, i) => {
     const cell = el('button', 'hud-cell');
     cell.type = 'button';
+    cell.dataset['paint'] = 'recess';
     const frame = el('div', 'hud-frame');
     frame.dataset['paint'] = 'ring';
     const cameo = el('div', 'hud-cameo');
@@ -104,6 +99,9 @@ export function createHud(parent: HTMLElement, party: Party, hooks: HudHooks): H
     const bars = el('div', 'hud-bars');
     const gem = el('div', 'hud-gem good');
     gem.dataset['paint'] = 'gem-good';
+    // Both tubes stand in one recessed slot.
+    const tubes = el('div', 'hud-tubes');
+    tubes.dataset['paint'] = 'tube-slot';
     const hp = el('div', 'hud-bar hp');
     hp.dataset['paint'] = 'tube';
     const hpFill = el('div', 'hud-fill');
@@ -114,7 +112,8 @@ export function createHud(parent: HTMLElement, party: Party, hooks: HudHooks): H
     const spFill = el('div', 'hud-fill');
     spFill.dataset['paint'] = 'tube-sp';
     sp.appendChild(spFill);
-    bars.append(gem, hp, sp);
+    tubes.append(hp, sp);
+    bars.append(gem, tubes);
     // No name plate: MM6 named nobody in the band; the sheet carries the name.
     cell.append(frame, bars);
     cell.title = m.name;
@@ -126,7 +125,7 @@ export function createHud(parent: HTMLElement, party: Party, hooks: HudHooks): H
         hooks.onSelect?.(i);
       }
     });
-    band.append(cell, pilaster());
+    band.appendChild(cell);
     return { cell, frame, hpFill, spFill, gem };
   });
   root.appendChild(band);

@@ -77,6 +77,8 @@ uniform vec4 clipPlane;
 uniform float time;
 uniform float wind;
 uniform float heat;
+// 1 lights the surface flat, as MM6's walls were: no face brighter than another.
+uniform float flatLight;
 varying vec2 vUV;
 varying float vClip;
 varying vec3 vLight;
@@ -120,6 +122,7 @@ void main(void) {
   // slope shows only a little, so hills read as painted ground, not shaded geometry.
   ndl = mix(0.8, ndl, 0.35);
 #endif
+  ndl = mix(ndl, 0.72, flatLight);
   vec3 light = ambientColor + lightColor * ndl;
 #ifdef BAKED
   // Baked per-vertex light replaces the environment's key and ambient light.
@@ -296,6 +299,8 @@ export interface VertexLitOptions {
   doubleSided?: boolean;
   /** Canopy sway: vertices above a metre move with the wind (forest leaves). */
   wind?: boolean;
+  /** Lit flat, as MM6's walls: no directional shading, the bitmap carries the picture. */
+  flatLight?: boolean;
   /** A sprite: the quad turns to face the camera and discards its clear pixels. */
   billboard?: boolean;
   /**
@@ -389,6 +394,7 @@ export class RetroMaterials {
         'toon',
         'time',
         'wind',
+        'flatLight',
         'heat',
         'cloudShadow',
       ],
@@ -413,6 +419,7 @@ export class RetroMaterials {
     mat.setVector3('cameraRight', Vector3.Right());
     mat.setFloat('time', this.time);
     mat.setFloat('wind', opts.wind ? 1 : 0);
+    mat.setFloat('flatLight', opts.flatLight ? 1 : 0);
     mat.setFloat('heat', this.weather.heat);
     mat.setFloat('cloudShadow', this.weather.cloudShadow);
     mat.setVector4('clipPlane', Vector4.Zero());

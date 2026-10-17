@@ -1464,8 +1464,64 @@ Not done, and said so: portraits painted by hand, item sprites spanning
 cells and a paper doll remain artwork the owner commissions; the rest
 screen's landscape inset and hourglass wait on that art too.
 
+### 16.16 Round 6: the critics' measurements (2026-10-17)
+
+Round 5 scored 3 (HUD), 3 (screens), 4 (talk) and 3 (world), verdict no,
+but for the first time the critics measured the originals pixel by pixel
+rather than describing them, and their measurements contradicted the
+previous round's words: MM6's band is light marble with each member in a
+recessed rectangle and no trough or pilaster at all; its stone is a mid
+grey with blotches and dark veins, nothing green; its pages are a greyer,
+cloudier parchment; its day sky is a dusky blue of low saturation with
+cream clouds; its dirt is near-black cracked earth; its talk panel is a
+near-black wood. Round 6 follows the measurements:
+
+- **Marble** repainted darker and greyer (twelve tones from 46 to 206,
+  warm and cool drifts), long diagonal dark veins with a one-pixel
+  falloff, the pillar shafts and the band with it.
+- **The band** back to recessed rectangles on marble (one-pixel dark
+  outline, one-pixel light line inside, the marble a shade darker within,
+  marble gutters between), the trough and pilasters gone. The tubes six
+  pixels wide with gold caps top and bottom and a light centre stripe,
+  both in one recessed slot; the clock a recessed plaque with bold gold
+  numerals; the capital a dark carved silhouette, twenty-four pixels tall,
+  overhanging the shaft, with volutes and leaf tongues in deep shadow; the
+  shelf a plain dark recess with a one-pixel border; the spines mottled
+  leather with gold-red-gold bands at 15 % and 85 %; the emblems thin gold
+  line art again.
+- **Screens**: the stone a mid-grey marble with blotches at three scales
+  and dark veins; the boxes cut with a two-pixel near-black groove above
+  and left and a light line below and right, nearly touching; no title
+  band, the title on the stone beside the exit oval; gold ovals with a
+  radial glint in their upper-left third, a black line and a darker
+  lower-right rim; pages a cloudy, greyer parchment in six close tones,
+  the left edge darkening, three stacked page edges below, no cover band
+  above; parchment tabs full size with a chevron edge and a shadow;
+  headings as white script on a ribbon with rounded ends.
+- **Spellbook**: spells as grey ellipses in a grid, the name and cost on
+  each; the Target row gone: a spell on one member waits for a tap on a
+  portrait in the band (`claimPortraits` on the screen context, routed by
+  `Screens.pickMember`), as MM6 cast its buffs.
+- **World**: the day a dusky low-saturation blue with cream clouds, the
+  horizon only a little paler, no haze band; the clouds' tones closer so
+  no edge reads as an outline; dirt as near-black cracked earth with
+  fissures, grass a dark olive, both at fourteen metres a tile and sampled
+  without mipmaps so the foreground blows up into blocks; props and
+  buildings lit flat (`flatLight`), so no posterised band crosses a curve;
+  sprites baked under a flatter light and tinted toward MM6's dark green.
+- **Talk**: the wood near black with a fine high-contrast grain and
+  knots; the window a two-pixel dark-grey bevel, no gold; the face closer
+  (a fifth of the model's height in frame) on a warm dark ground; the name
+  in MM6's blue.
+
 ## 13. Decision log
 
+- 2026-10-17 – Round 6 (16.16): the shell and world redone to the
+  critics' pixel measurements of MM6 rather than their words: grey veined
+  marble, recessed cells (no trough), tube slots, stone screens with
+  grooves and no title band, cloudy pages, spell ellipses targeted by
+  portrait, a dusky day, cracked earth, flat-lit buildings, near-black
+  wood.
 - 2026-10-17 – Round 5, the shell (16.15): one sunk band with pilasters
   and no name plates, tubes in a trough with a brass foot, the clock on a
   stone tablet, acanthus capitals, outlined gold emblems, members picked

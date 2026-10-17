@@ -318,7 +318,9 @@ export async function startDev(app: App): Promise<DevHandle> {
   const strip = createHud(uiLayer, roster, {
     onOpenSheet: () => screens.open('sheet'),
     onSelect: (i) => {
-      // The sheet, the inventory and the spellbook follow the portrait tapped (DESIGN.md 16.15).
+      // A screen waiting on a target (a spell) takes the tap; otherwise the sheet, the
+      // inventory and the spellbook follow the portrait tapped (DESIGN.md 16.15).
+      if (screens.pickMember(i)) return;
       state.selected = i;
       const cur = screens.current();
       if (cur === 'sheet' || cur === 'items' || cur === 'spells') screens.open(cur);

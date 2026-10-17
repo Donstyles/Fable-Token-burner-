@@ -8,7 +8,7 @@ import { type Character, maxSp } from '../game/character';
 import type { MagicSchool } from '../game/skills';
 import type { SpellId } from '../game/spells';
 import type { ScreenContext } from './context';
-import { button, el, heading, kv, note, tabRow } from './dom';
+import { button, el, heading, kv, note } from './dom';
 import { cast, castMessage, type SchoolTab, schoolTabs, spellRows } from './spellbook-model';
 
 function schoolColumn(
@@ -37,46 +37,58 @@ export function renderSpellbook(ctx: ScreenContext): void {
   const { state, frame, hooks, rng } = ctx;
   const active = state.selected;
   let school: MagicSchool | null = null;
-  let target = active;
+  // A spell on one member waits for a portrait tap in the band, as MM6 cast its buffs.
+  let pending: SpellId | null = null;
 
-  const onCast = (id: SpellId): void => {
+  const castAt = (id: SpellId, target: number): void => {
     const r = cast(state, active, id, target, rng);
     if (r.ok) hooks.onCast?.(r.event);
     frame.message(r.ok ? castMessage(state, r.event) : r.message);
+    pending = null;
+    ctx.claimPortraits(null);
+    draw();
+  };
+
+  const onPick = (row: { id: SpellId; target: string; name: string }): void => {
+    if (row.target !== 'member') {
+      castAt(row.id, active);
+      return;
+    }
+    if (pending === row.id) {
+      pending = null;
+      ctx.claimPortraits(null);
+      frame.message('');
+      draw();
+      return;
+    }
+    pending = row.id;
+    frame.message(`${row.name}: tap a portrait to choose whom.`);
+    ctx.claimPortraits((i) => {
+      castAt(row.id, i);
+      return true;
+    });
     draw();
   };
 
   const spellList = (c: Character, s: MagicSchool): HTMLElement => {
     const col = el('div', 'ui-col scroll');
     col.appendChild(heading('Spells'));
-    const targets = el('div', 'spell-target');
-    targets.appendChild(el('span', 'ui-k', 'Target'));
-    targets.appendChild(
-      tabRow(
-        state.party.map((m, i) => ({ id: i, label: m.name })),
-        target,
-        (i) => {
-          target = i;
-          draw();
-        },
-      ),
-    );
-    col.appendChild(targets);
+    const grid = el('div', 'spell-grid');
     for (const row of spellRows(c, s)) {
-      const line = el('div', 'ui-row');
-      const text = el('div', 'grow');
-      text.append(
-        el('div', '', row.name),
-        el('div', 'sub', `Level ${row.level} · ${row.cost} SP · ${row.targetLabel}`),
-      );
-      const b = button('Cast', () => onCast(row.id), {
-        className: 'primary',
-        disabled: !row.canCast,
-        note: row.reason ?? `${row.cost} SP`,
+      const slot = el('button', 'spell-slot');
+      slot.type = 'button';
+      slot.dataset['paint'] = 'ellipse';
+      slot.append(el('span', '', row.name), el('span', 'sub', row.reason ?? `${row.cost} SP`));
+      slot.disabled = !row.canCast;
+      slot.title = `Level ${row.level} · ${row.cost} SP · ${row.targetLabel}`;
+      if (pending === row.id) slot.classList.add('pending');
+      slot.addEventListener('click', (e) => {
+        e.preventDefault();
+        onPick(row);
       });
-      line.append(el('span', 'ui-v spell-level', `L${row.level}`), text, b);
-      col.appendChild(line);
+      grid.appendChild(slot);
     }
+    col.appendChild(grid);
     return col;
   };
 

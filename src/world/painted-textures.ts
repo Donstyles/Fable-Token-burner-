@@ -11,37 +11,57 @@ import { DynamicTexture } from '@babylonjs/core/Materials/Textures/dynamicTextur
 import { Color3 } from '@babylonjs/core/Maths/math.color';
 import type { Scene } from '@babylonjs/core/scene';
 import { ROLE } from '../../kernel/elements/roles';
-import { canvas, dab, die, grain, posterise, ramp, stroke, type Tone } from '../render/brush';
+import { canvas, dab, die, grain, posterise, ramp, snap, stroke, type Tone } from '../render/brush';
 import { applyRetroSampling } from '../render/materials';
 import { lampPane, stillWater, type RoleTextures } from './textures';
 
 const T = 128;
 
 function grass(): HTMLCanvasElement {
-  return grain(T, T, 31, ramp('#2a4620', '#3a5c2a', '#4a7232', '#5e8a3c', '#78a44a'), {
+  // Dark olive, as MM6's turf (critics, round 5: ~52,60,32).
+  return grain(T, T, 31, ramp('#1c2412', '#28321a', '#344020', '#404e28', '#4e5e30', '#5e6e3a'), {
     marks: 3200,
     clods: 54,
     clodSize: 10,
+    base: 2,
   });
 }
 
 function dirt(): HTMLCanvasElement {
-  const c = grain(T, T, 32, ramp('#3c2814', '#56391f', '#6e4c2c', '#88623c', '#a48052'), {
-    marks: 2800,
+  // Cracked earth (critics, round 5: ~79,48,33): near-black fissures through dark browns.
+  const tones = ramp('#1a0e06', '#2e1c10', '#43291a', '#56321f', '#6a4228', '#80522f');
+  const c = grain(T, T, 32, tones, {
+    marks: 2600,
     clods: 80,
     clodSize: 7,
+    base: 3,
   });
-  // Pebbles: a dark pit with a lit crown.
   const g = c.getContext('2d')!;
   const r = die(33);
+  for (let i = 0; i < 16; i++) {
+    let x = r() * T;
+    let y = r() * T;
+    let ang = r() * Math.PI * 2;
+    const pts: [number, number][] = [[x, y]];
+    const len = 10 + r() * 24;
+    for (let t = 0; t < len; t += 2) {
+      ang += (r() - 0.5) * 0.9;
+      x += Math.cos(ang) * 2;
+      y += Math.sin(ang) * 2;
+      pts.push([x, y]);
+    }
+    stroke(g, T, T, pts, '#1a0e06', 1);
+  }
+  // Pebbles: a dark pit with a lit crown.
   for (let i = 0; i < 30; i++) {
     const x = Math.floor(r() * T);
     const y = Math.floor(r() * T);
-    g.fillStyle = '#3c2814';
+    g.fillStyle = '#1a0e06';
     g.fillRect(x, y, 2, 2);
-    g.fillStyle = '#a48052';
+    g.fillStyle = '#80522f';
     g.fillRect(x, y, 1, 1);
   }
+  snap(g, T, T, tones);
   return c;
 }
 
@@ -449,8 +469,8 @@ export const PAINTERS: Record<string, { paint: () => HTMLCanvasElement; metresPe
   rock: { paint: rock, metresPerTile: 4 },
   marble: { paint: marble, metresPerTile: 2 },
   trim: { paint: trim, metresPerTile: 1 },
-  grass: { paint: grass, metresPerTile: 10 },
-  path: { paint: dirt, metresPerTile: 10 },
+  grass: { paint: grass, metresPerTile: 14 },
+  path: { paint: dirt, metresPerTile: 14 },
   scree: { paint: scree, metresPerTile: 6 },
   snow: { paint: snow, metresPerTile: 6 },
   bark: { paint: bark, metresPerTile: 1 },
@@ -465,7 +485,10 @@ export function paintRoleTextures(scene: Scene, mipmaps = true): RoleTextures {
   for (const [role, { paint, metresPerTile }] of Object.entries(PAINTERS)) {
     const id = ROLE[role as keyof typeof ROLE];
     const picture = paint();
-    const mips = mipmaps;
+    // The ground is sampled without mipmaps, as MM6 drew it: the foreground blows up into
+    // blocks and the distance shimmers (critics, round 5).
+    const ground = ['grass', 'path', 'scree', 'snow', 'sand'].includes(role);
+    const mips = mipmaps && !ground;
     const texture = new DynamicTexture(`painted-${role}`, { width: T, height: T }, scene, mips);
     texture.getContext().drawImage(picture, 0, 0);
     texture.update(false);

@@ -82,6 +82,8 @@ export interface Screens {
   close(): void;
   /** The open screen, or null. */
   current(): ScreenName | ServiceKind | null;
+  /** A tap on a portrait in the band: true when the open screen used it (a spell's target). */
+  pickMember(index: number): boolean;
   toggleButtonBar(on: boolean): void;
   dispose(): void;
 }
@@ -116,11 +118,13 @@ export function installScreens(
   installPressFeel(uiLayer);
 
   let open_: { name: ScreenName | ServiceKind; root: HTMLElement } | null = null;
+  let portraitClaim: ((index: number) => boolean) | null = null;
 
   function unmount(notify: boolean): void {
     if (!open_) return;
     open_.root.remove();
     open_ = null;
+    portraitClaim = null;
     if (notify) hooks.onClose();
   }
 
@@ -142,7 +146,17 @@ export function installScreens(
       const panel = frame.root.querySelector<HTMLElement>('.ui-panel');
       if (panel) panel.dataset['paint'] = 'book';
     }
-    render({ state, hooks, frame, rng, close });
+    portraitClaim = null;
+    render({
+      state,
+      hooks,
+      frame,
+      rng,
+      close,
+      claimPortraits: (handler) => {
+        portraitClaim = handler;
+      },
+    });
     uiLayer.appendChild(frame.root);
     open_ = { name, root: frame.root };
     hooks.onOpen?.(name);
@@ -161,6 +175,9 @@ export function installScreens(
     close,
     current() {
       return open_?.name ?? null;
+    },
+    pickMember(index) {
+      return portraitClaim ? portraitClaim(index) : false;
     },
     toggleButtonBar(on) {
       shelf.classList.toggle('hidden', !on);

@@ -63,4 +63,9 @@ export interface ScreenContext {
   frame: Frame;
   rng: Rng;
   close(): void;
+  /**
+   * Claim the next tap on a portrait in the band (DESIGN.md 16.16): the handler returns true
+   * when it used the tap, false to let it select the member as usual; null gives it up.
+   */
+  claimPortraits(handler: ((index: number) => boolean) | null): void;
 }

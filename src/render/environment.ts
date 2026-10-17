@@ -52,14 +52,16 @@ export const ENVIRONMENTS: Record<EnvironmentPreset, LightingEnvironment> = {
     cloudAmount: 0.75,
   },
   'mm6-day': {
+    // MM6's day (critics, round 5): a dusky blue of low saturation, cream clouds with a warm
+    // cast, the horizon only a little paler than the zenith, no haze band.
     lightDirection: new Vector3(-0.4, -1, 0.3).normalize(),
-    lightColor: c(0.95, 0.88, 0.75),
-    ambientColor: c(0.35, 0.35, 0.4),
-    fogColor: c(0.6, 0.7, 0.85),
-    fogDensity: 0.012,
-    skyZenith: c(0.15, 0.3, 0.7),
-    skyHorizon: c(0.6, 0.7, 0.85),
-    cloudColor: c(0.95, 0.95, 0.97),
+    lightColor: c(0.86, 0.8, 0.7),
+    ambientColor: c(0.42, 0.42, 0.46),
+    fogColor: c(0.4, 0.44, 0.58),
+    fogDensity: 0.008,
+    skyZenith: c(0.19, 0.25, 0.52),
+    skyHorizon: c(0.36, 0.4, 0.6),
+    cloudColor: c(0.76, 0.72, 0.64),
     cloudAmount: 0.4,
   },
 };

@@ -145,8 +145,8 @@ async function spriteOf(
   paint.setFloat('wind', 0);
   paint.setVector3('cameraPosition', camera.position);
   paint.setVector3('lightDirection', new Vector3(0.45, -0.6, 0.65).normalize());
-  paint.setColor3('lightColor', new Color3(0.5, 0.5, 0.5));
-  paint.setColor3('ambientColor', new Color3(0.58, 0.58, 0.58));
+  paint.setColor3('lightColor', new Color3(0.22, 0.22, 0.22));
+  paint.setColor3('ambientColor', new Color3(0.72, 0.72, 0.72));
   paint.setArray3('pointColor', new Array<number>(12).fill(0));
   mesh.isVisible = true;
   target.render(false, false);
@@ -204,6 +204,8 @@ async function spriteOf(
     texture: sprite,
     doubleSided: true,
     billboard: true,
+    // MM6's canopies were a dark, dense green (critics, round 5: ~41,68,40).
+    tint: new Color3(0.72, 0.8, 0.66),
   });
   quad.material = material;
   quad.isPickable = false;
@@ -234,13 +236,16 @@ export async function loadPropModels(
       });
       // Meshy paints buildings and stones a shade dark for daylight; a little lift reads
       // as sun on plaster rather than a cellar wall.
-      const lift = sways ? 1 : 1.2;
+      const lift = sways ? 1 : 1.05;
       const material = materials.create({
         name: `prop-${id}`,
         texture: bitmap,
         doubleSided: full.doubleSided,
         tint: new Color3(lift, lift, lift),
         ...(sways ? { wind: true } : {}),
+        // Walls and roofs lit flat, as MM6's: the bitmap carries the picture, no face
+        // brighter than another, no posterised bands across a curve (critics, round 5).
+        ...(sways ? {} : { flatLight: true }),
       });
       full.mesh.material = material;
       if (sways) {

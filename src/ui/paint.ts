@@ -25,29 +25,34 @@ export const GOLD = {
   glint: '#fff8d0',
 };
 
-/** MM6's HUD marble: warm putty, cream patches, taupe and dark veins; eight tones. */
+/**
+ * MM6's HUD marble (critics, round 5: mean ~150,141,137, veins from 41 to 189): a grey-white
+ * stone with warm and cool drifts, dark veins, nothing near white; twelve tones.
+ */
 const MARBLE: Tone[] = [
-  { cool: [118, 108, 108], warm: [126, 108, 100] },
-  { cool: [138, 128, 128], warm: [148, 128, 118] },
-  { cool: [156, 146, 146], warm: [166, 146, 136] },
-  { cool: [172, 162, 162], warm: [182, 162, 152] },
-  { cool: [186, 178, 176], warm: [196, 178, 166] },
-  { cool: [198, 190, 188], warm: [208, 190, 178] },
-  { cool: [208, 202, 198], warm: [218, 202, 190] },
-  { cool: [216, 210, 206], warm: [226, 210, 198] },
-  { cool: [224, 218, 214], warm: [232, 218, 206] },
-  { cool: [230, 226, 220], warm: [238, 226, 214] },
-  { cool: [236, 232, 226], warm: [242, 232, 222] },
-  { cool: [242, 238, 232], warm: [246, 238, 230] },
+  { cool: [46, 44, 44], warm: [50, 44, 41] },
+  { cool: [68, 64, 64], warm: [74, 64, 60] },
+  { cool: [90, 86, 86], warm: [98, 86, 80] },
+  { cool: [110, 104, 104], warm: [118, 104, 98] },
+  { cool: [128, 122, 122], warm: [136, 122, 116] },
+  { cool: [142, 136, 136], warm: [150, 136, 130] },
+  { cool: [154, 148, 148], warm: [162, 148, 142] },
+  { cool: [166, 160, 158], warm: [172, 160, 154] },
+  { cool: [176, 170, 168], warm: [182, 170, 164] },
+  { cool: [186, 180, 178], warm: [192, 180, 174] },
+  { cool: [196, 190, 188], warm: [202, 190, 184] },
+  { cool: [206, 200, 198], warm: [212, 200, 194] },
 ];
-/** The sheet's slate: grey-green, seven tones. */
+/** The sheet's stone (critics, round 5: ~80,80,82 with blotches and dark veins): mid grey, eight tones. */
 const SLATE: Tone[] = [
-  { cool: [42, 46, 44], warm: [46, 46, 42] },
-  { cool: [62, 68, 64], warm: [66, 66, 60] },
-  { cool: [84, 92, 86], warm: [88, 88, 80] },
-  { cool: [106, 114, 108], warm: [110, 110, 100] },
-  { cool: [128, 136, 130], warm: [132, 132, 122] },
-  { cool: [150, 158, 152], warm: [154, 154, 144] },
+  { cool: [38, 38, 40], warm: [40, 38, 36] },
+  { cool: [50, 50, 52], warm: [52, 50, 48] },
+  { cool: [62, 62, 64], warm: [64, 62, 60] },
+  { cool: [74, 74, 76], warm: [76, 74, 72] },
+  { cool: [86, 86, 88], warm: [88, 86, 84] },
+  { cool: [98, 98, 100], warm: [100, 98, 96] },
+  { cool: [112, 112, 114], warm: [114, 112, 110] },
+  { cool: [128, 128, 130], warm: [130, 128, 126] },
 ];
 
 /**
@@ -78,12 +83,12 @@ function paintMarble(w: number, h: number, seed: number): HTMLCanvasElement {
       y += Math.sin(ang) * 3;
       pts.push([x, y]);
     }
-    // The vein fades in and out: three overlapping soft strokes of different lengths.
-    const a = deep ? 0.2 : 0.14;
-    stroke(g, w, h, pts, `rgba(70,56,56,${a})`, 4);
-    stroke(g, w, h, pts.slice(2, -2), `rgba(70,56,56,${a + 0.08})`, 2);
+    // A dark vein one or two pixels wide with a one-pixel falloff, fading at its ends.
+    const a = deep ? 0.34 : 0.2;
+    stroke(g, w, h, pts, `rgba(40,34,34,${a * 0.35})`, 3);
+    stroke(g, w, h, pts.slice(1, -1), `rgba(40,34,34,${a})`, deep ? 2 : 1);
     const m = Math.floor(pts.length / 2);
-    stroke(g, w, h, pts.slice(m - 6, m + 6), `rgba(70,56,56,${a + 0.14})`, 1);
+    stroke(g, w, h, pts.slice(m - 8, m + 8), 'rgba(30,26,26,0.45)', 1);
     // Broken pale threads beside it.
     for (let k = 3; k < pts.length - 3; k += 7) {
       if (r() < 0.5) continue;
@@ -91,8 +96,8 @@ function paintMarble(w: number, h: number, seed: number): HTMLCanvasElement {
       stroke(g, w, h, seg, 'rgba(240,236,232,0.6)', 1);
     }
   };
-  for (let v = 0; v < 8; v++) {
-    vein(r() * w, r() * h, -0.7 + (r() - 0.5) * 0.9, 80 + r() * 150, v < 4);
+  for (let v = 0; v < 7; v++) {
+    vein(r() * w, r() * h, -0.7 + (r() - 0.5) * 0.7, 120 + r() * 180, v < 3);
   }
   const patches: [number, number, number, number][] = [];
   for (let i = 0; i < 10; i++) patches.push([r() * w, r() * h, 50 + r() * 80, r() < 0.5 ? 0 : 1]);
@@ -106,7 +111,7 @@ function paintMarble(w: number, h: number, seed: number): HTMLCanvasElement {
     }
     return Math.max(0, Math.min(1, acc));
   };
-  posterise(g, w, h, MARBLE, tint, 62, 200);
+  posterise(g, w, h, MARBLE, tint, 42, 192);
   return c;
 }
 
@@ -120,14 +125,22 @@ function paintSlate(w: number, h: number, seed: number): HTMLCanvasElement {
   const [c, g] = canvas(w, h);
   g.fillStyle = '#787878';
   g.fillRect(0, 0, w, h);
-  for (let i = 0; i < 48; i++) {
-    const tone = 128 + (r() - 0.5) * 64;
-    dab(g, w, h, r() * w, r() * h, 18 + r() * 34, 10 + r() * 20, r() * Math.PI, tone, 0.5);
+  // Cloudy blotches at three scales (critics, round 5: 10 to 30 px, +-25), then a fine grain.
+  for (const [n, lo, hi, amp] of [
+    [14, 24, 40, 70],
+    [30, 12, 24, 60],
+    [60, 6, 12, 50],
+  ] as const) {
+    for (let i = 0; i < n; i++) {
+      const tone = 128 + (r() - 0.5) * amp;
+      const sz = lo + r() * (hi - lo);
+      dab(g, w, h, r() * w, r() * h, sz, sz * (0.6 + r() * 0.5), r() * Math.PI, tone, 0.5);
+    }
   }
   for (let i = 0; i < 2600; i++) {
-    const tone = 128 + (r() - 0.5) * 44;
+    const tone = 128 + (r() - 0.5) * 40;
     const sz = 0.7 + r() * 1.2;
-    dab(g, w, h, r() * w, r() * h, sz, sz, 0, tone, 0.55);
+    dab(g, w, h, r() * w, r() * h, sz, sz, 0, tone, 0.5);
   }
   for (let v = 0; v < 7; v++) {
     let x = r() * w;
@@ -141,14 +154,12 @@ function paintSlate(w: number, h: number, seed: number): HTMLCanvasElement {
       y += Math.sin(ang) * 3;
       pts.push([x, y]);
     }
-    // Broken: every other short run drawn, in the pale tone.
-    for (let k = 0; k < pts.length - 3; k += 6) {
-      if (r() < 0.35) continue;
-      stroke(g, w, h, pts.slice(k, k + 3), 'rgba(200,206,200,0.55)', 1);
-    }
+    // Dark veins two to three pixels wide, fading at their ends.
+    stroke(g, w, h, pts, 'rgba(30,30,32,0.14)', 3);
+    stroke(g, w, h, pts.slice(1, -1), 'rgba(30,30,32,0.32)', v < 3 ? 2 : 1);
   }
   const tint = (x: number, y: number): number => 0.5 + 0.5 * Math.sin((x - y * 0.7) / 70);
-  posterise(g, w, h, SLATE, tint, 64, 196);
+  posterise(g, w, h, SLATE, tint, 56, 200);
   return c;
 }
 
@@ -234,7 +245,7 @@ function paintMahogany(w: number, h: number, seed: number): HTMLCanvasElement {
   g.fillStyle = '#808080';
   g.fillRect(0, 0, w, h);
   const grey = (t: number): string => `rgb(${Math.round(t)},${Math.round(t)},${Math.round(t)})`;
-  for (let i = 0; i < 14; i++) {
+  for (let i = 0; i < 10; i++) {
     dab(
       g,
       w,
@@ -244,33 +255,47 @@ function paintMahogany(w: number, h: number, seed: number): HTMLCanvasElement {
       10 + r() * 22,
       50 + r() * 90,
       (r() - 0.5) * 0.2,
-      r() < 0.5 ? 100 : 160,
-      0.35,
+      r() < 0.5 ? 108 : 148,
+      0.3,
     );
   }
-  for (let i = 0; i < 46; i++) {
+  // Fine, high-contrast grain: ninety lines a pixel wide, most dark, a few bright.
+  for (let i = 0; i < 90; i++) {
     const xb = r() * w;
-    const amp = 2 + r() * 6;
+    const amp = 1 + r() * 4;
     const period = 40 + r() * 90;
     const phase = r() * 10;
-    const tone = r() < 0.6 ? 70 + r() * 40 : 150 + r() * 40;
+    const tone = r() < 0.65 ? 40 + r() * 50 : 160 + r() * 60;
     const pts: [number, number][] = [];
     for (let y = 0; y <= h; y += 3) {
       pts.push([xb + amp * Math.sin(y / period + phase) + Math.sin(y / 9 + phase * 2), y]);
     }
-    stroke(g, w, h, pts, grey(tone), r() < 0.3 ? 2 : 1);
+    stroke(g, w, h, pts, grey(tone), 1);
   }
-  for (let i = 0; i < 1400; i++) {
-    dab(g, w, h, r() * w, r() * h, 0.8, 0.8, 0, 128 + (r() - 0.5) * 60, 0.5);
+  // Knots: rings of a darker tone, the grain bending round them.
+  for (let i = 0; i < 4; i++) {
+    const kx = r() * w;
+    const ky = r() * h;
+    for (let k = 4; k >= 0; k--) {
+      g.strokeStyle = grey(70 + k * 14);
+      g.lineWidth = 1;
+      g.beginPath();
+      g.ellipse(kx, ky, 1.5 + k * 1.2, 3 + k * 2.4, 0, 0, Math.PI * 2);
+      g.stroke();
+    }
   }
+  for (let i = 0; i < 1800; i++) {
+    dab(g, w, h, r() * w, r() * h, 0.8, 0.8, 0, 128 + (r() - 0.5) * 70, 0.5);
+  }
+  // Near-black browns (critics, round 5: ~60,40,25), the brightest a dull chestnut.
   posterise(
     g,
     w,
     h,
-    ramp('#1c0a06', '#2e120a', '#42190e', '#562414', '#6a2e1a', '#7e3a22', '#944a2c', '#aa5c38'),
+    ramp('#100804', '#180c06', '#221008', '#2c160b', '#361c0e', '#402212', '#4c2a16', '#5a341c'),
     null,
-    40,
-    215,
+    50,
+    205,
   );
   return c;
 }
@@ -327,23 +352,24 @@ function paintParchment(w: number, h: number, seed: number): HTMLCanvasElement {
   const [c, g] = canvas(w, h);
   g.fillStyle = '#808080';
   g.fillRect(0, 0, w, h);
+  // Cloudy, as MM6's pages (critics, round 5: ~189,174,156 to 206,199,181): soft clouds at
+  // two scales in six close tones, so the steps between them read as a wash, not a dither.
   for (let i = 0; i < 40; i++) {
     const tone = 128 + (r() - 0.5) * 34;
     dab(g, w, h, r() * w, r() * h, 30 + r() * 60, 16 + r() * 36, r() * Math.PI, tone, 0.5);
+  }
+  for (let i = 0; i < 90; i++) {
+    const tone = 128 + (r() - 0.5) * 22;
+    dab(g, w, h, r() * w, r() * h, 10 + r() * 18, 6 + r() * 12, r() * Math.PI, tone, 0.4);
   }
   posterise(
     g,
     w,
     h,
-    [
-      { cool: [206, 186, 148], warm: [206, 186, 148] },
-      { cool: [220, 204, 168], warm: [220, 204, 168] },
-      { cool: [230, 218, 190], warm: [230, 218, 190] },
-      { cool: [238, 228, 204], warm: [238, 228, 204] },
-    ],
+    ramp('#b4a48e', '#bcac96', '#c4b59f', '#ccbea9', '#d2c6b3', '#d8ccba'),
     null,
-    100,
-    160,
+    96,
+    164,
   );
   return c;
 }
@@ -413,15 +439,18 @@ export function paintButton(w: number, h: number, pressed: boolean): HTMLCanvasE
     for (let x = 0; x < w; x++) {
       if (!inOval(x, y, w, h, 0)) continue;
       let tone: string;
-      const t = (y + 0.5) / h;
+      // The light sits in the upper-left third (critics, round 5): a radial glint falling
+      // to the body, a darker rim at the lower right, a black line round the lot.
+      const d = Math.hypot((x + 0.5 - w * 0.34) / (w * 0.5), (y + 0.5 - h * 0.34) / (h * 0.5));
+      const lit = x / w + y / h < 0.9;
       if (!inOval(x, y, w, h, 1)) tone = '#100a04';
       else if (pressed) tone = !inOval(x, y, w, h, 2) ? GOLD.light : GOLD.highlight;
-      else if (!inOval(x, y, w, h, 2)) tone = t < 0.5 ? GOLD.glint : GOLD.dark;
-      else if (t < 0.14) tone = GOLD.glint;
-      else if (t < 0.4) tone = GOLD.highlight;
-      else if (t < 0.66) tone = GOLD.light;
-      else if (t < 0.9) tone = GOLD.shadow;
-      else tone = GOLD.dark;
+      else if (!inOval(x, y, w, h, 2)) tone = lit ? GOLD.light : GOLD.dark;
+      else if (d < 0.22) tone = GOLD.glint;
+      else if (d < 0.5) tone = GOLD.highlight;
+      else if (d < 0.85) tone = GOLD.light;
+      else if (d < 1.15) tone = GOLD.body;
+      else tone = GOLD.shadow;
       px(g, x, y, tone);
     }
   }
@@ -505,16 +534,21 @@ export function paintRecess(w: number, h: number, marble: HTMLCanvasElement): HT
   for (let y = 0; y < h; y += marble.height) {
     for (let x = 0; x < w; x += marble.width) g.drawImage(marble, x + 37, y + 61, w, h, x, y, w, h);
   }
-  g.fillStyle = 'rgba(20,14,10,0.16)';
+  // MM6's cell (critics, round 5): a one-pixel dark outline, a one-pixel light line inside
+  // it, the marble a shade darker within, a darker line along the inner bottom and right.
+  g.fillStyle = 'rgba(20,14,10,0.1)';
   g.fillRect(0, 0, w, h);
-  g.fillStyle = 'rgba(10,8,6,0.5)';
+  g.fillStyle = '#312c29';
   g.fillRect(0, 0, w, 1);
   g.fillRect(0, 0, 1, h);
-  g.fillStyle = 'rgba(10,8,6,0.25)';
-  g.fillRect(1, 1, w - 2, 1);
-  g.fillStyle = 'rgba(255,250,240,0.5)';
   g.fillRect(0, h - 1, w, 1);
   g.fillRect(w - 1, 0, 1, h);
+  g.fillStyle = '#ad9e9c';
+  g.fillRect(1, 1, w - 2, 1);
+  g.fillRect(1, 1, 1, h - 2);
+  g.fillStyle = 'rgba(30,26,24,0.45)';
+  g.fillRect(1, h - 2, w - 2, 1);
+  g.fillRect(w - 2, 1, 1, h - 2);
   return c;
 }
 
@@ -561,15 +595,21 @@ export function paintPlate(w: number, h: number): HTMLCanvasElement {
  */
 export function paintSpine(w: number, h: number): HTMLCanvasElement {
   const [c, g] = canvas(w, h);
-  const leather = ['#1e0e06', '#2e180a', '#3e2212', '#4e2e1a', '#604024', '#7a5434'];
+  // Mottled dark red-brown leather (critics, round 5: ~77,55,29) with a noisy grain over the
+  // spine's curve, lit a third of the way across.
+  const leather = ['#2a1a0c', '#3c2412', '#4e3018', '#5e3a1c', '#6e4424', '#7e502c'];
+  const r = die(w * 13 + h);
   for (let x = 0; x < w; x++) {
     const t = x / Math.max(1, w - 1);
     const l = Math.cos((t - 0.32) * Math.PI * 1.25);
     const k = l > 0.9 ? 5 : l > 0.6 ? 4 : l > 0.2 ? 3 : l > -0.3 ? 2 : l > -0.7 ? 1 : 0;
-    g.fillStyle = leather[k]!;
-    g.fillRect(x, 0, 1, h);
+    for (let y = 0; y < h; y++) {
+      const j = Math.max(0, Math.min(5, k + (r() < 0.22 ? (r() < 0.5 ? -1 : 1) : 0)));
+      g.fillStyle = leather[j]!;
+      g.fillRect(x, y, 1, 1);
+    }
   }
-  for (const y of [5, h - 10]) {
+  for (const y of [Math.round(h * 0.15) - 2, Math.round(h * 0.85) - 3]) {
     g.fillStyle = '#9a7a56';
     g.fillRect(1, y, w - 2, 1);
     g.fillStyle = '#6a1818';
@@ -605,39 +645,38 @@ export function paintSpine(w: number, h: number): HTMLCanvasElement {
 export function paintTube(w: number, h: number, kind: 'empty' | 'hp' | 'sp'): HTMLCanvasElement {
   const [c, g] = canvas(w, h);
   if (kind === 'empty') {
-    // The trough: near black, a shadow two deep under its top, a thread of light at the
-    // right; a brass foot of four courses with a lit upper edge (DESIGN.md 16.15).
-    g.fillStyle = '#0e1016';
+    // MM6's tube (critics, round 5): a dark-grey glass, a one-pixel darker edge each side, a
+    // gold cap of three courses top and bottom with a highlight on each.
+    g.fillStyle = '#2a2c32';
     g.fillRect(0, 0, w, h);
-    g.fillStyle = '#020304';
-    g.fillRect(0, 0, w, 2);
+    g.fillStyle = '#16181c';
     g.fillRect(0, 0, 1, h);
-    g.fillStyle = '#2a3040';
     g.fillRect(w - 1, 0, 1, h);
-    g.fillStyle = GOLD.dark;
-    g.fillRect(0, h - 4, w, 4);
-    g.fillStyle = GOLD.body;
-    g.fillRect(0, h - 4, w, 1);
-    g.fillStyle = GOLD.highlight;
-    g.fillRect(0, h - 4, Math.max(1, Math.floor(w / 2)), 1);
-    g.fillStyle = GOLD.shadow;
-    g.fillRect(0, h - 2, w, 1);
-    g.fillStyle = GOLD.line;
-    g.fillRect(0, h - 1, w, 1);
+    for (const y of [0, h - 3]) {
+      g.fillStyle = GOLD.dark;
+      g.fillRect(0, y, w, 3);
+      g.fillStyle = GOLD.body;
+      g.fillRect(0, y + 1, w, 1);
+      g.fillStyle = GOLD.highlight;
+      g.fillRect(1, y + 1, Math.max(1, Math.floor(w / 2)), 1);
+      g.fillStyle = GOLD.line;
+      g.fillRect(0, y === 0 ? 2 : h - 1, w, 1);
+    }
     return c;
   }
-  const [hi, core, dark, cap] =
+  const [hi, core, dark, stripe] =
     kind === 'hp'
-      ? ['#90f0a0', '#20c020', '#105010', '#d0ffd0']
-      : ['#a0c0ff', '#3058f0', '#182878', '#d8e4ff'];
+      ? ['#60d070', '#20b020', '#0c4a0c', '#b8ffc0']
+      : ['#6a90ff', '#2a50e8', '#142468', '#d0e0ff'];
   g.fillStyle = core;
   g.fillRect(0, 0, w, h);
   g.fillStyle = hi;
   g.fillRect(0, 0, 1, h);
   g.fillStyle = dark;
   g.fillRect(w - 1, 0, 1, h);
-  g.fillStyle = cap;
-  g.fillRect(0, 0, w, 1);
+  // A one-pixel light stripe up the middle: the glass's own reflection.
+  g.fillStyle = stripe;
+  g.fillRect(Math.floor(w / 2) - 1, 0, 1, h);
   return c;
 }
 
@@ -762,18 +801,28 @@ export function paintCapital(
     }
   }
   if (ring === 'below') {
-    // Acanthus (DESIGN.md 16.15): three leaf lobes across the bell under the abacus, each a
-    // pale ridge with a rounded tip curled dark, lit along its left, a dark seam between
-    // them and a vein down the middle; each row kept within the bell's own width.
+    // A carved capital in shadow (critics, round 5): under the abacus the bell is dark grey,
+    // a volute curling at each corner and three leaf tongues between, their edges lit from
+    // the upper left, their hollows near black; the collar below.
     const bell = h - collar;
+    g.fillStyle = '#3e3a38';
+    g.fillRect(0, 3, w, Math.max(1, bell - 3));
+    for (let y = 3; y < bell; y++) {
+      const [ri, rwid] = rows[y]!;
+      g.fillStyle = '#1e1c1a';
+      if (ri > 0) {
+        g.fillRect(0, y, ri, 1);
+        g.fillRect(ri + rwid, y, w - ri - rwid, 1);
+      }
+    }
     const lobes = 3;
-    const y0 = 3;
+    const y0 = 4;
     const y1 = bell - 1;
     for (let i = 0; i < lobes; i++) {
-      const x0 = Math.round((i * w) / lobes) + 1;
-      const x1 = Math.round(((i + 1) * w) / lobes) - 1;
+      const x0 = Math.round((i * w) / lobes) + 2;
+      const x1 = Math.round(((i + 1) * w) / lobes) - 2;
       const lw = x1 - x0;
-      if (lw < 2) continue;
+      if (lw < 3) continue;
       for (let y = y0; y < y1; y++) {
         const k = y - y0;
         const inset = k >= 3 ? 0 : [Math.ceil(lw / 2) - 1, 1, 0][k]!;
@@ -781,19 +830,32 @@ export function paintCapital(
         const xs = Math.max(x0 + inset, ri);
         const xe = Math.min(x1 - inset, ri + rwid);
         if (xe <= xs) continue;
-        g.fillStyle = k < 2 ? '#2a2420' : '#d8d0c4';
+        g.fillStyle = k < 2 ? '#8a8480' : '#5c5856';
         g.fillRect(xs, y, xe - xs, 1);
         if (k >= 2) {
-          g.fillStyle = '#f4f0e8';
+          g.fillStyle = '#9a948e';
           g.fillRect(xs, y, 1, 1);
-          g.fillStyle = '#8a8278';
+          g.fillStyle = '#1e1c1a';
           g.fillRect(xe - 1, y, 1, 1);
         }
       }
-      g.fillStyle = '#2a2420';
-      g.fillRect(x1, y0 + 2, 1, Math.max(1, y1 - y0 - 2));
-      g.fillStyle = 'rgba(42,36,32,0.5)';
+      g.fillStyle = '#141210';
       g.fillRect(x0 + Math.floor(lw / 2), y0 + 3, 1, Math.max(1, y1 - y0 - 4));
+    }
+    // Volutes: a curl at each upper corner, lit along its outer turn.
+    for (const [cx, dir] of [
+      [4, 1],
+      [w - 5, -1],
+    ] as const) {
+      g.strokeStyle = '#9a948e';
+      g.lineWidth = 1;
+      g.beginPath();
+      g.arc(cx, 7, 3, Math.PI * 0.5, Math.PI * 2.1);
+      g.stroke();
+      g.strokeStyle = '#141210';
+      g.beginPath();
+      g.arc(cx + dir * 0.5, 7.5, 1.6, Math.PI * 0.6, Math.PI * 1.9);
+      g.stroke();
     }
   }
   const [rx, rw] = rows[ring === 'below' ? h - 1 : 0]!;
@@ -822,40 +884,22 @@ export function paintLintel(w: number, h: number, marble: HTMLCanvasElement): HT
 /** The shelf's alcove: a dark recess under an arched marble lintel that shadows the book tops. */
 export function paintAlcove(w: number, h: number, marble: HTMLCanvasElement): HTMLCanvasElement {
   const [c, g] = canvas(w, h);
-  g.fillStyle = '#3a3026';
-  g.fillRect(0, 0, w, h);
-  const arch = (dy: number): void => {
-    g.beginPath();
-    g.moveTo(0, 0);
-    g.lineTo(w, 0);
-    g.lineTo(w, 11 + dy);
-    g.quadraticCurveTo(w / 2, -1 + dy, 0, 11 + dy);
-    g.closePath();
-  };
-  for (const [dy, alpha] of [
-    [3, 0.18],
-    [2, 0.3],
-    [1, 0.45],
-  ] as const) {
-    arch(dy);
-    g.fillStyle = `rgba(0,0,0,${alpha})`;
-    g.fill();
-  }
-  g.save();
-  arch(0);
-  g.clip();
-  for (let x = 0; x < w; x += marble.width) g.drawImage(marble, x, -20);
-  g.restore();
-  arch(0);
-  g.strokeStyle = '#3a3430';
-  g.lineWidth = 1;
-  g.stroke();
-  g.fillStyle = '#0e0a06';
-  g.fillRect(0, 0, 1, h);
-  g.fillRect(w - 1, 0, 1, h);
-  g.fillRect(0, h - 1, w, 1);
+  // MM6's shelf (critics, round 5): a dark recess with a one-pixel dark inset border and
+  // chamfered corners, a lit line along its inner bottom and right; no arch, no drop shadow.
+  g.drawImage(marble, 0, 0, w, h, 0, 0, w, h);
+  g.fillStyle = '#2a2420';
+  g.fillRect(2, 2, w - 4, h - 4);
+  g.fillStyle = '#141210';
+  g.fillRect(2, 1, w - 4, 1);
+  g.fillRect(1, 2, 1, h - 4);
+  g.fillRect(2, h - 2, w - 4, 1);
+  g.fillRect(w - 2, 2, 1, h - 4);
   g.fillStyle = '#5a4a34';
-  g.fillRect(1, h - 2, w - 2, 1);
+  g.fillRect(3, h - 3, w - 6, 1);
+  g.fillRect(w - 3, 3, 1, h - 6);
+  g.fillStyle = '#0e0c0a';
+  g.fillRect(2, 2, w - 4, 1);
+  g.fillRect(2, 2, 1, h - 4);
   return c;
 }
 
@@ -887,15 +931,16 @@ export function paintCartouche(w: number, h: number, pressed: boolean): HTMLCanv
  */
 export function paintFrame(w: number, h: number): HTMLCanvasElement {
   const [c, g] = canvas(w, h);
-  const top = [GOLD.glint, GOLD.light];
-  const left = [GOLD.highlight, GOLD.body];
-  const bottom = [GOLD.shadow, GOLD.dark];
-  const right = [GOLD.shadow, GOLD.dark];
+  // A dark-grey bevel two pixels wide, no gold, as MM6 framed its faces (critics, round 5).
+  const top = ['#8a8682', '#5a5652'];
+  const left = ['#7a7672', '#4a4642'];
+  const bottom = ['#2a2826', '#1a1816'];
+  const right = ['#322e2c', '#1e1a18'];
   for (let y = 0; y < h; y++) {
     for (let x = 0; x < w; x++) {
       const inset = Math.min(x, y, w - 1 - x, h - 1 - y);
       let tone: string | null = null;
-      if (inset === 0) tone = GOLD.line;
+      if (inset === 0) tone = '#0a0806';
       else if (inset <= 2) {
         const k = inset - 1;
         const m = Math.min(x, y, w - 1 - x, h - 1 - y);
@@ -1016,13 +1061,17 @@ export function paintBook(w: number, h: number, parchment: HTMLCanvasElement): H
   g.fillStyle = '#140804';
   g.fillRect(5, h - 6, w - 10, 1);
   g.fillRect(w - 6, 5, 1, h - 10);
-  const top = 30;
-  const left = 7;
-  const right = w - 16;
-  const bottom = h - 16;
-  for (let i = 8; i >= 1; i--) {
-    g.fillStyle = i % 2 ? '#b89c70' : '#e4d8bc';
-    g.fillRect(left + i, top + i, right - left, bottom - top);
+  // No cover band above the pages (critics, round 5): the pages fill the boards, three
+  // stacked page edges three pixels each showing below and to the right.
+  const top = 8;
+  const left = 8;
+  const right = w - 26;
+  const bottom = h - 14;
+  for (let i = 3; i >= 1; i--) {
+    g.fillStyle = i % 2 ? '#a08c66' : '#cfc2a4';
+    g.fillRect(left + i * 3 - 2, top + i * 3 - 2, right - left, bottom - top);
+    g.fillStyle = '#6a5a3c';
+    g.fillRect(left + i * 3 - 2, bottom + i * 3 - 3, right - left, 1);
   }
   g.save();
   g.beginPath();
@@ -1030,6 +1079,12 @@ export function paintBook(w: number, h: number, parchment: HTMLCanvasElement): H
   g.clip();
   for (let y = top; y < bottom; y += parchment.height) {
     for (let x = left; x < right; x += parchment.width) g.drawImage(parchment, x, y);
+  }
+  // The left page darkens toward its outer edge over twenty-five pixels, as a bound page does.
+  for (let d = 0; d < 25; d++) {
+    const t = 1 - d / 25;
+    g.fillStyle = `rgba(60,44,20,${(0.28 * t * t).toFixed(3)})`;
+    g.fillRect(left + d, top, 1, bottom - top);
   }
   // The gutter: the pages curve down into the spine.
   const gx = Math.floor((left + right) / 2);
@@ -1060,18 +1115,39 @@ export function paintBook(w: number, h: number, parchment: HTMLCanvasElement): H
   g.restore();
   // Cloth tabs down the right edge of the cover, full size, each a shade darker at its
   // lower edge and lit along its top.
+  // Parchment tabs (critics, round 5): full size, a chevron cut into the right edge, a dark
+  // outline, a two-pixel shadow under each, a band of colour across the top for the book.
   const tabs = ['#8a2a24', '#2a5a3a', '#2a3a7a', '#7a5a18'];
+  const tw = 17;
+  const th = 32;
   tabs.forEach((tone, i) => {
-    const ty = top + 6 + i * 26;
+    const tx = right + 4;
+    const ty = top + 4 + i * (th + 4);
+    const shape = (dx: number, dy: number): void => {
+      g.beginPath();
+      g.moveTo(tx + dx, ty + dy);
+      g.lineTo(tx + tw + dx, ty + dy);
+      g.lineTo(tx + tw - 5 + dx, ty + th / 2 + dy);
+      g.lineTo(tx + tw + dx, ty + th + dy);
+      g.lineTo(tx + dx, ty + th + dy);
+      g.closePath();
+    };
+    g.fillStyle = 'rgba(0,0,0,0.4)';
+    shape(2, 2);
+    g.fill();
     g.fillStyle = '#1a0c06';
-    g.fillRect(right + 6, ty, 9, 22);
+    shape(0, 0);
+    g.fill();
+    g.save();
+    shape(0, 0);
+    g.clip();
+    g.fillStyle = '#c4b59f';
+    g.fillRect(tx + 1, ty + 1, tw - 2, th - 2);
     g.fillStyle = tone;
-    g.fillRect(right + 7, ty + 1, 7, 20);
-    g.fillStyle = 'rgba(255,250,240,0.4)';
-    g.fillRect(right + 7, ty + 1, 7, 1);
-    g.fillStyle = 'rgba(0,0,0,0.35)';
-    g.fillRect(right + 7, ty + 20, 7, 1);
-    g.fillRect(right + 13, ty + 1, 1, 20);
+    g.fillRect(tx + 1, ty + 1, tw - 2, 7);
+    g.fillStyle = 'rgba(255,250,240,0.35)';
+    g.fillRect(tx + 1, ty + 1, tw - 2, 1);
+    g.restore();
   });
   // Corner ornaments: a gold angle with a stepped inner edge and a boss at the corner.
   const corner = (x: number, y: number, sx: number, sy: number): void => {
@@ -1099,29 +1175,31 @@ export function paintBook(w: number, h: number, parchment: HTMLCanvasElement): H
 /** A carved stone banner for a book's heading: a pale band with a bevel and curled ends. */
 export function paintBanner(w: number, h: number): HTMLCanvasElement {
   const [c, g] = canvas(w, h);
-  const mid = Math.floor(h / 2);
-  g.fillStyle = '#8a8070';
-  g.fillRect(4, 1, w - 8, h - 2);
-  g.fillStyle = '#c8bca4';
-  g.fillRect(5, 2, w - 10, h - 4);
-  g.fillStyle = '#e0d6c0';
-  g.fillRect(5, 2, w - 10, 1);
-  g.fillRect(5, 2, 1, h - 4);
-  g.fillStyle = '#6a6050';
-  g.fillRect(5, h - 3, w - 10, 1);
-  g.fillRect(w - 6, 2, 1, h - 4);
-  // The ends curl back: a dark fold and a lit edge each side.
-  for (const [x, dir] of [
-    [0, 1],
-    [w - 1, -1],
-  ] as const) {
-    g.fillStyle = '#5a5044';
-    g.fillRect(x, mid - 3, 5 * dir, 6);
-    g.fillStyle = '#9a9080';
-    g.fillRect(x, mid - 3, 5 * dir, 1);
-    g.fillStyle = '#3a3028';
-    g.fillRect(x, mid + 2, 5 * dir, 1);
-  }
+  // MM6's heading ribbon (critics, round 5): rounded ends, a dark line round it, a darker
+  // band of parchment with a lit upper edge, for white script with a black outline.
+  const rr = Math.max(2, Math.floor(h / 2));
+  const ribbon = (inset: number): void => {
+    g.beginPath();
+    g.moveTo(rr, inset);
+    g.lineTo(w - rr, inset);
+    g.arc(w - rr, h / 2, Math.max(0.5, rr - inset), -Math.PI / 2, Math.PI / 2);
+    g.lineTo(rr, h - inset);
+    g.arc(rr, h / 2, Math.max(0.5, rr - inset), Math.PI / 2, (Math.PI * 3) / 2);
+    g.closePath();
+  };
+  g.fillStyle = '#2a2018';
+  ribbon(0);
+  g.fill();
+  g.fillStyle = '#a89878';
+  ribbon(1);
+  g.fill();
+  g.fillStyle = '#c0b090';
+  ribbon(2);
+  g.fill();
+  g.fillStyle = '#d8ccb0';
+  g.fillRect(rr, 2, w - 2 * rr, 1);
+  g.fillStyle = '#8a7a5a';
+  g.fillRect(rr, h - 3, w - 2 * rr, 1);
   return c;
 }
 
@@ -1230,6 +1308,44 @@ export function paintTablet(w: number, h: number, marble: HTMLCanvasElement): HT
   return c;
 }
 
+/** The slot both tubes stand in (critics, round 5): a two-pixel dark border round a dark-grey fill. */
+export function paintTubeSlot(w: number, h: number): HTMLCanvasElement {
+  const [c, g] = canvas(w, h);
+  g.fillStyle = '#1a1816';
+  g.fillRect(0, 0, w, h);
+  g.fillStyle = '#3a3836';
+  g.fillRect(2, 2, w - 4, h - 4);
+  g.fillStyle = '#0c0a08';
+  g.fillRect(2, 2, w - 4, 1);
+  g.fillRect(2, 2, 1, h - 4);
+  g.fillStyle = '#54504c';
+  g.fillRect(2, h - 3, w - 4, 1);
+  g.fillRect(w - 3, 2, 1, h - 4);
+  return c;
+}
+
+/** A spell's slot in the book (critics, round 5): a grey ellipse with a dark line and a lit crown. */
+export function paintEllipse(w: number, h: number): HTMLCanvasElement {
+  const [c, g] = canvas(w, h);
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      if (!inOval(x, y, w, h, 0)) continue;
+      const l = litness(x, y, w, h);
+      const tone = !inOval(x, y, w, h, 1)
+        ? '#4a4034'
+        : !inOval(x, y, w, h, 2)
+          ? l > 0.2
+            ? '#d8ccb4'
+            : '#8a7e6a'
+          : l > 0.5
+            ? '#c4b8a0'
+            : '#b2a692';
+      px(g, x, y, tone);
+    }
+  }
+  return c;
+}
+
 function buttonUrl(w: number, h: number, pressed: boolean, slab: boolean): string {
   const k = `${w}x${h}${pressed ? 'd' : 'u'}${slab ? 's' : 'o'}`;
   let url = buttonCache.get(k);
@@ -1269,6 +1385,8 @@ function pieceUrl(kind: string, w: number, h: number): string | null {
   else if (kind === 'trough') c = paintTrough(w, h);
   else if (kind === 'pilaster') c = paintPilaster(w, h, s.marble);
   else if (kind === 'tablet') c = paintTablet(w, h, s.marble);
+  else if (kind === 'ellipse') c = paintEllipse(w, h);
+  else if (kind === 'tube-slot') c = paintTubeSlot(w, h);
   else if (kind === 'spine') c = paintSpine(w, h);
   else if (kind === 'gold') c = paintCartouche(w, h, false);
   else if (kind === 'frame') c = paintFrame(w, h);
