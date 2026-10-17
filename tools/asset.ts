@@ -7,11 +7,13 @@
  *   npm run asset -- batch new <name> <id>:<height-m>[:civilian] [...] [--pose t-pose]   plan a humanoid batch
  *   npm run asset -- batch show <nnn>
  *   npm run asset -- batch approve <nnn>            after the owner approves it in chat
+ *   npm run asset -- batch icons <name> <specs.json> [--grant <purpose>]   plan spell icons
+ *   npm run asset -- icon accept <nnn> <asset-id> [<spell-id>]   take a processed icon into assets/
  *   npm run asset -- run <nnn> [--dry-run] [--force] run an approved batch through Meshy
  *
  * Only `run` talks to Meshy, and only for an approved batch (`--dry-run` prints the commands).
  */
-import { access, readFile, stat } from 'node:fs/promises';
+import { access, copyFile, mkdir, readFile, stat } from 'node:fs/promises';
 import sharp from 'sharp';
 import {
   HUMANOID_CLIPS,
@@ -22,14 +24,26 @@ import {
   type PropSpec,
   creatureItems,
   type CreatureSpec,
+  iconItems,
+  type IconSpec,
+  CREDITS,
   makeBatch,
   nextBatchNumber,
   writeBatch,
 } from './lib/batch';
 import { INBOX_DIR, loadStyle, makeCard, writeCard, type CardKind } from './lib/cards';
-import { isValidId, readManifest, type AssetEntry } from './lib/manifest';
+import {
+  isValidId,
+  readManifest,
+  upsertAsset,
+  writeManifest,
+  type AssetEntry,
+} from './lib/manifest';
 import { CHARACTER_TEXTURE_SIZE, inspectGlb } from './lib/postprocess';
-import { runBatch } from './lib/run';
+import { MESHY_LICENCE, WORK_DIR, runBatch } from './lib/run';
+
+/** Where accepted spell icons live; the spellbook looks them up by spell id. */
+const SPELL_ICON_DIR = 'assets/icons/spells';
 
 /** Meshy targets 4000 and lands near it; a tenth over is accepted, more is a regeneration. */
 const MAX_HUMANOID_TRIANGLES = 4400;
@@ -244,6 +258,33 @@ async function batch(args: string[]): Promise<void> {
     console.info(`${formatBatch(b)}\nwrote ${path}; awaiting the owner's approval by number`);
     return;
   }
+  if (sub === 'icons') {
+    // `batch icons <name> <specs.json> [--grant <purpose>]`: { id, subject, model?, style? }
+    // each; one picture per icon, no 3D (owner, 2026-10-17: spell icons).
+    const grantAt = rest.indexOf('--grant');
+    const grant = grantAt >= 0 ? rest[grantAt + 1] : undefined;
+    const [name, file] =
+      grantAt < 0 ? rest : rest.filter((_, i) => i !== grantAt && i !== grantAt + 1);
+    if (!name || !isValidId(name) || !file)
+      fail('batch icons <name> <specs.json> [--grant <purpose>]');
+    const specs = JSON.parse(await readFile(file, 'utf8')) as IconSpec[];
+    if (!Array.isArray(specs) || !specs.length) fail(`${file}: a non-empty JSON list`);
+    const items = [];
+    for (const spec of specs) {
+      if (!isValidId(spec.id) || typeof spec.subject !== 'string' || !spec.subject.trim())
+        fail(`bad icon spec ${JSON.stringify(spec)}`);
+      if (spec.model !== undefined && !(spec.model in CREDITS.textToImage))
+        fail(`${spec.id}: model must be one of ${Object.keys(CREDITS.textToImage).join(', ')}`);
+      items.push(...iconItems(spec));
+    }
+    const b = makeBatch(await nextBatchNumber(), name, items);
+    if (grant) b.grant = grant;
+    const path = await writeBatch(b);
+    console.info(
+      `${formatBatch(b)}\nwrote ${path}; ${grant ? `spends the ${grant} grant` : "awaiting the owner's approval by number"}`,
+    );
+    return;
+  }
   const number = Number(rest[0]);
   if (!Number.isInteger(number)) fail('batch show|approve|approve-images <nnn>');
   const found = await findBatch(number);
@@ -265,6 +306,47 @@ async function batch(args: string[]): Promise<void> {
     return;
   }
   fail('batch new|props|creatures|show|approve|approve-images');
+}
+
+/** `icon accept <nnn> <asset-id> [<spell-id>]`: the processed icon into assets/, recorded in the manifest. */
+async function icon(args: string[]): Promise<void> {
+  const [sub, nnn, assetId, spellArg] = args;
+  if (sub !== 'accept' || !nnn || !assetId) fail('icon accept <nnn> <asset-id> [<spell-id>]');
+  const number = Number(nnn);
+  const found = await findBatch(number);
+  if (!found) fail(`no batch ${number}`);
+  const spellId = spellArg ?? assetId;
+  if (!isValidId(spellId)) fail('spell id must be lower-case words joined by dashes');
+  const item = found.batch.items.find((i) => i.assetId === assetId && i.step === 'text-to-image');
+  if (!item) fail(`batch ${number} has no icon ${assetId}`);
+  const run = [...found.batch.runs].reverse().find((r) => r.tasks[assetId]?.['text-to-image']);
+  const task = run?.tasks[assetId]?.['text-to-image'];
+  if (!task || task.status !== 'SUCCEEDED')
+    fail(`${assetId}: no finished picture in batch ${number}`);
+  const pad = String(number).padStart(3, '0');
+  const from = `${WORK_DIR}/batch-${pad}/${assetId}/${assetId}.icon.png`;
+  if (!(await exists(from))) fail(`${from} missing: run the batch first`);
+  await mkdir(SPELL_ICON_DIR, { recursive: true });
+  const to = `${SPELL_ICON_DIR}/${spellId}.png`;
+  await copyFile(from, to);
+  const manifest = await readManifest();
+  upsertAsset(manifest, {
+    id: `spell-icon-${spellId}`,
+    kind: 'icon',
+    source: `Meshy text-to-image (${String(item.params['ai_model'])}), background removed, cropped, fitted and palettised (tools/lib/icon.ts)`,
+    prompt: String(item.params['prompt']),
+    meshy: {
+      taskIds: [task.taskId],
+      params: { textToImage: { ...item.params } },
+      consumedCredits: task.consumedCredits ?? item.estimatedCredits,
+    },
+    licence: MESHY_LICENCE,
+    files: [to],
+    date: new Date().toISOString().slice(0, 10),
+    notes: `batch ${pad}, asset ${assetId}${task.consumedCredits === null ? '; credits estimated' : ''}`,
+  });
+  await writeManifest(manifest);
+  console.info(`accepted ${from} as ${to}`);
 }
 
 async function run(args: string[]): Promise<void> {
@@ -305,6 +387,9 @@ switch (command) {
     break;
   case 'run':
     await run(args);
+    break;
+  case 'icon':
+    await icon(args);
     break;
   default: {
     const size = (await stat('pipeline/style.md')).size;

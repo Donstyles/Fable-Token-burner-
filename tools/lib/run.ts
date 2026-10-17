@@ -10,6 +10,7 @@ import {
   HUMANOID_CLIPS,
   actionIds,
   findBatch,
+  imageOnlyAssetIds,
   writeBatch,
   type Batch,
   type BatchItem,
@@ -18,7 +19,8 @@ import {
   type HumanoidClip,
   type TaskRecord,
 } from './batch';
-import { readBudget, recordSpend, remaining } from './budget';
+import { readBudget, recordSpend, remainingFor } from './budget';
+import { ICON_SIZE, postProcessIcon } from './icon';
 import { CARD_DIR, INBOX_DIR } from './cards';
 import { readManifest, upsertAsset, writeManifest } from './manifest';
 import { MeshyClient, TERMINAL_STATES, type MeshyResource, type TaskOutcome } from './meshy';
@@ -140,17 +142,18 @@ export async function runBatch(number: number, opts: RunOptions = {}): Promise<R
   // A batch runs when the owner approved it by number, or within a standing credit grant
   // (pipeline/budget.json) that covers its estimate; the grant is spent as runs report costs.
   const budget = await readBudget();
-  const covered = budget !== null && remaining(budget) >= batch.estimatedCredits;
+  // A batch that names a purpose-scoped grant spends only that grant.
+  const left = budget === null ? 0 : remainingFor(budget, batch.grant);
+  const covered = budget !== null && left >= batch.estimatedCredits;
+  const grantName = batch.grant ? `the owner's ${batch.grant} grant` : "the owner's grant";
   if (!batch.approved && !covered && !dryRun) {
     throw new Error(
-      `${label} is not approved and no credit grant covers its ${batch.estimatedCredits} credits` +
-        (budget ? ` (${remaining(budget)} of ${budget.granted} left)` : ''),
+      `${label} is not approved and ${grantName} does not cover its ${batch.estimatedCredits} credits` +
+        (budget ? ` (${left} left)` : ''),
     );
   }
   if (!batch.approved && covered && !dryRun) {
-    log(
-      `${label}: running under the owner's grant (${remaining(budget!)} of ${budget!.granted} credits left)`,
-    );
+    log(`${label}: running under ${grantName} (${left} credits left)`);
   }
 
   let run = batch.runs.find((r) => !r.finished);
@@ -211,6 +214,7 @@ export async function runBatch(number: number, opts: RunOptions = {}): Promise<R
 
   // Creatures whose concept images were made this run and await a look before the 3D steps.
   const pendingReview: string[] = [];
+  const icons = imageOnlyAssetIds(batch);
   for (const assetId of assetIds) {
     const items = batch.items.filter((i) => i.assetId === assetId);
     const records = (run.tasks[assetId] ??= {});
@@ -262,6 +266,35 @@ export async function runBatch(number: number, opts: RunOptions = {}): Promise<R
       log(`  ${item.step}: ${outcome.status} ${outcome.taskId} (${credits})`);
       return records[item.step] as TaskRecord;
     };
+
+    if (icons.includes(assetId)) {
+      // An icon: the picture, then the spellbook's crop, fit and palette; nothing in 3D. The
+      // processed icon stays in the work folder until `asset icon accept` takes it into
+      // assets/, so a pass that misses leaves nothing behind.
+      const toImage = items.find((i) => i.step === 'text-to-image')!;
+      const picture = await step(toImage, () => textToImageFlags(toImage.params));
+      const dir = join(WORK_DIR, `batch-${pad(batch.number)}`, assetId);
+      if (!dryRun) await mkdir(dir, { recursive: true });
+      const files = await client.download('text-to-image', picture.taskId, 'image', dir);
+      const png = files.find((f) => /\.(png|jpe?g|webp)$/i.test(f));
+      const iconFile = join(dir, `${assetId}.icon.png`);
+      if (!dryRun) {
+        if (!png) throw new Error(`${assetId}: the image download has no picture`);
+        const report = await postProcessIcon(png, iconFile, ICON_SIZE);
+        log(
+          `  ${iconFile}: ${report.width}x${report.height}, ${report.opaque} opaque pixels, ${report.colours} colours`,
+        );
+      } else {
+        log(`  icon → ${iconFile} (${ICON_SIZE.width}x${ICON_SIZE.height})`);
+      }
+      summary.assets.push({
+        id: assetId,
+        file: iconFile,
+        report: null,
+        credits: picture.consumedCredits,
+      });
+      continue;
+    }
 
     const toModel = items.find((i) => i.step === 'image-to-3d');
     const toRig = items.find((i) => i.step === 'rig');
@@ -365,7 +398,8 @@ export async function runBatch(number: number, opts: RunOptions = {}): Promise<R
       : delta;
     run.finished = new Date().toISOString();
     await save();
-    if (budget && !batch.approved) await recordSpend(budget, batch.number, run.consumedCredits);
+    if (budget && !batch.approved)
+      await recordSpend(budget, batch.number, run.consumedCredits, undefined, batch.grant);
     const check = delta === run.consumedCredits ? '' : ` (balance moved by ${delta})`;
     log(
       `${label}: done, ${run.consumedCredits} credits consumed (balance ${after.balance})${check}`,

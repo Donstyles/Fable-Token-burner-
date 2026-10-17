@@ -1,0 +1,209 @@
+{
+  "number": 6,
+  "name": "spell-icons-pass-1",
+  "created": "2026-10-17",
+  "approved": false,
+  "items": [
+    {
+      "assetId": "protection-from-fire",
+      "step": "text-to-image",
+      "params": {
+        "prompt": "A small kneeling soldier in a steel-grey chainmail hauberk with a mail coif and a sleeveless tan cloth tabard over it, brown leather boots, crouching low and raising one forearm over his face as a sheet of orange and yellow flame sweeps down at him from the upper left and parts around him. A tiny spell icon for the spellbook of a 1998 fantasy PC role-playing game, made as a late-1990s pre-rendered 3D computer-graphics illustration in the style of 3D Studio renders of the time. Simple, chunky, readable shapes; smooth CG shading under a soft studio light from the upper left; muted earthy colours, steel-grey chainmail, tan and brown cloth, aged bronze, with the magic as bright glowing light. One subject, centred, seen slightly from above and filling most of the frame, isolated on a plain flat white background. No text, no letters, no border, no frame, no outline, no painterly brushwork, not photorealistic, not modern.",
+        "subject": "A small kneeling soldier in a steel-grey chainmail hauberk with a mail coif and a sleeveless tan cloth tabard over it, brown leather boots, crouching low and raising one forearm over his face as a sheet of orange and yellow flame sweeps down at him from the upper left and parts around him.",
+        "ai_model": "nano-banana-2-lite",
+        "aspect_ratio": "4:3",
+        "remove_background": true
+      },
+      "estimatedCredits": 3,
+      "estimateBasis": "documented (DESIGN.md 10.0), nano-banana-2-lite"
+    },
+    {
+      "assetId": "protection-from-fire-nb2",
+      "step": "text-to-image",
+      "params": {
+        "prompt": "A small kneeling soldier in a steel-grey chainmail hauberk with a mail coif and a sleeveless tan cloth tabard over it, brown leather boots, crouching low and raising one forearm over his face as a sheet of orange and yellow flame sweeps down at him from the upper left and parts around him. A tiny spell icon for the spellbook of a 1998 fantasy PC role-playing game, made as a late-1990s pre-rendered 3D computer-graphics illustration in the style of 3D Studio renders of the time. Simple, chunky, readable shapes; smooth CG shading under a soft studio light from the upper left; muted earthy colours, steel-grey chainmail, tan and brown cloth, aged bronze, with the magic as bright glowing light. One subject, centred, seen slightly from above and filling most of the frame, isolated on a plain flat white background. No text, no letters, no border, no frame, no outline, no painterly brushwork, not photorealistic, not modern.",
+        "subject": "A small kneeling soldier in a steel-grey chainmail hauberk with a mail coif and a sleeveless tan cloth tabard over it, brown leather boots, crouching low and raising one forearm over his face as a sheet of orange and yellow flame sweeps down at him from the upper left and parts around him.",
+        "ai_model": "nano-banana-2",
+        "aspect_ratio": "4:3",
+        "remove_background": true
+      },
+      "estimatedCredits": 6,
+      "estimateBasis": "documented (DESIGN.md 10.0), nano-banana-2"
+    },
+    {
+      "assetId": "sparks",
+      "step": "text-to-image",
+      "params": {
+        "prompt": "A burst of crackling electricity: dozens of thin pale-cyan and white sparks and tiny forked lightning lines shooting out in every direction from one blazing white point at the centre, scattered with small four-pointed glints. A tiny spell icon for the spellbook of a 1998 fantasy PC role-playing game, made as a late-1990s pre-rendered 3D computer-graphics illustration in the style of 3D Studio renders of the time. Simple, chunky, readable shapes; smooth CG shading under a soft studio light from the upper left; muted earthy colours, steel-grey chainmail, tan and brown cloth, aged bronze, with the magic as bright glowing light. One subject, centred, seen slightly from above and filling most of the frame, isolated on a plain flat white background. No text, no letters, no border, no frame, no outline, no painterly brushwork, not photorealistic, not modern.",
+        "subject": "A burst of crackling electricity: dozens of thin pale-cyan and white sparks and tiny forked lightning lines shooting out in every direction from one blazing white point at the centre, scattered with small four-pointed glints.",
+        "ai_model": "nano-banana-2-lite",
+        "aspect_ratio": "4:3",
+        "remove_background": true
+      },
+      "estimatedCredits": 3,
+      "estimateBasis": "documented (DESIGN.md 10.0), nano-banana-2-lite"
+    },
+    {
+      "assetId": "water-walk",
+      "step": "text-to-image",
+      "params": {
+        "prompt": "A small soldier in a steel-grey chainmail hauberk with a mail coif and a tan cloth tabard, brown boots, striding from left to right across the surface of choppy deep-blue water, the waves rippling under his feet, a faint pale glow where his boots touch the water. A tiny spell icon for the spellbook of a 1998 fantasy PC role-playing game, made as a late-1990s pre-rendered 3D computer-graphics illustration in the style of 3D Studio renders of the time. Simple, chunky, readable shapes; smooth CG shading under a soft studio light from the upper left; muted earthy colours, steel-grey chainmail, tan and brown cloth, aged bronze, with the magic as bright glowing light. One subject, centred, seen slightly from above and filling most of the frame, isolated on a plain flat white background. No text, no letters, no border, no frame, no outline, no painterly brushwork, not photorealistic, not modern.",
+        "subject": "A small soldier in a steel-grey chainmail hauberk with a mail coif and a tan cloth tabard, brown boots, striding from left to right across the surface of choppy deep-blue water, the waves rippling under his feet, a faint pale glow where his boots touch the water.",
+        "ai_model": "nano-banana-2-lite",
+        "aspect_ratio": "4:3",
+        "remove_background": true
+      },
+      "estimatedCredits": 3,
+      "estimateBasis": "documented (DESIGN.md 10.0), nano-banana-2-lite"
+    },
+    {
+      "assetId": "stun",
+      "step": "text-to-image",
+      "params": {
+        "prompt": "A small soldier in a steel-grey chainmail hauberk and a rust-orange tabard standing dazed with his sword hanging loose at his side, his knees buckling, his whole body ringed by a thin pale-gold glow as if struck by a shockwave of earth magic. A tiny spell icon for the spellbook of a 1998 fantasy PC role-playing game, made as a late-1990s pre-rendered 3D computer-graphics illustration in the style of 3D Studio renders of the time. Simple, chunky, readable shapes; smooth CG shading under a soft studio light from the upper left; muted earthy colours, steel-grey chainmail, tan and brown cloth, aged bronze, with the magic as bright glowing light. One subject, centred, seen slightly from above and filling most of the frame, isolated on a plain flat white background. No text, no letters, no border, no frame, no outline, no painterly brushwork, not photorealistic, not modern.",
+        "subject": "A small soldier in a steel-grey chainmail hauberk and a rust-orange tabard standing dazed with his sword hanging loose at his side, his knees buckling, his whole body ringed by a thin pale-gold glow as if struck by a shockwave of earth magic.",
+        "ai_model": "nano-banana-2-lite",
+        "aspect_ratio": "4:3",
+        "remove_background": true
+      },
+      "estimatedCredits": 3,
+      "estimateBasis": "documented (DESIGN.md 10.0), nano-banana-2-lite"
+    },
+    {
+      "assetId": "bless",
+      "step": "text-to-image",
+      "params": {
+        "prompt": "An ornate aged-bronze chalice on a short stem with a round foot, filled with a soft rose-pink radiance that rises above its rim into a bright white four-pointed star of light. A tiny spell icon for the spellbook of a 1998 fantasy PC role-playing game, made as a late-1990s pre-rendered 3D computer-graphics illustration in the style of 3D Studio renders of the time. Simple, chunky, readable shapes; smooth CG shading under a soft studio light from the upper left; muted earthy colours, steel-grey chainmail, tan and brown cloth, aged bronze, with the magic as bright glowing light. One subject, centred, seen slightly from above and filling most of the frame, isolated on a plain flat white background. No text, no letters, no border, no frame, no outline, no painterly brushwork, not photorealistic, not modern.",
+        "subject": "An ornate aged-bronze chalice on a short stem with a round foot, filled with a soft rose-pink radiance that rises above its rim into a bright white four-pointed star of light.",
+        "ai_model": "nano-banana-2-lite",
+        "aspect_ratio": "4:3",
+        "remove_background": true
+      },
+      "estimatedCredits": 3,
+      "estimateBasis": "documented (DESIGN.md 10.0), nano-banana-2-lite"
+    },
+    {
+      "assetId": "meditation",
+      "step": "text-to-image",
+      "params": {
+        "prompt": "Head-and-shoulders bust of a calm middle-aged man wearing a steel-grey chainmail coif that covers his head and neck, eyes closed in meditation, a small brilliant white star of light shining from a jewel on his forehead. A tiny spell icon for the spellbook of a 1998 fantasy PC role-playing game, made as a late-1990s pre-rendered 3D computer-graphics illustration in the style of 3D Studio renders of the time. Simple, chunky, readable shapes; smooth CG shading under a soft studio light from the upper left; muted earthy colours, steel-grey chainmail, tan and brown cloth, aged bronze, with the magic as bright glowing light. One subject, centred, seen slightly from above and filling most of the frame, isolated on a plain flat white background. No text, no letters, no border, no frame, no outline, no painterly brushwork, not photorealistic, not modern.",
+        "subject": "Head-and-shoulders bust of a calm middle-aged man wearing a steel-grey chainmail coif that covers his head and neck, eyes closed in meditation, a small brilliant white star of light shining from a jewel on his forehead.",
+        "ai_model": "nano-banana-2-lite",
+        "aspect_ratio": "4:3",
+        "remove_background": true
+      },
+      "estimatedCredits": 3,
+      "estimateBasis": "documented (DESIGN.md 10.0), nano-banana-2-lite"
+    },
+    {
+      "assetId": "cure-wounds",
+      "step": "text-to-image",
+      "params": {
+        "prompt": "A small wounded soldier in a steel-grey chainmail hauberk and a tan cloth tabard lying on his back on the ground, one knee raised, and floating above him a small round glass potion flask glowing a pale warm white. A tiny spell icon for the spellbook of a 1998 fantasy PC role-playing game, made as a late-1990s pre-rendered 3D computer-graphics illustration in the style of 3D Studio renders of the time. Simple, chunky, readable shapes; smooth CG shading under a soft studio light from the upper left; muted earthy colours, steel-grey chainmail, tan and brown cloth, aged bronze, with the magic as bright glowing light. One subject, centred, seen slightly from above and filling most of the frame, isolated on a plain flat white background. No text, no letters, no border, no frame, no outline, no painterly brushwork, not photorealistic, not modern.",
+        "subject": "A small wounded soldier in a steel-grey chainmail hauberk and a tan cloth tabard lying on his back on the ground, one knee raised, and floating above him a small round glass potion flask glowing a pale warm white.",
+        "ai_model": "nano-banana-2-lite",
+        "aspect_ratio": "4:3",
+        "remove_background": true
+      },
+      "estimatedCredits": 3,
+      "estimateBasis": "documented (DESIGN.md 10.0), nano-banana-2-lite"
+    }
+  ],
+  "estimatedCredits": 27,
+  "runs": [
+    {
+      "started": "2026-10-17T22:57:45.389Z",
+      "taskIds": [
+        "01a14c15-e7f1-7536-9844-a8ed0d016b72",
+        "01a14c16-6f20-72c3-b2d0-6e12e3ed1d60",
+        "01a14c16-ddd2-7360-9cff-b6d81ea3eaa2",
+        "01a14c17-89ac-73af-a548-f872038ef7dc",
+        "01a14c18-727d-7567-aa36-ff162f948121",
+        "01a14c18-f5b8-756a-8889-9f6b5f064591",
+        "01a14c19-791e-76e0-961a-ce32fe721370",
+        "01a14c19-bf8f-747a-8af7-5014a997b900"
+      ],
+      "tasks": {
+        "protection-from-fire": {
+          "text-to-image": {
+            "taskId": "01a14c15-e7f1-7536-9844-a8ed0d016b72",
+            "status": "SUCCEEDED",
+            "consumedCredits": 3,
+            "operationId": "b006-protection-from-fire-text-to-image-r1-a1"
+          }
+        },
+        "protection-from-fire-nb2": {
+          "text-to-image": {
+            "taskId": "01a14c16-6f20-72c3-b2d0-6e12e3ed1d60",
+            "status": "SUCCEEDED",
+            "consumedCredits": 6,
+            "operationId": "b006-protection-from-fire-nb2-text-to-image-r1-a1"
+          }
+        },
+        "sparks": {
+          "text-to-image": {
+            "taskId": "01a14c16-ddd2-7360-9cff-b6d81ea3eaa2",
+            "status": "SUCCEEDED",
+            "consumedCredits": 3,
+            "operationId": "b006-sparks-text-to-image-r1-a1"
+          }
+        },
+        "water-walk": {
+          "text-to-image": {
+            "taskId": "01a14c17-89ac-73af-a548-f872038ef7dc",
+            "status": "SUCCEEDED",
+            "consumedCredits": 3,
+            "operationId": "b006-water-walk-text-to-image-r1-a1"
+          }
+        },
+        "stun": {
+          "text-to-image": {
+            "taskId": "01a14c18-727d-7567-aa36-ff162f948121",
+            "status": "SUCCEEDED",
+            "consumedCredits": 3,
+            "operationId": "b006-stun-text-to-image-r1-a1"
+          }
+        },
+        "bless": {
+          "text-to-image": {
+            "taskId": "01a14c18-f5b8-756a-8889-9f6b5f064591",
+            "status": "SUCCEEDED",
+            "consumedCredits": 3,
+            "operationId": "b006-bless-text-to-image-r1-a1"
+          }
+        },
+        "meditation": {
+          "text-to-image": {
+            "taskId": "01a14c19-791e-76e0-961a-ce32fe721370",
+            "status": "SUCCEEDED",
+            "consumedCredits": 3,
+            "operationId": "b006-meditation-text-to-image-r1-a1"
+          }
+        },
+        "cure-wounds": {
+          "text-to-image": {
+            "taskId": "01a14c19-bf8f-747a-8af7-5014a997b900",
+            "status": "SUCCEEDED",
+            "consumedCredits": 3,
+            "operationId": "b006-cure-wounds-text-to-image-r1-a1"
+          }
+        }
+      },
+      "balanceBefore": 1987,
+      "attempts": {
+        "protection-from-fire/text-to-image": 1,
+        "protection-from-fire-nb2/text-to-image": 1,
+        "sparks/text-to-image": 1,
+        "water-walk/text-to-image": 1,
+        "stun/text-to-image": 1,
+        "bless/text-to-image": 1,
+        "meditation/text-to-image": 1,
+        "cure-wounds/text-to-image": 1
+      },
+      "balanceAfter": 1960,
+      "consumedCredits": 27,
+      "finished": "2026-10-17T23:02:16.074Z"
+    }
+  ],
+  "grant": "spell-icons"
+}

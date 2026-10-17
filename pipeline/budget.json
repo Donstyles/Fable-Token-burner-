@@ -18,5 +18,20 @@
       "credits": 223,
       "date": "2026-10-17"
     }
+  ],
+  "grants": [
+    {
+      "purpose": "spell-icons",
+      "granted": 100,
+      "grantedOn": "2026-10-17",
+      "note": "Owner, 2026-10-17 night: \"you have 100 meshy credits to dial in the art style of the spell icons. You don't need to do all spells icons. I just want the prompts to be dialed in. 1 or 2 spell icons per school\" until the critics say it looks straight out of MM6.",
+      "spent": [
+        {
+          "batch": 6,
+          "credits": 27,
+          "date": "2026-10-17"
+        }
+      ]
+    }
   ]
 }

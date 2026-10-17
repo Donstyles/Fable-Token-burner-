@@ -11,6 +11,9 @@ import {
   batchFileName,
   formatBatch,
   humanoidItems,
+  iconItems,
+  imageOnlyAssetIds,
+  ICON_STYLE,
   makeBatch,
   totalCredits,
   writeBatch,
@@ -78,5 +81,23 @@ describe('batches', () => {
     expect(batch.estimatedCredits).toBe(totalCredits(batch.items));
     expect(batch.estimatedCredits).toBeGreaterThan(0);
     expect(formatBatch(batch)).toContain('awaiting approval');
+  });
+
+  it('plans an icon as one background-removed picture on the cheapest model', () => {
+    const items = iconItems({ id: 'fire-bolt', subject: 'a bolt of fire.' });
+    expect(items).toHaveLength(1);
+    expect(items[0]!.step).toBe('text-to-image');
+    expect(items[0]!.params['ai_model']).toBe('nano-banana-2-lite');
+    expect(items[0]!.params['remove_background']).toBe(true);
+    expect(items[0]!.params['prompt']).toBe(`a bolt of fire. ${ICON_STYLE}`);
+    expect(items[0]!.estimatedCredits).toBe(CREDITS.textToImage['nano-banana-2-lite']);
+  });
+
+  it('tells image-only assets from humanoids', () => {
+    const b = makeBatch(9, 'mixed', [
+      ...iconItems({ id: 'bless', subject: 'a goblet.' }),
+      ...humanoidItems('guard', 1.8, 'guard.png'),
+    ]);
+    expect(imageOnlyAssetIds(b)).toEqual(['bless']);
   });
 });

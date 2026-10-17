@@ -83,6 +83,8 @@ export interface Batch {
   name: string;
   created: string;
   approved: boolean;
+  /** The purpose-scoped grant (pipeline/budget.json `grants`) this batch spends, if any. */
+  grant?: string;
   /**
    * Creatures start as text-to-image concepts (owner, 2026-10-17: never text-to-3D). A run
    * stops after the images until they are looked at and `batch approve-images` sets this.
@@ -191,6 +193,63 @@ export function creatureItems(spec: CreatureSpec, pose: PoseMode = 'a-pose'): Ba
     },
     ...humanoidItems(spec.id, spec.height, input, spec.set ?? 'combat', pose),
   ];
+}
+
+/**
+ * A spell icon (owner, 2026-10-17): one text-to-image picture, background removed, then
+ * cropped, fitted and palettised for the spellbook (tools/lib/icon.ts). No 3D steps.
+ */
+export interface IconSpec {
+  id: string;
+  /** What the icon shows; the look is added from ICON_STYLE. */
+  subject: string;
+  /** Text-to-image model; the cheapest unless the batch says otherwise. */
+  model?: keyof typeof CREDITS.textToImage;
+  /** The style text appended to the subject; ICON_STYLE unless a pass tries another. */
+  style?: string;
+}
+
+/**
+ * The look of MM6's spell icons, from the 99 reference icons (pipeline/style.md "Spell
+ * icons"): small late-1990s pre-rendered CG vignettes, steel-grey mail, tan cloth and aged
+ * bronze under a soft key light, the magic as bright glowing light, isolated so the game
+ * lays them on its own parchment oval.
+ */
+export const ICON_STYLE =
+  'A tiny spell icon for the spellbook of a 1998 fantasy PC role-playing game, made as a ' +
+  'late-1990s pre-rendered 3D computer-graphics illustration in the style of 3D Studio ' +
+  'renders of the time. Simple, chunky, readable shapes; smooth CG shading under a soft ' +
+  'studio light from the upper left; muted earthy colours, steel-grey chainmail, tan and ' +
+  'brown cloth, aged bronze, with the magic as bright glowing light. One subject, centred, ' +
+  'seen slightly from above and filling most of the frame, isolated on a plain flat white ' +
+  'background. No text, no letters, no border, no frame, no outline, no painterly ' +
+  'brushwork, not photorealistic, not modern.';
+
+export function iconItems(spec: IconSpec): BatchItem[] {
+  const model = spec.model ?? 'nano-banana-2-lite';
+  return [
+    {
+      assetId: spec.id,
+      step: 'text-to-image',
+      params: {
+        prompt: `${spec.subject.trim()} ${spec.style ?? ICON_STYLE}`,
+        subject: spec.subject.trim(),
+        ai_model: model,
+        aspect_ratio: '4:3',
+        remove_background: true,
+      },
+      estimatedCredits: CREDITS.textToImage[model],
+      estimateBasis: `documented (DESIGN.md 10.0), ${model}`,
+    },
+  ];
+}
+
+/** True for a batch's image-only assets (icons): every item of the asset is a text-to-image step. */
+export function imageOnlyAssetIds(batch: Batch): string[] {
+  const ids = [...new Set(batch.items.map((i) => i.assetId))];
+  return ids.filter((id) =>
+    batch.items.every((i) => i.assetId !== id || i.step === 'text-to-image'),
+  );
 }
 
 export function totalCredits(items: readonly BatchItem[]): number {

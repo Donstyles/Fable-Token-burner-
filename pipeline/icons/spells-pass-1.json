@@ -1,0 +1,35 @@
+[
+  {
+    "id": "protection-from-fire",
+    "subject": "A small kneeling soldier in a steel-grey chainmail hauberk with a mail coif and a sleeveless tan cloth tabard over it, brown leather boots, crouching low and raising one forearm over his face as a sheet of orange and yellow flame sweeps down at him from the upper left and parts around him."
+  },
+  {
+    "id": "protection-from-fire-nb2",
+    "model": "nano-banana-2",
+    "subject": "A small kneeling soldier in a steel-grey chainmail hauberk with a mail coif and a sleeveless tan cloth tabard over it, brown leather boots, crouching low and raising one forearm over his face as a sheet of orange and yellow flame sweeps down at him from the upper left and parts around him."
+  },
+  {
+    "id": "sparks",
+    "subject": "A burst of crackling electricity: dozens of thin pale-cyan and white sparks and tiny forked lightning lines shooting out in every direction from one blazing white point at the centre, scattered with small four-pointed glints."
+  },
+  {
+    "id": "water-walk",
+    "subject": "A small soldier in a steel-grey chainmail hauberk with a mail coif and a tan cloth tabard, brown boots, striding from left to right across the surface of choppy deep-blue water, the waves rippling under his feet, a faint pale glow where his boots touch the water."
+  },
+  {
+    "id": "stun",
+    "subject": "A small soldier in a steel-grey chainmail hauberk and a rust-orange tabard standing dazed with his sword hanging loose at his side, his knees buckling, his whole body ringed by a thin pale-gold glow as if struck by a shockwave of earth magic."
+  },
+  {
+    "id": "bless",
+    "subject": "An ornate aged-bronze chalice on a short stem with a round foot, filled with a soft rose-pink radiance that rises above its rim into a bright white four-pointed star of light."
+  },
+  {
+    "id": "meditation",
+    "subject": "Head-and-shoulders bust of a calm middle-aged man wearing a steel-grey chainmail coif that covers his head and neck, eyes closed in meditation, a small brilliant white star of light shining from a jewel on his forehead."
+  },
+  {
+    "id": "cure-wounds",
+    "subject": "A small wounded soldier in a steel-grey chainmail hauberk and a tan cloth tabard lying on his back on the ground, one knee raised, and floating above him a small round glass potion flask glowing a pale warm white."
+  }
+]
