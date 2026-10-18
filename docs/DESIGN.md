@@ -839,9 +839,10 @@ out the way one grows (`kernel/terrain/village.ts`, `layoutVillage`):
   undo it. Dirt (the path splat) covers the square, the two lanes and an
   apron before each door; the ground between houses stays grass. The forest
   keeps 18 m clear of the village rectangle (156 × 72 m).
-- Each building and prop contributes a footprint box to the navmesh and,
-  at runtime, to the lazy cell colliders (15.1), so bandits path round the
-  houses and the party cannot walk through a wall or the well.
+- Each building and prop contributes a footprint box to the navmesh, so
+  bandits path round the houses; the party collides with the model itself,
+  its triangles in the lazy cell colliders (15.1, 16.31), so it walks up to
+  a wall or the well and under the eaves, not up to a box round them.
 - Lights: the two lantern posts (warm, range 9) and the forge glow.
 - Points: `square`, `temple`, `inn`, `store`, `smithy`, `stables`, `barn`,
   `farmhouse`, `cottage-01`… for teleports and tests. Tests: nothing on
@@ -2214,7 +2215,42 @@ that gap.
   phone's insets, a fight and a walk through the village as well as the
   standing view, and the owner's own screenshots are the last word.
 
+### 16.31 The frame and the walls (owner, 2026-10-18)
+
+The owner's phone after 16.30: "Viewport extending past the pillars? Bad
+collision on the houses".
+
+- **The view past the pillars**: the pillars stand inside the safe areas (59
+  pixels each side in landscape) while the view ran to the screen's edges,
+  so the world showed outside the frame, where MM6 had none. The band's
+  marble now runs up outside each pillar to the screen's edge, its tile
+  carried on from the band's so the veins run on as one slab (`.view-margin`,
+  `src/ui/hud.css`). An end-to-end test forces the insets and checks that
+  hiding the view changes nothing outside the pillars.
+- **Walls a step short**: each building collided as a box round its whole
+  model, eaves, porches and posts included, so the party stopped short of
+  the wall: by up to 2.15 m at the barn, 1.5 m at the stables, 1.3 m at the
+  store and the third cottage. Buildings and props now collide as their own
+  models' triangles: one Havok mesh shape a model, placed in the cell
+  colliders at each instance's position, turn and scale
+  (`src/world/level.ts`); the walk collider keeps the cave mouth only.
+  Rays fired at every building and prop from all round meet the collider
+  within a centimetre of the drawn surface; walked up to, the party stops at
+  the wall, under the eaves and on the porches. Rocks
+  keep their boxes (a rock is its box near enough). The footprint boxes
+  still go to the navmesh, so bandits path round the houses as before.
+- **Why the checks missed them**: neither shows standing in the square in a
+  desktop browser; the first needs the phone's insets, the second a walk up
+  to a wall. The walk is now part of 16.30's routine: every building
+  approached from each side and the gap to the drawn wall measured, and an
+  end-to-end test fires rays at the barn and checks its collider meets the
+  drawn walls.
+
 ## 13. Decision log
+
+- 2026-10-18 – The frame and the walls (16.31): the band's marble fills the
+  safe areas outside the pillars; buildings and props collide as their own
+  models' triangles, not boxes; the boxes stay on the navmesh.
 
 - 2026-10-18 – The phone's faults (16.30): saved settings and tuning are
   dropped by any build but the one that saved them; the camera's up vector

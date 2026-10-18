@@ -560,6 +560,8 @@ waterfalls and deserts, walkable end to end.
     had (DESIGN 16.30): stale saved tuning, a horizon rolled after combat,
     the band under the shelf inside the safe areas, the inn on its posts,
     a portrait too fine for the shell; all five fixed the same evening.
+    Then the view past the pillars and walls a step short (DESIGN 16.31):
+    marble over the safe areas, buildings colliding as their models.
 18. Remaining, in order: lasting buffs and Jump; weather states (rain, a
     sandstorm); music; the smith's hammer and the temple bell.
 
