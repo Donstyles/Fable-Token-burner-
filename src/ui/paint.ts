@@ -988,8 +988,8 @@ export function paintSlot(w: number, h: number): HTMLCanvasElement {
  * boundaries): transparent, so the band's marble runs on under every cell, holding only the
  * first cell's dark edge against the pillar and MM6's gold spandrel in the top-left corner, a
  * concave triangle of eleven rows under the gold row (the band's top rows are in hud.css),
- * lighter rows over darker ones, its first pixel and its tip darker, a dark line along its
- * slope.
+ * lighter rows over darker ones, its first pixel and its tip darker, its slope edged in lit
+ * marble above and a dark line below.
  */
 export function paintRecess(
   w: number,
@@ -1018,7 +1018,9 @@ export function paintRecess(
     g.fillRect(x0, y, Math.min(wd, w - x0), 1);
     g.fillStyle = 'rgb(140,117,66)';
     g.fillRect(x0, y, 1, 1);
-    g.fillStyle = 'rgb(99,93,82)';
+    // The slope lit marble on its upper eight rows, dark below (HUD critic, round 17: MM6's
+    // edge is 136 on its upper rows and 98 on its lower, ours was 94 on all).
+    g.fillStyle = i <= 7 ? 'rgb(148,134,123)' : 'rgb(99,93,82)';
     if (x0 + wd < w) g.fillRect(x0 + wd, y, 1, 1);
   });
   g.fillStyle = 'rgb(99,93,82)';
@@ -1243,6 +1245,36 @@ const COLLAR: readonly Rgb[] = [
 ];
 
 /**
+ * MM6's brass by its light (HUD critic, round 17: ours kept one hue and scaled it, butter in
+ * the light and olive-grey in the shade): its collars' colour at each lum in all four
+ * screenshots, cream in the light, ochre in the shade.
+ */
+const BRASS: readonly [number, Rgb][] = [
+  [84, [114, 81, 25]],
+  [104, [136, 101, 38]],
+  [129, [157, 127, 65]],
+  [154, [175, 154, 98]],
+  [177, [193, 177, 133]],
+  [200, [211, 201, 164]],
+  [219, [230, 218, 192]],
+];
+
+const lumOf = ([r, g, b]: Rgb): number => 0.299 * r + 0.587 * g + 0.114 * b;
+
+/** Brass of lum `l` in MM6's colour at that lum, capped at 210 (MM6's collars top out at 208). */
+function brass(l: number): Rgb {
+  const v = Math.min(210, l);
+  let k = 1;
+  while (k < BRASS.length - 1 && v > BRASS[k]![0]) k++;
+  const [l0, c0] = BRASS[k - 1]!;
+  const [l1, c1] = BRASS[k]!;
+  const c = mix(c0, c1, Math.max(0, Math.min(1, (v - l0) / (l1 - l0))));
+  // Scaled to keep the lum exactly.
+  const s = v / lumOf(c);
+  return [Math.min(255, c[0] * s), Math.min(255, c[1] * s), Math.min(255, c[2] * s)];
+}
+
+/**
  * A marble pillar as MM6 shaded it (critics, rounds 9 to 11): veins running down the shaft
  * within thirty degrees of upright, painted on a wider tile and cropped, then every column
  * scaled to the convex profile 96 plus 75 times the cosine of a quarter turn over t to the
@@ -1290,15 +1322,17 @@ export function paintPillar(w: number, h: number, marble: HTMLCanvasElement): HT
   }
   // The collar again at rows 120 to 130, turned as the capital's (HUD critic, round 16:
   // MM6's shaft wears it at 31 to 41 and again at 120 to 130, in the same colours, in all
-  // four screenshots; ours ran 146 plain rows to the plinth).
+  // four screenshots; ours ran 146 plain rows to the plinth), in MM6's brass by its light
+  // (HUD critic, round 17).
   if (h >= 160)
     for (let x = 0; x < w; x++) {
       const k = 0.72 + 0.54 * Math.cos((Math.PI / 2) * Math.pow(x / Math.max(1, w - 1), 0.7));
-      COLLAR.forEach(([r, gr, b], j) => {
+      COLLAR.forEach((band, j) => {
         const i = ((120 + j) * w + x) * 4;
-        d[i] = Math.round(r * k);
-        d[i + 1] = Math.round(gr * k);
-        d[i + 2] = Math.round(b * k);
+        const c = brass(lumOf(band) * k);
+        d[i] = Math.round(c[0]);
+        d[i + 1] = Math.round(c[1]);
+        d[i + 2] = Math.round(c[2]);
       });
     }
   g.putImageData(img, 0, 0);
@@ -1387,17 +1421,14 @@ export function paintCapital(w: number, h: number, ring: 'below' | 'above'): HTM
     [190, 173, 123],
     [199, 184, 139],
   ];
+  // The ring in MM6's brass by its light (HUD critic, round 17).
   for (let y = 0; y < collar; y++) {
     const band = bands[Math.min(bands.length - 1, y)]!;
     for (let x = rx; x < rx + rw; x++) {
       const t = (x - rx) / Math.max(1, rw - 1);
       const k = 0.78 + 0.32 * Math.cos((Math.PI / 2) * Math.pow(t, 0.7));
-      px(
-        g,
-        x,
-        y,
-        `rgb(${Math.min(255, Math.round(band[0] * k))},${Math.min(255, Math.round(band[1] * k))},${Math.min(255, Math.round(band[2] * k))})`,
-      );
+      const b = brass(lumOf(band) * k);
+      px(g, x, y, `rgb(${Math.round(b[0])},${Math.round(b[1])},${Math.round(b[2])})`);
     }
   }
   quantise565(g, w, h);
@@ -1627,16 +1658,16 @@ function paintAcanthus(w: number, h: number): HTMLCanvasElement {
       else put(x, y, sky, 0);
     }
   });
-  // MM6's collar: eleven rows in five bands.
+  // MM6's collar: eleven rows in five bands, in its brass by its light, cream to ochre (HUD
+  // critic, round 17).
   for (let j = 0; j < collar; j++) {
-    const [r, gr, b] = COLLAR[Math.min(COLLAR.length - 1, j)]!;
+    const band = COLLAR[Math.min(COLLAR.length - 1, j)]!;
     for (let x = 0; x < w; x++) {
       if (x < m || x >= m + shaft) {
         put(x, top + j, sky, 0);
         continue;
       }
-      const k = turn(x);
-      put(x, top + j, [r * k, gr * k, b * k]);
+      put(x, top + j, brass(lumOf(band) * turn(x)));
     }
   }
   g.putImageData(img, 0, 0);
@@ -1715,7 +1746,8 @@ export function paintCartouche(w: number, h: number, pressed: boolean): HTMLCanv
     // MM6's polished brass (HUD critic, round 15): darker at the very top, brightest a fifth
     // of the way down; then its reflected horizon (HUD critic, round 16: MM6's four buttons
     // all dip to 51-82 at 0.45 to 0.65 of the height and rise to 104-113 at 0.7 to 0.85,
-    // where ours fell the whole way): down to 62, a second lit band of 128, then 48.
+    // where ours fell the whole way): down to 62, a second lit band of 109, then 48 (HUD
+    // critic, round 17: 128 stretched to a row mean of 144 there, a cream foot).
     const pts: [number, number][] = [
       [0, 96],
       [0.1, 124],
@@ -1723,8 +1755,8 @@ export function paintCartouche(w: number, h: number, pressed: boolean): HTMLCanv
       [0.32, 124],
       [0.45, 84],
       [0.57, 62],
-      [0.7, 100],
-      [0.8, 128],
+      [0.7, 96],
+      [0.8, 109],
       [0.9, 84],
       [1, 48],
     ];
