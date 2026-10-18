@@ -42,9 +42,10 @@
   image-rendering: pixelated;
 }
 .hud-clock-time {
-  /* The hour in MM6's yellow well numerals (paint.ts `paintNumerals`), centred, whole pixels. */
+  /* The hour in MM6's yellow well numerals (paint.ts `paintNumerals`), set from the left by a
+     whole-pixel margin (hud.ts), so a centring never lands on half a pixel. */
   display: flex;
-  justify-content: center;
+  justify-content: flex-start;
   height: 15px;
   padding-top: 1.5px;
 }
@@ -75,11 +76,11 @@
   padding: 0 0 0 64.5px;
 }
 .hud-band::before {
-  /* MM6's cell top run across the gaps: one light, one dark, one gold row (HUD critic,
-     round 12). */
+  /* MM6's cell top run across the gaps and over the clock: one light, one dark, one gold row
+     (HUD critic, rounds 12 and 14). */
   content: '';
   position: absolute;
-  left: 0;
+  left: -88.5px;
   right: 0;
   top: 0;
   height: 4.5px;
@@ -158,10 +159,10 @@
   image-rendering: pixelated;
 }
 .hud-tubes {
-  /* The tubes on the marble, a shadow at the left (paint.ts `tube-slot`), three pixels of
-     marble between them. */
+  /* The tubes on the marble, a shadow at the left (paint.ts `tube-slot`), two pixels of
+     marble between them (HUD critic, round 14). */
   display: flex;
-  gap: 4.5px;
+  gap: 3px;
   /* The well's walls (paint.ts `tube-slot`): three pixels at the left and the top, a line
      under the caps. */
   padding: 4.5px 4.5px 1.5px;
@@ -170,7 +171,8 @@
 }
 .hud-bar {
   position: relative;
-  width: 9px;
+  /* Four UI pixels, nearer MM6's slender rods at the band's scale (HUD critic, round 14). */
+  width: 6px;
   height: 66px;
   background: var(--paint) center / 100% 100% no-repeat;
   image-rendering: pixelated;
@@ -283,7 +285,9 @@
   height: 63px;
 }
 .view-plinth {
+  /* MM6's foot: the ring over a turned base, thirty-two rows (HUD critic, round 14). */
   bottom: 0;
+  height: 48px;
 }
 .view-lintel {
   position: absolute;
