@@ -96,7 +96,8 @@ describe('derived numbers', () => {
     expect(equipItem(c.equipment, createItem('leather-armor'), c.skills).ok).toBe(false);
     c.skills.leather = { level: 1, rank: 'normal' };
     equipItem(c.equipment, createItem('leather-armor'), c.skills);
-    expect(armorClass(c)).toBe(9);
+    // Speed, leather's 4 and Leather 1, which MM6 adds from Normal.
+    expect(armorClass(c)).toBe(10);
     expect(recoverySec(c, true)).toBe(Infinity);
   });
 

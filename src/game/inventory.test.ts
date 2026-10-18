@@ -76,6 +76,48 @@ describe('recovery by type (MM6-GAPS.md 8, GF-M)', () => {
   });
 });
 
+describe('armour skills (MM6-GAPS.md 4, RPGC)', () => {
+  it('add the body armour’s skill to armour class at every rank', () => {
+    const eq = createEquipment();
+    const chain: SkillSet = { chain: { level: 3, rank: 'normal' } };
+    equipItem(eq, createItem('chain-mail'), chain);
+    expect(equipmentArmor(eq, chain)).toBe(8 + 3);
+    chain.chain!.rank = 'expert';
+    expect(equipmentArmor(eq, chain)).toBe(8 + 3);
+    chain.chain!.rank = 'master';
+    expect(equipmentArmor(eq, chain)).toBe(8 + 3);
+  });
+
+  it('match screenshot-21: chain mail, a shield, Chain 1 and Shield 1 give 14', () => {
+    // The chain mail's 8 and the shield's 4 are assumed (MM6-GAPS.md 4); Speed 13 adds 0.
+    const eq = createEquipment();
+    const s: SkillSet = {
+      chain: { level: 1, rank: 'normal' },
+      shield: { level: 1, rank: 'normal' },
+    };
+    equipItem(eq, createItem('chain-mail'), s);
+    equipItem(eq, createItem('shield'), s);
+    expect(equipmentArmor(eq, s)).toBe(14);
+  });
+
+  it('keep the recovery penalty at Normal, reduce it at Expert and remove it at Master', () => {
+    const eq = createEquipment();
+    const s: SkillSet = {
+      chain: { level: 1, rank: 'normal' },
+      shield: { level: 1, rank: 'normal' },
+    };
+    equipItem(eq, createItem('chain-mail'), s);
+    equipItem(eq, createItem('shield'), s);
+    expect(equipmentRecoveryPenalty(eq, s)).toBe(20 + 10);
+    s.chain!.rank = 'expert';
+    s.shield!.rank = 'expert';
+    expect(equipmentRecoveryPenalty(eq, s)).toBe(10 + 5);
+    s.chain!.rank = 'master';
+    s.shield!.rank = 'master';
+    expect(equipmentRecoveryPenalty(eq, s)).toBe(0);
+  });
+});
+
 describe('inventory grid', () => {
   it('is 14 by 9 and refuses overlaps and the edge', () => {
     const grid = createGrid();
@@ -168,14 +210,15 @@ describe('equipment', () => {
     expect(equippedItems(eq)).toHaveLength(6);
   });
 
-  it('sums armour with skill bonuses and lifts the penalty at Expert', () => {
+  it('sums armour with skill bonuses and halves the penalty at Expert', () => {
     const eq = createEquipment();
     equipItem(eq, createItem('leather-armor'), skills);
     equipItem(eq, createItem('shield'), skills);
     equipItem(eq, createItem('helmet'), skills);
-    // Leather 4 + expert 3×1, shield 4 + 2×1, helmet 2.
+    // Leather 4 + expert 3, shield 4 + 2×1, helmet 2.
     expect(equipmentArmor(eq, skills)).toBe(4 + 3 + 4 + 2 + 2);
-    expect(equipmentRecoveryPenalty(eq, skills)).toBe(ARMOR_RECOVERY.shield);
+    // Expert leather's 10 halved, Normal shield's 10 whole.
+    expect(equipmentRecoveryPenalty(eq, skills)).toBe(5 + ARMOR_RECOVERY.shield);
     const broken = createItem('helmet');
     broken.broken = true;
     eq.helmet = broken;

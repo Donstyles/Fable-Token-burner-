@@ -17,7 +17,7 @@ import {
   weaponRecovery,
 } from './items';
 import type { Dice } from './rng';
-import { hasSkill, rankIndex, RANK_MULTIPLIER, type SkillSet } from './skills';
+import { hasSkill, RANK_MULTIPLIER, type SkillSet } from './skills';
 
 export const GRID_WIDTH = 14;
 export const GRID_HEIGHT = 9;
@@ -204,8 +204,9 @@ export function equippedItems(eq: Equipment): ItemInstance[] {
 }
 
 /**
- * Armour class from equipment and armour skills: every piece's armour value, plus the skill
- * bonus for body armour (skill × 0 / 1 / 2 by rank) and the shield (skill × 1 / 2 / 3).
+ * Armour class from equipment and armour skills: every piece's armour value, plus the body
+ * armour's skill at every rank and the Shield skill × 1 / 2 / 3 by rank (MM6-GAPS.md 4, RPGC,
+ * screenshot-23).
  */
 export function equipmentArmor(eq: Equipment, skills: SkillSet): number {
   let ac = 0;
@@ -216,22 +217,25 @@ export function equipmentArmor(eq: Equipment, skills: SkillSet): number {
     if (!def.skill) continue;
     const s = skills[def.skill];
     if (!s) continue;
-    if (def.kind === 'armor') ac += s.level * rankIndex(s.rank);
+    if (def.kind === 'armor') ac += s.level;
     if (def.kind === 'shield') ac += s.level * RANK_MULTIPLIER[s.rank];
   }
   return ac;
 }
 
-/** Recovery added by armour and shield in MM6's units, lifted once their skill is Expert. */
+/**
+ * Recovery added by armour and shield in MM6's units: whole at Normal, reduced at Expert, gone at
+ * Master in the piece's skill (MM6-GAPS.md 4, RPGC). By how much Expert reduces it no source
+ * says; half is ours.
+ */
 export function equipmentRecoveryPenalty(eq: Equipment, skills: SkillSet): number {
   let penalty = 0;
   for (const item of equippedItems(eq)) {
     const def = itemDef(item);
     const added = armorRecovery(def);
     if (!added) continue;
-    const s = def.skill ? skills[def.skill] : undefined;
-    if (s && rankIndex(s.rank) >= 1) continue;
-    penalty += added;
+    const rank = def.skill ? (skills[def.skill]?.rank ?? 'normal') : 'normal';
+    penalty += rank === 'master' ? 0 : rank === 'expert' ? Math.floor(added / 2) : added;
   }
   return penalty;
 }

@@ -581,7 +581,9 @@ wider steps above; 3 is −5, 0 is −6). Should the manual differ, the table in
 
 - Chance to hit: (15 + 2 × attack bonus) / (30 + 2 × attack bonus + armour
   class), the documented MM6 formula. Melee attack bonus = Accuracy bonus +
-  weapon skill; armour class = Speed bonus + armour.
+  weapon skill; armour class = Speed bonus + armour, where armour is each
+  piece's value plus the body armour's skill at every rank and the Shield
+  skill × 1 / 2 / 3 by rank (MM6-GAPS.md 4, RPGC).
 - A monster hits a member with chance (5 + 2 × monster level) / (10 + 2 ×
   monster level + armour class) (MM6-GAPS.md 8, GF-M): a level-2 bandit
   against armour class 10 hits 9 times in 24. `resolveMonsterAttack` in
@@ -594,15 +596,17 @@ wider steps above; 3 is −5, 0 is −6). Should the manual differ, the table in
 - Recovery is MM6's sum in its units (MM6-GAPS.md 8, GF-M): the weapon
   type's base (Staff, Axe, Bow and bare hands 100, Sword 90, Spear and Mace
   80, Dagger 60) plus worn armour (Shield and Leather 10, Chain 20, Plate
-  30), less the Speed effect and, from Expert in Sword, Axe or Bow, the
-  skill; at least 30 for melee, 0 for a bow. A struck member recovers 20 −
-  Endurance effect (nothing from Endurance 350), keeping any longer
-  recovery, and a selected member left recovering hands the selection to
-  the next ready one (GF-P); `Party.takeDamage` does this when the runtime
-  passes the simulated time, which `src/dev` does not yet. MM6's real-time
-  rate is unverified; we run 60 units a second, as MM7's engine does
-  (OpenEnroth multiplies recovery by 2.1333 at MMX's 128 ticks a second).
-  MM6-GAPS.md 8's reading of 128 alone would halve every recovery.
+  30; whole at Normal in its skill, gone at Master, and halved at Expert,
+  which is ours: MM6 reduces it by an amount no source gives), less the
+  Speed effect and, from Expert in Sword, Axe or Bow, the skill; at least
+  30 for melee, 0 for a bow. A struck member recovers 20 − Endurance effect
+  (nothing from Endurance 350), keeping any longer recovery, and a
+  selected member left recovering hands the selection to the next ready
+  one (GF-P); `Party.takeDamage` does this when the runtime passes the
+  simulated time, which `src/dev` does not yet. MM6's real-time rate is
+  unverified; we run 60 units a second, as MM7's engine does (OpenEnroth
+  multiplies recovery by 2.1333 at MMX's 128 ticks a second). MM6-GAPS.md
+  8's reading of 128 alone would halve every recovery.
 - Tapping a monster attacks with the selected member if ready, otherwise
   the next ready one; the selection then advances to the next ready member
   (DESIGN 7.1). A fallen member is skipped.
@@ -1840,7 +1844,8 @@ credit grant to dial in the icons' style, one or two per school).
   below 0 hit points, dead below minus Endurance; monsters hit by level;
   MM6's spell costs, Cure Disease at Body 8; Body Building and Meditation
   × class factor, Learning 9 % + skill; recovery in MM6's units at 60 a
-  second (ours), with hit recovery.
+  second (ours), with hit recovery; armour skills add AC from Normal, the
+  armour penalty halved at Expert (ours) and gone at Master.
 
 - 2026-10-17 – Round 12 (16.22): the spellbook as MM6's one spread with
   bookmarks and a place per spell level; spell icons as one bitmap on

@@ -24,11 +24,11 @@ describe('character-backed members', () => {
     expect(m.hp).toBe(70);
     expect(m.attackBonus).toBe(6);
     expect(m.damage).toEqual({ count: 3, sides: 3, bonus: 7 });
-    expect(m.armorClass).toBe(9);
+    expect(m.armorClass).toBe(10);
     // A long sword's 90 and leather's 10, less the Speed effect, at 60 units a second.
     expect(m.recoverySec).toBeCloseTo((90 + 10 - statBonus(21)) / 60);
     expect(m.def.meleeSkill).toBe(1);
-    expect(m.def.armor).toBe(4);
+    expect(m.def.armor).toBe(5);
     expect(m.isReady(0)).toBe(true);
   });
 
