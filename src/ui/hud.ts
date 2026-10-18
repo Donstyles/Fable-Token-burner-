@@ -188,8 +188,8 @@ export function createHud(parent: HTMLElement, party: Party, hooks: HudHooks): H
         digits.className = 'hud-numerals';
         digits.style.width = `${digits.width * PX}px`;
         digits.style.height = `${digits.height * PX}px`;
-        // Centred in the clock's 51 UI pixels on a whole pixel (HUD critic, round 14).
-        digits.style.marginLeft = `${Math.floor((51 - digits.width) / 2) * PX}px`;
+        // Centred in the clock's 76 UI pixels on a whole pixel (HUD critic, round 14).
+        digits.style.marginLeft = `${Math.floor((76 - digits.width) / 2) * PX}px`;
         clockTime.replaceChildren(digits);
         clockTime.setAttribute('aria-label', time);
         snapClock();

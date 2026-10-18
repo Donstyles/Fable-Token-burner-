@@ -222,7 +222,7 @@ function paintWood(w: number, h: number, seed: number): HTMLCanvasElement {
     g.fillRect(x0, 0, 1, h);
     x0 += board;
   }
-  for (let i = 0; i < 1800; i++) {
+  for (let i = 0; i < Math.round((1800 * w * h) / (256 * 168)); i++) {
     const tone = 128 + (r() - 0.5) * 70;
     dab(g, w, h, r() * w, r() * h, 0.8, 0.8, 0, tone, 0.5);
   }
@@ -263,7 +263,8 @@ function paintMahogany(w: number, h: number, seed: number): HTMLCanvasElement {
   const grey = (t: number): string => `rgb(${Math.round(t)},${Math.round(t)},${Math.round(t)})`;
   // The broad figure (talk critic, round 13: MM6's panel varies over fifteen pixels twice
   // as much): five long dabs, darker and lighter.
-  for (let i = 0; i < 5; i++) {
+  const area = (w * h) / 65536;
+  for (let i = 0; i < Math.round(5 * area); i++) {
     dab(
       g,
       w,
@@ -282,14 +283,14 @@ function paintMahogany(w: number, h: number, seed: number): HTMLCanvasElement {
   // brown stroke two pixels wider so its edge steps through dark brown, not black; round 13:
   // that stroke at a grey that lands a tone above the dark, (51,25,14), so the edge steps).
   const phi = r() * 10;
-  const bands = 120;
+  const bands = Math.round((120 * w) / 256);
   const order = Array.from({ length: bands }, (_, i) => i);
   for (let i = bands - 1; i > 0; i--) {
     const j = Math.floor(r() * (i + 1));
     [order[i], order[j]] = [order[j]!, order[i]!];
   }
   for (let i = 0; i < bands; i++) {
-    const dark = i < 70;
+    const dark = i < Math.round((70 * w) / 256);
     const x0 = ((order[i]! + r()) * w) / bands;
     const slope = (r() - 0.5) * 0.3;
     const full = r() < 1 / 3;
@@ -312,7 +313,7 @@ function paintMahogany(w: number, h: number, seed: number): HTMLCanvasElement {
       stroke(g, w, h, pts, grey(165 + r() * 35), r() < 0.5 ? 1 : 2);
     }
   }
-  for (let i = 0; i < 6; i++) {
+  for (let i = 0; i < Math.round(6 * area); i++) {
     const kx = r() * w;
     const ky = r() * h;
     const tilt = (r() - 0.5) * 0.3;
@@ -512,15 +513,17 @@ let surfaces: Surfaces | null = null;
 /** Paint the surfaces once and hand them to CSS as `--stone`, `--stone-dark`, `--wood`... */
 export function installPaint(): Surfaces {
   if (surfaces) return surfaces;
+  // Tiles half again as wide as before the pitch went to one CSS pixel, so they repeat as
+  // seldom across the screen; the recipes stay in pixels, MM6's.
   surfaces = {
-    marble: paintMarble(256, 256, 7),
-    marbleDark: paintMarble(256, 256, 19, [122, 113, 108], 0.9),
-    slate: paintSlate(256, 256, 21),
-    wood: paintWood(256, 168, 11),
-    leather: paintLeather(192, 192, 5),
-    parchment: paintParchment(256, 256, 3),
-    mahogany: paintMahogany(256, 256, 17),
-    rose: paintRose(256, 256, 29),
+    marble: paintMarble(384, 384, 7),
+    marbleDark: paintMarble(384, 384, 19, [122, 113, 108], 0.9),
+    slate: paintSlate(384, 384, 21),
+    wood: paintWood(384, 252, 11),
+    leather: paintLeather(288, 288, 5),
+    parchment: paintParchment(384, 384, 3),
+    mahogany: paintMahogany(384, 384, 17),
+    rose: paintRose(384, 384, 29),
   };
   const root = document.documentElement.style;
   const set = (name: string, c: HTMLCanvasElement): void => {
@@ -539,17 +542,22 @@ export function installPaint(): Surfaces {
   return surfaces;
 }
 
+/** Line art on its grid drawn `s` times as large, the pen still one pixel wide. */
+type Art = (s: number) => Pt[];
+const at = (s: number, pts: readonly Pt[]): Pt[] => pts.map(([x, y]) => [x * s, y * s]);
+const pen = (s: number, pts: readonly Pt[]): Pt[] => polyline(at(s, pts));
+
 /**
  * The shelf's emblems, as MM6's reference shelf drew its sword, leaf, globe and key (critics,
  * rounds 9 to 11): one-pixel lines on the grid of an 18 by 28 box, solid only where the object
  * is solid; a rapier on the diagonal, a satchel, a leaf, a key, a latticed globe.
  */
-export const EMBLEM_ART: Record<string, () => Pt[]> = {
+export const EMBLEM_ART: Record<string, Art> = {
   // A sword that reads as one (HUD critic, round 12: the curled guard and the blob of a
   // pommel read as a broom): a one-pixel blade at fifteen degrees from upright, a straight
   // seven-pixel guard square to it at seven tenths of its length, a three-pixel grip and a
   // two-by-two pommel.
-  sheet: () => {
+  sheet: (s) => {
     const along = (t: number): [number, number] => [
       14 - t * Math.sin(Math.PI / 12),
       0.5 + t * Math.cos(Math.PI / 12),
@@ -558,165 +566,171 @@ export const EMBLEM_ART: Record<string, () => Pt[]> = {
     const guard = along(18.5);
     const pommel = along(23);
     return [
-      ...polyline([along(0), along(18.5)]),
-      ...polyline([
+      ...pen(s, [along(0), along(18.5)]),
+      ...pen(s, [
         [guard[0] - 3.5 * across[0], guard[1] - 3.5 * across[1]],
         [guard[0] + 3.5 * across[0], guard[1] + 3.5 * across[1]],
       ]),
-      ...polyline([along(18.5), along(21.5)]),
-      ...fill([
-        [pommel[0] - 1, pommel[1] - 1],
-        [pommel[0] + 1, pommel[1] - 1],
-        [pommel[0] + 1, pommel[1] + 1],
-        [pommel[0] - 1, pommel[1] + 1],
-      ]),
+      ...pen(s, [along(18.5), along(21.5)]),
+      ...fill(
+        at(s, [
+          [pommel[0] - 1, pommel[1] - 1],
+          [pommel[0] + 1, pommel[1] - 1],
+          [pommel[0] + 1, pommel[1] + 1],
+          [pommel[0] - 1, pommel[1] + 1],
+        ]),
+      ),
     ];
   },
-  items: () => [
-    ...polyline([
+  items: (s) => [
+    ...pen(s, [
       [3, 10],
       [14, 10],
       [16, 26],
       [1, 26],
       [3, 10],
     ]),
-    ...polyline([
+    ...pen(s, [
       [3, 10],
       [8.5, 16],
       [14, 10],
     ]),
-    ...polyline(quad([6, 10], [8.5, 2], [11, 10])),
-    ...fill([
-      [7.5, 15.5],
-      [9.5, 15.5],
-      [9.5, 17.5],
-      [7.5, 17.5],
-    ]),
+    ...pen(s, quad([6, 10], [8.5, 2], [11, 10])),
+    ...fill(
+      at(s, [
+        [7.5, 15.5],
+        [9.5, 15.5],
+        [9.5, 17.5],
+        [7.5, 17.5],
+      ]),
+    ),
   ],
-  spells: () => [
-    ...polyline(quad([3, 26], [1, 8], [15, 1])),
-    ...polyline(quad([3, 26], [17, 17], [15, 1])),
-    ...polyline(quad([3, 26], [8, 13], [15, 1])),
-    ...polyline([
+  spells: (s) => [
+    ...pen(s, quad([3, 26], [1, 8], [15, 1])),
+    ...pen(s, quad([3, 26], [17, 17], [15, 1])),
+    ...pen(s, quad([3, 26], [8, 13], [15, 1])),
+    ...pen(s, [
       [3, 26],
       [1, 27],
     ]),
   ],
-  quests: () => [
-    ...polyline(arc(6, 6, 4, 4, 0, Math.PI * 2, 32)),
-    ...polyline([
+  quests: (s) => [
+    ...pen(s, arc(6, 6, 4, 4, 0, Math.PI * 2, 32)),
+    ...pen(s, [
       [8.8, 8.8],
       [14.5, 26],
     ]),
-    ...polyline([
+    ...pen(s, [
       [12.7, 22.3],
       [15.5, 21.3],
     ]),
-    ...polyline([
+    ...pen(s, [
       [13.7, 25.2],
       [16.5, 24.2],
     ]),
   ],
-  map: () => [
-    ...polyline(arc(8.5, 14, 8, 8, 0, Math.PI * 2, 48)),
-    ...polyline([
+  map: (s) => [
+    ...pen(s, arc(8.5, 14, 8, 8, 0, Math.PI * 2, 48)),
+    ...pen(s, [
       [0.5, 14],
       [16.5, 14],
     ]),
-    ...polyline(quad([2, 9.5], [8.5, 10.8], [15, 9.5])),
-    ...polyline(quad([2, 18.5], [8.5, 19.8], [15, 18.5])),
-    ...polyline([
+    ...pen(s, quad([2, 9.5], [8.5, 10.8], [15, 9.5])),
+    ...pen(s, quad([2, 18.5], [8.5, 19.8], [15, 18.5])),
+    ...pen(s, [
       [8.5, 6],
       [8.5, 22],
     ]),
-    ...polyline(arc(8.5, 14, 4, 8, -Math.PI / 2, Math.PI / 2, 24)),
-    ...polyline(arc(8.5, 14, 4, 8, Math.PI / 2, (Math.PI * 3) / 2, 24)),
+    ...pen(s, arc(8.5, 14, 4, 8, -Math.PI / 2, Math.PI / 2, 24)),
+    ...pen(s, arc(8.5, 14, 4, 8, Math.PI / 2, (Math.PI * 3) / 2, 24)),
   ],
 };
 
 /** The class sigils in the portrait ovals, the same one-pixel gold on an 18-pixel box. */
-export const SIGIL_ART: Record<string, () => Pt[]> = {
-  knight: () => [
-    ...polyline([
+export const SIGIL_ART: Record<string, Art> = {
+  knight: (s) => [
+    ...pen(s, [
       [9, 1],
       [9, 11],
     ]),
-    ...polyline([
+    ...pen(s, [
       [5, 11],
       [13, 11],
     ]),
-    ...polyline([
+    ...pen(s, [
       [9, 12],
       [9, 15],
     ]),
-    ...fill([
-      [7.5, 15.5],
-      [10.5, 15.5],
-      [10.5, 17.5],
-      [7.5, 17.5],
-    ]),
+    ...fill(
+      at(s, [
+        [7.5, 15.5],
+        [10.5, 15.5],
+        [10.5, 17.5],
+        [7.5, 17.5],
+      ]),
+    ),
   ],
-  paladin: () => [
-    ...polyline([
+  paladin: (s) => [
+    ...pen(s, [
       [3, 2],
       [15, 2],
       [15, 8],
     ]),
-    ...polyline(quad([15, 8], [15, 14], [9, 17])),
-    ...polyline(quad([9, 17], [3, 14], [3, 8])),
-    ...polyline([
+    ...pen(s, quad([15, 8], [15, 14], [9, 17])),
+    ...pen(s, quad([9, 17], [3, 14], [3, 8])),
+    ...pen(s, [
       [3, 8],
       [3, 2],
     ]),
-    ...polyline([
+    ...pen(s, [
       [9, 4],
       [9, 13],
     ]),
-    ...polyline([
+    ...pen(s, [
       [6, 7],
       [12, 7],
     ]),
   ],
-  archer: () => [
-    ...polyline(quad([5, 1], [14, 9], [5, 17])),
-    ...polyline([
+  archer: (s) => [
+    ...pen(s, quad([5, 1], [14, 9], [5, 17])),
+    ...pen(s, [
       [5, 1],
       [5, 17],
     ]),
-    ...polyline([
+    ...pen(s, [
       [2, 9],
       [16, 9],
     ]),
-    ...polyline([
+    ...pen(s, [
       [13, 6],
       [16, 9],
       [13, 12],
     ]),
   ],
-  cleric: () => [
-    ...polyline(arc(9, 4.5, 3, 3, 0, Math.PI * 2, 24)),
-    ...polyline([
+  cleric: (s) => [
+    ...pen(s, arc(9, 4.5, 3, 3, 0, Math.PI * 2, 24)),
+    ...pen(s, [
       [9, 8],
       [9, 17],
     ]),
-    ...polyline([
+    ...pen(s, [
       [5, 11],
       [13, 11],
     ]),
   ],
-  sorcerer: () => {
+  sorcerer: (s) => {
     const pts: Pt[] = [];
     for (let i = 0; i <= 10; i++) {
       const a = -Math.PI / 2 + (i * Math.PI) / 5;
       const rr = i % 2 === 0 ? 8 : 3.3;
       pts.push([9 + rr * Math.cos(a), 9.5 + rr * Math.sin(a)]);
     }
-    return polyline(pts);
+    return pen(s, pts);
   },
-  druid: () => [
-    ...polyline(quad([3, 16], [1, 4], [15, 2])),
-    ...polyline(quad([3, 16], [16, 14], [15, 2])),
-    ...polyline(quad([3, 16], [8, 9], [15, 2])),
+  druid: (s) => [
+    ...pen(s, quad([3, 16], [1, 4], [15, 2])),
+    ...pen(s, quad([3, 16], [16, 14], [15, 2])),
+    ...pen(s, quad([3, 16], [8, 9], [15, 2])),
   ],
 };
 
@@ -804,11 +818,24 @@ function drawGold(
   g.putImageData(img, 0, 0);
 }
 
-/** A class sigil for a portrait oval until the portraits are painted. */
+/**
+ * A class sigil for a portrait oval until the member's portraits come, centred in the ring,
+ * its 18-pixel grid drawn twice as large to fill MM6's oval as it filled the old one.
+ */
 export function paintSigil(w: number, h: number, classId: string): HTMLCanvasElement {
   const [c, g] = canvas(w, h);
   const art = SIGIL_ART[classId];
-  if (art) drawGold(g, w, h, art(), Math.floor((w - 18) / 2), Math.floor((h - 18) / 2), w * 3 + h);
+  const s = 2;
+  if (art)
+    drawGold(
+      g,
+      w,
+      h,
+      art(s),
+      Math.floor((w - 18 * s) / 2),
+      Math.floor((h - 18 * s) / 2),
+      w * 3 + h,
+    );
   return c;
 }
 
@@ -1119,9 +1146,13 @@ export function paintSpine(w: number, h: number, emblem: string | null = null): 
       g.fillRect(x, y + 1, 1, 4);
     }
   }
+  // The emblem's 18 by 28 grid half again as large (the pitch went from one and a half CSS
+  // pixels to one, the spine kept its size), centred between the bands.
   const art = emblem ? EMBLEM_ART[emblem] : undefined;
+  const s = 1.5;
+  const top = bandTop + 6 + Math.max(0, Math.floor((bandBottom - bandTop - 6 - 28 * s) / 2));
   if (art)
-    drawGold(g, w, h, art(), Math.floor((w - 18) / 2), bandTop + 6, w * 17 + h, emblem === 'map');
+    drawGold(g, w, h, art(s), Math.floor((w - 18 * s) / 2), top, w * 17 + h, emblem === 'map');
   dither(g, w, h, 2);
   quantise565(g, w, h);
   return c;
@@ -1159,10 +1190,10 @@ export function paintTube(w: number, h: number, kind: 'empty' | 'hp' | 'sp'): HT
     [33, 28, 24],
   ];
   const ramp = kind === 'sp' ? blue : kind === 'hp' ? green : glass;
-  // Four columns, the ramp's middle four (HUD critic, round 14: six read as thick bars beside
-  // a small oval, the band being drawn at half MM6's scale).
+  // The whole ramp across MM6's six columns, now the band is drawn at MM6's scale (HUD
+  // critic, round 14: at half its scale six read as thick bars, and four were drawn).
   for (let x = 0; x < w; x++) {
-    const k = 1 + Math.min(3, Math.floor((x / Math.max(1, w)) * 4));
+    const k = Math.min(5, Math.floor((x / Math.max(1, w)) * 6));
     const [cr, cg, cb] = ramp[k]!;
     g.fillStyle = `rgb(${cr},${cg},${cb})`;
     g.fillRect(x, 0, 1, h);
@@ -1199,8 +1230,8 @@ export function paintTubeCaps(w: number, h: number): HTMLCanvasElement {
 }
 
 /**
- * A condition gem, as MM6's (HUD critic, round 15): an upright stone five by seven, lit at
- * its upper left, no ring; its heart colour by the member's state.
+ * A condition gem, as MM6's (HUD critic, round 15): an upright stone eight by eleven, MM6's
+ * size beside its oval, lit at its upper left, no ring; its heart colour by the member's state.
  */
 export function paintGem(w: number, h: number, kind: string): HTMLCanvasElement {
   const [c, g] = canvas(w, h);
@@ -1217,9 +1248,21 @@ export function paintGem(w: number, h: number, kind: string): HTMLCanvasElement 
     G: v,
     g: v.map((t) => Math.round(0.83 * t)) as Rgb,
   };
-  const map = ['.LGG.', 'LLGGG', 'LGGGG', 'GGGGG', 'GGGGg', 'GGGgg', '.Ggg.'];
-  const ox = Math.floor((w - 5) / 2);
-  const oy = Math.floor((h - 7) / 2);
+  const map = [
+    '..LLGG..',
+    '.LLLGGG.',
+    'LLLGGGGG',
+    'LLGGGGGG',
+    'LGGGGGGG',
+    'GGGGGGGG',
+    'GGGGGGGG',
+    'GGGGGGGg',
+    'GGGGGGgg',
+    '.GGGggg.',
+    '..Gggg..',
+  ];
+  const ox = Math.floor((w - 8) / 2);
+  const oy = Math.floor((h - 11) / 2);
   map.forEach((row, y) => {
     for (let x = 0; x < row.length; x++) {
       const tone = tones[row[x]!];
@@ -1721,20 +1764,22 @@ export function paintAlcove(w: number, h: number, marble: HTMLCanvasElement): HT
 
 /**
  * The rest button, as MM6's oval (HUD critic, round 12): twenty-two by forty (aspect 0.55)
- * in its box, an (8,8,0) outline; a three-pixel bevel whose light follows the angle round the
- * oval (bright at the top, dark at the left and lower left), a one-pixel (214,178,99) rim
- * light at the lower right; the body (125,103,62) lit near the top, dark past the middle and
- * lit again before the foot, with a three-pixel mottle and a die; a (247,247,214) specular
- * near the top; the moon near black, a third of the width in radius, a warm edge at its
- * lower right. RGB565.
+ * drawn half again as large, thirty-three by sixty, in its box, an (8,8,0) outline; a bevel
+ * of five pixels whose light follows the angle round the oval (bright at the top,
+ * dark at the left and lower left), a one-pixel (214,178,99) rim light at the lower right;
+ * the body (125,103,62) lit near the top, dark past the middle and lit again before the
+ * foot, with a mottle and a die; a (247,247,214) specular near the top; the moon near
+ * black, a third of the width in radius, a warm edge at its lower right. RGB565.
  */
 export function paintCartouche(w: number, h: number, pressed: boolean): HTMLCanvasElement {
   const [c, g] = canvas(w, h);
-  const ow = Math.min(w, 22);
-  const oh = Math.min(h, 40);
+  const k = 1.5;
+  const ow = Math.min(w, 33);
+  const oh = Math.min(h, 60);
+  const lip = 1 + Math.round(3 * k);
   const ox = Math.floor((w - ow) / 2);
   const oy = Math.floor((h - oh) / 2);
-  const n3 = valueNoise(ow, oh, 3, w * 5 + h);
+  const n3 = valueNoise(ow, oh, Math.round(3 * k), w * 5 + h);
   const r = die(w * 11 + h);
   const toned = (lum: number): Rgb => {
     const k = lum / 151;
@@ -1783,15 +1828,15 @@ export function paintCartouche(w: number, h: number, pressed: boolean): HTMLCanv
       const deg =
         ((Math.atan2(-(y + 0.5 - oh / 2) / oh, (x + 0.5 - ow / 2) / ow) * 180) / Math.PI + 360) %
         360;
-      if (!inOval(x, y, ow, oh, 4)) {
+      if (!inOval(x, y, ow, oh, lip)) {
         const k = Math.floor(deg / 30);
         const f = deg / 30 - k;
         const lum = bevel[k]! + f * (bevel[k + 1]! - bevel[k]!) + (r() - 0.5) * 24;
         col = toned(lum + lift);
         // The rim lights on the bevel's inner row: from -20 to -50 degrees, and at the upper
         // left from 95 to 165 (HUD critic, round 15).
-        if (inOval(x, y, ow, oh, 3) && deg >= 310 && deg <= 340) col = [214, 178, 99];
-        if (inOval(x, y, ow, oh, 3) && deg >= 95 && deg <= 165) col = [231, 219, 156];
+        if (inOval(x, y, ow, oh, lip - 1) && deg >= 310 && deg <= 340) col = [214, 178, 99];
+        if (inOval(x, y, ow, oh, lip - 1) && deg >= 95 && deg <= 165) col = [231, 219, 156];
       } else {
         // The tones stretched a half again about 100 (HUD critic, round 15: MM6's brass spans
         // more, with fewer equal neighbours) on a die of 20 (HUD critic, round 16: 30 sanded
@@ -1801,8 +1846,8 @@ export function paintCartouche(w: number, h: number, pressed: boolean): HTMLCanv
         col = [125 * (lum / 106), 103 * (lum / 106), 62 * (lum / 106)];
         col = [col[0] + lift, col[1] + lift, col[2] + lift];
         // A small hot specular a fifth of the way down (HUD critic, rounds 13 and 15).
-        const dx = (x + 0.5 - ow * 0.5) / 1.6;
-        const dy = (y + 0.5 - oh * (pressed ? 0.24 : 0.19)) / 1.4;
+        const dx = (x + 0.5 - ow * 0.5) / (1.6 * k);
+        const dy = (y + 0.5 - oh * (pressed ? 0.24 : 0.19)) / (1.4 * k);
         col = mix(col, [247, 247, 214], 0.95 * Math.min(1, Math.exp(-(dx * dx + dy * dy) / 2)));
       }
       px(
@@ -1994,8 +2039,9 @@ function inPolygon(x: number, y: number, pts: readonly Pt[]): boolean {
 
 /**
  * The bookmarks' school pictures (critics, round 11: MM6's tab icons are painted sprites, not
- * glyphs): a shape in a fourteen by sixteen box, a one-pixel dark edge, lit from the upper
- * left through three tones to a highlight; five or six colours.
+ * glyphs): a shape in a fourteen by sixteen box, drawn half again as large as the bookmarks
+ * are, a one-pixel dark edge, lit from the upper left through three tones to a highlight; five
+ * or six colours.
  */
 const SCHOOL_SPRITES: Record<string, { ramp: Rgb[]; inside: (x: number, y: number) => boolean }> = {
   fire: {
@@ -2106,10 +2152,12 @@ function paintSchoolIcon(
 ): void {
   const sprite = SCHOOL_SPRITES[school];
   if (!sprite) return;
-  const W = 14;
-  const H = 16;
+  const k = 1.5;
+  const W = Math.round(14 * k);
+  const H = Math.round(16 * k);
+  // The shape sampled at each pixel's centre on its own grid.
   const inside = (x: number, y: number): boolean =>
-    x >= 0 && x < W && y >= 0 && y < H && sprite.inside(x, y);
+    x >= 0 && x < W && y >= 0 && y < H && sprite.inside((x + 0.5) / k - 0.5, (y + 0.5) / k - 0.5);
   let cx = 0;
   let cy = 0;
   let n = 0;
@@ -2130,7 +2178,7 @@ function paintSchoolIcon(
     for (let x = 0; x < W; x++) {
       if (!inside(x, y)) continue;
       const rim = !inside(x - 1, y) || !inside(x + 1, y) || !inside(x, y - 1) || !inside(x, y + 1);
-      const lit = (-(x - cx) - (y - cy)) / 7;
+      const lit = (-(x - cx) - (y - cy)) / (7 * k);
       if (!rim && lit > bestN) {
         bestN = lit;
         best = [x, y];
@@ -2147,11 +2195,14 @@ function paintSchoolIcon(
   }
   px(g, x0 + best[0], y0 + best[1], rgb(sprite.ramp[4]!));
   if (school === 'mind') {
+    const ex = Math.round(7 * k);
+    const ey = Math.round(8 * k);
     for (let y = 0; y < H; y++)
       for (let x = 0; x < W; x++)
-        if (Math.hypot(x - 7, y - 8) < 2.4) px(g, x0 + x, y0 + y, rgb(sprite.ramp[1]!));
-    px(g, x0 + 7, y0 + 8, '#000000');
-    px(g, x0 + 6, y0 + 7, rgb(sprite.ramp[4]!));
+        if (Math.hypot(x - ex, y - ey) < 2.4 * k) px(g, x0 + x, y0 + y, rgb(sprite.ramp[1]!));
+    px(g, x0 + ex, y0 + ey, '#000000');
+    px(g, x0 + ex + 1, y0 + ey, '#000000');
+    px(g, x0 + ex - 1, y0 + ey - 1, rgb(sprite.ramp[4]!));
   }
 }
 
@@ -2271,7 +2322,9 @@ export function paintBook(
   g.fillRect(B, B + 2, iw, 1);
   const top = B + 10;
   const left = B;
-  const right = w - B - 34;
+  // The spellbook's bookmarks half again MM6's size, as touch targets (screens.css
+  // `.spell-marks`), so its stack stands further in.
+  const right = w - B - (schools.length ? 50 : 34);
   const bottom = h - B - 22;
   const pw = Math.max(1, right - left);
   const ph = Math.max(1, bottom - top);
@@ -2416,15 +2469,15 @@ export function paintBook(
   }
   // Bookmarks (screens critic, round 12): MM6's pennants, page-textured and swallowtailed,
   // coming out from under the page over the stack and the board, one per school known at a
-  // pitch of 26; the open one in the page's full tone, two pixels taller, its picture
-  // breaking the top edge.
-  const fw = 36;
-  const fh = 22;
-  const fx = right - 4;
+  // pitch of 39; the open one in the page's full tone, three pixels taller, its picture
+  // breaking the top edge. All half again MM6's size, as touch targets.
+  const fw = 54;
+  const fh = 33;
+  const fx = right - 6;
   schools.forEach((school, i) => {
     const isOpen = school === open;
-    const hh = fh + (isOpen ? 2 : 0);
-    const ty = B + 14 + i * 26 - (isOpen ? 1 : 0);
+    const hh = fh + (isOpen ? 3 : 0);
+    const ty = B + 21 + i * 39 - (isOpen ? 1 : 0);
     if (ty + hh > h - B) return;
     g.save();
     g.beginPath();
@@ -2433,7 +2486,7 @@ export function paintBook(
     g.beginPath();
     g.moveTo(fx, ty);
     g.lineTo(fx + fw, ty);
-    g.lineTo(fx + fw - 7, ty + hh / 2);
+    g.lineTo(fx + fw - 10, ty + hh / 2);
     g.lineTo(fx + fw, ty + hh);
     g.lineTo(fx, ty + hh);
     g.closePath();
@@ -2448,7 +2501,7 @@ export function paintBook(
     g.fillStyle = 'rgb(120,110,92)';
     g.fillRect(fx, ty + hh - 1, fw, 1);
     g.restore();
-    paintSchoolIcon(g, fx + 14, ty + 3 - (isOpen ? 3 : 0), school);
+    paintSchoolIcon(g, fx + 21, ty + 4 - (isOpen ? 4 : 0), school);
   });
   // MM6's page holds a few tones in broad runs (screens critic, round 13).
   quantise565(g, w, h);
@@ -2686,12 +2739,13 @@ export const SLOT_PARCHMENT: Rgb = [184, 172, 150];
 /**
  * A spell's place: MM6's oval as the page's shadow (screens critic, round 12: the page
  * multiplied by 0.89, 0.86, 0.83, its grain showing through, one softer pixel at the rim),
- * 68 by 52, centred in its box, drawn for a multiply blend (screens.css `.spell-art`).
+ * 102 by 78, the icons' own oval (tools/lib/icon.ts ICON_OVAL), centred in its box, drawn for
+ * a multiply blend (screens.css `.spell-art`).
  */
 export function paintEllipse(w: number, h: number): HTMLCanvasElement {
   const [c, g] = canvas(w, h);
-  const ow = Math.min(w, 68);
-  const oh = Math.min(h, 52);
+  const ow = Math.min(w, 102);
+  const oh = Math.min(h, 78);
   const ox = Math.floor((w - ow) / 2);
   const oy = Math.floor((h - oh) / 2);
   for (let y = 0; y < oh; y++) {
@@ -2706,20 +2760,21 @@ export function paintEllipse(w: number, h: number): HTMLCanvasElement {
 
 /**
  * The close glyph painted on the gold (screens critic, round 12: the SVG stroke landed on
- * fractional pixels): a seven-pixel cross of two one-pixel diagonals in black, a pale gold
+ * fractional pixels): an eleven-pixel cross of two one-pixel diagonals in black, a pale gold
  * pixel under each.
  */
 function drawCross(g: CanvasRenderingContext2D, w: number, h: number, pressed: boolean): void {
-  const x0 = Math.floor((w - 7) / 2);
-  const y0 = Math.floor((h - 7) / 2) + (pressed ? 1 : 0);
-  for (let i = 0; i < 7; i++) {
-    for (const x of [x0 + i, x0 + 6 - i]) {
+  const n = 11;
+  const x0 = Math.floor((w - n) / 2);
+  const y0 = Math.floor((h - n) / 2) + (pressed ? 1 : 0);
+  for (let i = 0; i < n; i++) {
+    for (const x of [x0 + i, x0 + n - 1 - i]) {
       px(g, x, y0 + i + 1, 'rgb(206,190,140)');
     }
   }
-  for (let i = 0; i < 7; i++) {
+  for (let i = 0; i < n; i++) {
     px(g, x0 + i, y0 + i, '#000000');
-    px(g, x0 + 6 - i, y0 + i, '#000000');
+    px(g, x0 + n - 1 - i, y0 + i, '#000000');
   }
 }
 
@@ -2874,33 +2929,164 @@ export function installPaintedButtons(root: HTMLElement): void {
 
 /** MM6's yellow numerals, five by eight with one-pixel strokes (HUD critic, round 13). */
 const NUMERALS: Record<string, readonly string[]> = {
-  '0': [' ### ', '#   #', '#   #', '#   #', '#   #', '#   #', '#   #', ' ### '],
-  '1': ['  #  ', ' ##  ', '  #  ', '  #  ', '  #  ', '  #  ', '  #  ', ' ### '],
-  '2': [' ### ', '#   #', '    #', '   # ', '  #  ', ' #   ', '#    ', '#####'],
-  '3': [' ### ', '#   #', '    #', '  ## ', '    #', '    #', '#   #', ' ### '],
-  '4': ['   # ', '  ## ', ' # # ', '#  # ', '#####', '   # ', '   # ', '   # '],
-  '5': ['#####', '#    ', '#### ', '    #', '    #', '    #', '#   #', ' ### '],
-  '6': ['  ## ', ' #   ', '#    ', '#### ', '#   #', '#   #', '#   #', ' ### '],
-  '7': ['#####', '    #', '   # ', '   # ', '  #  ', '  #  ', ' #   ', ' #   '],
-  '8': [' ### ', '#   #', '#   #', ' ### ', '#   #', '#   #', '#   #', ' ### '],
-  '9': [' ### ', '#   #', '#   #', '#   #', ' ####', '    #', '   # ', ' ##  '],
-  ':': [' ', ' ', '#', ' ', ' ', '#', ' ', ' '],
+  '0': [
+    '  ###  ',
+    ' #   # ',
+    '#     #',
+    '#     #',
+    '#     #',
+    '#     #',
+    '#     #',
+    '#     #',
+    '#     #',
+    '#     #',
+    ' #   # ',
+    '  ###  ',
+  ],
+  '1': [
+    '   #   ',
+    '  ##   ',
+    ' # #   ',
+    '   #   ',
+    '   #   ',
+    '   #   ',
+    '   #   ',
+    '   #   ',
+    '   #   ',
+    '   #   ',
+    '   #   ',
+    ' ##### ',
+  ],
+  '2': [
+    '  ###  ',
+    ' #   # ',
+    '#     #',
+    '      #',
+    '      #',
+    '     # ',
+    '    #  ',
+    '   #   ',
+    '  #    ',
+    ' #     ',
+    '#      ',
+    '#######',
+  ],
+  '3': [
+    '  ###  ',
+    ' #   # ',
+    '#     #',
+    '      #',
+    '      #',
+    '   ### ',
+    '      #',
+    '      #',
+    '      #',
+    '#     #',
+    ' #   # ',
+    '  ###  ',
+  ],
+  '4': [
+    '     # ',
+    '    ## ',
+    '   # # ',
+    '  #  # ',
+    ' #   # ',
+    '#    # ',
+    '#######',
+    '     # ',
+    '     # ',
+    '     # ',
+    '     # ',
+    '     # ',
+  ],
+  '5': [
+    '#######',
+    '#      ',
+    '#      ',
+    '#      ',
+    '# ###  ',
+    '##   # ',
+    '      #',
+    '      #',
+    '      #',
+    '#     #',
+    ' #   # ',
+    '  ###  ',
+  ],
+  '6': [
+    '   ##  ',
+    '  #    ',
+    ' #     ',
+    '#      ',
+    '#      ',
+    '# ###  ',
+    '##   # ',
+    '#     #',
+    '#     #',
+    '#     #',
+    ' #   # ',
+    '  ###  ',
+  ],
+  '7': [
+    '#######',
+    '      #',
+    '      #',
+    '     # ',
+    '     # ',
+    '    #  ',
+    '    #  ',
+    '   #   ',
+    '   #   ',
+    '   #   ',
+    '  #    ',
+    '  #    ',
+  ],
+  '8': [
+    '  ###  ',
+    ' #   # ',
+    '#     #',
+    '#     #',
+    ' #   # ',
+    '  ###  ',
+    ' #   # ',
+    '#     #',
+    '#     #',
+    '#     #',
+    ' #   # ',
+    '  ###  ',
+  ],
+  '9': [
+    '  ###  ',
+    ' #   # ',
+    '#     #',
+    '#     #',
+    '#     #',
+    ' #   ##',
+    '  ### #',
+    '      #',
+    '      #',
+    '     # ',
+    '    #  ',
+    ' ##    ',
+  ],
+  ':': ['  ', '  ', '  ', '##', '##', '  ', '  ', '  ', '##', '##', '  ', '  '],
 };
 
 const numeralCache = new Map<string, HTMLCanvasElement>();
 
 /**
- * A number in MM6's well type: pure yellow (255,255,0) at an eight-pixel advance, a colon
- * in four, so three clear pixels stand between every pair (HUD critic, round 14), each lit
- * pixel with a black one at its lower right. One canvas pixel per UI pixel.
+ * A number in MM6's well type, drawn seven by twelve with a one-pixel pen (half again MM6's
+ * five by eight, as the clock's well kept its size when the pitch went to one CSS pixel):
+ * pure yellow (255,255,0), three clear pixels between every pair (HUD critic, round 14), each
+ * lit pixel with a black one at its lower right. One canvas pixel per UI pixel.
  */
 export function paintNumerals(text: string): HTMLCanvasElement {
   const hit = numeralCache.get(text);
   if (hit) return hit;
   const glyphs = [...text].map((ch) => NUMERALS[ch]).filter((g): g is readonly string[] => !!g);
-  const advance = (glyph: readonly string[]): number => (glyph[0]!.length === 1 ? 4 : 8);
+  const advance = (glyph: readonly string[]): number => glyph[0]!.length + 3;
   const width = Math.max(1, glyphs.reduce((sum, glyph) => sum + advance(glyph), 0) - 2);
-  const [c, g] = canvas(width, 9);
+  const [c, g] = canvas(width, 13);
   for (const [colour, off] of [
     ['#000000', 1],
     ['#ffff00', 0],

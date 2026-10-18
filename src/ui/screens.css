@@ -4,7 +4,7 @@
 
 /* Inventory */
 .inv-grid {
-  /* Fourteen by nine cells of eighteen UI pixels: the whole bag in the frame, as MM6's
+  /* Fourteen by nine cells of twenty-seven pixels: the whole bag in the frame, as MM6's
      (screens critic, round 13: 6 of 9 rows showed). */
   --cell: 27px;
   display: grid;
@@ -20,8 +20,8 @@
   image-rendering: pixelated;
   border: 0;
   box-shadow:
-    inset 1.5px 1.5px 0 #130500,
-    0 0 0 1.5px #692608;
+    inset 1px 1px 0 #130500,
+    0 0 0 1px #692608;
 }
 .inv-cell {
   /* The rust line at the top left, its two-pixel shadow below and right of it (critics,
@@ -29,8 +29,8 @@
   background: none;
   border: 0;
   box-shadow:
-    inset 1.5px 1.5px 0 #692608,
-    inset 4.5px 4.5px 0 #130500;
+    inset 1px 1px 0 #692608,
+    inset 3px 3px 0 #130500;
 }
 .inv-item {
   position: relative;
@@ -39,13 +39,13 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 1.5px;
-  padding: 1.5px;
+  gap: 1px;
+  padding: 1px;
   overflow: hidden;
   background: var(--paint) center / 100% 100% no-repeat;
   image-rendering: pixelated;
   font:
-    italic 18px/19.5px 'Tinos',
+    italic 18px/20px 'Tinos',
     Georgia,
     serif;
   color: #f0d060;
@@ -55,15 +55,15 @@
   transform: translateY(1px);
 }
 .inv-item.selected {
-  box-shadow: 0 0 0 1.5px #f0d880 inset;
+  box-shadow: 0 0 0 1px #f0d880 inset;
 }
 .inv-item.broken {
   color: #e06050;
 }
 .inv-glyph {
   display: inline-flex;
-  width: 22.5px;
-  height: 22.5px;
+  width: 22px;
+  height: 22px;
   flex: none;
 }
 .inv-glyph svg {
@@ -72,7 +72,7 @@
   fill: none;
   shape-rendering: crispEdges;
   stroke: #ffe080;
-  stroke-width: 1.5;
+  stroke-width: 1;
   stroke-linecap: round;
   stroke-linejoin: round;
 }
@@ -98,7 +98,7 @@
   overflow-y: auto;
 }
 .inv-slot .ui-v {
-  font-size: 12px;
+  font-size: 18px;
 }
 .inv-slot .slot-name {
   flex: 0 0 138px;
@@ -106,7 +106,7 @@
   color: var(--ink-pale);
 }
 .inv-slot {
-  /* Rows of 24 UI pixels with their padding, six filling the box (screens critic, rounds 14
+  /* Rows of thirty pixels with their padding, six filling the box (screens critic, rounds 14
      and 15). */
   min-height: 30px;
 }
@@ -117,7 +117,7 @@
 .inv-give {
   display: flex;
   flex-wrap: wrap;
-  gap: 4.5px;
+  gap: 4px;
 }
 
 /* Spellbook */
@@ -136,7 +136,7 @@
 .rest-well {
   box-sizing: border-box;
   height: 63px;
-  padding: 6px 7.5px 7.5px;
+  padding: 6px 8px 8px;
   text-align: center;
   background: var(--paint) center / 100% 100% no-repeat;
   image-rendering: pixelated;
@@ -150,7 +150,7 @@
 }
 .rest-date {
   font:
-    italic 15px 'Tinos',
+    italic 18px 'Tinos',
     Georgia,
     serif;
   color: #ffffff;
@@ -192,8 +192,8 @@
   background: var(--bg);
 }
 .cre-portrait {
-  width: 55.5px;
-  height: 70.5px;
+  width: 56px;
+  height: 70px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -209,13 +209,13 @@
 }
 .cre-identity {
   display: flex;
-  gap: 10.5px;
+  gap: 10px;
   align-items: center;
 }
 .cre-name {
   width: 100%;
   min-height: 36px;
-  padding: 0 7.5px;
+  padding: 0 8px;
   background: rgba(0, 0, 0, 0.35);
   color: var(--ink-yellow);
   border: 1px solid var(--gold-dark);
@@ -231,21 +231,21 @@
   display: grid;
   grid-template-columns: 1fr 40px 40px 40px;
   align-items: center;
-  gap: 4.5px;
+  gap: 4px;
 }
 .cre-stat .ui-btn {
-  min-height: 34.5px;
+  min-height: 34px;
   padding: 0;
 }
 .cre-chips {
   display: flex;
   flex-wrap: wrap;
-  gap: 4.5px;
+  gap: 4px;
 }
 .cre-chip {
-  min-height: 31.5px;
-  padding: 0 7.5px;
-  font-size: 12px;
+  min-height: 32px;
+  padding: 0 8px;
+  font-size: 18px;
 }
 .cre-chip.fixed {
   opacity: 0.8;
@@ -254,7 +254,7 @@
 
 /* Quest log */
 .quest-objective {
-  margin-top: 1.5px;
+  margin-top: 1px;
   color: #000000;
 }
 
@@ -274,7 +274,7 @@
 .spell-page {
   flex: 1;
   display: grid;
-  /* 84 UI pixels a place and 82 a row, so every oval sits on the grid (screens critic,
+  /* 126 pixels a place and 123 a row, so every oval sits on whole pixels (screens critic,
      rounds 12 and 13). */
   grid-template-columns: repeat(6, 126px);
   grid-template-rows: repeat(2, 123px);
@@ -310,15 +310,17 @@
   pointer-events: none;
 }
 /* The bookmarks (paint.ts `book:<schools>@<school>`): a clear button over each painted
-   pennant, thirty-two by twenty-two UI pixels showing, twenty-six apart from the twenty-
-   second row, ten in from the book's right edge. */
+   pennant, forty-eight by thirty-three pixels showing, thirty-nine apart from the twenty-
+   ninth row, ten in from the book's right edge; the stack stands sixteen further in for
+   them. */
 .screen-spells .ui-panel {
   position: relative;
+  padding-right: 60px;
 }
 .spell-marks {
   position: absolute;
-  right: 15px;
-  top: 33px;
+  right: 10px;
+  top: 29px;
   width: 48px;
   display: flex;
   flex-direction: column;
@@ -336,8 +338,8 @@
   filter: brightness(0.85);
 }
 .spell-slot {
-  /* The oval (paint.ts `ellipse`, 60 by 40 at the page's tone less twenty) with the picture
-     on it (72 by 54 UI pixels, tools/lib/icon.ts) and the name beneath, as MM6's page. */
+  /* The oval (paint.ts `ellipse`, 90 by 60 at the page's tone less twenty) with the picture
+     on it (108 by 81 pixels, tools/lib/icon.ts) and the name beneath, as MM6's page. */
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -401,7 +403,7 @@
   filter: brightness(0.85);
 }
 .spell-slot.pending {
-  box-shadow: 0 0 0 1.5px #f0d880;
+  box-shadow: 0 0 0 1px #f0d880;
 }
 
 /* The rest screen's choices: a column of full-width slabs (paint.ts `paintSlab`). */

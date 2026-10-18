@@ -60,13 +60,12 @@ export function createDialogue(
   const measure = (): void => {
     if (!open_) return;
     // The well 96 CSS pixels square (talk-world critic, round 14: it had grown to 97) on the
-    // grid the canvas and the UI share: the canvas's pixels are one CSS pixel, the UI's one
-    // and a half, so the hole snaps to three (round 15: on the UI's grid alone the bust's
-    // last row doubled and the foot's bevel thinned to a device pixel). The frame moves with
-    // the hole, so its bevel rings it evenly.
+    // grid the canvas and the UI share, one CSS pixel (round 15: off it the bust's last row
+    // doubled and the foot's bevel thinned to a device pixel). The frame moves with the hole,
+    // so its bevel rings it evenly.
     open_.frame.style.translate = '';
     const raw = open_.window.getBoundingClientRect();
-    const snap = (v: number): number => Math.round(v / (2 * PX)) * 2 * PX;
+    const snap = (v: number): number => Math.round(v / PX) * PX;
     const hole = new DOMRect(snap(raw.x), snap(raw.y), 96, 96);
     // The mask is cut in the planks' own pixels, which the rotated phone layout turns.
     const woodRect = open_.wood.getBoundingClientRect();

@@ -10,8 +10,12 @@
  * the quest log is Arimo, Tinos's sans sibling, as MM6 set its quest text in a sans.
  */
 
-/** CSS pixels per UI pixel: 932 CSS px across becomes 621 columns, MM6's 640. */
-export const PX = 1.5;
+/**
+ * CSS pixels per UI pixel: one, the view's own pitch (src/render/resolution.ts), so the shell
+ * and the world share a pixel as MM6's did, 430 rows against MM6's 480 (owner, 2026-10-18:
+ * "the whole UI is too pixelated" at one and a half).
+ */
+export const PX = 1;
 
 // MM6's shadow is black, a pixel down and right (critics, round 6).
 const SHADOW = [0, 0, 0];
@@ -59,8 +63,9 @@ function faceOf(el: Element): Face {
       ? 'Arimo'
       : 'Tinos';
   const cssSize = parseFloat(cs.fontSize) || 16;
-  // The CSS size is in CSS pixels; the glyphs are drawn in UI pixels, never under 11.
-  const size = Math.max(family === 'Pirata One' ? 18 : 12, Math.round(cssSize / PX));
+  // The CSS size is in CSS pixels; the glyphs are drawn in UI pixels, never under eighteen
+  // (twenty-seven for Pirata One), the smallest the phone keeps legible.
+  const size = Math.max(family === 'Pirata One' ? 27 : 18, Math.round(cssSize / PX));
   const fill = parseColor(cs.color);
   const lum = (0.299 * fill[0] + 0.587 * fill[1] + 0.114 * fill[2]) / 255;
   const italic = family !== 'Pirata One' && cs.fontStyle === 'italic';
@@ -256,14 +261,10 @@ function paintWord(word: string, f: Face): HTMLCanvasElement {
   const m = measure();
   m.font = cssFont(f);
   const below = Math.ceil(m.measureText(word).actualBoundingBoxDescent || 0);
-  // A pixel of margin left and right (the shadow's), the width even so the next word starts
-  // on the grid of three CSS pixels (screens critic, round 13).
-  let w = Math.ceil(wordWidth(word, f)) + 2;
-  w += w % 2;
-  // The height even too, so no box ends on half a CSS pixel (screens critic, round 16: Chrome
-  // rounded a box of 25.5 to 26 and drew one row four device rows tall).
-  let h = Math.max(f.line, f.base + below + 2);
-  h += h % 2;
+  // A pixel of margin left and right (the shadow's); whole pixels, so the next word starts on
+  // the grid (screens critic, round 13).
+  const w = Math.ceil(wordWidth(word, f)) + 2;
+  const h = Math.max(f.line, f.base + below + 2);
   const c = document.createElement('canvas');
   c.width = Math.max(1, w);
   c.height = Math.max(1, h);
@@ -331,10 +332,10 @@ function convert(node: Text): void {
 }
 
 /**
- * A run whose first word lands half a UI pixel off the grid the canvases share (a centred
- * line of an odd width) moved back onto it (screens critic, round 16: Chrome draws a box on
- * whole CSS pixels, so a word at 1.5 past a multiple of three shifted a device pixel). A
- * transform does not move an inline span; a relative offset does.
+ * A run whose first word lands off the grid (a centred line of an odd width lands half a
+ * pixel off) moved back onto it (screens critic, round 16: Chrome draws a box on whole CSS
+ * pixels, so a word half a pixel off shifted a device pixel). A transform does not move an
+ * inline span; a relative offset does.
  */
 function snapRun(span: HTMLElement): void {
   if (!span.isConnected) return;
@@ -342,10 +343,10 @@ function snapRun(span: HTMLElement): void {
   const first = span.querySelector('.pxw');
   if (!first) return;
   const x = first.getBoundingClientRect().left;
-  const off = ((x % (2 * PX)) + 2 * PX) % (2 * PX);
-  if (Math.abs(off - PX) > 0.25) return;
+  const off = ((x % PX) + PX) % PX;
+  if (off < 0.25 || off > PX - 0.25) return;
   span.style.position = 'relative';
-  span.style.left = `${-PX}px`;
+  span.style.left = `${-off}px`;
 }
 
 function convertUnder(root: Node): void {

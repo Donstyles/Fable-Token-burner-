@@ -100,28 +100,28 @@ html.forced-landscape body {
 }
 
 /* One pixel grid for the whole shell (critics, round 11: every piece at the same phase): the
-   layer is a whole number of UI pixels (1.5 CSS px, src/ui/pixel-text.ts) wide and tall, its
+   layer is a whole number of UI pixels (one CSS px, src/ui/pixel-text.ts) wide and tall, its
    right and bottom edge a fraction past the screen's, and the safe areas are rounded up to
    whole UI pixels, so right- and bottom-anchored pieces land on the grid as the left do. */
-@supports (width: round(up, 1px, 1.5px)) {
+@supports (width: round(up, 1px, 1px)) {
   :root {
-    --sat: round(up, env(safe-area-inset-top, 0px), 1.5px);
-    --sar: round(up, env(safe-area-inset-right, 0px), 1.5px);
-    --sab: round(up, env(safe-area-inset-bottom, 0px), 1.5px);
-    --sal: round(up, env(safe-area-inset-left, 0px), 1.5px);
+    --sat: round(up, env(safe-area-inset-top, 0px), 1px);
+    --sar: round(up, env(safe-area-inset-right, 0px), 1px);
+    --sab: round(up, env(safe-area-inset-bottom, 0px), 1px);
+    --sal: round(up, env(safe-area-inset-left, 0px), 1px);
   }
   html.forced-landscape {
-    --sat: round(up, env(safe-area-inset-right, 0px), 1.5px);
-    --sar: round(up, env(safe-area-inset-bottom, 0px), 1.5px);
-    --sab: round(up, env(safe-area-inset-left, 0px), 1.5px);
-    --sal: round(up, env(safe-area-inset-top, 0px), 1.5px);
+    --sat: round(up, env(safe-area-inset-right, 0px), 1px);
+    --sar: round(up, env(safe-area-inset-bottom, 0px), 1px);
+    --sab: round(up, env(safe-area-inset-left, 0px), 1px);
+    --sal: round(up, env(safe-area-inset-top, 0px), 1px);
   }
   .ui-layer {
     box-sizing: border-box;
     right: auto;
     bottom: auto;
-    width: round(up, 100%, 1.5px);
-    height: round(up, 100%, 1.5px);
+    width: round(up, 100%, 1px);
+    height: round(up, 100%, 1px);
   }
 }
 

@@ -3,13 +3,14 @@
    and a blue spell point tube in recessed slots beside it, a condition gem in its socket above
    them; the clock in a slot at the left, the book shelf in its alcove at the right. Every
    piece is painted by paint.ts at its size (`data-paint`), lit from the top left. Sized for
-   932 × 430 CSS px in landscape with the safe areas; 1.5 CSS px to the UI pixel. */
+   932 × 430 CSS px in landscape with the safe areas; one CSS px to the UI pixel, the view's.
+   The band stands at MM6's share of the screen, its ovals MM6's (owner, 2026-10-18). */
 .hud {
   position: absolute;
   left: 0;
   right: 0;
   bottom: 0;
-  height: calc(var(--sab) + 100.5px);
+  height: calc(var(--sab) + 114px);
   padding: 0 var(--sar) var(--sab) var(--sal);
   pointer-events: none;
   z-index: 25;
@@ -23,9 +24,9 @@
   position: absolute;
   left: 0;
   right: 0;
-  bottom: calc(var(--sab) + 1.5px);
-  height: 3px;
-  background: linear-gradient(rgb(49, 48, 41) 0 1.5px, rgb(74, 73, 66) 1.5px 3px);
+  bottom: calc(var(--sab) + 1px);
+  height: 2px;
+  background: linear-gradient(rgb(49, 48, 41) 0 1px, rgb(74, 73, 66) 1px 2px);
   z-index: 1;
   pointer-events: none;
 }
@@ -45,10 +46,10 @@
      outline (critics, round 5). */
   position: absolute;
   /* On the UI pixel grid (critics, round 10): every box a whole number of UI pixels. */
-  left: calc(var(--sal) + 4.5px);
-  top: 16.5px;
-  width: 76.5px;
-  padding: 6px 0 4.5px;
+  left: calc(var(--sal) + 4px);
+  top: 15px;
+  width: 76px;
+  padding: 6px 0 4px;
   text-align: center;
   pointer-events: none;
   background: var(--paint) center / 100% 100% no-repeat;
@@ -60,7 +61,7 @@
   display: flex;
   justify-content: flex-start;
   height: 15px;
-  padding-top: 1.5px;
+  padding-top: 1px;
 }
 .hud-numerals {
   display: block;
@@ -68,11 +69,11 @@
 }
 .hud-clock-date {
   font:
-    italic 18px/19.5px 'Tinos',
+    italic 18px/20px 'Tinos',
     Georgia,
     serif;
   color: #ffffff;
-  letter-spacing: 1.5px;
+  letter-spacing: 1px;
 }
 .hud-band {
   /* The four members on one marble surface with a seam round each (paint.ts `recess`); a
@@ -82,26 +83,26 @@
   display: flex;
   justify-content: flex-start;
   align-items: stretch;
-  gap: 4.5px;
-  height: 88.5px;
-  margin: 12px 0 0 88.5px;
+  gap: 4px;
+  height: 102px;
+  margin: 12px 0 0 88px;
   /* The cells start a whole number of UI pixels in (critics, round 10: one grid). */
-  padding: 0 0 0 64.5px;
+  padding: 0 0 0 45px;
 }
 .hud-band::before {
   /* MM6's cell top run across the gaps and over the clock: one light, one dark, one gold row
      (HUD critic, rounds 12 and 14). */
   content: '';
   position: absolute;
-  left: -88.5px;
+  left: -88px;
   right: 0;
   top: 0;
-  height: 4.5px;
+  height: 3px;
   background: linear-gradient(
     to bottom,
-    rgb(181, 178, 173) 0 1.5px,
-    rgb(99, 93, 90) 1.5px 3px,
-    rgb(156, 134, 74) 3px 4.5px
+    rgb(181, 178, 173) 0 1px,
+    rgb(99, 93, 90) 1px 2px,
+    rgb(156, 134, 74) 2px 3px
   );
   pointer-events: none;
 }
@@ -110,10 +111,10 @@
   pointer-events: auto;
   display: flex;
   align-items: flex-start;
-  gap: 4.5px;
-  width: 105px;
-  flex: 0 0 105px;
-  padding: 7.5px 6px 0;
+  gap: 4px;
+  width: 120px;
+  flex: 0 0 120px;
+  padding: 8px 6px 0;
   background: var(--paint) center / 100% 100% no-repeat;
   image-rendering: pixelated;
   border: 0;
@@ -138,18 +139,18 @@
 .hud-frame {
   position: relative;
   box-sizing: border-box;
-  width: 54px;
-  height: 72px;
-  padding: 12px 9px;
+  /* MM6's oval, sixty-eight by ninety-one of its 640 by 480 (owner, 2026-10-18: "Look at the
+     references!"), at the band's share of our 430 rows. */
+  width: 66px;
+  height: 90px;
   background: var(--paint) center / 100% 100% no-repeat;
   image-rendering: pixelated;
 }
 .hud-cameo {
   /* The class sigil in gold pixels (paint.ts `sigil-<class>`) until the portraits come. */
-  position: relative;
+  position: absolute;
+  inset: 0;
   z-index: 1;
-  width: 100%;
-  height: 100%;
   background: var(--paint) center / 100% 100% no-repeat;
   image-rendering: pixelated;
 }
@@ -162,12 +163,12 @@
   margin-top: 6px;
 }
 .hud-gem {
-  /* MM6's upright lit stone beside the oval's top, five by seven (paint.ts `gem`). */
+  /* MM6's upright lit stone beside the oval's top, eight by eleven (paint.ts `gem`). */
   position: absolute;
-  top: -10.5px;
-  left: -7.5px;
-  width: 7.5px;
-  height: 10.5px;
+  top: -11px;
+  left: -8px;
+  width: 8px;
+  height: 11px;
   background: var(--paint) center / 100% 100% no-repeat;
   image-rendering: pixelated;
 }
@@ -175,21 +176,20 @@
   /* The tubes on the marble, a shadow at the left (paint.ts `tube-slot`), two pixels of
      marble between them (HUD critic, round 14). */
   display: flex;
-  gap: 3px;
+  gap: 2px;
   /* The well's walls (paint.ts `tube-slot`): three pixels at the left and the top, a line
      under the caps. */
-  padding: 4.5px 4.5px 1.5px;
+  padding: 3px 3px 1px;
   background: var(--paint) center / 100% 100% no-repeat;
   image-rendering: pixelated;
 }
 .hud-bar {
   position: relative;
-  /* Four UI pixels, nearer MM6's slender rods at the band's scale (HUD critic, round 14).
-     Forty tall, the track thirty between the caps' five, so the slot's light lip stands over
-     three rows of marble before the band's dark foot, as MM6's does (HUD critic, round 16:
-     at forty-four the foot covered the lip). */
+  /* MM6's rods, six of its pixels across and eighty-eight tall beside a ninety-one-row oval
+     (owner, 2026-10-18), at the band's share: six by seventy-eight, the track between the
+     caps' five rows, the slot's light lip over a few rows of marble before the foot. */
   width: 6px;
-  height: 60px;
+  height: 78px;
   background: var(--paint) center / 100% 100% no-repeat;
   image-rendering: pixelated;
 }
@@ -198,8 +198,8 @@
   position: absolute;
   left: 0;
   right: 0;
-  top: 7.5px;
-  bottom: 7.5px;
+  top: 5px;
+  bottom: 5px;
 }
 .hud-caps {
   /* The gold caps over the fill (paint.ts `tube-caps`), clear between. */
@@ -226,7 +226,7 @@
   position: absolute;
   left: calc(var(--sal) + 60px);
   right: calc(var(--sar) + 300px);
-  bottom: calc(var(--sab) + 103.5px);
+  bottom: calc(var(--sab) + 117px);
   height: 30px;
   display: flex;
   align-items: center;
@@ -240,10 +240,10 @@
   image-rendering: pixelated;
   border: 0;
   box-shadow:
-    inset 0 1.5px 0 rgba(255, 250, 240, 0.5),
-    inset 1.5px 0 0 rgba(255, 250, 240, 0.4),
-    inset 0 -1.5px 0 rgba(0, 0, 0, 0.6),
-    inset -1.5px 0 0 rgba(0, 0, 0, 0.5);
+    inset 0 1px 0 rgba(255, 250, 240, 0.5),
+    inset 1px 0 0 rgba(255, 250, 240, 0.4),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.6),
+    inset -1px 0 0 rgba(0, 0, 0, 0.5);
   opacity: 0;
   transition: opacity 200ms ease-out;
 }
@@ -252,7 +252,7 @@
 }
 .status-text {
   font:
-    italic 15px/1 'Tinos',
+    italic 18px/1 'Tinos',
     Georgia,
     serif;
   color: #f0d060;
@@ -266,10 +266,10 @@
 .view-pillar {
   position: absolute;
   top: 0;
-  bottom: calc(var(--sab) + 100.5px);
+  bottom: calc(var(--sab) + 114px);
   /* MM6's shaft (reference mm6-outdoor-field: fifteen of 640 columns): fifteen pixels, lit
      at the left to shade at the right. */
-  width: 22.5px;
+  width: 15px;
   pointer-events: none;
   z-index: 24;
   background: var(--paint) 0 0 / 100% auto repeat-y;
@@ -286,9 +286,9 @@
 .view-capital,
 .view-plinth {
   position: absolute;
-  left: -4.5px;
-  right: -4.5px;
-  height: 27px;
+  left: -3px;
+  right: -3px;
+  height: 18px;
   background: var(--paint) center / 100% 100% no-repeat;
   image-rendering: pixelated;
 }
@@ -297,21 +297,21 @@
      over an eleven-row collar, its crown fourteen pixels past the shaft each side over the
      lintel, its bell six. */
   top: 0;
-  left: -21px;
-  right: -21px;
-  height: 63px;
+  left: -14px;
+  right: -14px;
+  height: 42px;
 }
 .view-plinth {
   /* MM6's foot: the ring over a turned base, thirty-two rows (HUD critic, round 14). */
   bottom: 0;
-  height: 48px;
+  height: 32px;
 }
 .view-lintel {
   position: absolute;
   top: 0;
   left: var(--sal);
   right: var(--sar);
-  height: 10.5px;
+  height: 7px;
   pointer-events: none;
   z-index: 23;
   background: var(--paint) 0 0 / auto 100% repeat-x;
