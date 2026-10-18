@@ -10,6 +10,10 @@ export interface MonsterDef {
   level: number;
   hp: number;
   armorClass: number;
+  /**
+   * Not MM6's: a monster hits by its level (`resolveMonsterAttack`, MM6-GAPS.md 8). Kept while
+   * `src/world/monster.ts` still passes it to the party formula.
+   */
   attackBonus: number;
   damage: Dice;
   /** Metres per second when closing in from afar / when near. */

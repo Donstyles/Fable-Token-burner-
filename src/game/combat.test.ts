@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { hitChance, resolveAttack } from './combat';
+import { hitChance, monsterHitChance, resolveAttack, resolveMonsterAttack } from './combat';
+import { MONSTERS } from './monsters';
 import { Party, TEST_PARTY } from './party';
 import { diceText, mulberry32, rollDice } from './rng';
 import { statBonus } from './stats';
@@ -51,6 +52,31 @@ describe('to-hit', () => {
     // 21 / 44 ≈ 0.48 expected.
     expect(hits).toBeGreaterThan(60);
     expect(hits).toBeLessThan(140);
+  });
+});
+
+describe('monster to-hit (MM6-GAPS.md 8, GF-M)', () => {
+  it('follows (5 + 2 × level) / (10 + 2 × level + ac)', () => {
+    expect(monsterHitChance(0, 0)).toBeCloseTo(0.5);
+    expect(monsterHitChance(1, 0)).toBeCloseTo(7 / 12);
+    // A level-2 bandit against armour class 10: 9 in 24, not the party formula's 21 in 46.
+    expect(monsterHitChance(MONSTERS.bandit!.level, 10)).toBeCloseTo(9 / 24);
+    expect(hitChance(MONSTERS.bandit!.attackBonus, 10)).toBeCloseTo(21 / 46);
+    expect(monsterHitChance(10, 30)).toBeCloseTo(25 / 60);
+  });
+
+  it('rolls the monster’s dice on a hit and nothing on a miss', () => {
+    const bandit = MONSTERS.bandit!;
+    const hit = resolveMonsterAttack(bandit, 10, () => 0.1);
+    expect(hit.hit).toBe(true);
+    expect(hit.chance).toBeCloseTo(9 / 24);
+    expect(hit.damage).toBeGreaterThanOrEqual(2);
+    expect(hit.damage).toBeLessThanOrEqual(7);
+    expect(resolveMonsterAttack(bandit, 10, () => 0.5)).toEqual({
+      hit: false,
+      damage: 0,
+      chance: 9 / 24,
+    });
   });
 });
 

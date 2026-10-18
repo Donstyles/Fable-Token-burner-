@@ -582,6 +582,11 @@ wider steps above; 3 is −5, 0 is −6). Should the manual differ, the table in
 - Chance to hit: (15 + 2 × attack bonus) / (30 + 2 × attack bonus + armour
   class), the documented MM6 formula. Melee attack bonus = Accuracy bonus +
   weapon skill; armour class = Speed bonus + armour.
+- A monster hits a member with chance (5 + 2 × monster level) / (10 + 2 ×
+  monster level + armour class) (MM6-GAPS.md 8, GF-M): a level-2 bandit
+  against armour class 10 hits 9 times in 24. `resolveMonsterAttack` in
+  `src/game/combat.ts` holds it; until `src/world/monster.ts` calls it, the
+  world's monsters still roll the party formula with their attack bonus.
 - Damage: the weapon's dice plus bonuses, at least 1 on a hit.
 - Falling and death (MM6-GAPS.md 11, MMW): a member at 0 hit points still
   stands; below 0 it is Unconscious; below minus its Endurance score it is
@@ -597,7 +602,8 @@ wider steps above; 3 is −5, 0 is −6). Should the manual differ, the table in
 
 ### 14.3 Monsters
 
-A monster record holds level, hit points, armour class, attack bonus,
+A monster record holds level, hit points, armour class, attack bonus (not
+MM6's: its to-hit comes from its level, 14.2),
 damage dice, walk and run speeds, aggro and attack ranges, the pause
 between swings, experience and its character asset. In the world a monster
 is a Meshy character on a recast-navigation crowd agent over the level's
@@ -1816,7 +1822,7 @@ credit grant to dial in the icons' style, one or two per school).
 ## 13. Decision log
 
 - 2026-10-18 – MM6 rules, step 1 (MM6-GAPS.md 38; DESIGN 14): unconscious
-  below 0 hit points, dead below minus Endurance.
+  below 0 hit points, dead below minus Endurance; monsters hit by level.
 
 - 2026-10-17 – Round 12 (16.22): the spellbook as MM6's one spread with
   bookmarks and a place per spell level; spell icons as one bitmap on
