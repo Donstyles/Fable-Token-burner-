@@ -543,12 +543,14 @@ equipment: the class is the equipment, so any face can play any class.
 - The portrait tool (`npm run portrait -- <appearance>`, `tools/portrait.ts`)
   cuts every picture by the appearance's head box, set once on the neutral
   one (`pipeline/portraits.json`), to the band ring's opening, 56 by 80 UI
-  pixels, at three image pixels to the UI pixel in full colour (168 by 240,
-  lanczos3, no posterising), keyed to the oval by whole UI pixels so its
-  edge steps with the ring's (owner, 2026-10-18: "the portrait is still too
-  pixelated" at one image pixel a UI pixel and 128 colours). With the
-  expressions it will also align each edit to the neutral image, keep only
-  what changed (eyes, brows, mouth) and reject an edit that moved the face.
+  pixels, one image pixel to the UI pixel (lanczos3, then the shell's sixteen
+  bits, no posterising), keyed to the oval by whole UI pixels so its edge
+  steps with the ring's. The owner on 2026-10-18: with the shell at one and a
+  half CSS pixels and the face posterised to 128 colours it was "still too
+  pixelated"; cut at three image pixels to the UI pixel it was "too high res,
+  not matching the UI". With the expressions the tool will also align each
+  edit to the neutral image, keep only what changed (eyes, brows, mouth) and
+  reject an edit that moved the face.
 - Alric's neutral portrait is cut and shows in the dev party's first oval;
   a member without a portrait shows their class sigil.
 - The game makes the rest: asleep and unconscious from eyes closed (the
@@ -2173,11 +2175,52 @@ wide.
   as seldom.
 - **The band at MM6's share**: 114 pixels tall (MM6's 128 of 480), ovals 66
   by 90 (MM6's 68 by 91), tubes six by 78 on MM6's whole six-tone ramp, gems
-  eight by eleven, cells 120 apart.
-- **Portraits** at three image pixels to the UI pixel, smooth (12.2):
-  Alric's in the first oval.
+  eight by eleven, cells 110 apart (MM6's 113) from ten pixels past the
+  clock, so all four clear the shelf inside the phone's safe areas (16.30).
+- **Portraits** on the shell's grid (12.2): Alric's in the first oval.
+
+### 16.30 The phone, not the test browser (owner, 2026-10-18)
+
+The owner's phone after 16.29: "How the fuck can your critics miss all that
+shit?", then "house floating, portrait too high res not matching the UI,
+after combat the view port is tilted permanently". The critics only ever
+judged our captures, and the captures were not the phone: a fresh desktop
+browser with nothing saved, no safe areas, a standing party at one spot in
+the village that never fought, a software renderer. Each fault below lived in
+that gap.
+
+- **Saved tuning from other builds**: the phone still held tuning saved days
+  before, a five-level posterise with dither (its sky's pixels sat on exactly
+  those levels), over every look shipped since, so it showed the checkered
+  static and the pink ground no capture had. Settings and the tuning panel's
+  values now carry the build that saved them and are dropped by any other
+  build (`src/app/settings.ts`, `src/dev/panel.ts`).
+- **The rolled horizon**: Babylon turns a camera's up vector only when its
+  roll changes, by the whole rotation, so the hit shake's last roll left it
+  tilted by the pitch of that moment (looking down at a bandit) and every
+  later turn rolled the view, 23 degrees in the test. The camera's up vector
+  now follows its rotation every frame (`updateUpVectorFromRotation`).
+- **The band under the shelf**: with the phone's insets (59 pixels each side
+  in landscape) the fourth member's tubes sat under the books; the cells are
+  narrower and start closer to the clock, and an end-to-end test forces the
+  insets and checks every cell clears the shelf.
+- **The floating inn**: the inn's model stands on posts, its walls 1.6 m up,
+  and props stand on their lowest point. The prop catalogue measures each
+  building's wall base (the first height at which it spans three fifths of
+  its footprint both ways) and the village sinks it by that, the posts into
+  the ground; only the inn had one.
+- **The portrait** back on the shell's grid (12.2).
+- **From now on** a look is judged on what the phone shows: captures take the
+  phone's insets, a fight and a walk through the village as well as the
+  standing view, and the owner's own screenshots are the last word.
 
 ## 13. Decision log
+
+- 2026-10-18 – The phone's faults (16.30): saved settings and tuning are
+  dropped by any build but the one that saved them; the camera's up vector
+  follows its rotation, so no shake leaves the view rolled; the band clears
+  the shelf inside the safe areas; buildings sink by their wall base; the
+  portrait is cut one image pixel to the UI pixel.
 
 - 2026-10-18 – The shell's pixel is one CSS pixel, the view's (16.29; owner:
   "the whole UI is too pixelated"); the band at MM6's share with MM6's ovals;

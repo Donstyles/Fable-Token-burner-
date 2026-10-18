@@ -556,7 +556,10 @@ waterfalls and deserts, walkable end to end.
     night, with the owner (2026-10-18)**: the shell's pixel down to one CSS
     pixel, the view's (DESIGN 16.29); the band at MM6's share with MM6's
     ovals; the portrait tool's first cut and Alric's face in the band
-    (DESIGN 12.2).
+    (DESIGN 12.2). The owner's phone then showed what the captures never
+    had (DESIGN 16.30): stale saved tuning, a horizon rolled after combat,
+    the band under the shelf inside the safe areas, the inn on its posts,
+    a portrait too fine for the shell; all five fixed the same evening.
 18. Remaining, in order: lasting buffs and Jump; weather states (rain, a
     sandstorm); music; the smith's hammer and the temple bell.
 
