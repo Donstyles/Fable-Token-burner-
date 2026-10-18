@@ -392,7 +392,9 @@ export async function startDev(app: App): Promise<DevHandle> {
         name: member.def.name,
         armorClass: member.armorClass,
         hit: (damage: number) => {
-          roster.takeDamage(index, damage);
+          // At the game's minute and the simulation's time, so the blow costs the member its
+          // hit recovery (MM6-GAPS.md 8).
+          roster.takeDamage(index, damage, state.clock.minutes, simTime);
           feedback.partyStruck();
         },
       };

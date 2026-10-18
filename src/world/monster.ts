@@ -5,7 +5,7 @@
  * falls when its hit points run out and stays down.
  */
 import type { Vector3 } from '@babylonjs/core/Maths/math.vector';
-import { resolveAttack } from '../game/combat';
+import { resolveMonsterAttack } from '../game/combat';
 import type { MonsterDef } from '../game/monsters';
 import type { Rng } from '../game/rng';
 import type { Character } from './character';
@@ -224,7 +224,8 @@ export class Monster {
       this.swingHitAt = -1;
       const target = party.pickTarget(this.rng);
       if (target) {
-        const r = resolveAttack(this.def.attackBonus, this.def.damage, target.armorClass, this.rng);
+        // MM6's monster blow: the chance by the monster's level against the armour class.
+        const r = resolveMonsterAttack(this.def, target.armorClass, this.rng);
         if (r.hit) {
           target.hit(r.damage, this.position);
           this.events.push({
