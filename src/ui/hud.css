@@ -288,6 +288,27 @@
 .view-pillar.left {
   left: var(--sal);
 }
+/* The band's marble carried up outside each pillar over the phone's safe area to the screen's
+   edge (owner, 2026-10-18: the view showed past the pillars). Each runs the band's width,
+   clipped to its strip, its tile ending at the band's top, so the veins run on into the
+   band's as one slab. */
+.view-margin {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: calc(var(--sab) + 114px);
+  pointer-events: none;
+  z-index: 24;
+  background: var(--stone) 0 100% / var(--stone-size);
+  image-rendering: pixelated;
+}
+.view-margin.left {
+  clip-path: inset(0 calc(100% - var(--sal)) 0 0);
+}
+.view-margin.right {
+  clip-path: inset(0 0 0 calc(100% - var(--sar)));
+}
 .view-pillar.right {
   right: var(--sar);
   /* Lit from the same side as the left one, mirrored (critics, round 10). */

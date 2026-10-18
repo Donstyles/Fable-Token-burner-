@@ -65,7 +65,12 @@ export function createHud(parent: HTMLElement, party: Party, hooks: HudHooks): H
   installPaint();
   installPaintedButtons(parent);
   installPixelText(parent);
-  // The window's frame: two marble pillars with capitals and plinths, and a lintel.
+  // The window's frame: two marble pillars with capitals and plinths, and a lintel; outside
+  // each pillar the band's marble fills the phone's safe area to the screen's edge, so the
+  // view never shows past the frame (owner, 2026-10-18).
+  for (const side of ['left', 'right'] as const) {
+    parent.appendChild(el('div', `view-margin ${side}`));
+  }
   for (const side of ['left', 'right'] as const) {
     const pillar = el('div', `view-pillar ${side}`);
     pillar.dataset['paint'] = 'pillar';
@@ -216,7 +221,8 @@ export function createHud(parent: HTMLElement, party: Party, hooks: HudHooks): H
     dispose() {
       removeEventListener('resize', snapClock);
       root.remove();
-      for (const n of parent.querySelectorAll('.view-pillar, .view-lintel')) n.remove();
+      for (const n of parent.querySelectorAll('.view-pillar, .view-lintel, .view-margin'))
+        n.remove();
     },
   };
 }
