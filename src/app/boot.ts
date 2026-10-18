@@ -54,6 +54,11 @@ export function boot(canvas: HTMLCanvasElement, uiLayer: HTMLElement): App {
   camera.maxZ = 1200; // room for the sky dome
   camera.fov = 1.15; // ~66° vertical on a 21:9 phone, close to MM6's wide view
   camera.inputs.clear(); // movement comes from our own controller
+  // The up vector follows the rotation every frame. Babylon otherwise turns it only when
+  // rotation.z changes, by the whole rotation, so the hit shake's last roll left it tilted by
+  // the pitch of that moment and every later turn rolled the horizon (owner, 2026-10-18:
+  // "after combat the view port is tilted permanently").
+  camera.updateUpVectorFromRotation = true;
 
   const materials = new RetroMaterials(scene);
   const sky = new SkyDome(scene, materials.env);
