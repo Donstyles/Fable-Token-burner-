@@ -82,7 +82,8 @@ export function createHud(parent: HTMLElement, party: Party, hooks: HudHooks): H
   const cells = party.members.map((m, i) => {
     const cell = el('button', 'hud-cell');
     cell.type = 'button';
-    cell.dataset['paint'] = 'recess';
+    // The first cell meets the pillar with a dark edge; the others the previous cell's ridge.
+    cell.dataset['paint'] = i === 0 ? 'recess-first' : 'recess';
     const frame = el('div', 'hud-frame');
     frame.dataset['paint'] = 'ring';
     const cameo = el('div', 'hud-cameo');

@@ -145,8 +145,10 @@ export class SkyDome {
     // The strip painted once: 2048 pixels round the horizon, 256 up to the zenith, sampled
     // nearest, so a cloud texel is about two pixels of the view, as MM6's bitmap sky was
     // (critics, round 9).
-    const strip = new DynamicTexture('sky-strip', { width: 2048, height: 256 }, scene, false);
-    strip.getContext().drawImage(paintSkyStrip(2048, 256, 23), 0, 0);
+    // 512 across (critics, round 12: at 2048 a texel stood one pixel wide and two tall, and
+    // the lumps grew into upright fingers; MM6's cloud runs are four to eight across).
+    const strip = new DynamicTexture('sky-strip', { width: 512, height: 256 }, scene, false);
+    strip.getContext().drawImage(paintSkyStrip(512, 256, 23), 0, 0);
     strip.wrapU = Constants.TEXTURE_WRAP_ADDRESSMODE;
     strip.wrapV = Constants.TEXTURE_CLAMP_ADDRESSMODE;
     // Flipped on upload, so the canvas's foot is the horizon as the painter laid it (round

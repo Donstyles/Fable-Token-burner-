@@ -160,6 +160,10 @@ void main(void) {
 `;
 
 ShaderStore.ShadersStore[`${SHADER}FragmentShader`] = /* glsl */ `
+#ifdef TERRAIN
+#extension GL_OES_standard_derivatives : enable
+#extension GL_EXT_shader_texture_lod : enable
+#endif
 precision highp float;
 varying vec2 vUV;
 varying vec3 vLight;
@@ -175,6 +179,14 @@ uniform sampler2D screeSampler;
 uniform sampler2D snowSampler;
 uniform vec4 splatScale;
 varying vec3 vSplat;
+// A ground tile read at the level of detail its horizontal footprint asks for (critics,
+// round 12): the isotropic level followed the grazing vertical footprint and smeared the
+// far ground into horizontal dashes; MM6's texels stay about two pixels across while its
+// rows alias. Tiles are 128 texels.
+vec3 tileAt(sampler2D s, vec2 u) {
+  float lod = log2(max(length(dFdx(u)) * 128.0, 1.0));
+  return texture2DLodEXT(s, u, lod).rgb;
+}
 #endif
 uniform vec3 fogColor;
 uniform vec3 tint;
@@ -258,12 +270,10 @@ void main(void) {
   float steep = smoothstep(0.18, 0.45, 1.0 - abs(n.y));
   vec2 wall = abs(n.x) > abs(n.z) ? vec2(vWorldPos.z, vWorldPos.y) : vec2(-vWorldPos.x, vWorldPos.y);
   vec2 screeUV = mix(vUV, wall, steep) * splatScale.z;
-  // Sampled half a level sharper than the grazing ground asks for, so the grain shows a
-  // little further down the road, as it did in 1998.
-  vec3 albedo = texture2D(diffuseSampler, vUV * splatScale.x, -0.5).rgb * g +
-    texture2D(pathSampler, vUV * splatScale.y, -0.5).rgb * w.r +
-    texture2D(screeSampler, screeUV, -0.5).rgb * w.g +
-    texture2D(snowSampler, vUV * splatScale.w, -0.5).rgb * w.b;
+  vec3 albedo = tileAt(diffuseSampler, vUV * splatScale.x) * g +
+    tileAt(pathSampler, vUV * splatScale.y) * w.r +
+    tileAt(screeSampler, screeUV) * w.g +
+    tileAt(snowSampler, vUV * splatScale.w) * w.b;
   if (heat > 0.0) {
     // Mirage: seen at a grazing angle the far sand mirrors the sky; the sun glints off it.
     vec3 v = normalize(cameraPosition - vWorldPos);

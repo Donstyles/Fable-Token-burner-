@@ -93,8 +93,12 @@ function stamp(
   tg.fillText(word, 1 + ox, asc + oy);
   const id = tg.getImageData(0, 0, w, h);
   const d = id.data;
+  // The coverage a pixel needs to be ink: the talk panel's topic lines (italic Tinos at 13 UI
+  // pixels, 19.5 CSS, and up) thickened at 100 (talk critic, round 12: 0.26 ink against MM6's
+  // 0.18), so they cut at 125; at 150 their thin strokes broke, and smaller type keeps 100.
+  const cut = /tinos/i.test(f.family) && f.italic && f.size >= 13 ? 125 : 100;
   for (let i = 0; i < d.length; i += 4) {
-    if (d[i + 3]! >= 100) {
+    if (d[i + 3]! >= cut) {
       d[i] = color[0];
       d[i + 1] = color[1];
       d[i + 2] = color[2];

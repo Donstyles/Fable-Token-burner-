@@ -1850,7 +1850,59 @@ credit grant to dial in the icons' style, one or two per school).
   third the slab's full height, one gentle wobble, a chestnut top
   (150,110,80), the grain as short vertical specks after the colour.
 
+### 16.23 Round 13: the page's shadow and the critics' recipes (2026-10-18)
+
+Round 12 scored HUD 6, screens 6, talk 7, world 6, verdict no; the spell
+icons' second pass a median 5 (the first 3). Round 13:
+
+- **Spellbook**: a place is the page's own shadow, the oval multiplied
+  (227,219,212) with a softer rim so the page's grain and light show, and
+  the icons' parchment keyed out so they sit in the same shadow; places on
+  84-pixel columns; the type upright and black; MM6's pennants for the
+  bookmarks, page-textured and swallowtailed, coming out from under the
+  page, all seven schools (Body's had not fitted); the page brightest a
+  quarter of the way across and falling to the stack; the lift on the
+  spellbook only; the stack's edges drifting without crossing over a
+  mid-grey backing, the foot's seven lines sharing one bow, the page
+  running on under it.
+- **Spell icons**: pass 3a (batch 008, 15 credits) on the critic's second
+  style text (mid-tones on a mid-tone ground, coarse textures, an uneven
+  glow, nothing unnamed, spread wide): fire bolt, sparks, stun, bless and
+  torch light. The post-process maps the picture's tones onto the
+  parchment, fits 68 by 50 and takes the glow with it; batch 007's
+  pictures were reprocessed at no cost.
+- **Shell grid**: every length in the screens' styles a whole UI pixel,
+  the line heights too; the close cross painted in whole pixels.
+- **HUD**: the portrait rings MM6's five bands, grey stone for the others
+  and silver and gold for the member in hand, a 26 by 38 opening; MM6's
+  cell top (light, dark, gold) run across the band and a gold spandrel in
+  each cell's top-left corner; the capital's bell irregular leaves on a
+  mid grey with a few tips over the view; the rest oval MM6's 22 by 40,
+  lit from the top with its rim light at the lower right; the gold of the
+  emblems and sigils toned by the way each pixel faces; a sword that reads
+  as one.
+- **Screens**: the slate warmer with darker seams, blotches and streaks,
+  the rose marble's crazing wider and softer with fewer pale veins, the
+  leather's lights without blue, the rest clock's wisps over a quarter of
+  its well, the frame pillars calmer with MM6's eleven-row gold bands.
+- **Talk**: the wood's darks dark brown and dashed, finer and more of
+  them, the grain multiplied; the face under a warmer, harder key with
+  almost no fill; a painted room of planks and a shelf behind it; the
+  head with headroom; the topic lines a lighter ink.
+- **World**: the sky strip 512 texels round (four by two pixels a texel)
+  with a hundred masses, lit from a blurred density; the ground's mips
+  averaged and snapped to each tile's colours, sampled at the level the
+  horizontal footprint asks for; the dirt's variance in blobs over 32
+  tones with cool twins and brighter pebbles; the hill's bare patches
+  gated on a slope smoothed over thirty metres, at full weight; the grass
+  lifted back.
+
 ## 13. Decision log
+
+- 2026-10-18 – Round 13 (16.23): spell places as the page's multiplied
+  shadow with keyed icons; MM6's pennants; the shell's lengths in whole
+  UI pixels; the critics' recipes for rings, cells, capital, rest oval,
+  gold, slate, rose, leather, wood, face, room, sky, ground and hills.
 
 - 2026-10-18 – MM6 rules, step 1 (MM6-GAPS.md 38; DESIGN 14): unconscious
   below 0 hit points, dead below minus Endurance; monsters hit by level;

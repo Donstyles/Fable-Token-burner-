@@ -85,7 +85,7 @@
   display: inline;
   margin-left: 0.3em;
   font:
-    italic 18px/1.1 'Tinos',
+    italic 18px/19.5px 'Tinos',
     Georgia,
     serif;
   color: #109aef;
@@ -95,7 +95,7 @@
   display: inline;
   margin: 0;
   font:
-    italic 18px/1.1 'Tinos',
+    italic 18px/19.5px 'Tinos',
     Georgia,
     serif;
   color: #109aef;
@@ -137,7 +137,7 @@
   padding: 3px 6px;
   min-height: 26px;
   font:
-    italic 19.5px/1.2 'Tinos',
+    italic 19.5px/24px 'Tinos',
     Georgia,
     serif;
   color: var(--ink-pale);

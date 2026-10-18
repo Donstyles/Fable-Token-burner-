@@ -28,9 +28,9 @@ const NEAR = 0.05;
 const FAR = 40;
 /**
  * The window frames this much of the model's height: the head fills three fifths of it, the
- * shoulders at its foot (critics, round 11: MM6's heads fill 60 to 65%).
+ * shoulders at its foot, a little headroom over the hair (critics, rounds 11 and 12).
  */
-const FRAMED_HEIGHT = 0.21;
+const FRAMED_HEIGHT = 0.22;
 /** The eyes sit here, as a fraction of the model's height. */
 const EYE_LINE = 0.9;
 /** The near-black ground behind the face, as MM6's portraits sat on one. */
@@ -38,16 +38,19 @@ const EYE_LINE = 0.9;
 // A dark brown behind the head (critics, round 9), speckled by the window's overlay.
 const GROUND = new Color4(0.118, 0.078, 0.047, 1);
 /** The key: a hard warm light from the camera's upper left, as a painted portrait's. */
-const KEY_COLOR = new Color3(0.54, 0.48, 0.41);
-const KEY_FILL = 0.3;
+// A warmer, harder key and almost no fill (talk critic, round 12: 2% of the face under luma
+// 60 against MM6's 45 to 66%; the far cheek, the sockets and under the nose drop a level).
+const KEY_COLOR = new Color3(0.8, 0.68, 0.52);
+const KEY_FILL = 0.08;
 /** The room behind the head, this far behind it, seen only by the bust's camera. */
 const ROOM_BACK = 1.2;
 const ROOM_LAYER = 0x10000000;
 
 /**
- * The room behind a portrait (critics, round 11: MM6's ring holds 175 to 241 colours, ours
- * one): a dark brown wall in blocks of two view pixels, sixteen levels either way, a darker
- * shelf at seven tenths of its height and a lighter wedge of lamplight from the top left.
+ * The room behind a portrait (talk critic, rounds 11 and 12: MM6's backdrops are things, a
+ * lattice at the tavern, planks and tools at the smithy): vertical planks six to eight pixels
+ * wide with dark seams, lit left edges and grain lines; a shelf at two thirds of the height
+ * with three jugs and bowls on it; lamplight from the top left. One texel a view pixel.
  */
 function paintRoom(size: number): HTMLCanvasElement {
   const c = document.createElement('canvas');
@@ -59,15 +62,56 @@ function paintRoom(size: number): HTMLCanvasElement {
     seed = (seed * 16807) % 2147483647;
     return seed / 2147483647;
   };
-  for (let y = 0; y < size; y++) {
-    for (let x = 0; x < size; x++) {
-      let l = (rand() - 0.5) * 32;
-      if (Math.abs(y / size - 0.7) < 0.065) l -= 12;
-      if (x / size + y / size < 0.55) l += 15 * (1 - (x / size + y / size) / 0.55) + 8;
-      const k = (v: number): number => Math.max(0, Math.min(255, Math.round(v + l)));
-      g.fillStyle = `rgb(${k(40)},${k(26)},${k(12)})`;
-      g.fillRect(x, y, 1, 1);
+  const put = (x: number, y: number, r: number, gr: number, b: number): void => {
+    g.fillStyle = `rgb(${Math.max(0, Math.min(255, Math.round(r)))},${Math.max(0, Math.min(255, Math.round(gr)))},${Math.max(0, Math.min(255, Math.round(b)))})`;
+    g.fillRect(x, y, 1, 1);
+  };
+  // Planks.
+  let x = 0;
+  while (x < size) {
+    const pw = 6 + Math.floor(rand() * 3);
+    const tone = (rand() - 0.5) * 20;
+    const lines: number[] = [];
+    for (let lx = 2; lx < pw - 1; lx += 2 + Math.floor(rand() * 2)) lines.push(lx);
+    for (let px = 0; px < pw && x + px < size; px++) {
+      for (let y = 0; y < size; y++) {
+        let l = tone;
+        if (px === 0) l = -36;
+        else if (px === 1) l += 22;
+        else if (lines.includes(px)) l += rand() < 0.5 ? -8 : 8;
+        const lamp =
+          (x + px) / size + y / size < 0.6 ? 14 * (1 - ((x + px) / size + y / size) / 0.6) : 0;
+        if (px === 0) put(x + px, y, 16, 8, 4);
+        else put(x + px, y, 52 + l + lamp, 34 + l * 0.7 + lamp * 0.8, 20 + l * 0.4 + lamp * 0.5);
+      }
     }
+    x += pw;
+  }
+  // The shelf: a beam with a lit top and a shadow under it.
+  const sy = Math.round(size * 0.67);
+  for (let xx = 0; xx < size; xx++) {
+    put(xx, sy, 110, 80, 50);
+    put(xx, sy + 1, 70, 46, 26);
+    put(xx, sy + 2, 70, 46, 26);
+    put(xx, sy + 3, 12, 6, 2);
+  }
+  // Three jugs and bowls on it, each lit on its left.
+  for (const [cx, ht, wd, l] of [
+    [12, 10, 6, 96],
+    [40, 6, 10, 72],
+    [78, 9, 7, 112],
+  ] as const) {
+    for (let yy = 0; yy < ht; yy++) {
+      const t = yy / ht;
+      const half = Math.round(
+        (wd / 2) * (ht > 7 ? 0.6 + 0.4 * Math.sin(Math.PI * t) : 1 - 0.3 * t),
+      );
+      for (let xx = -half; xx <= half; xx++) {
+        const edge = xx === -half ? 30 : xx === half ? -24 : 0;
+        put(cx + xx, sy - ht + yy, l * 0.75 + edge, l * 0.55 + edge * 0.8, l * 0.35 + edge * 0.5);
+      }
+    }
+    put(cx - 1, sy - ht + 1, l + 60, l + 40, l + 20);
   }
   return c;
 }
@@ -200,18 +244,21 @@ export class Bust {
     const distance = (height * FRAMED_HEIGHT) / 2 / Math.tan(FOV / 2);
     this.camera.position.copyFrom(eyes.add(forward.scale(distance)));
     this.camera.position.y += height * 0.03;
-    // The eyes a little above the window's middle, as a painted portrait's.
-    this.camera.setTarget(eyes.subtract(new Vector3(0, height * FRAMED_HEIGHT * 0.08, 0)));
+    // Aimed a little above the eyes, so the hair clears the top and the eyes sit at about
+    // two fifths of the window, as MM6's (talk critic, round 12).
+    this.camera.setTarget(eyes.add(new Vector3(0, height * FRAMED_HEIGHT * 0.015, 0)));
     // The room behind, filling the window.
     const back = distance + ROOM_BACK;
     this.room.position.copyFrom(eyes.subtract(forward.scale(ROOM_BACK)));
-    this.room.scaling.setAll(2 * back * Math.tan(FOV / 2) * 1.3);
+    // A hair larger than the window, so a texel is about a view pixel and no edge shows.
+    this.room.scaling.setAll(2 * back * Math.tan(FOV / 2) * 1.04);
     // The key light: from the camera's upper left, down onto the face.
     const toFace = eyes.subtract(this.camera.position).normalize();
     const right = Vector3.Cross(Vector3.Up(), toFace).normalize();
+    // Fifty-five degrees off the lens's axis.
     const dir = toFace
-      .add(right.scale(-0.7))
-      .add(new Vector3(0, -0.6, 0))
+      .add(right.scale(-1.1))
+      .add(new Vector3(0, -0.9, 0))
       .normalize();
     for (const m of s.meshes) {
       const mat = m.material;

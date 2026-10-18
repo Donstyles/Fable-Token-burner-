@@ -124,10 +124,9 @@ export function createFrame(title: string, onClose: () => void): Frame {
   const head = el('div', 'ui-head');
   const titleNode = el('h1', 'ui-title', title);
   const tabs = el('div', 'ui-head-tabs');
-  // MM6 closed its screens with a glyph, not a word: a cross in dark ink on the gold oval.
+  // MM6 closed its screens with a glyph, not a word: a cross in dark ink on the gold oval,
+  // painted on the button's face in whole pixels (paint.ts `drawCross`).
   const close = button('', onClose, { className: 'ui-close' });
-  close.innerHTML =
-    '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>';
   close.setAttribute('aria-label', 'Close');
   close.title = 'Close';
   head.append(titleNode, tabs, close);

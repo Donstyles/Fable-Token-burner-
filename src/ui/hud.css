@@ -44,14 +44,14 @@
 .hud-clock-time {
   /* White serif with a black shadow in a dark well (paint.ts `plaque`), as MM6's clock. */
   font:
-    19.5px/1.1 'Tinos',
+    19.5px/21px 'Tinos',
     Georgia,
     serif;
   color: #ffffff;
 }
 .hud-clock-date {
   font:
-    italic 18px/1.1 'Tinos',
+    italic 18px/19.5px 'Tinos',
     Georgia,
     serif;
   color: #ffffff;
@@ -71,13 +71,20 @@
   padding: 0 0 0 64.5px;
 }
 .hud-band::before {
+  /* MM6's cell top run across the gaps: one light, one dark, one gold row (HUD critic,
+     round 12). */
   content: '';
   position: absolute;
   left: 0;
   right: 0;
-  top: 7.5px;
-  height: 1.5px;
-  background: #ad8e52;
+  top: 0;
+  height: 4.5px;
+  background: linear-gradient(
+    to bottom,
+    rgb(181, 178, 173) 0 1.5px,
+    rgb(99, 93, 90) 1.5px 3px,
+    rgb(156, 134, 74) 3px 4.5px
+  );
   pointer-events: none;
 }
 .hud-cell {

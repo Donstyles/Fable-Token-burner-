@@ -319,7 +319,7 @@ export function paintSkyStrip(w: number, h: number, seed: number): HTMLCanvasEle
   // slope a little, as a brush dragged across the sky does.
   // Sixty strokes round the whole horizon, whatever the strip's size: the brush scales with
   // the strip, so the cover stays the same.
-  const masses = 60;
+  const masses = 100;
   for (let m = 0; m < masses; m++) {
     const cx = r() * w;
     const v = 0.1 + r() * 0.75;
@@ -332,7 +332,7 @@ export function paintSkyStrip(w: number, h: number, seed: number): HTMLCanvasEle
     const slope = (r() - 0.5) * 0.12;
     for (let k = 0; k < n; k++) {
       const t = (k / Math.max(1, n - 1) - 0.5) * spread;
-      const x = cx + t + (r() - 0.5) * 10;
+      const x = cx + t + (r() - 0.5) * 10 * (w / 1024);
       const y = cy + t * slope + (r() - 0.5) * (streak ? 4 : 12) * (h / 192);
       const rx = (streak ? 22 + r() * 40 : 7 + r() * 12) * (w / 1024);
       const ry = (streak ? 2.5 + r() * 3 : 5 + r() * 8) * (h / 192);
@@ -377,38 +377,43 @@ export function paintSkyStrip(w: number, h: number, seed: number): HTMLCanvasEle
   const d = img.data;
   const density = new Float32Array(w * h);
   for (let i = 0; i < w * h; i++) density[i] = d[i * 4]! / 255;
-  // The tone (critics, round 11: the grey shaded most of each mass, MM6's commonest cloud
-  // tone is the lit cream): lit along each mass's top, falling to the body's half over a
-  // third of the mass's own height at that column and never below it, the underside grey a
-  // rim along the mass's foot; a mottle stretched four to one along the sky and striations
-  // two texels tall and twelve wide through it.
-  const qw = Math.max(1, Math.ceil(w / 4));
-  const mottleQ = valueNoise(qw, h, 3, seed + 77);
-  const sw = Math.max(1, Math.ceil(w / 6));
+  // The tone (critics, rounds 11 and 12): lit where the density rises from the row above,
+  // grey where it falls to the row below, from the density blurred over three texels and
+  // three rows so the light runs smoothly across columns; a mottle of twelve by six pixels
+  // and striations of sixteen by four through it. Rows run toward the horizon.
+  const blur = new Float32Array(w * h);
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      let sum = 0;
+      let n = 0;
+      for (let dy = -1; dy <= 1; dy++) {
+        const yy = y + dy;
+        if (yy < 0 || yy >= h) continue;
+        for (let dx = -1; dx <= 1; dx++) {
+          sum += density[yy * w + ((((x + dx) % w) + w) % w)]!;
+          n++;
+        }
+      }
+      blur[y * w + x] = sum / n;
+    }
+  }
+  const db = (x: number, y: number): number => (y < 0 || y >= h ? 0 : blur[y * w + x]!);
+  const mottle = valueNoise(w, h, 3, seed + 77);
+  const sw = Math.max(1, w >> 1);
   const stria = valueNoise(sw, h, 2, seed + 91);
   const tones = new Float32Array(w * h).fill(0.5);
-  for (let x = 0; x < w; x++) {
-    let y = 0;
-    while (y < h) {
-      if (density[y * w + x]! < 0.3) {
-        y++;
-        continue;
-      }
-      let y1 = y;
-      while (y1 + 1 < h && density[(y1 + 1) * w + x]! >= 0.3) y1++;
-      const span = y1 - y + 1;
-      const reach = Math.max(2, 0.35 * span);
-      const rim = Math.max(1, Math.round(0.12 * span));
-      for (let k = y; k <= y1; k++) {
-        const up = k - y;
-        const down = y1 - k;
-        const i = k * w + x;
-        const base = down < rim ? 0.15 : Math.max(0.5, 1 - (0.5 * up) / reach);
-        const m = mottleQ[k * qw + Math.min(qw - 1, x >> 2)]! * 0.7;
-        const st = stria[k * sw + Math.min(sw - 1, Math.floor(x / 6))]! * 0.46;
-        tones[i] = Math.max(0, Math.min(1, base + m + st));
-      }
-      y = y1 + 1;
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      const i = y * w + x;
+      if (density[i]! < 0.3) continue;
+      const here = db(x, y);
+      const base = Math.max(
+        0.15,
+        Math.min(1, 0.62 + 1.6 * (here - db(x, y - 3)) - 0.9 * Math.max(0, here - db(x, y + 3))),
+      );
+      const m = mottle[i]! * 0.7;
+      const st = stria[y * sw + Math.min(sw - 1, x >> 1)]! * 0.46;
+      tones[i] = Math.max(0, Math.min(1, base + m + st));
     }
   }
   for (let i = 0; i < w * h; i++) {
@@ -634,13 +639,14 @@ export function chroma(
   h: number,
   seed: number,
   amp: number,
+  redOnly = false,
 ): void {
   const r = die(seed);
   const img = g.getImageData(0, 0, w, h);
   const d = img.data;
   for (let i = 0; i < d.length; i += 4) {
     d[i] = Math.max(0, Math.min(255, d[i]! + (r() - 0.5) * 2 * amp));
-    d[i + 2] = Math.max(0, Math.min(255, d[i + 2]! + (r() - 0.5) * 2 * amp));
+    if (!redOnly) d[i + 2] = Math.max(0, Math.min(255, d[i + 2]! + (r() - 0.5) * 2 * amp));
   }
   g.putImageData(img, 0, 0);
 }

@@ -22,6 +22,7 @@ import {
   snap,
   stroke,
   type Tone,
+  valueNoise,
 } from '../render/brush';
 import { applyRetroSampling } from '../render/materials';
 import { palettise } from '../render/palette';
@@ -30,9 +31,9 @@ import { lampPane, stillWater, type RoleTextures } from './textures';
 const T = 128;
 
 function grass(): HTMLCanvasElement {
-  // MM6's turf (critics, round 9: (61,84,45), green twenty levels over red; round 11: a step
-  // darker, so the hill lands on (60,80,45), and clumps of eight to twelve texels).
-  return grain(T, T, 31, ramp('#223a18', '#2c4420', '#365228', '#416030', '#4c6e38', '#5b7d3e'), {
+  // MM6's turf (critics, round 9: (61,84,45), green twenty levels over red; round 11: clumps
+  // of eight to twelve texels; round 12: the step down overshot, lifted back about 15%).
+  return grain(T, T, 31, ramp('#264418', '#325021', '#3d6129', '#497131', '#568239', '#67943f'), {
     marks: 3200,
     clods: 120,
     clodSize: 5,
@@ -41,17 +42,31 @@ function grass(): HTMLCanvasElement {
 }
 
 function dirt(): HTMLCanvasElement {
-  // MM6's earth (critics, round 9: (57,28,16) to (107,73,57), its darkest common tone
-  // (57,28,16), no black confetti).
-  const tones = ramp('#391c10', '#45251a', '#513023', '#5d3b2d', '#644233', '#6b4939');
-  const c = grain(T, T, 32, tones, {
-    marks: 2600,
-    clods: 80,
-    clodSize: 7,
-    base: 8,
-  });
-  const g = c.getContext('2d')!;
+  // MM6's earth (critics, rounds 9 to 12): its variance in blobs of thirty-two and eight
+  // texels, not white noise, over thirty-two steps from (57,28,16) to (122,86,66), each step
+  // with a cool twin used in patches, as MM6's (82,48,33)/(82,52,33) pairs; cracks; dark pits
+  // over four per cent; brighter pebbles over three, each with a shadow texel under it.
+  const tones = expand(ramp('#391c10', '#45251a', '#513023', '#5d3b2d', '#644233', '#7a5642'), 32);
+  const n32 = valueNoise(T, T, 32, 32);
+  const n8 = valueNoise(T, T, 8, 33);
+  const cool = valueNoise(T, T, 24, 34);
   const r = die(33);
+  const [c, g] = canvas(T, T);
+  const img = g.createImageData(T, T);
+  const d = img.data;
+  for (let i = 0; i < T * T; i++) {
+    const k = Math.max(
+      0,
+      Math.min(31, Math.round(15.5 + 12 * n32[i]! + 6 * n8[i]! + 1.5 * (2 * r() - 1))),
+    );
+    const t = tones[k]!.warm;
+    const twin = cool[i]! > 0 ? [0, 5, 4] : [0, 0, 0];
+    d[i * 4] = Math.round(t[0] + twin[0]!);
+    d[i * 4 + 1] = Math.round(t[1] + twin[1]!);
+    d[i * 4 + 2] = Math.round(t[2] + twin[2]!);
+    d[i * 4 + 3] = 255;
+  }
+  g.putImageData(img, 0, 0);
   for (let i = 0; i < 16; i++) {
     let x = r() * T;
     let y = r() * T;
@@ -66,29 +81,32 @@ function dirt(): HTMLCanvasElement {
     }
     stroke(g, T, T, pts, '#3a1c10', 1);
   }
-  // Pits and pebbles (critics, rounds 10 and 11): dark pits a step below the ramp
-  // (38,16,8) over four per cent of the tile, light pebbles (120,88,66) and (135,105,80)
-  // over two, each a blob of one to four texels, kept by the snap with sixteen steps of
-  // the ramp so the ground keeps its colours.
-  const blob = (x: number, y: number, n: number, colour: string): void => {
-    g.fillStyle = colour;
+  const blob = (x: number, y: number, n: number, colour: string, under?: string): void => {
     let bx = x;
     let by = y;
     for (let k = 0; k < n; k++) {
-      g.fillRect(((Math.floor(bx) % T) + T) % T, ((Math.floor(by) % T) + T) % T, 1, 1);
+      const px = ((Math.floor(bx) % T) + T) % T;
+      const py = ((Math.floor(by) % T) + T) % T;
+      if (under) {
+        g.fillStyle = under;
+        g.fillRect(px, (py + 1) % T, 1, 1);
+      }
+      g.fillStyle = colour;
+      g.fillRect(px, py, 1, 1);
       if (r() < 0.5) bx += r() < 0.5 ? -1 : 1;
       else by += r() < 0.5 ? -1 : 1;
     }
   };
   for (let i = 0; i < 260; i++) blob(r() * T, r() * T, 1 + Math.floor(r() * 4), '#261008');
-  for (let i = 0; i < 130; i++) {
-    const x = r() * T;
-    const y = r() * T;
-    const n = 1 + Math.floor(r() * 4);
-    blob(x, y, n, '#785842');
-    if (n > 1) blob(x, y, 1, '#876950');
+  for (let i = 0; i < 200; i++) {
+    blob(r() * T, r() * T, 1 + Math.floor(r() * 4), r() < 0.5 ? '#96765c' : '#a58468', '#462e20');
   }
-  snap(g, T, T, [...expand(tones, 16), ...ramp('#261008', '#785842', '#876950')]);
+  // Snapped to the steps, their twins and the pit, pebble and shadow tones, kept apart.
+  const twins = tones.map((t) => ({
+    warm: [t.warm[0], t.warm[1] + 5, t.warm[2] + 4] as [number, number, number],
+    cool: [t.warm[0], t.warm[1] + 5, t.warm[2] + 4] as [number, number, number],
+  }));
+  snap(g, T, T, [...tones, ...twins, ...ramp('#261008', '#96765c', '#a58468', '#462e20')]);
   return c;
 }
 
@@ -524,12 +542,13 @@ export const PAINTERS: Record<string, { paint: () => HTMLCanvasElement; metresPe
 };
 
 /**
- * Mip levels that keep the tile's tones (critics, round 11: averaged levels smeared the far
- * ground into a few colours): each level takes one texel of every two by two of the level
- * above, chosen by a hash so no lattice shows, instead of their mean. Uploaded straight into
- * the WebGL texture after Babylon generated its chain; elsewhere the generated chain stays.
+ * Mip levels that keep the tile's tones (critics, rounds 11 and 12): each level the mean of
+ * every two by two of the one above (picking one texel in four salted the far hills), then
+ * snapped to the nearest of the tile's own colours, so a far road keeps the ground's palette
+ * instead of fading into in-between browns. Uploaded straight into the WebGL texture after
+ * Babylon generated its chain; elsewhere the generated chain stays.
  */
-function pickMips(scene: Scene, texture: DynamicTexture, picture: HTMLCanvasElement): void {
+function snappedMips(scene: Scene, texture: DynamicTexture, picture: HTMLCanvasElement): void {
   const engine = scene.getEngine() as unknown as {
     _gl?: WebGL2RenderingContext;
     _bindTextureDirectly?(target: number, texture: unknown, forUpdate?: boolean): boolean;
@@ -539,29 +558,64 @@ function pickMips(scene: Scene, texture: DynamicTexture, picture: HTMLCanvasElem
   if (!gl || !internal || !engine._bindTextureDirectly) return;
   let w = picture.width;
   let h = picture.height;
-  let data = picture.getContext('2d')!.getImageData(0, 0, w, h).data;
+  const base = picture.getContext('2d')!.getImageData(0, 0, w, h).data;
+  // The tile's own colours, once.
+  const seen = new Set<number>();
+  const palette: number[] = [];
+  for (let i = 0; i < base.length; i += 4) {
+    const key = (base[i]! << 16) | (base[i + 1]! << 8) | base[i + 2]!;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    palette.push(base[i]!, base[i + 1]!, base[i + 2]!);
+  }
+  let level = new Float32Array(w * h * 3);
+  for (let i = 0, j = 0; i < base.length; i += 4, j += 3) {
+    level[j] = base[i]!;
+    level[j + 1] = base[i + 1]!;
+    level[j + 2] = base[i + 2]!;
+  }
   engine._bindTextureDirectly(gl.TEXTURE_2D, internal, true);
   gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
-  for (let level = 1; w > 1 || h > 1; level++) {
+  for (let mip = 1; w > 1 || h > 1; mip++) {
     const nw = Math.max(1, w >> 1);
     const nh = Math.max(1, h >> 1);
-    const next = new Uint8ClampedArray(nw * nh * 4);
+    const next = new Float32Array(nw * nh * 3);
+    const out = new Uint8ClampedArray(nw * nh * 4);
     for (let y = 0; y < nh; y++) {
       for (let x = 0; x < nw; x++) {
-        const k =
-          Math.imul((x * 73856093) ^ (y * 19349663) ^ (level * 83492791), 2654435761) >>> 30;
-        const sx = Math.min(w - 1, 2 * x + (k & 1));
-        const sy = Math.min(h - 1, 2 * y + (k >> 1));
-        const s0 = (sy * w + sx) * 4;
-        const d0 = (y * nw + x) * 4;
-        next[d0] = data[s0]!;
-        next[d0 + 1] = data[s0 + 1]!;
-        next[d0 + 2] = data[s0 + 2]!;
-        next[d0 + 3] = data[s0 + 3]!;
+        const d = (y * nw + x) * 3;
+        for (let c = 0; c < 3; c++) {
+          let sum = 0;
+          for (let dy = 0; dy < 2; dy++) {
+            for (let dx = 0; dx < 2; dx++) {
+              const sx = Math.min(w - 1, 2 * x + dx);
+              const sy = Math.min(h - 1, 2 * y + dy);
+              sum += level[(sy * w + sx) * 3 + c]!;
+            }
+          }
+          next[d + c] = sum / 4;
+        }
+        let best = 0;
+        let bestD = Infinity;
+        for (let k = 0; k < palette.length; k += 3) {
+          const dr = next[d]! - palette[k]!;
+          const dg = next[d + 1]! - palette[k + 1]!;
+          const db = next[d + 2]! - palette[k + 2]!;
+          const dd = dr * dr + dg * dg + db * db;
+          if (dd < bestD) {
+            bestD = dd;
+            best = k;
+          }
+        }
+        const o = (y * nw + x) * 4;
+        out[o] = palette[best]!;
+        out[o + 1] = palette[best + 1]!;
+        out[o + 2] = palette[best + 2]!;
+        out[o + 3] = 255;
       }
     }
-    gl.texSubImage2D(gl.TEXTURE_2D, level, 0, 0, nw, nh, gl.RGBA, gl.UNSIGNED_BYTE, next);
-    data = next;
+    gl.texSubImage2D(gl.TEXTURE_2D, mip, 0, 0, nw, nh, gl.RGBA, gl.UNSIGNED_BYTE, out);
+    level = next;
     w = nw;
     h = nh;
   }
@@ -580,7 +634,7 @@ export function paintRoleTextures(scene: Scene, mipmaps = true): RoleTextures {
     const texture = new DynamicTexture(`painted-${role}`, { width: T, height: T }, scene, mips);
     texture.getContext().drawImage(picture, 0, 0);
     texture.update(false);
-    if (mips) pickMips(scene, texture, picture);
+    if (mips) snappedMips(scene, texture, picture);
     // A tile repeats across the world; a dynamic texture clamps unless told otherwise, and
     // clamped it paints the whole ground in its corner texel.
     texture.wrapU = Constants.TEXTURE_WRAP_ADDRESSMODE;

@@ -517,8 +517,12 @@ waterfalls and deserts, walkable end to end.
     **Round 11 scored 2026-10-17**: 6, 5, 6 (talk), 6 (world), no.
     **Round 12** (DESIGN 16.22): MM6's spellbook spread with bookmarks,
     spell icons dialled in under the owner's 100-credit grant (pass 1
-    27 credits, pass 2 33), the shell on one pixel grid; the world's
-    texels, wood, clouds, portrait and scree follow, then the scoring.
+    27 credits, pass 2 33), the shell on one pixel grid, finer ground,
+    streaked clouds, a centred portrait. **Round 12 scored 2026-10-18**:
+    6, 6, 7 (talk), 6 (world), no; icons pass 2 a median 5. **Round 13**
+    (DESIGN 16.23): the page's shadow under the spells, MM6's pennants,
+    whole-pixel lengths, the critics' recipes across the shell and the
+    world; icon pass 3a (15 credits); the scoring follows.
 18. Remaining, in order: lasting buffs and Jump; weather states (rain, a
     sandstorm); music; the smith's hammer and the temple bell.
 

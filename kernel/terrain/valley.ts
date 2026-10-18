@@ -298,10 +298,19 @@ export function generateValley(spec: ValleySpec): ValleyResult {
       // the slope is a cliff, and no snow (critics, round 6).
       // Scars in patches (critics, round 10: a seven-tenths blend read khaki; round 11: a
       // third everywhere read green, brown pixels 0% where MM6's hill bands run 21 to 69%):
-      // the earth shows nearly bare in patches some twenty metres across over the slopes
-      // past 26 degrees, the grass whole between them.
-      const patch = smoothstep(0.05, 0.3, fbm(x, z, 24, seed + 17));
-      path = Math.max(path, 0.85 * patch * smoothstep(24, 34, s) * (1 - smoothstep(50, 60, s)));
+      // the earth bare in patches over the steeper slopes, the grass whole between them.
+      // Round 12: gated on a slope smoothed over thirty metres, so the patches follow the
+      // hills and not the ripples on their flanks, seventy-metre patches at full weight.
+      const ci = (k: number): number => Math.max(0, Math.min(n - 1, k));
+      const gx = (hf.get(ci(i + 3), j) - hf.get(ci(i - 3), j)) / (6 * hf.cell);
+      const gz = (hf.get(i, ci(j + 3)) - hf.get(i, ci(j - 3))) / (6 * hf.cell);
+      const sS = (Math.atan(Math.hypot(gx, gz)) * 180) / Math.PI;
+      const patch = smoothstep(
+        -0.05,
+        0.1,
+        fbm(x, z, 70, seed + 17) + 0.12 * fbm(x, z, 9, seed + 29),
+      );
+      path = Math.max(path, patch * smoothstep(18, 28, sS) * (1 - smoothstep(55, 62, sS)));
       let scree =
         smoothstep(52, 64, s) + 0.6 * smoothstep(6, 2, dRiver) * (h < FLOOR + 0.5 ? 1 : 0);
       let snow = 0;
