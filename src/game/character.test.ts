@@ -88,8 +88,9 @@ describe('derived numbers', () => {
     expect(equipItem(c.equipment, createItem('dagger'), c.skills).ok).toBe(true);
     expect(attackBonus(c)).toBe(6);
     expect(damageDice(c)).toEqual({ count: 2, sides: 2, bonus: -2 });
+    // The skill adds its level to attack at every rank; Master does not double it.
     c.skills.dagger = { level: 4, rank: 'master' };
-    expect(attackBonus(c)).toBe(5 + 8);
+    expect(attackBonus(c)).toBe(5 + 4);
     // A dagger's 60; Dagger skill takes nothing off.
     expect(recoveryUnits(c)).toBe(60 - statBonus(23));
     equipItem(c.equipment, createItem('leather-armor'), c.skills);
@@ -106,6 +107,61 @@ describe('derived numbers', () => {
     afflict(c.conditions, 'weak', 0);
     expect(maxHp(c)).toBeLessThan(27);
     expect(attackBonus(c)).toBeLessThan(5);
+  });
+});
+
+describe('weapon skill ranks (MM6-GAPS.md 4, RPGC)', () => {
+  function knight() {
+    const r = createCharacter(knightInput());
+    if (!r.ok) throw new Error('fixture');
+    return r.character;
+  }
+
+  it('add the skill to attack at every rank', () => {
+    const k = knight();
+    equipItem(k.equipment, createItem('long-sword'), k.skills);
+    const accuracy = statBonus(k.stats.accuracy);
+    for (const rank of ['normal', 'expert', 'master'] as const) {
+      k.skills.sword = { level: 6, rank };
+      expect(attackBonus(k)).toBe(accuracy + 6);
+    }
+  });
+
+  it('add a Mace’s skill to damage from Expert, an Axe’s and a Spear’s at Master', () => {
+    const k = knight();
+    const might = statBonus(k.stats.might);
+    k.skills.mace = { level: 5, rank: 'normal' };
+    equipItem(k.equipment, createItem('mace'), k.skills);
+    expect(damageDice(k)).toEqual({ count: 2, sides: 4, bonus: might });
+    k.skills.mace.rank = 'expert';
+    expect(damageDice(k)).toEqual({ count: 2, sides: 4, bonus: might + 5 });
+    k.skills.axe = { level: 6, rank: 'expert' };
+    equipItem(k.equipment, createItem('axe'), k.skills);
+    expect(damageDice(k)!.bonus).toBe(might);
+    k.skills.axe.rank = 'master';
+    expect(damageDice(k)!.bonus).toBe(might + 6);
+    k.skills.spear = { level: 3, rank: 'master' };
+    equipItem(k.equipment, createItem('spear'), k.skills);
+    expect(damageDice(k)!.bonus).toBe(might + 3);
+    k.skills.sword = { level: 9, rank: 'master' };
+    equipItem(k.equipment, createItem('long-sword'), k.skills);
+    expect(damageDice(k)!.bonus).toBe(might);
+  });
+
+  it('add a Staff’s and a Spear’s skill to armour class from Expert', () => {
+    const k = knight();
+    const speed = statBonus(k.stats.speed);
+    k.skills.staff = { level: 4, rank: 'normal' };
+    equipItem(k.equipment, createItem('staff'), k.skills);
+    expect(armorClass(k)).toBe(speed);
+    k.skills.staff.rank = 'expert';
+    expect(armorClass(k)).toBe(speed + 4);
+    k.skills.spear = { level: 3, rank: 'expert' };
+    equipItem(k.equipment, createItem('spear'), k.skills);
+    expect(armorClass(k)).toBe(speed + 3);
+    k.skills.mace = { level: 7, rank: 'master' };
+    equipItem(k.equipment, createItem('mace'), k.skills);
+    expect(armorClass(k)).toBe(speed);
   });
 });
 

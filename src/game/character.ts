@@ -5,8 +5,11 @@
  * DESIGN 14 records: hit points = class base + (level + Endurance bonus) × class factor +
  * Bodybuilding skill × rank multiplier × class factor; spell points likewise from the class's
  * magic statistic(s) and Meditation (MM6-GAPS.md 4, RPGC);
- * attack bonus = Accuracy bonus + weapon skill (Master doubles the skill); melee damage adds the
- * Might bonus; armour class = Speed bonus + equipment. Recovery is MM6's sum in its units: the
+ * attack bonus = Accuracy bonus + weapon skill at every rank; melee damage adds the Might bonus
+ * and the skill of a Mace from Expert or an Axe or Spear at Master; armour class = Speed bonus +
+ * equipment + the skill of a Staff or Spear from Expert (MM6-GAPS.md 4, RPGC). Not built: Master
+ * Staff and Mace stun, Master Dagger triple damage, Master Bow's two arrows, a weapon in the left
+ * hand (Expert Dagger, Master Sword). Recovery is MM6's sum in its units: the
  * weapon type's base plus worn armour, less the Speed effect and, from Expert in Sword, Axe or
  * Bow, the skill; at least 30 for melee, 0 for bows; a struck member recovers 20 − Endurance
  * effect (MM6-GAPS.md 8, GF-M). `recoverySec` converts at 60 units a second (ours, DESIGN 14.2).
@@ -39,6 +42,7 @@ import {
   type SkillId,
   skillLevel,
   skillRank,
+  type SkillRank,
   type SkillSet,
 } from './skills';
 import type { SpellId } from './spells';
@@ -101,32 +105,52 @@ export function maxSp(c: Character): number {
   return Math.max(0, baseSp(cls, c.level, bonuses) + meditationSp(c));
 }
 
-/** Weapon skill contribution to hit: the level, doubled at Master. */
+/** Weapon skill contribution to hit: the level, at every rank (MM6-GAPS.md 4, RPGC). */
 function weaponSkillToHit(c: Character, ranged: boolean): number {
   const weapon = ranged ? rangedWeapon(c.equipment) : meleeWeapon(c.equipment);
   const skill = weapon?.def?.skill;
-  if (!skill) return 0;
-  const level = skillLevel(c.skills, skill);
-  return skillRank(c.skills, skill) === 'master' ? 2 * level : level;
+  return skill ? skillLevel(c.skills, skill) : 0;
+}
+
+/** The rank from which the melee weapon's skill adds to damage (MM6-GAPS.md 4, RPGC). */
+const SKILL_TO_DAMAGE: Partial<Record<SkillId, SkillRank>> = {
+  mace: 'expert',
+  axe: 'master',
+  spear: 'master',
+};
+
+/** The rank from which the melee weapon's skill adds to armour class (MM6-GAPS.md 4, RPGC). */
+const SKILL_TO_ARMOR: Partial<Record<SkillId, SkillRank>> = { staff: 'expert', spear: 'expert' };
+
+/** The melee weapon's skill level when its rank has reached the table's rank, else 0. */
+function meleeSkillFrom(c: Character, table: Partial<Record<SkillId, SkillRank>>): number {
+  const skill = meleeWeapon(c.equipment).def?.skill;
+  const from = skill ? table[skill] : undefined;
+  const rank = skill ? skillRank(c.skills, skill) : null;
+  return skill && from && rank && rankAtLeast(rank, from) ? skillLevel(c.skills, skill) : 0;
 }
 
 export function attackBonus(c: Character, ranged = false): number {
   return statBonus(currentStats(c).accuracy) + weaponSkillToHit(c, ranged);
 }
 
-/** Damage dice in hand; melee adds the Might bonus. */
+/** Damage dice in hand; melee adds the Might bonus and the weapon skill where its rank does. */
 export function damageDice(c: Character, ranged = false): Dice | null {
   if (ranged) {
     const bow = rangedWeapon(c.equipment);
     return bow ? bow.damage : null;
   }
   const weapon = meleeWeapon(c.equipment);
-  const bonus = (weapon.damage.bonus ?? 0) + statBonus(currentStats(c).might);
+  const bonus =
+    (weapon.damage.bonus ?? 0) +
+    statBonus(currentStats(c).might) +
+    meleeSkillFrom(c, SKILL_TO_DAMAGE);
   return { count: weapon.damage.count, sides: weapon.damage.sides, bonus };
 }
 
 export function armorClass(c: Character): number {
-  return Math.max(0, statBonus(currentStats(c).speed) + equipmentArmor(c.equipment, c.skills));
+  const equipment = equipmentArmor(c.equipment, c.skills) + meleeSkillFrom(c, SKILL_TO_ARMOR);
+  return Math.max(0, statBonus(currentStats(c).speed) + equipment);
 }
 
 /**

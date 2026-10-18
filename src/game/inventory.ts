@@ -5,7 +5,8 @@
  * gauntlets, an amulet and six rings. Rules: a two-handed weapon and a shield exclude each
  * other (the one in the way is handed back as displaced); wielding or wearing needs the item's
  * skill learnt (a class that cannot learn Plate therefore cannot wear it); a broken item cannot
- * be equipped. Simplification: no second weapon in the off hand (MM6 has none either).
+ * be equipped. Simplification: no second weapon in the off hand (MM6 allows a dagger there from
+ * Expert Dagger and a sword from Master Sword, MM6-GAPS.md 8; not built).
  */
 import {
   armorRecovery,

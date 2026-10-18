@@ -584,6 +584,12 @@ wider steps above; 3 is −5, 0 is −6). Should the manual differ, the table in
   weapon skill; armour class = Speed bonus + armour, where armour is each
   piece's value plus the body armour's skill at every rank and the Shield
   skill × 1 / 2 / 3 by rank (MM6-GAPS.md 4, RPGC).
+- Weapon skills (MM6-GAPS.md 4, RPGC) add their level to attack at every
+  rank, never doubled; from Expert, Mace adds it to damage, Staff and Spear
+  to armour class, and Sword, Axe and Bow take it off recovery; at Master,
+  Axe and Spear add it to damage. Not built yet: Master Staff and Mace
+  stun, Master Dagger's triple damage (RPGC and GF-M disagree on its
+  chance), Master Bow's two arrows and a weapon in the left hand.
 - A monster hits a member with chance (5 + 2 × monster level) / (10 + 2 ×
   monster level + armour class) (MM6-GAPS.md 8, GF-M): a level-2 bandit
   against armour class 10 hits 9 times in 24. `resolveMonsterAttack` in
@@ -1852,7 +1858,7 @@ credit grant to dial in the icons' style, one or two per school).
   × class factor, Learning 9 % + skill; recovery in MM6's units at 60 a
   second (ours), with hit recovery; armour skills add AC from Normal, the
   armour penalty halved at Expert (ours) and gone at Master; bows shoot
-  with the bow's numbers.
+  with the bow's numbers; weapon skills by MM6's ranks.
 
 - 2026-10-17 – Round 12 (16.22): the spellbook as MM6's one spread with
   bookmarks and a place per spell level; spell icons as one bitmap on
