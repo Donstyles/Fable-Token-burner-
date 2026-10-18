@@ -540,10 +540,17 @@ equipment: the class is the equipment, so any face can play any class.
   card `docs/prompt-cards/portrait-alric.md`): a blink, eyes closed, two
   glances, two winces, smile, cast, talk, refuse, afraid, weak, sick, drunk
   and insane.
-- The portrait tool aligns each edit to the neutral image, keeps only what
-  changed (eyes, brows, mouth), rejects an edit that moved the face, crops
-  MM6's oval and writes the band's 26 by 38 and the sheet's 52 by 76 in the
-  UI palette, as the icon pipeline does.
+- The portrait tool (`npm run portrait -- <appearance>`, `tools/portrait.ts`)
+  cuts every picture by the appearance's head box, set once on the neutral
+  one (`pipeline/portraits.json`), to the band ring's opening, 56 by 80 UI
+  pixels, at three image pixels to the UI pixel in full colour (168 by 240,
+  lanczos3, no posterising), keyed to the oval by whole UI pixels so its
+  edge steps with the ring's (owner, 2026-10-18: "the portrait is still too
+  pixelated" at one image pixel a UI pixel and 128 colours). With the
+  expressions it will also align each edit to the neutral image, keep only
+  what changed (eyes, brows, mouth) and reject an edit that moved the face.
+- Alric's neutral portrait is cut and shows in the dev party's first oval;
+  a member without a portrait shows their class sigil.
 - The game makes the rest: asleep and unconscious from eyes closed (the
   second tipped and darkened), poisoned and diseased as tints over sick,
   stoned, paralysed and cursed as tints over neutral, a drawn gravestone for
@@ -1181,9 +1188,10 @@ in MM6 is defined and hand painted, yours is generative noise"; "every
 button and element needs to be artisanal like someone from 1998 drew it by
 hand."
 
-- The grid: the shell has a pixel of 1.5 CSS px (`PX` in
-  `src/ui/pixel-text.ts`), so the 932 px phone screen is 621 columns, MM6's 640. Everything painted is drawn at that grid and shown pixel for pixel
-  (`image-rendering: pixelated`).
+- The grid: the shell had a pixel of 1.5 CSS px (`PX` in
+  `src/ui/pixel-text.ts`), so the 932 px phone screen was 621 columns, MM6's 640;
+  since 16.29 it is one CSS px, the view's own. Everything painted is drawn at that
+  grid and shown pixel for pixel (`image-rendering: pixelated`).
 - The paint shop (`src/ui/paint.ts`) paints every surface once at startup as
   a painter would: a base coat, dabs of a wide brush, veins or grain drawn
   stroke by stroke, a knot or a scuff here and there, then the whole
@@ -2134,8 +2142,47 @@ HUD and round 17 for the talk panel and the world:
   the bust's camera position inside its pass, far crowns keeping their
   black, the scree's ramp darker, the sky's streaks capped.
 
+### 16.29 The shell at the view's pitch (owner, 2026-10-18)
+
+"The portrait is still too pixelated. The whole UI is too pixelated." The
+shell's pixel had been one and a half CSS pixels while the view rendered at
+one (16.20), so the HUD and the screens were half again coarser than the
+world, and on the phone (three device pixels to the CSS pixel) every UI
+pixel was four and a half device pixels, drawn alternately four and five
+wide.
+
+- **One pitch**: `PX` is one CSS pixel, the view's: three device pixels on
+  the phone, a whole number on any screen; 430 rows against MM6's 480.
+  The half-pixel snaps (the text runs, the talk window, the even word
+  canvases) are gone with the half pixels; every length in the styles is a
+  whole CSS pixel.
+- **What keeps its size and gains pixels**: the type (its CSS sizes, so its
+  glyphs are drawn half again as many pixels tall, monoline, never under 18
+  or 27 for Pirata One, the old floor), the buttons, the panels, the shelf's
+  books (their emblems on the 18 by 28 grid drawn half again as large), the
+  rest button (MM6's 22 by 40 drawn 33 by 60), the clock (figures seven by
+  twelve), the close cross (eleven), the spell places and their icons (re-cut
+  from their pictures at 108 by 81, no credits spent), and the spellbook's
+  bookmarks (half again MM6's, as touch targets).
+- **What keeps its pixel counts**: every one-pixel line, bevel and shadow,
+  the ring's five bands, the tube caps, the spandrels, the book's frame and
+  stack, the view's pillars (15 wide), capitals (42 rows), plinths (32) and
+  lintel (7), and the critics' recipes for marble, slate, hide, rose and
+  mahogany, which were MM6's own pixel counts and now land at MM6's share
+  of the screen. The surface tiles are half again as wide, so they repeat
+  as seldom.
+- **The band at MM6's share**: 114 pixels tall (MM6's 128 of 480), ovals 66
+  by 90 (MM6's 68 by 91), tubes six by 78 on MM6's whole six-tone ramp, gems
+  eight by eleven, cells 120 apart.
+- **Portraits** at three image pixels to the UI pixel, smooth (12.2):
+  Alric's in the first oval.
+
 ## 13. Decision log
 
+- 2026-10-18 – The shell's pixel is one CSS pixel, the view's (16.29; owner:
+  "the whole UI is too pixelated"); the band at MM6's share with MM6's ovals;
+  portraits cut at three image pixels to the UI pixel, smooth (12.2), Alric's
+  in the band.
 - 2026-10-18 – Party portraits and paper dolls (DESIGN 12, with the owner):
   portraits are the owner's ChatGPT images with their expressions; the paper
   doll is 3D (a shared base body per sex, the member's head, garments fitted

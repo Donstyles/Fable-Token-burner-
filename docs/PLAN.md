@@ -552,7 +552,11 @@ waterfalls and deserts, walkable end to end.
     talk bust in its own light, the wall tile on each face's plane, crowns
     ranked by light, height and side. **Scored 2026-10-18, the night's
     last**: HUD 8.2 (round 18), screens 8.5, talk 9.0, world 7.5 (round
-    17), no; the bust's light then kept inside its own pass.
+    17), no; the bust's light then kept inside its own pass. **After the
+    night, with the owner (2026-10-18)**: the shell's pixel down to one CSS
+    pixel, the view's (DESIGN 16.29); the band at MM6's share with MM6's
+    ovals; the portrait tool's first cut and Alric's face in the band
+    (DESIGN 12.2).
 18. Remaining, in order: lasting buffs and Jump; weather states (rain, a
     sandstorm); music; the smith's hammer and the temple bell.
 
