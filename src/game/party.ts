@@ -105,9 +105,9 @@ export class PartyMember {
     return this.def.maxHp;
   }
 
-  /** Up and targetable: hit points above zero and not dead, stoned or eradicated. */
+  /** Up and targetable: 0 hit points or more (MM6) and not dead, stoned or eradicated. */
   get alive(): boolean {
-    return this.character ? isConscious(this.character) : this.hp > 0;
+    return this.character ? isConscious(this.character) : this.hp >= 0;
   }
 
   get attackBonus(): number {
@@ -143,7 +143,7 @@ export class PartyMember {
   /** Damage at game minute `gameMinute`; a character sheet handles falling and dying. */
   takeDamage(amount: number, gameMinute = 0): void {
     if (this.character) damageCharacter(this.character, amount, gameMinute);
-    else this.legacyHp = Math.max(0, this.legacyHp - amount);
+    else this.legacyHp -= Math.max(0, amount);
   }
 }
 

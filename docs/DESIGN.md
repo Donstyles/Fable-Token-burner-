@@ -583,6 +583,9 @@ wider steps above; 3 is −5, 0 is −6). Should the manual differ, the table in
   class), the documented MM6 formula. Melee attack bonus = Accuracy bonus +
   weapon skill; armour class = Speed bonus + armour.
 - Damage: the weapon's dice plus bonuses, at least 1 on a hit.
+- Falling and death (MM6-GAPS.md 11, MMW): a member at 0 hit points still
+  stands; below 0 it is Unconscious; below minus its Endurance score it is
+  Dead (at Endurance 30, death at −31).
 - Recovery: each member has a weapon recovery in seconds, shortened by
   0.05 s per point of Speed bonus, never under 0.5 s. (MM6 counts recovery
   in ticks; the mapping to seconds is ours until confirmed.)
@@ -1811,6 +1814,9 @@ credit grant to dial in the icons' style, one or two per school).
   (150,110,80), the grain as short vertical specks after the colour.
 
 ## 13. Decision log
+
+- 2026-10-18 – MM6 rules, step 1 (MM6-GAPS.md 38; DESIGN 14): unconscious
+  below 0 hit points, dead below minus Endurance.
 
 - 2026-10-17 – Round 12 (16.22): the spellbook as MM6's one spread with
   bookmarks and a place per spell level; spell icons as one bitmap on

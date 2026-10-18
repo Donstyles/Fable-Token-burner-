@@ -74,23 +74,40 @@ describe('derived numbers', () => {
 });
 
 describe('damage and healing', () => {
-  it('fells at zero, wakes when healed, dies past half the maximum below zero', () => {
+  it('stays up at 0, falls below 0, wakes at 0 when healed (MM6-GAPS.md 10, 11)', () => {
     const c = sorcerer();
-    expect(deathThreshold(c)).toBe(-14);
-    expect(damageCharacter(c, 27, 100)).toEqual({ hp: 0, fell: true, died: false });
+    expect(damageCharacter(c, maxHp(c), 100)).toEqual({ hp: 0, fell: false, died: false });
+    expect(isConscious(c)).toBe(true);
+    expect(damageCharacter(c, 1, 101)).toEqual({ hp: -1, fell: true, died: false });
     expect(isConscious(c)).toBe(false);
     expect(isLiving(c)).toBe(true);
     expect(canActNow(c)).toBe(false);
-    expect(c.conditions.unconscious?.since).toBe(100);
-    expect(healCharacter(c, 5)).toBe(5);
+    expect(c.conditions.unconscious?.since).toBe(101);
+    expect(healCharacter(c, 1)).toBe(1);
     expect(isConscious(c)).toBe(true);
     expect(c.conditions.unconscious).toBeUndefined();
-    expect(damageCharacter(c, 30, 200)).toEqual({ hp: -25, fell: false, died: true });
+  });
+
+  it('dies below minus the Endurance score: at Endurance 24, −24 lives and −25 dies', () => {
+    const c = sorcerer();
+    expect(c.stats.endurance).toBe(24);
+    expect(deathThreshold(c)).toBe(-24);
+    expect(damageCharacter(c, c.hp + 24, 150)).toEqual({ hp: -24, fell: true, died: false });
+    expect(damageCharacter(c, 1, 200)).toEqual({ hp: -25, fell: false, died: true });
     expect(isLiving(c)).toBe(false);
     expect(c.conditions.unconscious).toBeUndefined();
     expect(c.conditions.dead?.since).toBe(200);
     expect(healCharacter(c, 99)).toBe(0);
     expect(damageCharacter(c, 5, 300).hp).toBe(-25);
+  });
+
+  it('matches MMW’s example: at Endurance 30, death at −31', () => {
+    const r = createCharacter(knightInput());
+    if (!r.ok) throw new Error('fixture');
+    const k = r.character;
+    expect(k.stats.endurance).toBe(30);
+    expect(damageCharacter(k, k.hp + 30, 0).died).toBe(false);
+    expect(damageCharacter(k, 1, 1)).toEqual({ hp: -31, fell: false, died: true });
   });
 
   it('wakes a sleeper when struck and clamps to the maxima', () => {
