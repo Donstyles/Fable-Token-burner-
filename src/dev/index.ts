@@ -364,6 +364,7 @@ export async function startDev(app: App): Promise<DevHandle> {
     notice: (line) => status.say(line, 6000),
     onClose: () => {
       bust.hide();
+      talking?.engage(false);
       talking = null;
       screens.toggleButtonBar(true);
       saveGame(state);
@@ -376,6 +377,7 @@ export async function startDev(app: App): Promise<DevHandle> {
       return;
     }
     talking = npc;
+    npc.engage(true);
     screens.toggleButtonBar(false);
     bust.show(npc.character);
     dialogue.open(npc.def, def);

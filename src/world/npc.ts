@@ -13,6 +13,8 @@ const TALK_SECONDS = 3.5;
 export class Npc {
   private line = 0;
   private talkUntil = 0;
+  /** In the talk panel: the talk clip holds till the panel shuts. */
+  private engaged = false;
   private readonly restYaw: number;
   private time = 0;
 
@@ -46,6 +48,17 @@ export class Npc {
     if (this.character.clips.includes('talk')) this.character.play('talk');
   }
 
+  /**
+   * The talk panel opens on them or shuts. While it is open they keep the talk clip between
+   * lines: the idle is Meshy's look-around, the hips a quarter turn and the head well past
+   * the shoulder, and in the window's close-up it read as the head spinning on the neck
+   * (owner, 2026-10-18: "twitching, very scary").
+   */
+  engage(on: boolean): void {
+    this.engaged = on;
+    if (on) this.say();
+  }
+
   update(dt: number, party: Vector3): void {
     this.time += dt;
     const node = this.character.node;
@@ -57,7 +70,7 @@ export class Npc {
     let delta = want - node.rotation.y;
     delta = Math.atan2(Math.sin(delta), Math.cos(delta));
     node.rotation.y += delta * Math.min(1, dt * 4);
-    if (this.talkUntil > 0 && this.time >= this.talkUntil) {
+    if (this.talkUntil > 0 && this.time >= this.talkUntil && !this.engaged) {
       this.talkUntil = 0;
       this.character.play('idle');
     }
