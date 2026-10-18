@@ -62,25 +62,36 @@ plans the batch, `run <nnn> --dry-run` then `run <nnn>` makes it, and
   and translucent magic and leaves dark haze; our matte keys the picture
   by its distance from the border's colour and keeps the glow.
 - **Shape**: 4:3; 16:9 for a bolt or a beam across the page.
-- **Subjects**: say what is in the picture and where, as MM6's icon shows
-  it: slim adults (about seven heads tall) in a coif and hauberk of pale
-  silver-grey mail under an off-white linen tabard, tan and brown
-  leather; the subject washed in its magic's colour; the magic as light
-  with a white-hot core, coloured edges, deeper tips and a soft halo. Say
-  "no person" for an effect-only icon, or the model adds a caster.
+- **Subjects**: one sentence, written from MM6's own icon, of what is in
+  the picture and where: the pose and its direction, the corner or edge
+  each part reaches, what stays empty, and every colour, since the style
+  text names none. The house figure is a slim adult (about seven heads
+  tall) in a grey mail coif and hauberk under an off-white tabard, with tan
+  and brown leather. A figure MM6 tints all over is "lit by warm orange
+  light, so his mail, skin and boots are shades of copper"; a bare list of
+  colours loses to the model's grey mail (passes 3a, 3b), and "his shadows
+  cool blue-grey" left the walker plain grey (pass 5). Add "no glow round
+  him" unless MM6's figure glows, and "and nothing else ... no person" for
+  an effect, or the model adds a caster. Say shapes plainly: "chalk loop"
+  drew a perfect circle and "thick band of water" a block on a base (pass
+  3b); "following his outline, half a head's width out" drew a sticker
+  outline touching him (pass 5); "plain carved-wood face" keeps a face
+  simple, a mask only under zoom.
 - **Light**: people and things mostly mid-tones, a little darker than
   their ground (icon critic, pass 2: high-key overshot to luma 180 against
   MM6's 148); magic on its own, with no person or thing, pale: a little
   lighter than the ground, its darkest parts no darker than a mid-tone,
   its colour in pale tints (pass 3: MM6's twenty pure effects average
-  181, three over their parchment; ours came 126 to 172). All on a
+  181, three over their parchment; ours came 126 to 172; pass 3b: 185
+  against MM6's 181, people and things 149 against 141). All on a
   mid-tone parchment ground (about #B8AC96), the subject wider than tall
   wherever its shape allows. The post-process maps the
   picture's tones so its ground lands on the parchment's 173 (black, 60 and
   white kept); a pure light effect (a bolt, sparks, a fire spiral) keeps
-  its own exposure (`expose: 'keep'`). It still lifts, never darkens, a
-  subject darker than MM6's (5th percentile under 45, more than 5% under
-  luma 50, or a mean under 105).
+  its own exposure (`expose: 'keep'`). It still lifts, never darkens, the
+  shadows of a subject darker than MM6's (judged on what the key keeps: a
+  5th percentile under 60, or more than 2% under luma 50) to a 5th
+  percentile of 70, keeping its median and highlights.
 - **Only what is named**: the style text says no extra people, casters,
   hands or wands; a subject sentence for an effect says "and nothing else".
 - **Bitmap** (`tools/lib/icon.ts`): the subject fitted 68 by 50 (wider,
@@ -88,7 +99,10 @@ plans the batch, `run <nnn> --dry-run` then `run <nnn>` makes it, and
   twenty covered in its nine-by-nine window), the whole box taken from the picture round it
   so a glow runs to the oval's edge, on MM6's 68 by 52 parchment oval
   (184,172,150) with a four-level mottle in a 72 by 54 box, keyed outside
-  the oval, 255 colours; then the parchment keyed out, so in the game the
-  icon sits on the page's own shadow (paint.ts `ellipse`, multiplied), as
-  an empty place does. `icon reprocess <nnn>` runs a better recipe again on
+  the oval; then the parchment keyed out softly (the parchment that
+  reaches the rim and a two-pixel band into the subject take a cover of
+  their distance less four over sixteen, unmixed; parchment enclosed by
+  the subject stays), 255 colours with alpha as a fourth channel, so in
+  the game the icon sits on the page's own shadow (paint.ts `ellipse`,
+  multiplied), as an empty place does. `icon reprocess <nnn>` runs a better recipe again on
   pictures already paid for.

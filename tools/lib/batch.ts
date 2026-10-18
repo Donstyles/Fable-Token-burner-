@@ -224,11 +224,12 @@ export interface IconSpec {
 
 /**
  * The look of MM6's spell icons (pipeline/style.md "Spell icons"; icon critics, passes 1 to
- * 3, from the 99 reference icons): small 1998 pre-rendered models with coarse textures;
+ * 5, from the 99 reference icons): small 1998 pre-rendered models with coarse textures;
  * people and things mostly mid-tones a little darker than the ground with warm shadows,
- * magic on its own pale, a little lighter than the ground; slim adults; the magic as light
- * with an uneven glow; nothing the description does not name; spread wide on a mid-tone
- * parchment ground with no floor or shadow, so the matte keeps the glow (tools/lib/icon.ts).
+ * magic on its own pale, a little lighter than the ground; the colours only those the
+ * description names; slim adults; only the magic glows, as light with an uneven glow;
+ * nothing the description does not name; spread wide on a mid-tone parchment ground with no
+ * floor or shadow, so the matte keeps the glow (tools/lib/icon.ts).
  */
 export const ICON_STYLE =
   "A tiny spell icon from a 1998 fantasy PC role-playing game's spellbook: a small " +
@@ -239,15 +240,16 @@ export const ICON_STYLE =
   'colour of the magic, never black, with only small highlights near white. Magic on its ' +
   'own, with no person or thing, is pale: as a whole a little lighter than the ' +
   'background, its darkest parts no darker than a mid-tone. Muted, slightly faded ' +
-  'colours: grey mail, off-white linen, tan and brown leather, dull gold; everything is ' +
-  'lit by the magic and takes on its colour. Slim adults with realistic proportions, ' +
-  'small heads and simple faces. Magic is light: a white-hot core, pale tints of its ' +
-  'colour around it, a little deeper colour at its edges and tips, and an uneven glow, ' +
-  'brightest where it touches the magic and fading slowly into the background, never a ' +
-  'flat disc. Show only what the description names: no extra people, casters, hands or ' +
-  'wands. One subject, centred and spread wide, wider than it is tall wherever its shape ' +
-  'allows, filling the whole width of the picture and most of its height, on a plain, ' +
-  'flat, evenly lit, mid-tone greyish-beige background like old parchment in shade (about ' +
+  'colours, exactly those the description names; everything is lit by the magic and takes ' +
+  'on its colour. Slim adults with realistic proportions, small heads and simple faces. ' +
+  'Magic is light: a white-hot core, pale tints of its colour around it, a little deeper ' +
+  'colour at its edges and tips, and an uneven glow, brightest where it touches the magic ' +
+  'and fading slowly into the background, never a flat disc. Only the magic glows: ' +
+  'people, their clothes and weapons have no glow, halo or rim light of their own. Show ' +
+  'only what the description names: no extra people, casters, hands or wands. One ' +
+  'subject, centred and spread wide, wider than it is tall wherever its shape allows, ' +
+  'filling the whole width of the picture and most of its height, on a plain, flat, ' +
+  'evenly lit, mid-tone greyish-beige background like old parchment in shade (about ' +
   '#B8AC96), with no ground, floor, base or cast shadow. No text, no border, no frame, no ' +
   'black outlines, no cartoon or chibi proportions, not photorealistic, not modern.';
 
