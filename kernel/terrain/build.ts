@@ -185,9 +185,15 @@ function buildValleyLevel(spec: TerrainSpec): TerrainLevel {
   const cave = caveMouth(valley.cave);
   const visual = empty();
   appendPlain(visual, cave.visual);
+  // The walk collider holds the cave mouth only: buildings and props collide as their own
+  // models at runtime (src/world/level.ts), so the party walks up to the walls (owner,
+  // 2026-10-18: "bad collision on the houses", boxes reaching up to two metres past the
+  // walls). Their boxes still go to the navmesh, so monsters path round them.
   const solids = empty();
-  appendPlain(solids, village.collider);
   appendPlain(solids, cave.collider);
+  const navSolids = empty();
+  appendPlain(navSolids, village.collider);
+  appendPlain(navSolids, cave.collider);
   const half = spec.width / 2;
   const bounds = {
     min: [-half, valley.height.min - 10, -half] as [number, number, number],
@@ -223,7 +229,7 @@ function buildValleyLevel(spec: TerrainSpec): TerrainLevel {
     props: village.props,
     forest: forest.visual,
     trees,
-    collider: navCollider(valley, navTrunks, solids),
+    collider: navCollider(valley, navTrunks, navSolids),
     solids,
     lights: [
       { position: cave.light, color: [1, 0.62, 0.3], range: 10, intensity: 2.5, kind: 'glow' },

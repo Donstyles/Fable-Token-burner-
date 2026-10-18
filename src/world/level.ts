@@ -25,6 +25,7 @@ import { Matrix, Quaternion } from '@babylonjs/core/Maths/math.vector';
 import {
   PhysicsShapeBox,
   PhysicsShapeContainer,
+  PhysicsShapeMesh,
   PhysicsShapeCylinder,
 } from '@babylonjs/core/Physics/v2/physicsShape';
 import { PhysicsBody } from '@babylonjs/core/Physics/v2/physicsBody';
@@ -355,17 +356,23 @@ export async function loadLevel(
   // switched off. Trunks collide as static bodies of cylinders, one per 200 m cell, built
   // the first time the eye comes within 60 m of the cell: thirteen thousand trees then cost
   // the load nothing, and the party never walks through a trunk it can reach.
-  // Static colliders for trunks, buildings and rocks: one body per 200 m cell, built the
+  // Static colliders for trunks, buildings, props and rocks: one body per 200 m cell, built the
   // first time the eye comes within 60 m of the cell, so ten thousand trees cost the load
   // nothing and the party never walks through a trunk or a wall it can reach.
   const physicsBodies: PhysicsBody[] = [];
   const CELL = 200;
   type Cylinder = { kind: 'cylinder'; x: number; y: number; z: number; r: number; h: number };
   type Box = { kind: 'box'; centre: Vector3; yaw: number; extents: Vector3 };
-  const colliderBuckets = new Map<string, (Cylinder | Box)[]>();
+  // A building or a prop collides as its own model's triangles (owner, 2026-10-18: "bad
+  // collision on the houses", a box round the model reached up to two metres past its walls
+  // under the eaves and porches). One mesh shape a model, placed per instance.
+  type Model = { kind: 'model'; model: string; position: Vector3; yaw: number; scale: number };
+  type Collider = Cylinder | Box | Model;
+  const colliderBuckets = new Map<string, Collider[]>();
+  const modelShapes = new Map<string, PhysicsShapeMesh>();
   const cellKey = (x: number, z: number): string =>
     `${Math.floor(x / CELL)}:${Math.floor(z / CELL)}`;
-  const addCollider = (x: number, z: number, c: Cylinder | Box): void => {
+  const addCollider = (x: number, z: number, c: Collider): void => {
     const k = cellKey(x, z);
     (colliderBuckets.get(k) ?? colliderBuckets.set(k, []).get(k)!).push(c);
   };
@@ -388,6 +395,17 @@ export async function loadLevel(
         cellRoot.parent = root;
         const container = new PhysicsShapeContainer(scene);
         for (const c of shapes) {
+          if (c.kind === 'model') {
+            const shape = modelShapes.get(c.model);
+            if (!shape) continue;
+            container.addChild(
+              shape,
+              c.position,
+              Quaternion.RotationAxis(Vector3.Up(), c.yaw),
+              new Vector3(c.scale, c.scale, c.scale),
+            );
+            continue;
+          }
           const shape =
             c.kind === 'cylinder'
               ? new PhysicsShapeCylinder(
@@ -468,7 +486,15 @@ export async function loadLevel(
       const keep = spec.kind === 'building';
       place(model, kx, ky, kz, yaw, scale, keep);
       propPlacements.push({ model, position: new Vector3(-kx, ky, kz), yaw: -yaw, scale });
-      if (spec.kind === 'building' || spec.kind === 'rock' || spec.kind === 'prop') {
+      if (spec.kind === 'building' || spec.kind === 'prop') {
+        addCollider(-kx, kz, {
+          kind: 'model',
+          model,
+          position: new Vector3(-kx, ky, kz),
+          yaw: -yaw,
+          scale,
+        });
+      } else if (spec.kind === 'rock') {
         // A box round the model's footprint; the loader mirrors x, hence the sign.
         const [w, h, d] = measure.size;
         const lx = -(measure.min[0] + w / 2) * scale;
@@ -488,12 +514,17 @@ export async function loadLevel(
         });
       }
     }
-    buildCollidersNear(toBabylon(sidecar.spawn.position));
     const models = await loadPropModels(
       scene,
       materials,
       [...buckets.values()].map((b) => b.model),
     );
+    for (const [id, model] of models) {
+      const kind = PROPS[id]?.kind;
+      if (kind === 'building' || kind === 'prop')
+        modelShapes.set(id, new PhysicsShapeMesh(model.mesh, scene));
+    }
+    buildCollidersNear(toBabylon(sidecar.spawn.position));
     for (const [key, bucket] of buckets) {
       const model = models.get(bucket.model)!;
       const buffer = new Float32Array(bucket.matrices.length * 16);
@@ -587,8 +618,8 @@ export async function loadLevel(
     };
   });
 
-  // Collider: an invisible static mesh shape (indoors the whole level, outdoors the village
-  // solids), plus outdoors the full-detail terrain chunks.
+  // Collider: an invisible static mesh shape (indoors the whole level, outdoors the cave
+  // mouth), plus outdoors the full-detail terrain chunks.
   const collider = new Mesh('level-collider', scene);
   const cp = find('collider')?.primitives[0];
   const aggregates: PhysicsAggregate[] = [];
@@ -707,6 +738,7 @@ export async function loadLevel(
       for (const l of live) materials.removeLight(l);
       for (const a of aggregates) a.dispose();
       for (const b of physicsBodies) b.dispose();
+      for (const s of modelShapes.values()) s.dispose();
       navMesh?.material?.dispose();
       root.dispose(false, true);
     },

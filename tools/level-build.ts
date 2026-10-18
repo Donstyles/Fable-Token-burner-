@@ -89,7 +89,7 @@ async function buildTerrain(id: string, validate: boolean): Promise<boolean> {
   const chunkMetres = mod.default.chunkCells * mod.default.cell;
   // Trees travel as instances in the sidecar (a few bytes each) and are drawn as thin
   // instances of two prototypes; collision is the terrain chunks plus a cylinder per trunk,
-  // plus the village solids as a collider mesh.
+  // plus the cave mouth as a collider mesh (buildings and props collide as their own models).
   const glb = await buildLevelGlb(
     {
       visual: level.visual,

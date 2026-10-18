@@ -113,6 +113,73 @@ test.describe('valley region', () => {
     await page.screenshot({ path: `test-results/valley-${test.info().project.name}.png` });
   });
 
+  test('the barn collides as its drawn walls, not a box round them', async ({ page }) => {
+    // Owner's phone, 2026-10-18: "bad collision on the houses", the barn's box 2.15 m past
+    // its walls. Rays from all round at chest height must meet the collider where they meet
+    // the drawn model (a tree or the ground in front may take a few).
+    const r = await page.evaluate(async () => {
+      type Vec = { x: number; y: number; z: number; add(v: Vec): Vec; scale(s: number): Vec };
+      type VecClass = (new (x: number, y: number, z: number) => Vec) & {
+        Distance(a: Vec, b: Vec): number;
+      };
+      type Picked = { hit: boolean; distance: number } | null;
+      type Mesh = { name: string; isEnabled(): boolean; isPickable: boolean } & {
+        thinInstanceEnablePicking: boolean;
+      };
+      type Scene = {
+        meshes: Mesh[];
+        activeCamera: { position: Vec; getForwardRay(): object };
+        pickWithRay(ray: object, predicate: (m: Mesh) => boolean): Picked;
+        getPhysicsEngine(): { raycast(a: Vec, b: Vec): { hasHit: boolean; hitPointWorld: Vec } };
+      };
+      const ftb = (window as unknown as { ftb: { dev: Dev; scene: Scene } }).ftb;
+      const d = ftb.dev;
+      const scene = ftb.scene;
+      const V = scene.activeCamera.position.constructor as VecClass;
+      const Ray = scene.activeCamera.getForwardRay().constructor as new (
+        o: Vec,
+        d: Vec,
+        l: number,
+      ) => object;
+      const models = d.level.sidecar.propModels!;
+      const [, kx, ky, kz] = (d.level.sidecar.props as number[][]).find(
+        (p) => models[p[0]!] === 'building-barn',
+      )!;
+      // Kernel X is mirrored in the scene.
+      const c = { x: -kx!, y: ky!, z: kz! };
+      // Up above it, so the cell colliders round it are built and the party is in no ray.
+      d.teleport(c.x + 30, c.y + 40, c.z + 30, 0);
+      await new Promise((done) => setTimeout(done, 500));
+      for (const m of scene.meshes) {
+        if (!m.name.startsWith('props:')) continue;
+        m.thinInstanceEnablePicking = true;
+        m.isPickable = true;
+      }
+      const engine = scene.getPhysicsEngine();
+      let both = 0;
+      let agree = 0;
+      let wallWithout = 0;
+      const R = 16;
+      for (let k = 0; k < 24; k++) {
+        const a = (k / 24) * Math.PI * 2;
+        const o = new V(c.x + Math.sin(a) * R, c.y + 1, c.z + Math.cos(a) * R);
+        const dir = new V(-Math.sin(a), 0, -Math.cos(a));
+        // The yard's fence and haystacks stand in front of it: drawn, they count.
+        const seen = scene.pickWithRay(new Ray(o, dir, R), (m) => m.name.startsWith('props:'));
+        const felt = engine.raycast(o, o.add(dir.scale(R)));
+        if (!seen?.hit || !felt.hasHit) continue;
+        both++;
+        const gap = seen.distance - V.Distance(o, felt.hitPointWorld);
+        if (Math.abs(gap) < 0.05) agree++;
+        if (gap < -0.1) wallWithout++;
+      }
+      return { both, agree, wallWithout };
+    });
+    expect(r.both).toBeGreaterThanOrEqual(20);
+    expect(r.agree).toBeGreaterThanOrEqual(r.both - 3);
+    expect(r.wallWithout).toBe(0);
+  });
+
   test('stands on the pass and the summit after teleporting', async ({ page }) => {
     for (const name of ['pass', 'summit']) {
       const q = await page.evaluate((n) => {
