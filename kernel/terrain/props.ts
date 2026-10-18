@@ -73,6 +73,12 @@ export interface PropMeasure {
   triangles: number;
   /** Triangles of the far-detail copy, when one was made. */
   lodTriangles?: number;
+  /**
+   * A building's wall base: metres from its lowest point up to the first height at which it
+   * spans most of its footprint both ways. Posts and steps below go into the ground, so the
+   * walls stand on it (owner, 2026-10-18: the inn's walls hung 1.6 m up on its posts).
+   */
+  base?: number;
 }
 
 export type PropCatalogue = Record<string, PropMeasure>;

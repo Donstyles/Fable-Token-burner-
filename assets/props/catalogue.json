@@ -11,7 +11,8 @@
       -4.135199723415803
     ],
     "scale": 9.457159293645548,
-    "triangles": 922
+    "triangles": 922,
+    "base": 0
   },
   "building-cottage-01": {
     "size": [
@@ -25,7 +26,8 @@
       -2.8635355024032414
     ],
     "scale": 6.823172729309035,
-    "triangles": 842
+    "triangles": 842,
+    "base": 0
   },
   "building-cottage-02": {
     "size": [
@@ -39,7 +41,8 @@
       -1.6095815654138796
     ],
     "scale": 5.788279483228941,
-    "triangles": 940
+    "triangles": 940,
+    "base": 0
   },
   "building-cottage-03": {
     "size": [
@@ -53,7 +56,8 @@
       -2.4835149670328986
     ],
     "scale": 8.899796611861916,
-    "triangles": 1028
+    "triangles": 1028,
+    "base": 0
   },
   "building-farmhouse": {
     "size": [
@@ -67,7 +71,8 @@
       -3.565549781554227
     ],
     "scale": 9.982557032181411,
-    "triangles": 1434
+    "triangles": 1434,
+    "base": 0
   },
   "building-inn": {
     "size": [
@@ -81,7 +86,8 @@
       -6.109177374524074
     ],
     "scale": 20.46049716143199,
-    "triangles": 1656
+    "triangles": 1656,
+    "base": 1.6
   },
   "building-smithy": {
     "size": [
@@ -95,7 +101,8 @@
       -3.8638599211328777
     ],
     "scale": 8.75836995766912,
-    "triangles": 1461
+    "triangles": 1461,
+    "base": 0
   },
   "building-stables": {
     "size": [
@@ -109,7 +116,8 @@
       -5.463443743739683
     ],
     "scale": 11.517383850644832,
-    "triangles": 1338
+    "triangles": 1338,
+    "base": 0
   },
   "building-store": {
     "size": [
@@ -123,7 +131,8 @@
       -4.233133659951817
     ],
     "scale": 8.841869880940381,
-    "triangles": 1241
+    "triangles": 1241,
+    "base": 0
   },
   "building-temple": {
     "size": [
@@ -137,7 +146,8 @@
       -4.599027226570121
     ],
     "scale": 13.660341201932457,
-    "triangles": 1840
+    "triangles": 1840,
+    "base": 0
   },
   "bush-01": {
     "size": [

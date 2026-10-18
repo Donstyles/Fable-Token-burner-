@@ -38,6 +38,53 @@ async function exists(path: string): Promise<boolean> {
   }
 }
 
+/**
+ * The lowest height, in metres above the model's foot, at which a slice 0.2 m deep spans at
+ * least three fifths of the model's width and depth: where the walls begin, under any posts,
+ * steps or stray points.
+ */
+function wallBase(doc: Document, scale: number): number {
+  const pts: [number, number, number][] = [];
+  for (const node of doc.getRoot().listNodes()) {
+    const mesh = node.getMesh();
+    if (!mesh) continue;
+    const m = node.getWorldMatrix();
+    for (const prim of mesh.listPrimitives()) {
+      const pos = prim.getAttribute('POSITION');
+      if (!pos) continue;
+      const v = [0, 0, 0];
+      for (let i = 0; i < pos.getCount(); i++) {
+        const [x, y, z] = pos.getElement(i, v) as [number, number, number];
+        pts.push([
+          (m[0] * x + m[4] * y + m[8] * z + m[12]) * scale,
+          (m[1] * x + m[5] * y + m[9] * z + m[13]) * scale,
+          (m[2] * x + m[6] * y + m[10] * z + m[14]) * scale,
+        ]);
+      }
+    }
+  }
+  if (!pts.length) return 0;
+  const extent = (band: [number, number, number][]): [number, number] => {
+    let [a0, a1, b0, b1] = [Infinity, -Infinity, Infinity, -Infinity];
+    for (const [x, , z] of band) {
+      a0 = Math.min(a0, x);
+      a1 = Math.max(a1, x);
+      b0 = Math.min(b0, z);
+      b1 = Math.max(b1, z);
+    }
+    return [a1 - a0, b1 - b0];
+  };
+  const foot = Math.min(...pts.map((p) => p[1]));
+  const [w, d] = extent(pts);
+  for (let h = 0; h < 3; h += 0.1) {
+    const band = pts.filter((p) => p[1] - foot >= h && p[1] - foot < h + 0.2);
+    if (!band.length) continue;
+    const [bw, bd] = extent(band);
+    if (bw >= 0.6 * w && bd >= 0.6 * d) return Math.round(h * 10) / 10;
+  }
+  return 0;
+}
+
 async function main(): Promise<void> {
   const io = new NodeIO().registerExtensions(ALL_EXTENSIONS);
   await MeshoptSimplifier.ready;
@@ -63,6 +110,7 @@ async function main(): Promise<void> {
       scale,
       triangles: triangles(doc),
     };
+    if (spec.kind === 'building') measure.base = wallBase(doc, scale);
     if (spec.kind === 'tree' || spec.kind === 'bush') {
       const lod = join(PROP_DIR, id, `${id}.lod.glb`);
       await doc.transform(

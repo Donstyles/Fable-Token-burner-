@@ -173,8 +173,12 @@ export function layoutVillage(spec: VillageSpec): VillageLayout {
     const [x, z] = world(s.a, s.b);
     const rise = s.rise ?? 0;
     const y = spec.y + rise;
-    props.push({ model: s.model, x, y, z, yaw, scale: 1 });
-    const [w, h, d] = m.size;
+    // Sunk by its wall base, so the walls stand on the levelled ground and any posts under
+    // them go into it.
+    const base = m.base ?? 0;
+    props.push({ model: s.model, x, y: y - base, z, yaw, scale: 1 });
+    const [w, full, d] = m.size;
+    const h = full - base;
     // The model's box in its own frame: x across the front, z front to back.
     const cx = m.min[0] + w / 2;
     const cz = m.min[2] + d / 2;

@@ -171,7 +171,10 @@ describe('village', () => {
     // The temple rises on its knoll; everything else sits on the floor.
     const temple = by('building-temple')[0]!;
     expect(temple.y).toBeCloseTo(14.5);
-    expect(by('building-inn')[0]!.y).toBe(12);
+    // On the street, sunk by its wall base so its walls stand on the ground, not its posts.
+    const innBase = CATALOGUE['building-inn']!.base ?? 0;
+    expect(innBase).toBeGreaterThan(1);
+    expect(by('building-inn')[0]!.y).toBeCloseTo(12 - innBase);
     expect(v.pads.find((pad) => pad.rise > 0)).toBeTruthy();
     // Footprint boxes for the navmesh: at least one per building and prop.
     expect(v.collider.indices.length / 3).toBeGreaterThan(v.props.length * 10);
