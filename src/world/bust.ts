@@ -14,6 +14,8 @@ import { RenderTargetTexture } from '@babylonjs/core/Materials/Textures/renderTa
 import { Color3, Color4 } from '@babylonjs/core/Maths/math.color';
 import { Matrix, Vector2, Vector3 } from '@babylonjs/core/Maths/math.vector';
 import { AbstractMesh } from '@babylonjs/core/Meshes/abstractMesh';
+import { TransformNode } from '@babylonjs/core/Meshes/transformNode';
+import type { Node } from '@babylonjs/core/node';
 import { CreatePlane } from '@babylonjs/core/Meshes/Builders/planeBuilder';
 import type { Mesh } from '@babylonjs/core/Meshes/mesh';
 import type { Scene } from '@babylonjs/core/scene';
@@ -354,8 +356,15 @@ export class Bust {
   }
 }
 
-/** The world position of the rig's head bone, if the model has one. */
-function headOf(meshes: readonly AbstractMesh[]): Vector3 | null {
+/**
+ * The world position of the rig's head bone this frame, if the model has one. Babylon keeps a
+ * node's world matrix for the render it was last computed in, and the render count moves on
+ * only when a camera draws, after the frame's hooks: read from a hook, the bone stood where
+ * the last frame left it, so at every step of the clip the head jumped off the window's
+ * middle for a frame and back (owner, 2026-10-18: "twitching, very scary"). The chain is
+ * recomputed from the root down.
+ */
+export function headOf(meshes: readonly AbstractMesh[]): Vector3 | null {
   for (const m of meshes) {
     const bones = m.skeleton?.bones;
     if (!bones) continue;
@@ -364,7 +373,13 @@ function headOf(meshes: readonly AbstractMesh[]): Vector3 | null {
       bones.find((b) => /head/i.test(b.name) && !/end|top/i.test(b.name));
     if (!bone) continue;
     const node = bone.getTransformNode();
-    return node ? node.getAbsolutePosition().clone() : bone.getAbsolutePosition(m).clone();
+    if (!node) return bone.getAbsolutePosition(m).clone();
+    const chain: TransformNode[] = [];
+    for (let n: Node | null = node; n; n = n.parent) {
+      if (n instanceof TransformNode) chain.unshift(n);
+    }
+    for (const n of chain) n.computeWorldMatrix(true);
+    return node.getAbsolutePosition().clone();
   }
   return null;
 }
