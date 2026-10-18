@@ -1,0 +1,473 @@
+From 371cbf953f4d4e76cec0ad12f55a86039da74172 Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Sun, 18 Oct 2026 00:25:49 +0000
+Subject: [PATCH] Rules: MM6's stat effect table (two src/ui assertions left
+ old)
+
+The statistic effect table is MM6's (MM6-GAPS.md 3, GF-M): 0 -> -6, 3 ->
+-5, 5 -> -4, 7 -> -3, 9 -> -2, 11 -> -1, 13 -> 0, 15 -> +1, 17 -> +2,
+19 -> +3, 21 -> +4, 25 -> +5, 30 -> +6, 35 -> +7, 40 -> +8, 50 -> +9,
++1 per 25 to 300 -> +19, 350 -> +20, 400 -> +25, 500 -> +30. Was one
+step too high from 4 to 399 (11-12 gave 0) and +22 / +23 at 400 / 500.
+Screenshot-21's level-1 Paladin now comes out: Attack +2, Damage 5-11,
+Shoot +1, SP 7, AC 14 (his 31 HP still do not: the class table, left to
+the owner).
+
+Tests: new stats.test.ts with the whole table; combat.test.ts's stat
+test, and character.test.ts, creation.test.ts and party.test.ts, encoded
+the old table; updated to MM6's values, with GF-M's recovery example
+(99) and screenshot-21's Paladin.
+
+NOT GREEN: two src/ui assertions encode the old table and fail with this
+commit: src/ui/creation-model.test.ts expects Might 17 -> bonus 3 (MM6:
+2) and src/ui/sheet-model.test.ts expects Might 32 -> 7 (MM6: 6). The
+coordinator agreed to changing just those two values, but the permission
+system denied my edit to src/ui, so they are left for the owner: update
+them, or drop this commit (it is last and self-contained).
+
+DESIGN 14.1 and src/game/README.md updated; decision log line extended.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01W5BePXiaXkqzr4br9g7qBv
+---
+ docs/DESIGN.md             | 13 +++---
+ src/game/README.md         |  2 +-
+ src/game/character.test.ts | 84 +++++++++++++++++++++++++++-----------
+ src/game/combat.test.ts    | 14 -------
+ src/game/creation.test.ts  |  7 ++--
+ src/game/party.test.ts     | 15 +++----
+ src/game/stats.test.ts     | 56 +++++++++++++++++++++++++
+ src/game/stats.ts          | 65 ++++++++++++++---------------
+ 8 files changed, 171 insertions(+), 85 deletions(-)
+ create mode 100644 src/game/stats.test.ts
+
+diff --git a/docs/DESIGN.md b/docs/DESIGN.md
+index 3fbdc86..ffd7c72 100644
+--- a/docs/DESIGN.md
++++ b/docs/DESIGN.md
+@@ -572,10 +572,12 @@ deviate. Code: `src/game/`.
+ ### 14.1 Statistics
+ 
+ The seven MM6 statistics: Might, Intellect, Personality, Endurance,
+-Accuracy, Speed, Luck. The bonus table is the MM6 to MM8 one as the community
+-documents it (11–12 is 0, then +1 per two points to 20, +1 per five to 40,
+-wider steps above; 3 is −5, 0 is −6). Should the manual differ, the table in
+-`src/game/stats.ts` changes and this entry records it.
++Accuracy, Speed, Luck. A score gives its effect (bonus) by MM6's table
++(MM6-GAPS.md 3, GF-M): 0 is −6, 3 −5, 5 −4, 7 −3, 9 −2, 11 −1, 13 0, 15
+++1, 17 +2, 19 +3, 21 +4, 25 +5, 30 +6, 35 +7, 40 +8, 50 +9, then +1 per 25
++points to +19 at 300, 350 +20, 400 +25 and 500 +30. Screenshot-21 confirms
++it (Accuracy 15 gives +1, Might 17 +2). Until 2026-10-18 the table here
++was one step too high from 4 to 399 (11–12 gave 0).
+ 
+ ### 14.2 Combat resolution
+ 
+@@ -1802,7 +1804,8 @@ Round 11:
+   × class factor, Learning 9 % + skill; recovery in MM6's units at 60 a
+   second (ours), with hit recovery; armour skills add AC from Normal, the
+   armour penalty halved at Expert (ours) and gone at Master; bows shoot
+-  with the bow's numbers; weapon skills by MM6's ranks.
++  with the bow's numbers; weapon skills by MM6's ranks; MM6's stat effect
++  table (one step lower from 4 to 399).
+ 
+ - 2026-10-17 – Round 11 (16.21): no dither on the light steps (the
+   critic's reversal); blended clouds lit from above; continuous veins,
+diff --git a/src/game/README.md b/src/game/README.md
+index 5399dbe..399aa61 100644
+--- a/src/game/README.md
++++ b/src/game/README.md
+@@ -7,7 +7,7 @@ here and in the module's header comment. `fixtures.ts` is test data only.
+ 
+ | Module                                           | MM6 rule followed                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             | Simplifications (ours)                                                                                                                                                                                                                                                                                                                                                                                                                      |
+ | ------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+-| `rng.ts`, `stats.ts`, `combat.ts`, `monsters.ts` | Pre-existing: seven stats and the MM6–MM8 bonus table; to-hit (15 + 2A) / (30 + 2A + AC); a monster's to-hit by its level L, (5 + 2L) / (10 + 2L + AC) (MM6-GAPS.md 8, GF-M; `resolveMonsterAttack`); damage dice.                                                                                                                                                                                                                                                                                                                                                                                                                                            | See DESIGN 14.                                                                                                                                                                                                                                                                                                                                                                                                                              |
++| `rng.ts`, `stats.ts`, `combat.ts`, `monsters.ts` | Seven stats and MM6's effect table, 13 → 0, 15 → +1, … 500 → +30 (MM6-GAPS.md 3, GF-M; screenshot-21); to-hit (15 + 2A) / (30 + 2A + AC); a monster's to-hit by its level L, (5 + 2L) / (10 + 2L + AC) (MM6-GAPS.md 8, GF-M; `resolveMonsterAttack`); damage dice.                                                                                                                                                                                                                                                                                                                                                                                            | See DESIGN 14.                                                                                                                                                                                                                                                                                                                                                                                                                              |
+ | `skills.ts`                                      | 26 skills in MM6's four groups; Normal/Expert/Master; raising level n → n + 1 costs n + 1 points; Expert at level 4 for 1000 gold, Master at level 7 for 2000; rank multiplier ×1/×2/×3.                                                                                                                                                                                                                                                                                                                                                                                                                                                                      | Diplomacy omitted. Master prices are the common ones; individual MM6 masters asked more or a quest.                                                                                                                                                                                                                                                                                                                                         |
+ | `classes.ts`                                     | Six classes; HP = base + (level + Endurance bonus) × factor; SP = base + (level + magic-stat bonus) × factor (Intellect: Archer, Sorcerer; Personality: Paladin, Cleric; both summed: Druid; none: Knight). Table: Knight 30/5, Paladin 25/4 + 5/1, Archer 20/3 + 5/1, Cleric 20/3 + 10/2, Sorcerer 15/2 + 10/3, Druid 15/2 + 10/3.                                                                                                                                                                                                                                                                                                                           | Base stats, fixed/optional starting skills and per-class rank caps are approximations of MM6's class table; caps are the promoted ones (no promotion quests).                                                                                                                                                                                                                                                                               |
+ | `creation.ts`                                    | Name, sex, portrait, class; class base stats plus a bonus pool, lowering a stat refunds; two fixed skills plus two picks; level 1, full HP/SP; every starting magic skill grants its school's first spell.                                                                                                                                                                                                                                                                                                                                                                                                                                                    | Pool 50, one point per step, range base −5 to base +15, all points must be spent (MM6's exact creation table unverified; tuning pending). Name ≤ 15 characters, age 20, 0 skill points. Errors are values.                                                                                                                                                                                                                                  |
+diff --git a/src/game/character.test.ts b/src/game/character.test.ts
+index e874ef3..6a6a530 100644
+--- a/src/game/character.test.ts
++++ b/src/game/character.test.ts
+@@ -28,7 +28,7 @@ import { knightInput, sorcererInput } from './fixtures';
+ import { equipItem } from './inventory';
+ import { createItem } from './items';
+ import { TEST_PARTY } from './party';
+-import { statBonus } from './stats';
++import { statBonus, stats } from './stats';
+ 
+ function sorcerer() {
+   const r = createCharacter(sorcererInput());
+@@ -39,15 +39,16 @@ function sorcerer() {
+ describe('derived numbers', () => {
+   it('computes hit and spell points from class, level, stats and skills', () => {
+     const c = sorcerer();
+-    // Her Meditation 1 adds the Sorcerer's 3 spell points a level.
+-    expect(maxHp(c)).toBe(27);
+-    expect(maxSp(c)).toBe(37);
++    // Endurance 24 gives +4 and Intellect 32 +6 (MM6's table): 15 + (1 + 4) × 2 hit points and
++    // 10 + (1 + 6) × 3 spell points, plus Meditation 1 × the Sorcerer's 3.
++    expect(maxHp(c)).toBe(25);
++    expect(maxSp(c)).toBe(34);
+     c.skills.bodybuilding = { level: 2, rank: 'normal' };
+     c.skills.meditation = { level: 2, rank: 'expert' };
+-    expect(maxHp(c)).toBe(31);
+-    expect(maxSp(c)).toBe(46);
++    expect(maxHp(c)).toBe(29);
++    expect(maxSp(c)).toBe(43);
+     c.level = 3;
+-    expect(maxHp(c)).toBe(35);
++    expect(maxHp(c)).toBe(33);
+     const knight = createCharacter(knightInput());
+     if (knight.ok) expect(maxSp(knight.character)).toBe(0);
+   });
+@@ -78,35 +79,70 @@ describe('derived numbers', () => {
+ 
+   it('derives attack, damage, armour and recovery from equipment', () => {
+     const c = sorcerer();
+-    expect(attackBonus(c)).toBe(5);
+-    expect(damageDice(c)).toEqual({ count: 1, sides: 3, bonus: -2 });
++    // Accuracy and Speed 23 give +4, Might 7 gives −3 (MM6's table).
++    expect(attackBonus(c)).toBe(4);
++    expect(damageDice(c)).toEqual({ count: 1, sides: 3, bonus: -3 });
+     expect(damageDice(c, true)).toBeNull();
+-    expect(armorClass(c)).toBe(5);
++    expect(armorClass(c)).toBe(4);
+     // Bare hands recover as a staff, 100, less the Speed effect.
+-    expect(recoveryUnits(c)).toBe(100 - statBonus(23));
+-    expect(recoverySec(c)).toBeCloseTo((100 - statBonus(23)) / 60);
++    expect(recoveryUnits(c)).toBe(96);
++    expect(recoverySec(c)).toBeCloseTo(96 / 60);
+     expect(equipItem(c.equipment, createItem('dagger'), c.skills).ok).toBe(true);
+-    expect(attackBonus(c)).toBe(6);
+-    expect(damageDice(c)).toEqual({ count: 2, sides: 2, bonus: -2 });
++    expect(attackBonus(c)).toBe(5);
++    expect(damageDice(c)).toEqual({ count: 2, sides: 2, bonus: -3 });
+     // The skill adds its level to attack at every rank; Master does not double it.
+     c.skills.dagger = { level: 4, rank: 'master' };
+-    expect(attackBonus(c)).toBe(5 + 4);
++    expect(attackBonus(c)).toBe(4 + 4);
+     // A dagger's 60; Dagger skill takes nothing off.
+-    expect(recoveryUnits(c)).toBe(60 - statBonus(23));
++    expect(recoveryUnits(c)).toBe(56);
+     equipItem(c.equipment, createItem('leather-armor'), c.skills);
+     expect(equipItem(c.equipment, createItem('leather-armor'), c.skills).ok).toBe(false);
+     c.skills.leather = { level: 1, rank: 'normal' };
+     equipItem(c.equipment, createItem('leather-armor'), c.skills);
+     // Speed, leather's 4 and Leather 1, which MM6 adds from Normal.
+-    expect(armorClass(c)).toBe(10);
++    expect(armorClass(c)).toBe(4 + 4 + 1);
+     expect(recoverySec(c, true)).toBe(Infinity);
+   });
+ 
+   it('lets conditions pull the derived numbers down', () => {
+     const c = sorcerer();
+     afflict(c.conditions, 'weak', 0);
+-    expect(maxHp(c)).toBeLessThan(27);
+-    expect(attackBonus(c)).toBeLessThan(5);
++    expect(maxHp(c)).toBeLessThan(25);
++    expect(attackBonus(c)).toBeLessThan(4);
++  });
++
++  it('matches screenshot-21’s level-1 Paladin', () => {
++    // Might 17, Intellect 5, Personality 15, Endurance 15, Accuracy 15, Speed 13, Luck 6; Sword,
++    // Spirit, Shield and Chain at 1; a long sword (3–9), chain mail and a shield.
++    const r = createCharacter(knightInput());
++    if (!r.ok) throw new Error('fixture');
++    const p = r.character;
++    p.classId = 'paladin';
++    p.stats = stats({
++      might: 17,
++      intellect: 5,
++      personality: 15,
++      endurance: 15,
++      accuracy: 15,
++      speed: 13,
++      luck: 6,
++    });
++    p.skills = {
++      sword: { level: 1, rank: 'normal' },
++      spirit: { level: 1, rank: 'normal' },
++      shield: { level: 1, rank: 'normal' },
++      chain: { level: 1, rank: 'normal' },
++    };
++    for (const id of ['long-sword', 'chain-mail', 'shield'] as const) {
++      expect(equipItem(p.equipment, createItem(id), p.skills).ok).toBe(true);
++    }
++    expect(attackBonus(p)).toBe(2);
++    expect(damageDice(p)).toEqual({ count: 3, sides: 3, bonus: 2 });
++    expect(attackBonus(p, true)).toBe(1);
++    expect(maxSp(p)).toBe(7);
++    // AC 14 with the assumed item values 8 and 4 (MM6-GAPS.md 4).
++    expect(armorClass(p)).toBe(14);
++    // Hit points are 33 here and 31 in MM6: the Paladin's base or factor is off (MM6-GAPS.md 2).
+   });
+ });
+ 
+@@ -193,6 +229,7 @@ describe('recovery in MM6 units (MM6-GAPS.md 8, GF-M)', () => {
+     equipItem(k.equipment, createItem('shield'), k.skills);
+     equipItem(k.equipment, createItem('leather-armor'), k.skills);
+     expect(recoveryUnits(k)).toBe(80 + 10 + 10 - statBonus(15));
++    expect(recoveryUnits(k)).toBe(99);
+   });
+ 
+   it('takes the skill off from Expert in Sword, Axe and Bow, not in Mace', () => {
+@@ -229,7 +266,8 @@ describe('recovery in MM6 units (MM6-GAPS.md 8, GF-M)', () => {
+     const c = sorcerer();
+     expect(hitRecoveryUnits(c)).toBe(20 - statBonus(c.stats.endurance));
+     expect(hitRecovery(0)).toBe(26);
+-    expect(hitRecovery(13)).toBe(20 - statBonus(13));
++    expect(hitRecovery(13)).toBe(20);
++    expect(hitRecovery(15)).toBe(19);
+     expect(hitRecovery(350)).toBe(0);
+     expect(hitRecovery(500)).toBe(0);
+   });
+@@ -279,12 +317,12 @@ describe('damage and healing', () => {
+     expect(c.conditions.asleep).toBeUndefined();
+     c.sp = 0;
+     expect(restoreSp(c, 10)).toBe(10);
+-    expect(restoreSp(c)).toBe(27);
++    expect(restoreSp(c)).toBe(24);
+     c.hp = 999;
+     c.sp = 999;
+     clampToMax(c);
+-    expect(c.hp).toBe(27);
+-    expect(c.sp).toBe(37);
++    expect(c.hp).toBe(25);
++    expect(c.sp).toBe(34);
+   });
+ 
+   it('tells a character sheet from test data', () => {
+diff --git a/src/game/combat.test.ts b/src/game/combat.test.ts
+index f0f9f0f..8bacdf0 100644
+--- a/src/game/combat.test.ts
++++ b/src/game/combat.test.ts
+@@ -3,20 +3,6 @@ import { hitChance, monsterHitChance, resolveAttack, resolveMonsterAttack } from
+ import { MONSTERS } from './monsters';
+ import { Party, TEST_PARTY } from './party';
+ import { diceText, mulberry32, rollDice } from './rng';
+-import { statBonus } from './stats';
+-
+-describe('stat bonuses', () => {
+-  it('anchors at zero for 11 and 12 and climbs in steps', () => {
+-    expect(statBonus(11)).toBe(0);
+-    expect(statBonus(12)).toBe(0);
+-    expect(statBonus(13)).toBe(1);
+-    expect(statBonus(20)).toBe(4);
+-    expect(statBonus(21)).toBe(5);
+-    expect(statBonus(50)).toBe(10);
+-    expect(statBonus(3)).toBe(-5);
+-    expect(statBonus(0)).toBe(-6);
+-  });
+-});
+ 
+ describe('dice', () => {
+   it('rolls within range and repeats with the same seed', () => {
+diff --git a/src/game/creation.test.ts b/src/game/creation.test.ts
+index a302269..dce1880 100644
+--- a/src/game/creation.test.ts
++++ b/src/game/creation.test.ts
+@@ -78,7 +78,8 @@ describe('createCharacter', () => {
+     expect(c.skillPoints).toBe(0);
+     expect(Object.keys(c.skills).sort()).toEqual(['axe', 'leather', 'shield', 'sword']);
+     expect(c.hp).toBe(maxHp(c));
+-    expect(c.hp).toBe(30 + (1 + 7) * 5);
++    // Endurance 30 gives +6 (MM6's table).
++    expect(c.hp).toBe(30 + (1 + 6) * 5);
+     expect(c.sp).toBe(0);
+     expect(c.spells).toEqual([]);
+     expect(c.grid.items).toEqual([]);
+@@ -94,8 +95,8 @@ describe('createCharacter', () => {
+     expect(c.spells).toEqual(['torch-light', 'wizard-eye']);
+     expect(c.sp).toBe(maxSp(c));
+     // Meditation 1 adds the Sorcerer's 3 spell points a level (MM6-GAPS.md 4).
+-    expect(c.sp).toBe(10 + (1 + 7) * 3 + 1 * 3);
+-    expect(c.hp).toBe(15 + (1 + 5) * 2);
++    expect(c.sp).toBe(10 + (1 + 6) * 3 + 1 * 3);
++    expect(c.hp).toBe(15 + (1 + 4) * 2);
+   });
+ 
+   it('builds the four test characters', () => {
+diff --git a/src/game/party.test.ts b/src/game/party.test.ts
+index 889b84a..18af21d 100644
+--- a/src/game/party.test.ts
++++ b/src/game/party.test.ts
+@@ -22,13 +22,14 @@ describe('character-backed members', () => {
+     const m = new PartyMember(knight!);
+     expect(m.character).toBe(knight);
+     expect(m.def.name).toBe('Alric');
+-    expect(m.def.maxHp).toBe(70);
+-    expect(m.hp).toBe(70);
+-    expect(m.attackBonus).toBe(6);
+-    expect(m.damage).toEqual({ count: 3, sides: 3, bonus: 7 });
+-    expect(m.armorClass).toBe(10);
++    // Endurance 30, Accuracy 23, Speed 21 and Might 32 give +6, +4, +4 and +6 (MM6's table).
++    expect(m.def.maxHp).toBe(65);
++    expect(m.hp).toBe(65);
++    expect(m.attackBonus).toBe(5);
++    expect(m.damage).toEqual({ count: 3, sides: 3, bonus: 6 });
++    expect(m.armorClass).toBe(9);
+     // A long sword's 90 and leather's 10, less the Speed effect, at 60 units a second.
+-    expect(m.recoverySec).toBeCloseTo((90 + 10 - statBonus(21)) / 60);
++    expect(m.recoverySec).toBeCloseTo((90 + 10 - 4) / 60);
+     expect(m.def.meleeSkill).toBe(1);
+     expect(m.def.armor).toBe(5);
+     expect(m.isReady(0)).toBe(true);
+@@ -123,7 +124,7 @@ describe('character-backed members', () => {
+     expect(dummy.taken).toBe(0);
+     party.members[0]!.readyAt = 0;
+     party.selected = 0;
+-    // No curse failure (0.9 ≥ 0.5), then a hit (0.1 under the 27/42 chance), then damage rolls.
++    // No curse failure (0.9 ≥ 0.5), then a hit (0.1 under the 25/40 chance), then damage rolls.
+     const rolls = [0.9, 0.1];
+     const landed = party.attack(dummy, 0, () => rolls.shift() ?? 0.5);
+     expect(landed?.member.def.name).toBe('Alric');
+diff --git a/src/game/stats.test.ts b/src/game/stats.test.ts
+new file mode 100644
+index 0000000..f35e4a1
+--- /dev/null
++++ b/src/game/stats.test.ts
+@@ -0,0 +1,56 @@
++import { describe, expect, it } from 'vitest';
++import { statBonus } from './stats';
++
++/** MM6's statistic effects (MM6-GAPS.md 3, GF-M): a score at or above the first earns the second. */
++const MM6_TABLE: readonly [number, number][] = [
++  [0, -6],
++  [3, -5],
++  [5, -4],
++  [7, -3],
++  [9, -2],
++  [11, -1],
++  [13, 0],
++  [15, 1],
++  [17, 2],
++  [19, 3],
++  [21, 4],
++  [25, 5],
++  [30, 6],
++  [35, 7],
++  [40, 8],
++  [50, 9],
++  [75, 10],
++  [100, 11],
++  [125, 12],
++  [150, 13],
++  [175, 14],
++  [200, 15],
++  [225, 16],
++  [250, 17],
++  [275, 18],
++  [300, 19],
++  [350, 20],
++  [400, 25],
++  [500, 30],
++];
++
++describe('stat effects', () => {
++  it('follows MM6’s table at every threshold and just below it', () => {
++    MM6_TABLE.forEach(([score, effect], i) => {
++      expect(statBonus(score)).toBe(effect);
++      if (i > 0) expect(statBonus(score - 1)).toBe(MM6_TABLE[i - 1]![1]);
++    });
++    expect(statBonus(4)).toBe(-5);
++    expect(statBonus(12)).toBe(-1);
++    expect(statBonus(14)).toBe(0);
++    expect(statBonus(999)).toBe(30);
++  });
++
++  it('matches screenshot-21: Accuracy 15 gives +1, Might 17 +2, Speed 13 nothing', () => {
++    // Attack +2 is Accuracy 15 plus Sword 1; Damage 5–11 is a 3–9 sword plus Might 17.
++    expect(statBonus(15) + 1).toBe(2);
++    expect(3 + statBonus(17)).toBe(5);
++    expect(9 + statBonus(17)).toBe(11);
++    expect(statBonus(13)).toBe(0);
++  });
++});
+diff --git a/src/game/stats.ts b/src/game/stats.ts
+index 591217b..ea2a6a6 100644
+--- a/src/game/stats.ts
++++ b/src/game/stats.ts
+@@ -1,7 +1,6 @@
+ /**
+- * The seven MM6 statistics and the bonus each score gives (DESIGN.md 14.1). The table is the
+- * one the community documents for MM6 to MM8; where the manual is found to differ, this table
+- * changes and DESIGN.md records it.
++ * The seven MM6 statistics and the effect (bonus) each score gives (DESIGN.md 14.1): MM6's table
++ * (MM6-GAPS.md 3, GF-M), which screenshot-21 confirms.
+  */
+ export const STATS = [
+   'might',
+@@ -16,38 +15,40 @@ export const STATS = [
+ export type Stat = (typeof STATS)[number];
+ export type Stats = Record<Stat, number>;
+ 
+-/** Score thresholds, ascending: a score at or above the threshold earns the bonus. */
++/**
++ * Score thresholds, ascending: a score at or above the threshold earns the effect. MM6's table
++ * (MM6-GAPS.md 3, GF-M), checked against screenshot-21: Accuracy 15 gives +1, Might 17 gives +2.
++ */
+ const BONUS_TABLE: readonly [number, number][] = [
+   [0, -6],
+   [3, -5],
+-  [4, -4],
+-  [5, -3],
+-  [7, -2],
+-  [9, -1],
+-  [11, 0],
+-  [13, 1],
+-  [15, 2],
+-  [17, 3],
+-  [19, 4],
+-  [21, 5],
+-  [25, 6],
+-  [30, 7],
+-  [35, 8],
+-  [40, 9],
+-  [50, 10],
+-  [75, 11],
+-  [100, 12],
+-  [125, 13],
+-  [150, 14],
+-  [175, 15],
+-  [200, 16],
+-  [225, 17],
+-  [250, 18],
+-  [275, 19],
+-  [300, 20],
+-  [350, 21],
+-  [400, 22],
+-  [500, 23],
++  [5, -4],
++  [7, -3],
++  [9, -2],
++  [11, -1],
++  [13, 0],
++  [15, 1],
++  [17, 2],
++  [19, 3],
++  [21, 4],
++  [25, 5],
++  [30, 6],
++  [35, 7],
++  [40, 8],
++  [50, 9],
++  [75, 10],
++  [100, 11],
++  [125, 12],
++  [150, 13],
++  [175, 14],
++  [200, 15],
++  [225, 16],
++  [250, 17],
++  [275, 18],
++  [300, 19],
++  [350, 20],
++  [400, 25],
++  [500, 30],
+ ];
+ 
+ export function statBonus(score: number): number {
+-- 
+2.43.0
+
