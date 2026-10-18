@@ -73,12 +73,12 @@ describe('character-backed members', () => {
   it('keeps hit points on the sheet and follows its conditions', () => {
     const chars = outfittedParty();
     const party = new Party(chars);
-    // MM6: at 0 a member stands; below 0 it falls (MM6-GAPS.md 10).
-    party.takeDamage(0, party.members[0]!.maxHp, 4);
-    expect(chars[0]!.hp).toBe(0);
+    // MM6: at 1 a member stands; at 0 it falls (docs/gaps/characters.md 12.1).
+    party.takeDamage(0, party.members[0]!.maxHp - 1, 4);
+    expect(chars[0]!.hp).toBe(1);
     expect(party.members[0]!.alive).toBe(true);
     party.takeDamage(0, 1, 5);
-    expect(chars[0]!.hp).toBe(-1);
+    expect(chars[0]!.hp).toBe(0);
     expect(chars[0]!.conditions.unconscious?.since).toBe(5);
     expect(party.members[0]!.alive).toBe(false);
     expect(party.selected).toBe(1);

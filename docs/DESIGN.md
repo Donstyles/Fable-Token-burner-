@@ -602,9 +602,10 @@ wider steps above; 3 is −5, 0 is −6). Should the manual differ, the table in
   `Party.attack` shoots whenever a bow is slung, as the runtime lets a bow
   reach anything in view; `ranged: false` strikes in melee instead, for
   when MM6's rule for a bow at arm's length is known.
-- Falling and death (MM6-GAPS.md 11, MMW): a member at 0 hit points still
-  stands; below 0 it is Unconscious; below minus its Endurance score it is
-  Dead (at Endurance 30, death at −31).
+- Falling and death (docs/gaps/characters.md 12.1): a member at 0 hit
+  points or less is Unconscious (MM6's own help text); at minus its base
+  Endurance score, before conditions, it is Dead (MW6 and the MM7 engine:
+  at Endurance 30, death at −30; corrected 2026-10-18 from MMW's "−31").
 - Recovery is MM6's sum in its units (MM6-GAPS.md 8, GF-M): the weapon
   type's base (Staff, Axe, Bow and bare hands 100, Sword 90, Spear and Mace
   80, Dagger 60) plus worn armour (Shield and Leather 10, Chain 20, Plate
@@ -1983,6 +1984,10 @@ spell icons a median 6. Round 15:
   (batch 011) meditation; 99 of the 100 credits spent.
 
 ## 13. Decision log
+
+- 2026-10-18 – Death thresholds (docs/gaps/characters.md 12.1): down at 0
+  hit points or less, dead at minus the base Endurance, a point each from
+  step 1's reading of MMW.
 
 - 2026-10-18 – Round 15 (16.25): coherent stone for the capital, MM6's
   clock figures, tubes and plinth; stops kept and the quest log upright;

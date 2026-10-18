@@ -120,9 +120,9 @@ export class PartyMember {
     return this.def.maxHp;
   }
 
-  /** Up and targetable: 0 hit points or more (MM6) and not dead, stoned or eradicated. */
+  /** Up and targetable: above 0 hit points (MM6) and not dead, stoned or eradicated. */
   get alive(): boolean {
-    return this.character ? isConscious(this.character) : this.hp >= 0;
+    return this.character ? isConscious(this.character) : this.hp > 0;
   }
 
   get attackBonus(): number {

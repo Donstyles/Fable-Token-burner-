@@ -200,9 +200,12 @@ export function isLiving(c: Character): boolean {
   return isAlive(c.conditions);
 }
 
-/** Up and able to be targeted and to be selected: living, at 0 hit points or more (MM6). */
+/**
+ * Up and able to be targeted and to be selected: living, above 0 hit points (MM6's own help:
+ * unconscious at 0 or less; docs/gaps/characters.md 12.1).
+ */
 export function isConscious(c: Character): boolean {
-  return isLiving(c) && c.hp >= 0 && !hasCondition(c.conditions, 'unconscious');
+  return isLiving(c) && c.hp > 0 && !hasCondition(c.conditions, 'unconscious');
 }
 
 /** Can the character attack, cast or use an item right now? */
@@ -211,11 +214,12 @@ export function canActNow(c: Character): boolean {
 }
 
 /**
- * A character dies when hit points fall below this: minus the Endurance score (MM6-GAPS.md 11,
- * MMW: at Endurance 30, death at −31). The score is the current one, after conditions.
+ * A character dies when hit points reach this: minus the base Endurance score, before
+ * conditions (docs/gaps/characters.md 12.1: MW6 and the MM7 engine agree, at Endurance 100
+ * dead at -100; MMW's "at 30, death at -31" is a point off against both).
  */
 export function deathThreshold(c: Character): number {
-  return -currentStats(c).endurance;
+  return -c.stats.endurance;
 }
 
 export interface DamageOutcome {
@@ -224,7 +228,7 @@ export interface DamageOutcome {
   died: boolean;
 }
 
-/** Apply damage at game minute `now`; wakes a sleeper, fells below 0, kills below the threshold. */
+/** Apply damage at game minute `now`; wakes a sleeper, fells at 0, kills at the threshold. */
 export function damageCharacter(c: Character, amount: number, now: number): DamageOutcome {
   if (!isLiving(c)) return { hp: c.hp, fell: false, died: false };
   const before = c.hp;
@@ -232,27 +236,27 @@ export function damageCharacter(c: Character, amount: number, now: number): Dama
   damageConditions(c.conditions);
   let fell = false;
   let died = false;
-  if (c.hp < deathThreshold(c)) {
+  if (c.hp <= deathThreshold(c)) {
     cure(c.conditions, 'unconscious');
     afflict(c.conditions, 'dead', now);
     died = true;
-  } else if (c.hp < 0 && before >= 0) {
+  } else if (c.hp <= 0 && before > 0) {
     afflict(c.conditions, 'unconscious', now);
     fell = true;
-  } else if (c.hp < 0) {
+  } else if (c.hp <= 0) {
     afflict(c.conditions, 'unconscious', now);
   }
   return { hp: c.hp, fell, died };
 }
 
-/** Heal up to the maximum; a character brought to 0 or above wakes. Returns the points healed. */
+/** Heal up to the maximum; a character brought above 0 wakes. Returns the points healed. */
 export function healCharacter(c: Character, amount: number): number {
   if (!isLiving(c)) return 0;
   const max = maxHp(c);
   const target = Math.min(max, c.hp + Math.max(0, Math.floor(amount)));
   const healed = target - c.hp;
   c.hp = target;
-  if (c.hp >= 0) cure(c.conditions, 'unconscious');
+  if (c.hp > 0) cure(c.conditions, 'unconscious');
   return healed;
 }
 
