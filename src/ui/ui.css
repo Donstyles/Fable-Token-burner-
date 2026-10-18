@@ -47,6 +47,11 @@
 .screen-map .ui-panel .pxt {
   word-spacing: 3px;
 }
+/* A spell's name closer still (screens critic, round 16: seven pixels between its words,
+   MM6's five). */
+.screen-spells .ui-panel .spell-name .pxt {
+  word-spacing: 0;
+}
 .pxs {
   position: absolute;
   width: 1px;
@@ -206,7 +211,9 @@
      both at the head's top. */
   display: flex;
   align-items: flex-start;
-  gap: 7.5px;
+  /* Six, so the exit oval lands on the grid the canvas shares (screens critic, round 16: 7.5
+     put it at 160.5 and 151.5). */
+  gap: 6px;
   padding: 6px 9px 0;
   min-height: 36px;
   border-bottom: 0;
@@ -604,14 +611,16 @@
   color: #5a2a0a;
 }
 
-/* The quest log's lines are MM6's sans, black, 15 UI pixels a pixel apart on lines of 16;
-   its headings keep the italic (screens critic, rounds 14 and 15). */
+/* The quest log's lines are MM6's sans, black, 16 UI pixels untracked on lines of 16; its
+   headings keep the italic (screens critic, rounds 14 to 16: at 15 a pixel apart the letter
+   gaps ran .03/.27/.60 at one, two and three pixels where MM6's run .21/.62/.17, and its
+   ascenders stood 10 to 11 rows where MM6's stand 12). */
 .screen-quests .ui-col,
 .screen-quests .ui-note,
 .screen-quests .ui-row .sub {
   font:
-    22.5px/24px 'Arimo',
+    24px/24px 'Arimo',
     sans-serif;
-  letter-spacing: 1.5px;
+  letter-spacing: 0;
   color: #000000;
 }

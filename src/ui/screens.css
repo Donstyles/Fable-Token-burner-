@@ -296,6 +296,8 @@
     Georgia,
     serif;
   color: #000000;
+  /* One line, as MM6's (screens critic, round 16: "Water Magic" spilled a pixel each side). */
+  white-space: nowrap;
 }
 .spell-plate .sub {
   font:

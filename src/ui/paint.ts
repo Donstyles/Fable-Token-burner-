@@ -475,11 +475,13 @@ function paintRose(w: number, h: number, seed: number): HTMLCanvasElement {
   // wide at half strength, fewer and longer pale veins, fewer dark ones, half the chroma.
   // Round 15 (MM6's is crackled and grainy, ours had gone smooth): a coarser crack network
   // at a pitch of 48, a grain of fourteen, straight kinked pale veins, a jitter of six.
-  crazed2(g, w, h, seed + 11, 48, [196, 151, 128], [120, 80, 56], 6, { alpha: 0.65, width: 1 });
+  // Round 16 (MM6's rose has contrast: its pale web whiter and stronger, its cracks at
+  // (91,71,62)): the cracks' shade MM6's, the pale veins tinted toward white.
+  crazed2(g, w, h, seed + 11, 48, [196, 151, 128], [92, 72, 62], 6, { alpha: 0.65, width: 1 });
   roseVeins(g, w, h, seed + 19, {
     pale: Math.round((w * h) / 2500),
     dark: Math.round((w * h * 0.4) / 3000),
-    paleTint: [1, 0.86, 0.8],
+    paleTint: [0.8, 0.95, 1],
     darkColor: [120, 80, 56],
     darkAlpha: [0.35, 0.6],
   });
@@ -2090,24 +2092,46 @@ function paintBinding(g: CanvasRenderingContext2D, x0: number, y0: number, y1: n
     strand(aOver ? b : a, y);
     strand(aOver ? a : b, y);
   }
-  // The fittings: a plate over the break, an olive corner sloping in at each end with a
-  // groove a pixel inside its edge.
+  // The fittings: a plate over the break and at each end an olive pair point-symmetric, as
+  // MM6's (screens critic, round 16: its corners are ◥ above and ◣ below): two bars a row
+  // apart joined at both sides, then the corner sloping in over six rows, a lit pixel on its
+  // slope every other row and a groove a pixel inside it.
   g.fillStyle = plate;
   g.fillRect(x0, gap[0], sw, gap[1] - gap[0] + 1);
-  for (let k = 0; k <= 8; k++) {
-    const from = x0 + 1 + Math.round((10 * k) / 8);
-    for (const y of [gap[0] + k, gap[1] - k]) {
+  const slope = [2, 4, 5, 6, 8, 9];
+  for (const [top, dir] of [
+    [gap[0], 1],
+    [gap[1], -1],
+  ] as const) {
+    g.fillStyle = olive;
+    g.fillRect(x0 + 1, top, 11, 1);
+    g.fillRect(x0 + 1, top + 2 * dir, 11, 1);
+    px(g, x0 + 1, top + dir, olive);
+    px(g, x0 + 11, top + dir, olive);
+    for (let k = 3; k <= 8; k++) {
+      const y = top + dir * k;
+      const from = dir === 1 ? x0 + 1 + slope[k - 3]! : x0 + 1;
+      const to = dir === 1 ? x0 + 11 : x0 + 11 - slope[k - 3]!;
       g.fillStyle = olive;
-      g.fillRect(from, y, Math.max(0, x0 + 11 - from), 1);
-      if (k >= 2 && k <= 7) px(g, from + 1, y, plate);
+      g.fillRect(from, y, to - from + 1, 1);
+      const edge = dir === 1 ? from : to;
+      if (k % 2 === 1) px(g, edge, y, 'rgb(165,140,82)');
+      if (k >= 4 && k <= 7 && edge + dir >= from && edge + dir <= to) px(g, edge + dir, y, plate);
     }
   }
-  const scroll = [
-    ...polyline(arc(cx, mid - 5, 3.5, 5, 0.3, -Math.PI * 1.5)),
-    ...polyline(arc(cx, mid + 5, 3.5, 5, -Math.PI / 2, Math.PI - 0.3)),
-  ];
-  for (const [x, y] of scroll) px(g, x + 1, y + 1, 'rgb(92,85,78)');
-  for (const [x, y] of scroll) px(g, x, y, olive);
+  // The S with a two-pixel pen, eleven by twenty-three, its shadow only where no pen lies
+  // (round 16: ours was 8 by 21 with 45 pixels, MM6's 11 by 24 with 73).
+  const pen = new Map<number, Pt>();
+  for (const [x, y] of [
+    ...polyline(arc(cx, mid - 5.5, 4.5, 5.5, 0.3, -Math.PI * 1.5)),
+    ...polyline(arc(cx, mid + 5.5, 4.5, 5.5, -Math.PI / 2, Math.PI - 0.3)),
+  ]) {
+    pen.set(y * 4096 + x, [x, y]);
+    pen.set(y * 4096 + x + 1, [x + 1, y]);
+  }
+  for (const [x, y] of pen.values())
+    if (!pen.has((y + 1) * 4096 + x + 1)) px(g, x + 1, y + 1, 'rgb(92,85,78)');
+  for (const [x, y] of pen.values()) px(g, x, y, olive);
 }
 
 /**
@@ -2241,6 +2265,19 @@ export function paintBook(
   // noises so edges part and meet without crossing, each edge's tone wandering along it.
   const gaps = footRgb.map((_, k) => noise1(pw + 12, 30 + 10 * ((7 * k) % 5), w * 17 + k));
   const tones = footRgb.map((_, j) => noise1(pw + 12, 18, w * 19 + j));
+  // Dashes of tone along each edge (screens critic, round 16: a tone changed at a quarter of
+  // the columns, MM6's at seven tenths): runs of two to six columns, each up to twelve
+  // either way.
+  const dashes = footRgb.map((_, j) => {
+    const r = die(w * 23 + j);
+    const out: number[] = [];
+    while (out.length < pw + 12) {
+      const run = 2 + Math.floor(r() * 5);
+      const v = (r() * 2 - 1) * 12;
+      for (let i = 0; i < run; i++) out.push(v);
+    }
+    return out;
+  });
   const edgesAt = (x: number): number[] => {
     let open = 0;
     return footRgb.map((_, j) => {
@@ -2268,7 +2305,7 @@ export function paintBook(
     for (let row = base; row <= last; row++) {
       let j = 0;
       while (j + 1 < ys.length && ys[j + 1]! <= row) j++;
-      const t = 16 * tones[j]![x]!;
+      const t = 16 * tones[j]![x]! + dashes[j]![x]!;
       const [r0, g0, b0] = footRgb[j]!;
       px(
         g,

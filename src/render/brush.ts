@@ -949,7 +949,7 @@ export function roseVeins(
       seen.add(i);
       for (let k = 0; k < 3; k++)
         d[i + k] = Math.min(
-          Math.max(d[i + k]!, mean[k]! + 70 * o.paleTint[k]!),
+          Math.max(d[i + k]!, mean[k]! + 85 * o.paleTint[k]!),
           d[i + k]! + amount * o.paleTint[k]!,
         );
     };
@@ -966,7 +966,9 @@ export function roseVeins(
       pts.push([x, y]);
       const a = Math.max(0, Math.min(1, 0.45 + n[t]! * 1.6));
       const core = a < 0.62 ? 0 : Math.min(1, (a - 0.62) / 0.38);
-      const amount = 8 + 6 * a + 20 * core * core;
+      // Stronger (screens critic, round 16: pale over the mean plus 40 on 0.3 to 0.6% of the
+      // stone, MM6's 0.9 to 2.4%).
+      const amount = 14 + 10 * a + 28 * core * core;
       // Across the vein: its two pixels and the half-lit one either side.
       const [ax, ay] = Math.abs(Math.cos(ang)) > Math.abs(Math.sin(ang)) ? [0, 1] : [1, 0];
       lift(x, y, amount);

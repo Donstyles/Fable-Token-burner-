@@ -260,7 +260,10 @@ function paintWord(word: string, f: Face): HTMLCanvasElement {
   // on the grid of three CSS pixels (screens critic, round 13).
   let w = Math.ceil(wordWidth(word, f)) + 2;
   w += w % 2;
-  const h = Math.max(f.line, f.base + below + 2);
+  // The height even too, so no box ends on half a CSS pixel (screens critic, round 16: Chrome
+  // rounded a box of 25.5 to 26 and drew one row four device rows tall).
+  let h = Math.max(f.line, f.base + below + 2);
+  h += h % 2;
   const c = document.createElement('canvas');
   c.width = Math.max(1, w);
   c.height = Math.max(1, h);
@@ -324,6 +327,25 @@ function convert(node: Text): void {
     span.appendChild(img);
   }
   node.replaceWith(span);
+  requestAnimationFrame(() => snapRun(span));
+}
+
+/**
+ * A run whose first word lands half a UI pixel off the grid the canvases share (a centred
+ * line of an odd width) moved back onto it (screens critic, round 16: Chrome draws a box on
+ * whole CSS pixels, so a word at 1.5 past a multiple of three shifted a device pixel). A
+ * transform does not move an inline span; a relative offset does.
+ */
+function snapRun(span: HTMLElement): void {
+  if (!span.isConnected) return;
+  span.style.left = '';
+  const first = span.querySelector('.pxw');
+  if (!first) return;
+  const x = first.getBoundingClientRect().left;
+  const off = ((x % (2 * PX)) + 2 * PX) % (2 * PX);
+  if (Math.abs(off - PX) > 0.25) return;
+  span.style.position = 'relative';
+  span.style.left = `${-PX}px`;
 }
 
 function convertUnder(root: Node): void {
@@ -356,6 +378,9 @@ export function installPixelText(root: HTMLElement): void {
       }
     });
     observer.observe(root, { childList: true, characterData: true, subtree: true });
+    window.addEventListener('resize', () =>
+      requestAnimationFrame(() => root.querySelectorAll<HTMLElement>('.pxt').forEach(snapRun)),
+    );
   };
   if (ready) {
     convertUnder(root);
