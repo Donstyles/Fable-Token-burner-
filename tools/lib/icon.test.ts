@@ -141,7 +141,7 @@ describe('icon light', () => {
     lift(copy);
     for (let i = 0; i < copy.length; i += 4) expect(copy[i]!).toBeGreaterThanOrEqual(px[i]!);
     const after = subjectStats(copy);
-    expect(after.p5).toBeGreaterThanOrEqual(78);
+    expect(after.p5).toBeGreaterThanOrEqual(68);
     expect(lightEnough(after)).toBe(true);
   });
 });

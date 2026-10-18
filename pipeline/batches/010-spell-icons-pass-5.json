@@ -1,0 +1,68 @@
+{
+  "number": 10,
+  "name": "spell-icons-pass-5",
+  "created": "2026-10-18",
+  "approved": false,
+  "items": [
+    {
+      "assetId": "water-walk",
+      "step": "text-to-image",
+      "params": {
+        "prompt": "A slim soldier striding left to right, seen from the side, in a grey mail coif and hauberk under an off-white tabard, tan leather boots, his shadows cool blue-grey, no glow round him; under his feet, across almost the full width, a ragged strip of loose, crisp, sharp-edged navy, teal and cyan wavelets with white crests, shin-high, thinning out to nothing at both ends, with no block, base or straight edge. A tiny spell icon from a 1998 fantasy PC role-playing game's spellbook: a small pre-rendered 3D Studio picture, low-polygon models with coarse, slightly grainy textures and smooth shading, the magic painted over them as glowing 2D light. Soft, even light from the front and above. People and things are mostly mid-tones, as a whole a little darker than the background, their shadows warm mid-browns or the deep colour of the magic, never black, with only small highlights near white. Magic on its own, with no person or thing, is pale: as a whole a little lighter than the background, its darkest parts no darker than a mid-tone. Muted, slightly faded colours, exactly those the description names; everything is lit by the magic and takes on its colour. Slim adults with realistic proportions, small heads and simple faces. Magic is light: a white-hot core, pale tints of its colour around it, a little deeper colour at its edges and tips, and an uneven glow, brightest where it touches the magic and fading slowly into the background, never a flat disc. Only the magic glows: people, their clothes and weapons have no glow, halo or rim light of their own. Show only what the description names: no extra people, casters, hands or wands. One subject, centred and spread wide, wider than it is tall wherever its shape allows, filling the whole width of the picture and most of its height, on a plain, flat, evenly lit, mid-tone greyish-beige background like old parchment in shade (about #B8AC96), with no ground, floor, base or cast shadow. No text, no border, no frame, no black outlines, no cartoon or chibi proportions, not photorealistic, not modern.",
+        "subject": "A slim soldier striding left to right, seen from the side, in a grey mail coif and hauberk under an off-white tabard, tan leather boots, his shadows cool blue-grey, no glow round him; under his feet, across almost the full width, a ragged strip of loose, crisp, sharp-edged navy, teal and cyan wavelets with white crests, shin-high, thinning out to nothing at both ends, with no block, base or straight edge.",
+        "ai_model": "nano-banana-2-lite",
+        "aspect_ratio": "4:3",
+        "remove_background": false
+      },
+      "estimatedCredits": 3,
+      "estimateBasis": "documented (DESIGN.md 10.0), nano-banana-2-lite"
+    },
+    {
+      "assetId": "stun",
+      "step": "text-to-image",
+      "params": {
+        "prompt": "A slim soldier facing us in a wide braced stance, a long sword held diagonally across his whole body, point beyond his head at upper left, lit by warm orange light, so his mail, skin and boots are bright shades of rust-orange and copper and his tabard is pale cream, no grey; no glow round him; following his outline all the way round, half a head's width out and never touching him, a bold, wobbly chalk-white line, plain background between. A tiny spell icon from a 1998 fantasy PC role-playing game's spellbook: a small pre-rendered 3D Studio picture, low-polygon models with coarse, slightly grainy textures and smooth shading, the magic painted over them as glowing 2D light. Soft, even light from the front and above. People and things are mostly mid-tones, as a whole a little darker than the background, their shadows warm mid-browns or the deep colour of the magic, never black, with only small highlights near white. Magic on its own, with no person or thing, is pale: as a whole a little lighter than the background, its darkest parts no darker than a mid-tone. Muted, slightly faded colours, exactly those the description names; everything is lit by the magic and takes on its colour. Slim adults with realistic proportions, small heads and simple faces. Magic is light: a white-hot core, pale tints of its colour around it, a little deeper colour at its edges and tips, and an uneven glow, brightest where it touches the magic and fading slowly into the background, never a flat disc. Only the magic glows: people, their clothes and weapons have no glow, halo or rim light of their own. Show only what the description names: no extra people, casters, hands or wands. One subject, centred and spread wide, wider than it is tall wherever its shape allows, filling the whole width of the picture and most of its height, on a plain, flat, evenly lit, mid-tone greyish-beige background like old parchment in shade (about #B8AC96), with no ground, floor, base or cast shadow. No text, no border, no frame, no black outlines, no cartoon or chibi proportions, not photorealistic, not modern.",
+        "subject": "A slim soldier facing us in a wide braced stance, a long sword held diagonally across his whole body, point beyond his head at upper left, lit by warm orange light, so his mail, skin and boots are bright shades of rust-orange and copper and his tabard is pale cream, no grey; no glow round him; following his outline all the way round, half a head's width out and never touching him, a bold, wobbly chalk-white line, plain background between.",
+        "ai_model": "nano-banana-2-lite",
+        "aspect_ratio": "4:3",
+        "remove_background": false
+      },
+      "estimatedCredits": 3,
+      "estimateBasis": "documented (DESIGN.md 10.0), nano-banana-2-lite"
+    }
+  ],
+  "estimatedCredits": 6,
+  "runs": [
+    {
+      "started": "2026-10-18T02:28:07.961Z",
+      "taskIds": ["01a14cd6-82a7-7665-9779-4d83f58ba0ab", "01a14cd6-c8ff-7603-8855-d22c14e88076"],
+      "tasks": {
+        "water-walk": {
+          "text-to-image": {
+            "taskId": "01a14cd6-82a7-7665-9779-4d83f58ba0ab",
+            "status": "SUCCEEDED",
+            "consumedCredits": 3,
+            "operationId": "b010-water-walk-text-to-image-r1-a1"
+          }
+        },
+        "stun": {
+          "text-to-image": {
+            "taskId": "01a14cd6-c8ff-7603-8855-d22c14e88076",
+            "status": "SUCCEEDED",
+            "consumedCredits": 3,
+            "operationId": "b010-stun-text-to-image-r1-a1"
+          }
+        }
+      },
+      "balanceBefore": 1897,
+      "attempts": {
+        "water-walk/text-to-image": 1,
+        "stun/text-to-image": 1
+      },
+      "balanceAfter": 1891,
+      "consumedCredits": 6,
+      "finished": "2026-10-18T02:29:00.879Z"
+    }
+  ],
+  "grant": "spell-icons"
+}

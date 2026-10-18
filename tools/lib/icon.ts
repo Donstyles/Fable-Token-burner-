@@ -64,14 +64,15 @@ export interface IconOptions {
 const luma = (r: number, g: number, b: number): number => 0.299 * r + 0.587 * g + 0.114 * b;
 
 /**
- * Median cut over the opaque pixels: the box of colours with the widest channel is split at
- * its median until there are `count` boxes, and every pixel takes its box's mean. Done here
- * because the bundled image library writes a palette PNG only when it was built with a
- * quantiser, and silently writes true colour when it was not.
+ * Median cut over the pixels with any cover, alpha a fourth channel (a soft-keyed edge is
+ * colours at part cover): the box with the widest channel is split at its median until
+ * there are `count` boxes, and every pixel takes its box's mean. Done here because the
+ * bundled image library writes a palette PNG only when it was built with a quantiser, and
+ * silently writes true colour when it was not.
  */
 export function reduceColours(rgba: Buffer, count: number): void {
   const idx: number[] = [];
-  for (let i = 0; i < rgba.length; i += 4) if (rgba[i + 3]! >= 128) idx.push(i);
+  for (let i = 0; i < rgba.length; i += 4) if (rgba[i + 3]! > 0) idx.push(i);
   if (!idx.length) return;
   type Box = number[];
   const range = (b: Box, c: number): number => {
@@ -91,7 +92,7 @@ export function reduceColours(rgba: Buffer, count: number): void {
     let bestChannel = 0;
     boxes.forEach((b, k) => {
       if (b.length < 2) return;
-      for (let c = 0; c < 3; c++) {
+      for (let c = 0; c < 4; c++) {
         const r = range(b, c);
         if (r > bestRange) {
           bestRange = r;
@@ -109,16 +110,19 @@ export function reduceColours(rgba: Buffer, count: number): void {
     let r = 0;
     let g = 0;
     let bl = 0;
+    let a = 0;
     for (const i of b) {
       r += rgba[i]!;
       g += rgba[i + 1]!;
       bl += rgba[i + 2]!;
+      a += rgba[i + 3]!;
     }
     const n = b.length;
     for (const i of b) {
       rgba[i] = Math.round(r / n);
       rgba[i + 1] = Math.round(g / n);
       rgba[i + 2] = Math.round(bl / n);
+      rgba[i + 3] = Math.round(a / n);
     }
   }
 }
@@ -201,13 +205,18 @@ export function subjectStats(rgba: Buffer): SubjectStats {
   };
 }
 
-/** MM6's light: subject p5 at least 45, at most 5% under luma 50, a mean of 105 or more. */
+/**
+ * MM6's shadows: a subject's 5th percentile at least 60 and at most 2% under luma 50 (icon
+ * critic, pass 4: judged on what the key keeps, so a halo near the parchment no longer
+ * passes a dark figure).
+ */
 export function lightEnough(s: SubjectStats): boolean {
-  return s.p5 >= 45 && s.dark <= 0.05 && s.mean >= 105;
+  return s.p5 >= 60 && s.dark <= 0.02;
 }
 
 /**
- * Lift the subject's tones so its 5th, 50th and 95th percentiles land on 80, 140 and 235,
+ * Lift a subject's shadows so its 5th percentile lands on 70, its median and highlights
+ * kept (icon critic, pass 4: lifting all three raised a dark figure's halo into a plate),
  * never darkening a pixel, its colour scaled with its luma so the hue holds.
  */
 export function lift(rgba: Buffer): void {
@@ -219,8 +228,8 @@ export function lift(rgba: Buffer): void {
   if (ls.length < 8) return;
   ls.sort((p, q) => p - q);
   const q = (f: number): number => ls[Math.min(ls.length - 1, Math.floor(ls.length * f))]!;
-  const xs = [0, q(0.05), q(0.5), q(0.95), 255];
-  const ys = [0, 80, 140, 235, 255];
+  const xs = [0, q(0.05), Math.max(q(0.05) + 1, q(0.5)), 255];
+  const ys = [0, 70, Math.max(70, q(0.5)), 255];
   const curve = (l: number): number => {
     for (let k = 1; k < xs.length; k++) {
       if (l <= xs[k]! || k === xs.length - 1) {
@@ -241,6 +250,87 @@ export function lift(rgba: Buffer): void {
     }
     const k = target / l;
     for (let c = 0; c < 3; c++) rgba[i + c] = Math.min(255, Math.round(rgba[i + c]! * k));
+  }
+}
+
+/**
+ * The soft key (icon critic, passes 3 and 4: a hard key left a step of 25 at the subject's
+ * edge against MM6's 15, and holes where the parchment showed inside it). Parchment within
+ * twelve that reaches the oval's rim, and a band two pixels into the subject beside it, take
+ * a cover of (largest channel distance - 4) / 16, their colour unmixed from the parchment;
+ * parchment enclosed by the subject stays opaque.
+ */
+function softKey(box: Buffer, w: number, h: number, parch: readonly number[]): void {
+  const n = w * h;
+  const dist = new Float32Array(n);
+  for (let i = 0; i < n; i++) {
+    if (box[i * 4 + 3] === 0) {
+      dist[i] = -1;
+      continue;
+    }
+    let d = 0;
+    for (let c = 0; c < 3; c++) d = Math.max(d, Math.abs(box[i * 4 + c]! - parch[c]!));
+    dist[i] = d;
+  }
+  const keyable = (i: number): boolean => dist[i]! >= 0 && dist[i]! <= 12;
+  const keyed = new Uint8Array(n);
+  const stack: number[] = [];
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      const i = y * w + x;
+      if (!keyable(i)) continue;
+      const rim =
+        x === 0 ||
+        y === 0 ||
+        x === w - 1 ||
+        y === h - 1 ||
+        dist[i - 1]! < 0 ||
+        dist[i + 1]! < 0 ||
+        dist[i - w]! < 0 ||
+        dist[i + w]! < 0;
+      if (rim) {
+        keyed[i] = 1;
+        stack.push(i);
+      }
+    }
+  }
+  while (stack.length) {
+    const i = stack.pop()!;
+    const x = i % w;
+    for (const j of [x > 0 ? i - 1 : -1, x < w - 1 ? i + 1 : -1, i - w, i + w]) {
+      if (j < 0 || j >= n || keyed[j] || !keyable(j)) continue;
+      keyed[j] = 1;
+      stack.push(j);
+    }
+  }
+  const soft = new Uint8Array(n);
+  for (let i = 0; i < n; i++) {
+    if (!keyed[i]) continue;
+    soft[i] = 1;
+    const x = i % w;
+    const y = Math.floor(i / w);
+    for (let dy = -2; dy <= 2; dy++)
+      for (let dx = -2; dx <= 2; dx++) {
+        const xx = x + dx;
+        const yy = y + dy;
+        if (xx < 0 || yy < 0 || xx >= w || yy >= h) continue;
+        if (dist[yy * w + xx]! >= 0) soft[yy * w + xx] = 1;
+      }
+  }
+  for (let i = 0; i < n; i++) {
+    if (!soft[i]) continue;
+    const a = Math.max(0, Math.min(1, (dist[i]! - 4) / 16));
+    if (a >= 1) continue;
+    if (a <= 0) {
+      box[i * 4 + 3] = 0;
+      continue;
+    }
+    for (let c = 0; c < 3; c++)
+      box[i * 4 + c] = Math.max(
+        0,
+        Math.min(255, Math.round(parch[c]! + (box[i * 4 + c]! - parch[c]!) / a)),
+      );
+    box[i * 4 + 3] = Math.round(a * 255);
   }
 }
 
@@ -479,7 +569,15 @@ export async function postProcessIcon(
     sub[i * 4 + 2] = col[i * 3 + 2]!;
     sub[i * 4 + 3] = alpha[i]!;
   }
-  const subject = subjectStats(sub);
+  // Judged on what the key keeps: covered pixels more than the key's twelve from the
+  // parchment.
+  const kept = Buffer.from(sub);
+  for (let i = 0; i < W * H; i++) {
+    let near = true;
+    for (let c = 0; c < 3; c++) if (Math.abs(kept[i * 4 + c]! - parch[c]!) > 12) near = false;
+    if (near) kept[i * 4 + 3] = 0;
+  }
+  const subject = subjectStats(kept);
   const lifted = (o.lift ?? true) && !lightEnough(subject);
   if (lifted) lift(sub);
   const box = Buffer.alloc(W * H * 4);
@@ -504,18 +602,11 @@ export async function postProcessIcon(
       }
     }
   }
-  reduceColours(box, o.colours ?? 255);
   // The parchment keyed out (screens critic, round 12): the game lays the icon on the page's
   // own shadow (paint.ts `ellipse`, multiplied), so the page's grain and light show through
   // round the subject as they do in MM6's book; the subject and its glow stay.
-  if (o.keyParchment ?? true) {
-    for (let i = 0; i < W * H; i++) {
-      if (box[i * 4 + 3] === 0) continue;
-      let near = true;
-      for (let c = 0; c < 3; c++) if (Math.abs(box[i * 4 + c]! - parch[c]!) > 12) near = false;
-      if (near) box[i * 4 + 3] = 0;
-    }
-  }
+  if (o.keyParchment ?? true) softKey(box, W, H, parch);
+  reduceColours(box, o.colours ?? 255);
   await sharp(box, { raw: { width: W, height: H, channels: 4 } })
     .png()
     .toFile(output);
