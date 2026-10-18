@@ -953,9 +953,11 @@ Phase 6 content comes; creatures per region.
   portal travel lowers the same veil with the destination's name. The dev
   chrome (stats box, sound test) shows only with `?dev`; Babylon's own
   unmute button is off; the version tag sits bottom left.
-- **Fonts** (`npm run fonts`, `src/ui/fonts/`, OFL): IM Fell English
-  regular and italic (the worn serif of MM6's stat screens) and Pirata One
-  for headings, woff2, 124 KiB in all, precached by the service worker.
+- **Fonts** (`npm run fonts`, `src/ui/fonts/`): Tinos regular, italic and
+  bold and Arimo (Apache 2.0, its text in `LICENSE-Apache-2.0.txt`) and
+  Pirata One for headings (SIL OFL, `OFL.txt`), woff2, 72 KiB in all,
+  precached by the service worker; IM Fell English was the first body face
+  (see below).
 - **HUD band** (`src/ui/hud.ts`, DESIGN 9 realised): MM6's marble foot along
   the bottom of the view (the repo's `marble_01`), four cells each with a
   gold oval frame holding the member's class sigil in gold line art (sword,
@@ -1178,6 +1180,8 @@ hand."
   English clogged at that size (old-style figures, thin strokes) and is
   gone. Headings stay Pirata One at 18 pixels. Sizes in CSS are set in CSS
   pixels (19.5 for 13, 18 for 12, 27 for 18) and the painter clamps upward.
+  The quest log alone is set in Arimo (Steve Matteson, Apache 2.0), Tinos's
+  sans sibling, as MM6 sets its quest text in a sans (round 16).
 - The HUD's pieces are painted too, each at its own size through
   `data-paint` and the same observer: the portrait frame a turned gold ring
   round a leather recess under glass, the brass plates of the names and the
