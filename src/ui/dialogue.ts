@@ -42,6 +42,7 @@ interface Open {
   def: DialogueDef;
   root: HTMLElement;
   wood: HTMLElement;
+  frame: HTMLElement;
   window: HTMLElement;
   text: HTMLElement;
   topics: HTMLElement;
@@ -58,13 +59,20 @@ export function createDialogue(
 
   const measure = (): void => {
     if (!open_) return;
-    // The well on the grid of UI pixels and 96 CSS pixels square (talk-world critic, round
-    // 14: it had grown to 97 and fallen two device pixels off the grid).
+    // The well 96 CSS pixels square (talk-world critic, round 14: it had grown to 97) on the
+    // grid the canvas and the UI share: the canvas's pixels are one CSS pixel, the UI's one
+    // and a half, so the hole snaps to three (round 15: on the UI's grid alone the bust's
+    // last row doubled and the foot's bevel thinned to a device pixel). The frame moves with
+    // the hole, so its bevel rings it evenly.
+    open_.frame.style.translate = '';
     const raw = open_.window.getBoundingClientRect();
-    const snap = (v: number): number => Math.round(v / PX) * PX;
+    const snap = (v: number): number => Math.round(v / (2 * PX)) * 2 * PX;
     const hole = new DOMRect(snap(raw.x), snap(raw.y), 96, 96);
     // The mask is cut in the planks' own pixels, which the rotated phone layout turns.
-    const local = toLocalRect(hole, open_.wood.getBoundingClientRect());
+    const woodRect = open_.wood.getBoundingClientRect();
+    const local = toLocalRect(hole, woodRect);
+    const at = toLocalRect(new DOMRect(raw.x, raw.y, 96, 96), woodRect);
+    open_.frame.style.translate = `${local.x - at.x}px ${local.y - at.y}px`;
     open_.wood.style.setProperty('--hole-x', `${local.x}px`);
     open_.wood.style.setProperty('--hole-y', `${local.y}px`);
     open_.wood.style.setProperty('--hole-w', `${local.w}px`);
@@ -141,7 +149,7 @@ export function createDialogue(
     const observer = typeof ResizeObserver === 'function' ? new ResizeObserver(measure) : null;
     observer?.observe(wood);
     window.addEventListener('resize', measure);
-    open_ = { npc, def, root, wood, window: window_, text, topics, observer };
+    open_ = { npc, def, root, wood, frame, window: window_, text, topics, observer };
     measure();
     requestAnimationFrame(measure);
     say(view.greeting);
