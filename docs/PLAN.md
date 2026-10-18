@@ -561,7 +561,9 @@ waterfalls and deserts, walkable end to end.
     the band under the shelf inside the safe areas, the inn on its posts,
     a portrait too fine for the shell; all five fixed the same evening.
     Then the view past the pillars and walls a step short (DESIGN 16.31):
-    marble over the safe areas, buildings colliding as their models.
+    marble over the safe areas, buildings colliding as their models. Then
+    the talking head (DESIGN 16.32): the bust's camera a frame behind the
+    head, and the look-around idle in the window; both fixed.
 18. Remaining, in order: lasting buffs and Jump; weather states (rain, a
     sandstorm); music; the smith's hammer and the temple bell.
 

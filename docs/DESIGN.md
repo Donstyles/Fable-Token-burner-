@@ -1126,6 +1126,8 @@ the world for over a second after a screen closed (CI run 93).
   generated or photographed (16.5); MM6 played film loops of its faces, ours
   turn to the party and talk. A layer samples its texture by screen position,
   so the texture matrix maps the window's span back onto the whole texture.
+  While the panel is open the villager keeps the talk clip between lines, and
+  the camera reads the head bone where this frame's pose puts it (16.32).
 - Dialogue data (`src/game/dialogue.ts`): a greeting and topics of three kinds,
   plain talk, rumours told in turn (the turn kept in the state's flags) and a
   quest, which carries its own stages: the offer takes the quest, the active
@@ -2246,7 +2248,38 @@ collision on the houses".
   end-to-end test fires rays at the barn and checks its collider meets the
   drawn walls.
 
+### 16.32 The talking head held still (owner, 2026-10-18)
+
+The owner's phone: "Portrait of the village woman is twitching. Very
+scary". Two faults, one on top of the other:
+
+- **A frame behind**: the bust's camera is set before the head each frame
+  from the rig's head bone, read in the frame's hook. Babylon keeps a node's
+  world matrix for the render it was last computed in and counts renders only
+  when a camera draws, after the hooks, so the bone read where the last frame
+  had left it. At every step of the clip (ten a second) the head stood up to
+  4 cm off the window's middle for a frame, 11 of its 96 pixels, and snapped
+  back. The bust now recomputes the bone's chain from the root
+  (`headOf`, `src/world/bust.ts`, with a unit test): the camera holds the
+  head to a tenth of a millimetre.
+- **The look-around idle**: a line's talk clip lasted 3.5 s, then the
+  villager went back to idle with the panel still open. Meshy's Idle (action
+  0, shared by every humanoid) is a look-around: the hips swing a quarter
+  turn and the neck twists up to about 96 degrees more, the head ending up
+  over the shoulder. The bust's camera stays square to the body, so in the
+  close-up she whipped from profile to the back of her bonnet and round
+  again in ten-a-second steps. A villager in the panel now keeps the talk
+  clip till it shuts (`Npc.engage`, with a unit test), and faces the party
+  throughout.
+- **Still open**: in the world the same idle turns every villager and bandit
+  well past the shoulder. A calmer idle is a new animation request to Meshy,
+  for the owner to approve.
+
 ## 13. Decision log
+
+- 2026-10-18 – The talking head held still (16.32): the bust's camera reads
+  the head bone fresh each frame; a villager in the talk panel keeps the
+  talk clip till it shuts.
 
 - 2026-10-18 – The frame and the walls (16.31): the band's marble fills the
   safe areas outside the pillars; buildings and props collide as their own
