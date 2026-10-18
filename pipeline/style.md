@@ -68,10 +68,21 @@ plans the batch, `run <nnn> --dry-run` then `run <nnn>` makes it, and
   leather; the subject washed in its magic's colour; the magic as light
   with a white-hot core, coloured edges, deeper tips and a soft halo. Say
   "no person" for an effect-only icon, or the model adds a caster.
-- **Light**: high-key. The post-process rejects a subject darker than
-  MM6's (5th percentile under 45, more than 5% under luma 50, or a mean
-  under 105) and lifts it, never darkening; a good prompt needs no lift.
-- **Bitmap** (`tools/lib/icon.ts`): the subject fitted 64 by 48 (wider,
-  up to 100, for a bolt) and composited by its soft alpha onto MM6's flat
-  68 by 52 parchment oval (184,172,150) in a 72 by 54 box, keyed outside
-  the oval, 255 colours. An empty slot paints the same oval.
+- **Light**: mostly mid-tones, the subject a little darker than its ground
+  (icon critic, pass 2: high-key overshot to luma 180 against MM6's 148),
+  on a mid-tone parchment ground (about #B8AC96). The post-process maps the
+  picture's tones so its ground lands on the parchment's 173 (black, 60 and
+  white kept); a pure light effect (a bolt, sparks, a fire spiral) keeps
+  its own exposure (`expose: 'keep'`). It still lifts, never darkens, a
+  subject darker than MM6's (5th percentile under 45, more than 5% under
+  luma 50, or a mean under 105).
+- **Only what is named**: the style text says no extra people, casters,
+  hands or wands; a subject sentence for an effect says "and nothing else".
+- **Bitmap** (`tools/lib/icon.ts`): the subject fitted 68 by 50 (wider,
+  up to 100, for a bolt), the whole box taken from the picture round it
+  so a glow runs to the oval's edge, on MM6's 68 by 52 parchment oval
+  (184,172,150) with a four-level mottle in a 72 by 54 box, keyed outside
+  the oval, 255 colours; then the parchment keyed out, so in the game the
+  icon sits on the page's own shadow (paint.ts `ellipse`, multiplied), as
+  an empty place does. `icon reprocess <nnn>` runs a better recipe again on
+  pictures already paid for.

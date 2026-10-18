@@ -1,0 +1,143 @@
+{
+  "number": 8,
+  "name": "spell-icons-pass-3a",
+  "created": "2026-10-18",
+  "approved": false,
+  "items": [
+    {
+      "assetId": "fire-bolt",
+      "step": "text-to-image",
+      "params": {
+        "prompt": "A single bolt of fire and nothing else, drawn like a heraldic lightning flash: three long, flat, blade-like wedges of flame joined end to end in a shallow staircase that runs from the left edge of the picture, high up, down to its right edge, low down, each wedge about a third of the picture long and tapering to a sharp point toward the lower right, white-hot pale yellow along its upper side and orange to bright red along its lower edge, with crisp, clean edges and only a faint glow; no person, no caster, no hand, no wand. A tiny spell icon from a 1998 fantasy PC role-playing game's spellbook: a small pre-rendered 3D Studio picture, low-polygon models with coarse, slightly grainy textures and smooth shading, the magic painted over them as glowing 2D light. Soft, even light from the front and above. Mostly mid-tones: the subject as a whole is a little darker than the background, its shadows warm mid-browns or the deep colour of its magic, never black, and only small highlights and the magic's core are near white. Muted, slightly faded colours: grey mail, off-white linen, tan and brown leather, dull gold; everything is lit by the magic and takes on its colour. Slim adults with realistic proportions, small heads and simple faces. Magic is light: a white-hot core, saturated colour at its edges, deeper colour at its tips, and an uneven glow, brightest where it touches the magic and fading slowly into the background, never a flat disc. Show only what the description names: no extra people, casters, hands or wands. One subject, centred and spread wide, filling the whole width of the picture and most of its height, on a plain, flat, evenly lit, mid-tone greyish-beige background like old parchment in shade (about #B8AC96), with no ground, floor, base or cast shadow. No text, no border, no frame, no black outlines, no cartoon or chibi proportions, not photorealistic, not modern.",
+        "subject": "A single bolt of fire and nothing else, drawn like a heraldic lightning flash: three long, flat, blade-like wedges of flame joined end to end in a shallow staircase that runs from the left edge of the picture, high up, down to its right edge, low down, each wedge about a third of the picture long and tapering to a sharp point toward the lower right, white-hot pale yellow along its upper side and orange to bright red along its lower edge, with crisp, clean edges and only a faint glow; no person, no caster, no hand, no wand.",
+        "ai_model": "nano-banana-2-lite",
+        "aspect_ratio": "16:9",
+        "remove_background": false,
+        "expose": "keep"
+      },
+      "estimatedCredits": 3,
+      "estimateBasis": "documented (DESIGN.md 10.0), nano-banana-2-lite"
+    },
+    {
+      "assetId": "sparks",
+      "step": "text-to-image",
+      "params": {
+        "prompt": "A crackling ball of electricity and nothing else, filling the picture to every edge: a small white-hot star of light a little left of the centre, and around it a dense, tangled, lopsided web of many short, crooked, branching cracks of dark slate-blue and teal, darker than the background, each lit along its middle by a thin line of bright cyan and forking again and again into smaller twigs, with a dozen small round sparks of white-cyan light at their tips and scattered through the web; no person, no figure, no hands. A tiny spell icon from a 1998 fantasy PC role-playing game's spellbook: a small pre-rendered 3D Studio picture, low-polygon models with coarse, slightly grainy textures and smooth shading, the magic painted over them as glowing 2D light. Soft, even light from the front and above. Mostly mid-tones: the subject as a whole is a little darker than the background, its shadows warm mid-browns or the deep colour of its magic, never black, and only small highlights and the magic's core are near white. Muted, slightly faded colours: grey mail, off-white linen, tan and brown leather, dull gold; everything is lit by the magic and takes on its colour. Slim adults with realistic proportions, small heads and simple faces. Magic is light: a white-hot core, saturated colour at its edges, deeper colour at its tips, and an uneven glow, brightest where it touches the magic and fading slowly into the background, never a flat disc. Show only what the description names: no extra people, casters, hands or wands. One subject, centred and spread wide, filling the whole width of the picture and most of its height, on a plain, flat, evenly lit, mid-tone greyish-beige background like old parchment in shade (about #B8AC96), with no ground, floor, base or cast shadow. No text, no border, no frame, no black outlines, no cartoon or chibi proportions, not photorealistic, not modern.",
+        "subject": "A crackling ball of electricity and nothing else, filling the picture to every edge: a small white-hot star of light a little left of the centre, and around it a dense, tangled, lopsided web of many short, crooked, branching cracks of dark slate-blue and teal, darker than the background, each lit along its middle by a thin line of bright cyan and forking again and again into smaller twigs, with a dozen small round sparks of white-cyan light at their tips and scattered through the web; no person, no figure, no hands.",
+        "ai_model": "nano-banana-2-lite",
+        "aspect_ratio": "4:3",
+        "remove_background": false,
+        "expose": "keep"
+      },
+      "estimatedCredits": 3,
+      "estimateBasis": "documented (DESIGN.md 10.0), nano-banana-2-lite"
+    },
+    {
+      "assetId": "stun",
+      "step": "text-to-image",
+      "params": {
+        "prompt": "A slim soldier standing full-length and facing us, his feet planted wide apart, in a coif and hauberk of mail under a short off-white linen tabard, with olive-green hose and rust-brown leather boots, holding a long straight sword up across his body so that its blade points to the upper left beyond his head and its pommel to the lower right; the whole figure, face and hands included, lit a strong warm orange-brown; and around the whole figure and sword, half a head's width away from them, one thin, sharp, unbroken line of bright white light that follows his outline loosely like a chalk line, with plain background showing between the line and the figure. A tiny spell icon from a 1998 fantasy PC role-playing game's spellbook: a small pre-rendered 3D Studio picture, low-polygon models with coarse, slightly grainy textures and smooth shading, the magic painted over them as glowing 2D light. Soft, even light from the front and above. Mostly mid-tones: the subject as a whole is a little darker than the background, its shadows warm mid-browns or the deep colour of its magic, never black, and only small highlights and the magic's core are near white. Muted, slightly faded colours: grey mail, off-white linen, tan and brown leather, dull gold; everything is lit by the magic and takes on its colour. Slim adults with realistic proportions, small heads and simple faces. Magic is light: a white-hot core, saturated colour at its edges, deeper colour at its tips, and an uneven glow, brightest where it touches the magic and fading slowly into the background, never a flat disc. Show only what the description names: no extra people, casters, hands or wands. One subject, centred and spread wide, filling the whole width of the picture and most of its height, on a plain, flat, evenly lit, mid-tone greyish-beige background like old parchment in shade (about #B8AC96), with no ground, floor, base or cast shadow. No text, no border, no frame, no black outlines, no cartoon or chibi proportions, not photorealistic, not modern.",
+        "subject": "A slim soldier standing full-length and facing us, his feet planted wide apart, in a coif and hauberk of mail under a short off-white linen tabard, with olive-green hose and rust-brown leather boots, holding a long straight sword up across his body so that its blade points to the upper left beyond his head and its pommel to the lower right; the whole figure, face and hands included, lit a strong warm orange-brown; and around the whole figure and sword, half a head's width away from them, one thin, sharp, unbroken line of bright white light that follows his outline loosely like a chalk line, with plain background showing between the line and the figure.",
+        "ai_model": "nano-banana-2-lite",
+        "aspect_ratio": "4:3",
+        "remove_background": false
+      },
+      "estimatedCredits": 3,
+      "estimateBasis": "documented (DESIGN.md 10.0), nano-banana-2-lite"
+    },
+    {
+      "assetId": "bless",
+      "step": "text-to-image",
+      "params": {
+        "prompt": "A wide, flared, cone-shaped bowl like a holy-water font, its rim about twice as wide as the bowl is deep and spanning most of the width of the picture, on a short stem with two ring mouldings and a broad round foot, made of dull rose-gold brass with soft mauve-purple shadows and a thin violet edge; inside it a flat oval of glowing dusty-rose liquid; rising from its centre a tall, thin, vertical ray of white light that reaches the top of the picture, crossed just above the rim by a cluster of short white sparkle rays, in a faint white and lavender haze. A tiny spell icon from a 1998 fantasy PC role-playing game's spellbook: a small pre-rendered 3D Studio picture, low-polygon models with coarse, slightly grainy textures and smooth shading, the magic painted over them as glowing 2D light. Soft, even light from the front and above. Mostly mid-tones: the subject as a whole is a little darker than the background, its shadows warm mid-browns or the deep colour of its magic, never black, and only small highlights and the magic's core are near white. Muted, slightly faded colours: grey mail, off-white linen, tan and brown leather, dull gold; everything is lit by the magic and takes on its colour. Slim adults with realistic proportions, small heads and simple faces. Magic is light: a white-hot core, saturated colour at its edges, deeper colour at its tips, and an uneven glow, brightest where it touches the magic and fading slowly into the background, never a flat disc. Show only what the description names: no extra people, casters, hands or wands. One subject, centred and spread wide, filling the whole width of the picture and most of its height, on a plain, flat, evenly lit, mid-tone greyish-beige background like old parchment in shade (about #B8AC96), with no ground, floor, base or cast shadow. No text, no border, no frame, no black outlines, no cartoon or chibi proportions, not photorealistic, not modern.",
+        "subject": "A wide, flared, cone-shaped bowl like a holy-water font, its rim about twice as wide as the bowl is deep and spanning most of the width of the picture, on a short stem with two ring mouldings and a broad round foot, made of dull rose-gold brass with soft mauve-purple shadows and a thin violet edge; inside it a flat oval of glowing dusty-rose liquid; rising from its centre a tall, thin, vertical ray of white light that reaches the top of the picture, crossed just above the rim by a cluster of short white sparkle rays, in a faint white and lavender haze.",
+        "ai_model": "nano-banana-2-lite",
+        "aspect_ratio": "4:3",
+        "remove_background": false
+      },
+      "estimatedCredits": 3,
+      "estimateBasis": "documented (DESIGN.md 10.0), nano-banana-2-lite"
+    },
+    {
+      "assetId": "torch-light",
+      "step": "text-to-image",
+      "params": {
+        "prompt": "A swirling spiral of fire and nothing else, filling the picture: a small white-hot yellow core at the centre winding outward in three curling arms of orange and yellow flame, their ragged tips deep red and red-brown, with small flying embers between the arms, in an uneven warm glow that fades slowly into the background; no torch, no person, no hand. A tiny spell icon from a 1998 fantasy PC role-playing game's spellbook: a small pre-rendered 3D Studio picture, low-polygon models with coarse, slightly grainy textures and smooth shading, the magic painted over them as glowing 2D light. Soft, even light from the front and above. Mostly mid-tones: the subject as a whole is a little darker than the background, its shadows warm mid-browns or the deep colour of its magic, never black, and only small highlights and the magic's core are near white. Muted, slightly faded colours: grey mail, off-white linen, tan and brown leather, dull gold; everything is lit by the magic and takes on its colour. Slim adults with realistic proportions, small heads and simple faces. Magic is light: a white-hot core, saturated colour at its edges, deeper colour at its tips, and an uneven glow, brightest where it touches the magic and fading slowly into the background, never a flat disc. Show only what the description names: no extra people, casters, hands or wands. One subject, centred and spread wide, filling the whole width of the picture and most of its height, on a plain, flat, evenly lit, mid-tone greyish-beige background like old parchment in shade (about #B8AC96), with no ground, floor, base or cast shadow. No text, no border, no frame, no black outlines, no cartoon or chibi proportions, not photorealistic, not modern.",
+        "subject": "A swirling spiral of fire and nothing else, filling the picture: a small white-hot yellow core at the centre winding outward in three curling arms of orange and yellow flame, their ragged tips deep red and red-brown, with small flying embers between the arms, in an uneven warm glow that fades slowly into the background; no torch, no person, no hand.",
+        "ai_model": "nano-banana-2-lite",
+        "aspect_ratio": "4:3",
+        "remove_background": false,
+        "expose": "keep"
+      },
+      "estimatedCredits": 3,
+      "estimateBasis": "documented (DESIGN.md 10.0), nano-banana-2-lite"
+    }
+  ],
+  "estimatedCredits": 15,
+  "runs": [
+    {
+      "started": "2026-10-18T00:24:38.227Z",
+      "taskIds": [
+        "01a14c65-744e-74e2-8944-4bc3a3c9e256",
+        "01a14c65-a8e8-75b5-a403-1450b03d64d9",
+        "01a14c65-f219-7690-bfd8-500eee84514f",
+        "01a14c66-2960-7651-a218-927b9b087a27",
+        "01a14c66-5cca-76f2-8e47-47f5ae91bd77"
+      ],
+      "tasks": {
+        "fire-bolt": {
+          "text-to-image": {
+            "taskId": "01a14c65-744e-74e2-8944-4bc3a3c9e256",
+            "status": "SUCCEEDED",
+            "consumedCredits": 3,
+            "operationId": "b008-fire-bolt-text-to-image-r1-a1"
+          }
+        },
+        "sparks": {
+          "text-to-image": {
+            "taskId": "01a14c65-a8e8-75b5-a403-1450b03d64d9",
+            "status": "SUCCEEDED",
+            "consumedCredits": 3,
+            "operationId": "b008-sparks-text-to-image-r1-a1"
+          }
+        },
+        "stun": {
+          "text-to-image": {
+            "taskId": "01a14c65-f219-7690-bfd8-500eee84514f",
+            "status": "SUCCEEDED",
+            "consumedCredits": 3,
+            "operationId": "b008-stun-text-to-image-r1-a1"
+          }
+        },
+        "bless": {
+          "text-to-image": {
+            "taskId": "01a14c66-2960-7651-a218-927b9b087a27",
+            "status": "SUCCEEDED",
+            "consumedCredits": 3,
+            "operationId": "b008-bless-text-to-image-r1-a1"
+          }
+        },
+        "torch-light": {
+          "text-to-image": {
+            "taskId": "01a14c66-5cca-76f2-8e47-47f5ae91bd77",
+            "status": "SUCCEEDED",
+            "consumedCredits": 3,
+            "operationId": "b008-torch-light-text-to-image-r1-a1"
+          }
+        }
+      },
+      "balanceBefore": 1927,
+      "attempts": {
+        "fire-bolt/text-to-image": 1,
+        "sparks/text-to-image": 1,
+        "stun/text-to-image": 1,
+        "bless/text-to-image": 1,
+        "torch-light/text-to-image": 1
+      },
+      "balanceAfter": 1912,
+      "consumedCredits": 15,
+      "finished": "2026-10-18T00:25:57.705Z"
+    }
+  ],
+  "grant": "spell-icons"
+}

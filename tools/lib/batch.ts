@@ -215,31 +215,38 @@ export interface IconSpec {
    * keys out by colour, keeping the glow.
    */
   removeBackground?: boolean;
+  /**
+   * The post-process's exposure (tools/lib/icon.ts): 'map' tones the picture onto the
+   * parchment; 'keep' leaves a pure light effect (a bolt, sparks) as it came.
+   */
+  expose?: 'map' | 'keep';
 }
 
 /**
- * The look of MM6's spell icons (pipeline/style.md "Spell icons"; icon critic, pass 1, from
- * the 99 reference icons): small 1998 pre-rendered models with plain textures, high-key and
- * pale with warm mid-tone shadows, slim adults, the magic painted on as light with a white-hot
- * core and a halo, on a plain parchment ground with no floor or shadow, so the halo survives
- * the matte (tools/lib/icon.ts).
+ * The look of MM6's spell icons (pipeline/style.md "Spell icons"; icon critics, passes 1 and
+ * 2, from the 99 reference icons): small 1998 pre-rendered models with coarse textures,
+ * mostly mid-tones a little darker than the ground with warm shadows, slim adults, the magic
+ * as light with an uneven glow, nothing the description does not name, spread wide on a
+ * mid-tone parchment ground with no floor or shadow, so the matte keeps the glow
+ * (tools/lib/icon.ts).
  */
 export const ICON_STYLE =
-  'A tiny spell icon from the spellbook of a 1998 fantasy PC role-playing game: a small ' +
-  'pre-rendered 3D picture made in 3D Studio, a low-polygon model with plain, simple texture ' +
-  'maps and smooth shading, with the magic painted over it as glowing 2D light. High-key and ' +
-  'pale: bright, even light from the front and above with strong ambient fill, so every ' +
-  'shadow stays a soft, warm mid-tone and nothing is black, and the lightest parts are almost ' +
-  'white. Slightly faded, warm colours: pale silver-grey mail, off-white linen, tan and ' +
-  'mid-brown leather, pale gold; the whole subject takes on the colour of its magic. People ' +
-  'are slim adults with realistic proportions, small heads and simple faces. Magic is light: ' +
-  'a white-hot core, saturated colour towards its edges, deeper colour at its tips, and a ' +
-  'soft halo that fades out into the background. One subject, centred, filling most of the ' +
-  'picture with a narrow margin all round, on a plain, flat, evenly lit, light greyish-beige ' +
-  'background the colour of old parchment, with no ground, floor, base, platform or cast ' +
-  'shadow. No text, no letters, no border, no frame, no outlines, no black, no cartoon or ' +
-  'chibi proportions, no fine detail such as single chainmail rings or skin pores, not ' +
-  'photorealistic, not modern.';
+  "A tiny spell icon from a 1998 fantasy PC role-playing game's spellbook: a small " +
+  'pre-rendered 3D Studio picture, low-polygon models with coarse, slightly grainy textures ' +
+  'and smooth shading, the magic painted over them as glowing 2D light. Soft, even light ' +
+  'from the front and above. Mostly mid-tones: the subject as a whole is a little darker ' +
+  'than the background, its shadows warm mid-browns or the deep colour of its magic, never ' +
+  "black, and only small highlights and the magic's core are near white. Muted, slightly " +
+  'faded colours: grey mail, off-white linen, tan and brown leather, dull gold; everything ' +
+  'is lit by the magic and takes on its colour. Slim adults with realistic proportions, ' +
+  'small heads and simple faces. Magic is light: a white-hot core, saturated colour at its ' +
+  'edges, deeper colour at its tips, and an uneven glow, brightest where it touches the ' +
+  'magic and fading slowly into the background, never a flat disc. Show only what the ' +
+  'description names: no extra people, casters, hands or wands. One subject, centred and ' +
+  'spread wide, filling the whole width of the picture and most of its height, on a plain, ' +
+  'flat, evenly lit, mid-tone greyish-beige background like old parchment in shade (about ' +
+  '#B8AC96), with no ground, floor, base or cast shadow. No text, no border, no frame, no ' +
+  'black outlines, no cartoon or chibi proportions, not photorealistic, not modern.';
 
 export function iconItems(spec: IconSpec): BatchItem[] {
   const model = spec.model ?? 'nano-banana-2-lite';
@@ -253,6 +260,8 @@ export function iconItems(spec: IconSpec): BatchItem[] {
         ai_model: model,
         aspect_ratio: spec.aspect ?? '4:3',
         remove_background: spec.removeBackground ?? false,
+        // Ours, not Meshy's: the post-process reads it (textToImageFlags passes only its own).
+        ...(spec.expose ? { expose: spec.expose } : {}),
       },
       estimatedCredits: CREDITS.textToImage[model],
       estimateBasis: `documented (DESIGN.md 10.0), ${model}`,

@@ -9,11 +9,12 @@
  *   npm run asset -- batch approve <nnn>            after the owner approves it in chat
  *   npm run asset -- batch icons <name> <specs.json> [--grant <purpose>]   plan spell icons
  *   npm run asset -- icon accept <nnn> <asset-id> [<spell-id>]   take a processed icon into assets/
+ *   npm run asset -- icon reprocess <nnn> [<asset-id>...]         post-process a batch's pictures again
  *   npm run asset -- run <nnn> [--dry-run] [--force] run an approved batch through Meshy
  *
  * Only `run` talks to Meshy, and only for an approved batch (`--dry-run` prints the commands).
  */
-import { access, copyFile, mkdir, readFile, stat } from 'node:fs/promises';
+import { access, copyFile, mkdir, readdir, readFile, stat } from 'node:fs/promises';
 import sharp from 'sharp';
 import {
   HUMANOID_CLIPS,
@@ -39,6 +40,7 @@ import {
   writeManifest,
   type AssetEntry,
 } from './lib/manifest';
+import { postProcessIcon } from './lib/icon';
 import { CHARACTER_TEXTURE_SIZE, inspectGlb } from './lib/postprocess';
 import { MESHY_LICENCE, WORK_DIR, runBatch } from './lib/run';
 
@@ -280,6 +282,8 @@ async function batch(args: string[]): Promise<void> {
         fail(`${spec.id}: aspect must be 1:1, 4:3, 3:4, 16:9 or 9:16`);
       if (spec.removeBackground !== undefined && typeof spec.removeBackground !== 'boolean')
         fail(`${spec.id}: removeBackground must be true or false`);
+      if (spec.expose !== undefined && spec.expose !== 'map' && spec.expose !== 'keep')
+        fail(`${spec.id}: expose must be map or keep`);
       items.push(...iconItems(spec));
     }
     const b = makeBatch(await nextBatchNumber(), name, items);
@@ -313,10 +317,45 @@ async function batch(args: string[]): Promise<void> {
   fail('batch new|props|creatures|show|approve|approve-images');
 }
 
+/**
+ * `icon reprocess <nnn> [<asset-id>...]`: run the current post-process again on a batch's
+ * downloaded pictures (no Meshy call, no credits), so a better recipe reaches icons already
+ * paid for; `accept` then takes them as usual.
+ */
+async function reprocessIcons(nnn: string | undefined, ids: string[]): Promise<void> {
+  const number = Number(nnn);
+  const found = await findBatch(number);
+  if (!found) fail(`no batch ${nnn}`);
+  const pad = String(number).padStart(3, '0');
+  const items = found.batch.items.filter(
+    (i) => i.step === 'text-to-image' && (!ids.length || ids.includes(i.assetId)),
+  );
+  if (!items.length) fail(`batch ${number} has no such icon`);
+  for (const item of items) {
+    const dir = `${WORK_DIR}/batch-${pad}/${item.assetId}`;
+    const picture = (await readdir(dir).catch(() => [] as string[])).find(
+      (f) => /\.(png|jpe?g|webp)$/i.test(f) && !f.endsWith('.icon.png'),
+    );
+    if (!picture) {
+      console.info(`${item.assetId}: no downloaded picture in ${dir}`);
+      continue;
+    }
+    const out = `${dir}/${item.assetId}.icon.png`;
+    const r = await postProcessIcon(`${dir}/${picture}`, out, {
+      expose: item.params['expose'] === 'keep' ? 'keep' : 'map',
+    });
+    console.info(
+      `${out}: ${r.width}x${r.height}, ${r.colours} colours, ${r.matte} matte; subject mean ${r.subject.mean}, p5 ${r.subject.p5}${r.lifted ? ', lifted' : ''}`,
+    );
+  }
+}
+
 /** `icon accept <nnn> <asset-id> [<spell-id>]`: the processed icon into assets/, recorded in the manifest. */
 async function icon(args: string[]): Promise<void> {
+  if (args[0] === 'reprocess') return reprocessIcons(args[1], args.slice(2));
   const [sub, nnn, assetId, spellArg] = args;
-  if (sub !== 'accept' || !nnn || !assetId) fail('icon accept <nnn> <asset-id> [<spell-id>]');
+  if (sub !== 'accept' || !nnn || !assetId)
+    fail('icon accept <nnn> <asset-id> [<spell-id>] | icon reprocess <nnn> [<asset-id>...]');
   const number = Number(nnn);
   const found = await findBatch(number);
   if (!found) fail(`no batch ${number}`);
@@ -338,7 +377,7 @@ async function icon(args: string[]): Promise<void> {
   upsertAsset(manifest, {
     id: `spell-icon-${spellId}`,
     kind: 'icon',
-    source: `Meshy text-to-image (${String(item.params['ai_model'])}), background removed, cropped, fitted and palettised (tools/lib/icon.ts)`,
+    source: `Meshy text-to-image (${String(item.params['ai_model'])}), ${item.params['remove_background'] ? 'background removed by Meshy' : 'keyed from its parchment ground'}, fitted onto the parchment oval and palettised (tools/lib/icon.ts)`,
     prompt: String(item.params['prompt']),
     meshy: {
       taskIds: [task.taskId],

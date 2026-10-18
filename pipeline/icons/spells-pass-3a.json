@@ -1,0 +1,26 @@
+[
+  {
+    "id": "fire-bolt",
+    "aspect": "16:9",
+    "expose": "keep",
+    "subject": "A single bolt of fire and nothing else, drawn like a heraldic lightning flash: three long, flat, blade-like wedges of flame joined end to end in a shallow staircase that runs from the left edge of the picture, high up, down to its right edge, low down, each wedge about a third of the picture long and tapering to a sharp point toward the lower right, white-hot pale yellow along its upper side and orange to bright red along its lower edge, with crisp, clean edges and only a faint glow; no person, no caster, no hand, no wand."
+  },
+  {
+    "id": "sparks",
+    "expose": "keep",
+    "subject": "A crackling ball of electricity and nothing else, filling the picture to every edge: a small white-hot star of light a little left of the centre, and around it a dense, tangled, lopsided web of many short, crooked, branching cracks of dark slate-blue and teal, darker than the background, each lit along its middle by a thin line of bright cyan and forking again and again into smaller twigs, with a dozen small round sparks of white-cyan light at their tips and scattered through the web; no person, no figure, no hands."
+  },
+  {
+    "id": "stun",
+    "subject": "A slim soldier standing full-length and facing us, his feet planted wide apart, in a coif and hauberk of mail under a short off-white linen tabard, with olive-green hose and rust-brown leather boots, holding a long straight sword up across his body so that its blade points to the upper left beyond his head and its pommel to the lower right; the whole figure, face and hands included, lit a strong warm orange-brown; and around the whole figure and sword, half a head's width away from them, one thin, sharp, unbroken line of bright white light that follows his outline loosely like a chalk line, with plain background showing between the line and the figure."
+  },
+  {
+    "id": "bless",
+    "subject": "A wide, flared, cone-shaped bowl like a holy-water font, its rim about twice as wide as the bowl is deep and spanning most of the width of the picture, on a short stem with two ring mouldings and a broad round foot, made of dull rose-gold brass with soft mauve-purple shadows and a thin violet edge; inside it a flat oval of glowing dusty-rose liquid; rising from its centre a tall, thin, vertical ray of white light that reaches the top of the picture, crossed just above the rim by a cluster of short white sparkle rays, in a faint white and lavender haze."
+  },
+  {
+    "id": "torch-light",
+    "expose": "keep",
+    "subject": "A swirling spiral of fire and nothing else, filling the picture: a small white-hot yellow core at the centre winding outward in three curling arms of orange and yellow flame, their ragged tips deep red and red-brown, with small flying embers between the arms, in an uneven warm glow that fades slowly into the background; no torch, no person, no hand."
+  }
+]

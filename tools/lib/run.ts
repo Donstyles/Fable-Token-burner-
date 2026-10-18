@@ -280,7 +280,9 @@ export async function runBatch(number: number, opts: RunOptions = {}): Promise<R
       const iconFile = join(dir, `${assetId}.icon.png`);
       if (!dryRun) {
         if (!png) throw new Error(`${assetId}: the image download has no picture`);
-        const report = await postProcessIcon(png, iconFile);
+        const report = await postProcessIcon(png, iconFile, {
+          expose: toImage.params['expose'] === 'keep' ? 'keep' : 'map',
+        });
         const sub = report.subject;
         log(
           `  ${iconFile}: ${report.width}x${report.height}, ${report.colours} colours, ${report.matte} matte; subject mean ${sub.mean}, p5 ${sub.p5}, ${Math.round(sub.dark * 100)}% under 50${report.lifted ? ', lifted' : ''}`,

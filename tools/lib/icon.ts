@@ -1,13 +1,16 @@
 /**
  * Spell icons from Meshy pictures (DESIGN.md 16.22), built as MM6 built its icons: one
- * bitmap of the subject composited onto a flat parchment oval (icon critic, pass 1: 68 by 52,
- * (184,172,150), the same oval as an empty slot), the subject's soft edge and glow blended
- * into the parchment, transparent only outside the oval where the subject is under half
- * there, 255 colours. The subject is matted from Meshy's alpha (un-premultiplied, the faint
- * haze dropped) or, for a picture kept on its plain background, keyed by its distance from
- * the background's colour, so a halo survives. It is fitted 64 by 48 into the oval, a bolt
- * or a beam wider (up to 100), and lifted, never darkened, when it is darker than MM6's
- * (subject p5 under 45, more than 5% under luma 50, or a mean under 105).
+ * bitmap of the subject on a parchment oval (icon critic, pass 1: 68 by 52, (184,172,150),
+ * the same oval as an empty slot), the subject's soft edge and glow running into the
+ * parchment, transparent only outside the oval where the subject is under half there, 255
+ * colours. A picture generated on a plain ground is keyed by its distance from the ground's
+ * colour and its tones mapped onto the parchment (icon critic, pass 2: the ground to 173,
+ * black, 60 and white kept), so the subject sits darker than its oval as MM6's do; a pure
+ * light effect keeps its own exposure. A picture with an alpha channel (Meshy's background
+ * removal) is un-premultiplied and its haze dropped. The subject is fitted 68 by 50 in the
+ * oval (a bolt wider, up to 100) and the whole box is taken from the picture around it, so a
+ * glow runs on to the oval's edge; the parchment carries a mottle of four levels. A subject
+ * darker than MM6's is lifted, never darkened.
  */
 import sharp from 'sharp';
 
@@ -17,8 +20,8 @@ export const ICON_SIZE = { width: 72, height: 54 } as const;
 export const ICON_OVAL = { width: 68, height: 52 } as const;
 /** MM6's parchment inside the oval: flat, about four levels either way. */
 export const ICON_PARCHMENT = [184, 172, 150] as const;
-/** The subject's fit: most of the oval's height, a narrow margin each side; wide ones overhang. */
-export const ICON_FIT = { width: 64, height: 48, wide: 100 } as const;
+/** The subject's fit (icon critic, pass 2: MM6's subjects span 68 by 49); wide ones overhang. */
+export const ICON_FIT = { width: 68, height: 50, wide: 100 } as const;
 
 export interface SubjectStats {
   /** Mean luma (Rec. 601) of the subject's pixels, its 5th percentile, its share under 50. */
@@ -45,6 +48,13 @@ export interface IconOptions {
   colours?: number;
   /** Lift a subject darker than MM6's (default on; off for the dark school). */
   lift?: boolean;
+  /**
+   * 'map' (default): the picture's tones mapped onto the parchment, its ground to the
+   * parchment's 173; 'keep': its own exposure, for a pure light effect (a bolt, sparks).
+   */
+  expose?: 'map' | 'keep';
+  /** Key the parchment out so the page shows through (default on). */
+  keyParchment?: boolean;
 }
 
 const luma = (r: number, g: number, b: number): number => 0.299 * r + 0.587 * g + 0.114 * b;
@@ -237,6 +247,81 @@ function inOval(x: number, y: number, cx: number, cy: number, w: number, h: numb
   return dx * dx + dy * dy <= 1;
 }
 
+/** The border's median colour: the plain ground a picture was generated on. */
+function groundOf(data: Buffer, width: number, height: number): [number, number, number] {
+  const band = Math.max(2, Math.round(Math.min(width, height) * 0.04));
+  const samples: [number[], number[], number[]] = [[], [], []];
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      if (x >= band && x < width - band && y >= band && y < height - band) continue;
+      const i = (y * width + x) * 4;
+      for (let c = 0; c < 3; c++) samples[c]!.push(data[i + c]!);
+    }
+  }
+  const med = samples.map((v) => {
+    v.sort((p, q) => p - q);
+    return v[v.length >> 1]!;
+  });
+  return [med[0]!, med[1]!, med[2]!];
+}
+
+/**
+ * The tone map onto the parchment: luma through (0,0), (60,60), (ground,173), (255,255),
+ * the colour scaled with its luma so hue and saturation hold.
+ */
+export function toneMap(
+  ground: number,
+): (r: number, g: number, b: number) => [number, number, number] {
+  const target = luma(...ICON_PARCHMENT);
+  const xs = ground > 70 && ground < 250 ? [0, 60, ground, 255] : [0, 255];
+  const ys = ground > 70 && ground < 250 ? [0, 60, target, 255] : [0, 255];
+  const curve = (l: number): number => {
+    for (let k = 1; k < xs.length; k++) {
+      if (l <= xs[k]! || k === xs.length - 1) {
+        const span = Math.max(1e-6, xs[k]! - xs[k - 1]!);
+        return ys[k - 1]! + ((l - xs[k - 1]!) / span) * (ys[k]! - ys[k - 1]!);
+      }
+    }
+    return l;
+  };
+  return (r, g, b) => {
+    const l = luma(r, g, b);
+    if (l < 1) return [r, g, b];
+    const k = curve(l) / l;
+    return [Math.min(255, r * k), Math.min(255, g * k), Math.min(255, b * k)];
+  };
+}
+
+/** A smooth mottle of four levels either way, as MM6's icon parchment carries. */
+function mottle(w: number, h: number, seed: number): Float32Array {
+  const step = 4;
+  const gw = Math.ceil(w / step) + 2;
+  const gh = Math.ceil(h / step) + 2;
+  let s = seed >>> 0 || 1;
+  const grid = new Float32Array(gw * gh);
+  for (let i = 0; i < grid.length; i++) {
+    s = Math.imul(s ^ (s >>> 15), 2246822507) >>> 0;
+    s = Math.imul(s ^ (s >>> 13), 3266489909) >>> 0;
+    grid[i] = ((s >>> 8) / 16777216) * 8 - 4;
+  }
+  const out = new Float32Array(w * h);
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      const gx = x / step;
+      const gy = y / step;
+      const x0 = Math.floor(gx);
+      const y0 = Math.floor(gy);
+      const fx = gx - x0;
+      const fy = gy - y0;
+      const at = (i: number, j: number): number => grid[j * gw + i]!;
+      const top = at(x0, y0) * (1 - fx) + at(x0 + 1, y0) * fx;
+      const bottom = at(x0, y0 + 1) * (1 - fx) + at(x0 + 1, y0 + 1) * fx;
+      out[y * w + x] = top * (1 - fy) + bottom * fy;
+    }
+  }
+  return out;
+}
+
 export async function postProcessIcon(
   input: string,
   output: string,
@@ -244,17 +329,52 @@ export async function postProcessIcon(
 ): Promise<IconReport> {
   const src = sharp(input).ensureAlpha();
   const { data, info } = await src.raw().toBuffer({ resolveWithObject: true });
-  const cut = matte(data, info.width, info.height);
+  const width = info.width;
+  const height = info.height;
+  const cut = matte(data, width, height);
+  // The picture as it will sit on the parchment: each pixel toned, then its ground swapped
+  // for the parchment by how far it is ground; the cover kept apart for the oval's edge.
+  const n = width * height;
+  const rgb = Buffer.alloc(n * 3);
+  const cover = Buffer.alloc(n);
+  const parch = ICON_PARCHMENT;
+  if (cut.kind === 'key') {
+    const ground = groundOf(data, width, height);
+    const tone =
+      (o.expose ?? 'map') === 'map'
+        ? toneMap(luma(...ground))
+        : (r: number, g: number, b: number): [number, number, number] => [r, g, b];
+    const tg = tone(...ground);
+    for (let i = 0; i < n; i++) {
+      const a = cut.rgba[i * 4 + 3]! / 255;
+      const t = tone(data[i * 4]!, data[i * 4 + 1]!, data[i * 4 + 2]!);
+      for (let c = 0; c < 3; c++) {
+        rgb[i * 3 + c] = Math.max(
+          0,
+          Math.min(255, Math.round(t[c]! + (1 - a) * (parch[c]! - tg[c]!))),
+        );
+      }
+      cover[i] = cut.rgba[i * 4 + 3]!;
+    }
+  } else {
+    for (let i = 0; i < n; i++) {
+      const a = cut.rgba[i * 4 + 3]! / 255;
+      for (let c = 0; c < 3; c++) {
+        rgb[i * 3 + c] = Math.round(a * cut.rgba[i * 4 + c]! + (1 - a) * parch[c]!);
+      }
+      cover[i] = cut.rgba[i * 4 + 3]!;
+    }
+  }
   // What the picture shows: the bounding box of its pixels at least a third covered (half,
   // when keyed, so a slight shading of the ground does not count).
   const edge = cut.kind === 'key' ? 128 : 85;
-  let x0 = info.width;
-  let y0 = info.height;
+  let x0 = width;
+  let y0 = height;
   let x1 = -1;
   let y1 = -1;
-  for (let y = 0; y < info.height; y++) {
-    for (let x = 0; x < info.width; x++) {
-      if (cut.rgba[(y * info.width + x) * 4 + 3]! < edge) continue;
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      if (cover[y * width + x]! < edge) continue;
       if (x < x0) x0 = x;
       if (x > x1) x1 = x;
       if (y < y0) y0 = y;
@@ -262,69 +382,114 @@ export async function postProcessIcon(
     }
   }
   if (x1 < 0) throw new Error(`${input}: no subject left after the matte`);
-  // Keep the faint glow just outside the box.
-  const pad = Math.round(Math.max(x1 - x0, y1 - y0) * 0.03);
-  const left = Math.max(0, x0 - pad);
-  const top = Math.max(0, y0 - pad);
-  const width = Math.min(info.width - left, x1 - x0 + 1 + 2 * pad);
-  const height = Math.min(info.height - top, y1 - y0 + 1 + 2 * pad);
-  // The fit: the oval's height less two pixels each side; wider than the oval only for a
-  // subject much wider than tall (a bolt), as 36 of MM6's 99 are.
-  const aspect = width / height;
-  let fw: number;
-  let fh: number;
-  if (aspect * ICON_FIT.height <= ICON_FIT.width) {
-    fh = ICON_FIT.height;
-    fw = Math.max(1, Math.round(aspect * fh));
-  } else if (aspect >= 1.6) {
-    fw = Math.min(ICON_FIT.wide, Math.round(aspect * ICON_FIT.height));
-    fh = Math.max(1, Math.round(fw / aspect));
-  } else {
-    fw = ICON_FIT.width;
-    fh = Math.max(1, Math.round(fw / aspect));
+  const bw = x1 - x0 + 1;
+  const bh = y1 - y0 + 1;
+  // The fit: 68 by 50 in the oval; wider than the oval only for a subject much wider than
+  // tall (a bolt), as 36 of MM6's 99 are.
+  const aspect = bw / bh;
+  let scale: number;
+  if (aspect * ICON_FIT.height <= ICON_FIT.width) scale = ICON_FIT.height / bh;
+  else if (aspect >= 1.6) scale = Math.min(ICON_FIT.wide, aspect * ICON_FIT.height) / bw;
+  else scale = ICON_FIT.width / bw;
+  const fw = Math.round(bw * scale);
+  const W = Math.max(ICON_SIZE.width, fw + 4 + ((fw + 4) % 2));
+  const H = ICON_SIZE.height;
+  // The whole box from the picture round the subject, padded with the parchment past its edge.
+  const cx = (x0 + x1 + 1) / 2;
+  const cy = (y0 + y1 + 1) / 2;
+  const rw = W / scale;
+  const rh = H / scale;
+  const left = Math.round(cx - rw / 2);
+  const top = Math.round(cy - rh / 2);
+  const ext = {
+    left: Math.max(0, -left),
+    top: Math.max(0, -top),
+    right: Math.max(0, left + Math.round(rw) - width),
+    bottom: Math.max(0, top + Math.round(rh) - height),
+  };
+  const region = {
+    left: left + ext.left,
+    top: top + ext.top,
+    width: Math.round(rw),
+    height: Math.round(rh),
+  };
+  // Two passes: sharp extracts before it extends within one pipeline.
+  const sample = async (buf: Buffer, channels: 1 | 3, fill: number[]): Promise<Buffer> => {
+    const padded = await sharp(buf, { raw: { width, height, channels } })
+      .extend({
+        ...ext,
+        background:
+          channels === 3 ? { r: fill[0]!, g: fill[1]!, b: fill[2]! } : { r: 0, g: 0, b: 0 },
+      })
+      .raw()
+      .toBuffer({ resolveWithObject: true });
+    const out = await sharp(padded.data, {
+      raw: {
+        width: padded.info.width,
+        height: padded.info.height,
+        channels: padded.info.channels as 1 | 3,
+      },
+    })
+      .extract(region)
+      .resize(W, H, { fit: 'fill', kernel: 'lanczos3' })
+      .raw()
+      .toBuffer({ resolveWithObject: true });
+    // A one-channel picture may come back with more channels; keep the first.
+    if (out.info.channels === channels) return out.data;
+    const one = Buffer.alloc(W * H * channels);
+    for (let i = 0; i < W * H; i++) {
+      for (let c = 0; c < channels; c++)
+        one[i * channels + c] = out.data[i * out.info.channels + c]!;
+    }
+    return one;
+  };
+  const col = await sample(rgb, 3, [...parch]);
+  const alpha = await sample(cover, 1, [0]);
+  // The subject's light, judged on what is at least half covered.
+  const sub = Buffer.alloc(W * H * 4);
+  for (let i = 0; i < W * H; i++) {
+    sub[i * 4] = col[i * 3]!;
+    sub[i * 4 + 1] = col[i * 3 + 1]!;
+    sub[i * 4 + 2] = col[i * 3 + 2]!;
+    sub[i * 4 + 3] = alpha[i]!;
   }
-  const fitted = await sharp(cut.rgba, {
-    raw: { width: info.width, height: info.height, channels: 4 },
-  })
-    .extract({ left, top, width, height })
-    .resize(fw, fh, { fit: 'fill', kernel: 'lanczos3' })
-    .raw()
-    .toBuffer({ resolveWithObject: true });
-  const sub = fitted.data;
   const subject = subjectStats(sub);
   const lifted = (o.lift ?? true) && !lightEnough(subject);
   if (lifted) lift(sub);
-  const W = Math.max(ICON_SIZE.width, fw + 4 + ((fw + 4) % 2));
-  const H = ICON_SIZE.height;
   const box = Buffer.alloc(W * H * 4);
-  const cx = W / 2;
-  const cy = H / 2;
-  const ox = Math.floor((W - fw) / 2);
-  const oy = Math.floor((H - fh) / 2);
+  const ocx = W / 2;
+  const ocy = H / 2;
+  const mott = mottle(W, H, W * 31 + H);
   for (let y = 0; y < H; y++) {
     for (let x = 0; x < W; x++) {
-      const d = (y * W + x) * 4;
-      const sx = x - ox;
-      const sy = y - oy;
-      const s = sx >= 0 && sy >= 0 && sx < fw && sy < fh ? (sy * fw + sx) * 4 : -1;
-      const a = s >= 0 ? sub[s + 3]! / 255 : 0;
-      if (inOval(x, y, cx, cy, ICON_OVAL.width, ICON_OVAL.height)) {
-        // On the parchment: the subject blended in by its cover.
-        for (let c = 0; c < 3; c++) {
-          const fg = s >= 0 ? sub[s + c]! : 0;
-          box[d + c] = Math.round(a * fg + (1 - a) * ICON_PARCHMENT[c]!);
-        }
-        box[d + 3] = 255;
+      const i = y * W + x;
+      const a = sub[i * 4 + 3]! / 255;
+      if (inOval(x, y, ocx, ocy, ICON_OVAL.width, ICON_OVAL.height)) {
+        const m = (1 - a) * mott[i]!;
+        for (let c = 0; c < 3; c++)
+          box[i * 4 + c] = Math.max(0, Math.min(255, Math.round(sub[i * 4 + c]! + m)));
+        box[i * 4 + 3] = 255;
       } else if (a >= 0.5) {
         // Past the oval, as MM6's bolts overhang it: the subject alone, keyed.
-        box[d] = sub[s]!;
-        box[d + 1] = sub[s + 1]!;
-        box[d + 2] = sub[s + 2]!;
-        box[d + 3] = 255;
+        box[i * 4] = sub[i * 4]!;
+        box[i * 4 + 1] = sub[i * 4 + 1]!;
+        box[i * 4 + 2] = sub[i * 4 + 2]!;
+        box[i * 4 + 3] = 255;
       }
     }
   }
   reduceColours(box, o.colours ?? 255);
+  // The parchment keyed out (screens critic, round 12): the game lays the icon on the page's
+  // own shadow (paint.ts `ellipse`, multiplied), so the page's grain and light show through
+  // round the subject as they do in MM6's book; the subject and its glow stay.
+  if (o.keyParchment ?? true) {
+    for (let i = 0; i < W * H; i++) {
+      if (box[i * 4 + 3] === 0) continue;
+      let near = true;
+      for (let c = 0; c < 3; c++) if (Math.abs(box[i * 4 + c]! - parch[c]!) > 12) near = false;
+      if (near) box[i * 4 + 3] = 0;
+    }
+  }
   await sharp(box, { raw: { width: W, height: H, channels: 4 } })
     .png()
     .toFile(output);

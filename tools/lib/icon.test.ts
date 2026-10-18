@@ -62,7 +62,7 @@ describe('spell icon post-process', () => {
       ];
     });
     const output = join(dir, 'disc.icon.png');
-    const report = await postProcessIcon(input, output);
+    const report = await postProcessIcon(input, output, { keyParchment: false });
     expect(report.matte).toBe('alpha');
     expect([report.width, report.height]).toEqual([ICON_SIZE.width, ICON_SIZE.height]);
     expect(report.colours).toBeLessThanOrEqual(255);
@@ -73,7 +73,11 @@ describe('spell icon post-process', () => {
     // Every alpha is a key, the corners are clear, the oval's rim is parchment.
     for (let i = 3; i < data.length; i += 4) expect([0, 255]).toContain(data[i]);
     expect(at(0, 0)[3]).toBe(0);
-    expect(at(2, 27)).toEqual([...ICON_PARCHMENT, 255]);
+    // The rim is parchment, give or take its four-level mottle.
+    const rim = at(2, 27);
+    for (let c = 0; c < 3; c++)
+      expect(Math.abs(rim[c]! - ICON_PARCHMENT[c]!)).toBeLessThanOrEqual(5);
+    expect(rim[3]).toBe(255);
     // The disc sits in the middle.
     expect(at(36, 27)[0]).toBeGreaterThan(200);
   });
@@ -92,7 +96,7 @@ describe('spell icon post-process', () => {
       ];
     });
     const output = join(dir, 'glow.icon.png');
-    const report = await postProcessIcon(input, output, { lift: false });
+    const report = await postProcessIcon(input, output, { lift: false, keyParchment: false });
     expect(report.matte).toBe('key');
     const { data, width, height } = await pixels(output);
     // Pixels lighter than the parchment inside the oval: the halo survived.
@@ -139,5 +143,20 @@ describe('icon light', () => {
     const after = subjectStats(copy);
     expect(after.p5).toBeGreaterThanOrEqual(78);
     expect(lightEnough(after)).toBe(true);
+  });
+});
+
+describe('icon parchment key', () => {
+  it('keys the parchment out and keeps the subject', async () => {
+    const input = await picture('keyed.png', 300, 300, (x, y) => {
+      const d = Math.hypot(x - 150, y - 150);
+      return d < 60 ? [90, 60, 30, 255] : [184, 172, 150, 255];
+    });
+    const output = join(dir, 'keyed.icon.png');
+    await postProcessIcon(input, output, { lift: false });
+    const { data, width } = await pixels(output);
+    const at = (x: number, y: number): number => data[(y * width + x) * 4 + 3]!;
+    expect(at(4, 27)).toBe(0);
+    expect(at(36, 27)).toBe(255);
   });
 });
