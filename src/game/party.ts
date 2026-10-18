@@ -1,11 +1,12 @@
 /**
  * The party in combat (DESIGN.md 14.2): four members, one selected; tapping a monster attacks
  * with the selected member if ready, then the selection advances to the next ready member,
- * MM6-style. Recovery is per member; a struck member also recovers (20 − Endurance effect, GF-M)
- * and, if selected, hands the selection on (GF-P) when the runtime passes the time. A member is
- * backed either by a full `Character` sheet (creation, levels, equipment and conditions drive its
- * numbers and its hit points live on the sheet) or, for test data, by a plain `MemberDef`;
- * `TEST_PARTY` uses the latter.
+ * MM6-style. A member with a bow shoots with the bow's attack bonus, dice and recovery
+ * (MM6-GAPS.md 8). Recovery is per member; a struck member also recovers (20 − Endurance
+ * effect, GF-M) and, if selected, hands the selection on (GF-P) when the runtime passes the
+ * time. A member is backed either by a full `Character` sheet (creation, levels, equipment and
+ * conditions drive its numbers and its hit points live on the sheet) or, for test data, by a
+ * plain `MemberDef`; `TEST_PARTY` uses the latter.
  */
 import {
   armorClass as characterArmor,
@@ -25,6 +26,7 @@ import {
 } from './character';
 import { resolveAttack, type AttackResult } from './combat';
 import { failChance } from './conditions';
+import { rangedWeapon } from './inventory';
 import type { Dice, Rng } from './rng';
 import { statBonus, stats, type Stats } from './stats';
 
@@ -46,6 +48,13 @@ export type MemberSource = MemberDef | Character;
 export interface Target {
   armorClass: number;
   takeDamage(amount: number): void;
+}
+
+/** One attack's numbers: a melee blow's or, with a bow, a shot's. */
+export interface AttackNumbers {
+  attackBonus: number;
+  damage: Dice;
+  recoverySec: number;
 }
 
 /** A `MemberDef` view over a character sheet; its fields follow the sheet live. */
@@ -138,6 +147,27 @@ export class PartyMember {
     return Math.max(MIN_MELEE_RECOVERY, units - speed) / RECOVERY_UNITS_PER_SECOND;
   }
 
+  /** A bow is slung and whole; test data has none. */
+  get canShoot(): boolean {
+    return this.character ? rangedWeapon(this.character.equipment) !== null : false;
+  }
+
+  /**
+   * The numbers of an attack: a shot takes the bow's attack bonus (Shoot), dice and recovery, a
+   * blow the melee weapon's (MM6-GAPS.md 8). Without a bow a shot falls back to the blow.
+   */
+  attackNumbers(ranged: boolean): AttackNumbers {
+    const c = this.character;
+    if (c && ranged && this.canShoot) {
+      return {
+        attackBonus: characterAttack(c, true),
+        damage: damageDice(c, true) ?? this.damage,
+        recoverySec: characterRecovery(c, true),
+      };
+    }
+    return { attackBonus: this.attackBonus, damage: this.damage, recoverySec: this.recoverySec };
+  }
+
   /** Seconds of recovery a blow costs: 20 − Endurance effect in MM6's units (GF-M). */
   get hitRecoverySec(): number {
     const units = this.character
@@ -170,6 +200,8 @@ export class PartyMember {
 export interface PartyAttack {
   member: PartyMember;
   result: AttackResult;
+  /** The member shot with a bow rather than struck in melee. */
+  ranged: boolean;
 }
 
 export class Party {
@@ -193,20 +225,27 @@ export class Party {
     return -1;
   }
 
-  /** Attack a target with the ready member; the selection advances afterwards. */
-  attack(target: Target, now: number, rng: Rng): PartyAttack | null {
+  /**
+   * Attack a target with the ready member; the selection advances afterwards. A member with a
+   * bow shoots with the bow's numbers, as the runtime lets a bow reach anything in view; pass
+   * `ranged: false` for a blow (what MM6 does with a bow at arm's length is unverified). A member
+   * without a bow strikes in melee.
+   */
+  attack(target: Target, now: number, rng: Rng, ranged = true): PartyAttack | null {
     const index = this.readyIndex(now);
     if (index < 0) return null;
     const member = this.members[index]!;
+    const shot = ranged && member.canShoot;
+    const n = member.attackNumbers(shot);
     const chance = member.failChance;
     const result: AttackResult =
       chance > 0 && rng() < chance
         ? { hit: false, damage: 0, chance: 0 }
-        : resolveAttack(member.attackBonus, member.damage, target.armorClass, rng);
+        : resolveAttack(n.attackBonus, n.damage, target.armorClass, rng);
     if (result.hit) target.takeDamage(result.damage);
-    member.readyAt = now + member.recoverySec;
+    member.readyAt = now + n.recoverySec;
     this.advance(now, index);
-    return { member, result };
+    return { member, result, ranged: shot };
   }
 
   /** Move the selection to the next ready member after `from`, or to the next alive one. */

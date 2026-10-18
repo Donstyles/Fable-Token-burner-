@@ -1,4 +1,6 @@
 import { describe, expect, it } from 'vitest';
+import { attackBonus, recoverySec } from './character';
+import { hitChance } from './combat';
 import { afflict } from './conditions';
 import { testCharacters } from './fixtures';
 import { Party, PartyMember, TEST_PARTY } from './party';
@@ -30,6 +32,42 @@ describe('character-backed members', () => {
     expect(m.def.meleeSkill).toBe(1);
     expect(m.def.armor).toBe(5);
     expect(m.isReady(0)).toBe(true);
+    expect(m.canShoot).toBe(false);
+  });
+
+  it('shoots a bow with the bow’s Shoot bonus, dice and recovery (MM6-GAPS.md 8)', () => {
+    const chars = outfittedParty();
+    const mira = chars[1]!;
+    const party = new Party(chars);
+    const archer = party.members[1]!;
+    expect(archer.canShoot).toBe(true);
+    // Accuracy 30 plus Bow 1; the long bow's 3d3; a bow's 100 and leather's 10 less Speed 28.
+    const shot = archer.attackNumbers(true);
+    expect(shot.attackBonus).toBe(statBonus(30) + 1);
+    expect(shot.attackBonus).toBe(attackBonus(mira, true));
+    expect(shot.damage).toEqual({ count: 3, sides: 3 });
+    expect(shot.recoverySec).toBeCloseTo((100 + 10 - statBonus(28)) / 60);
+    expect(shot.recoverySec).toBeCloseTo(recoverySec(mira, true));
+    // Her bare hands in melee: no weapon skill, 1d3 plus Might.
+    const blow = archer.attackNumbers(false);
+    expect(blow.attackBonus).toBe(statBonus(30));
+    expect(blow.damage).toEqual({ count: 1, sides: 3, bonus: statBonus(23) });
+    const dummy = { armorClass: 0, taken: 0, takeDamage: (n: number) => void (dummy.taken += n) };
+    party.selected = 1;
+    const a = party.attack(dummy, 0, () => 0);
+    expect(a?.member).toBe(archer);
+    expect(a?.ranged).toBe(true);
+    expect(a?.result.chance).toBeCloseTo(hitChance(shot.attackBonus, 0));
+    expect(dummy.taken).toBe(3);
+    expect(archer.readyAt).toBeCloseTo(shot.recoverySec);
+    party.selected = 1;
+    const b = party.attack(dummy, 10, () => 0, false);
+    expect(b?.ranged).toBe(false);
+    expect(b?.result.chance).toBeCloseTo(hitChance(blow.attackBonus, 0));
+    expect(archer.readyAt).toBeCloseTo(10 + blow.recoverySec);
+    // The knight has no bow: asked to shoot, he strikes.
+    party.selected = 0;
+    expect(party.attack(dummy, 20, () => 0, true)?.ranged).toBe(false);
   });
 
   it('keeps hit points on the sheet and follows its conditions', () => {

@@ -590,6 +590,12 @@ wider steps above; 3 is −5, 0 is −6). Should the manual differ, the table in
   `src/game/combat.ts` holds it; until `src/world/monster.ts` calls it, the
   world's monsters still roll the party formula with their attack bonus.
 - Damage: the weapon's dice plus bonuses, at least 1 on a hit.
+- A member with a bow shoots with the bow's numbers (MM6-GAPS.md 8): the
+  Shoot bonus (Accuracy effect + Bow skill), the bow's dice without Might
+  (MM6's rule on Might for bows is unverified) and the bow's recovery.
+  `Party.attack` shoots whenever a bow is slung, as the runtime lets a bow
+  reach anything in view; `ranged: false` strikes in melee instead, for
+  when MM6's rule for a bow at arm's length is known.
 - Falling and death (MM6-GAPS.md 11, MMW): a member at 0 hit points still
   stands; below 0 it is Unconscious; below minus its Endurance score it is
   Dead (at Endurance 30, death at −31).
@@ -1845,7 +1851,8 @@ credit grant to dial in the icons' style, one or two per school).
   MM6's spell costs, Cure Disease at Body 8; Body Building and Meditation
   × class factor, Learning 9 % + skill; recovery in MM6's units at 60 a
   second (ours), with hit recovery; armour skills add AC from Normal, the
-  armour penalty halved at Expert (ours) and gone at Master.
+  armour penalty halved at Expert (ours) and gone at Master; bows shoot
+  with the bow's numbers.
 
 - 2026-10-17 – Round 12 (16.22): the spellbook as MM6's one spread with
   bookmarks and a place per spell level; spell icons as one bitmap on
