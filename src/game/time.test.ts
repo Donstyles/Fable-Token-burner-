@@ -33,6 +33,15 @@ describe('game clock', () => {
     expect(gameDate(clock.minutes).minute).toBe(30);
   });
 
+  it('adds up fractions of a minute, as the world advances it a frame at a time', () => {
+    const clock = createClock();
+    // Sixty frames a second at one game minute a real second, for ten seconds.
+    for (let i = 0; i < 600; i++) advanceClock(clock, 1 / 60);
+    expect(clock.minutes).toBeGreaterThanOrEqual(START_MINUTES + 9);
+    expect(clock.minutes).toBeLessThanOrEqual(START_MINUTES + 10);
+    expect(Number.isInteger(clock.minutes)).toBe(true);
+  });
+
   it('is light from five to nine and knows the way to dawn', () => {
     expect(isDaylight(5 * 60)).toBe(true);
     expect(isDaylight(5 * 60 - 1)).toBe(false);

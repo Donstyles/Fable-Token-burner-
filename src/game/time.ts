@@ -48,14 +48,24 @@ export const WEEKDAY_NAMES = [
 export interface GameClock {
   /** Game minutes since the epoch. */
   minutes: number;
+  /**
+   * The fraction of a minute carried between frames: the world advances the clock by a
+   * sixtieth of a minute a frame, which rounded down alone never moved it (MM6 gap deep
+   * dive, magic, 2026-10-18).
+   */
+  carry?: number;
 }
 
 export function createClock(minutes = START_MINUTES): GameClock {
   return { minutes };
 }
 
+/** Advance the clock; fractions of a minute add up across calls, a negative step is ignored. */
 export function advanceClock(clock: GameClock, minutes: number): void {
-  clock.minutes += Math.max(0, Math.floor(minutes));
+  const total = (clock.carry ?? 0) + Math.max(0, minutes);
+  const whole = Math.floor(total);
+  clock.minutes += whole;
+  clock.carry = total - whole;
 }
 
 export interface GameDate {
