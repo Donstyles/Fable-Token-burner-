@@ -164,6 +164,9 @@ export class Bust {
   readonly layer: Layer;
   private readonly room: Mesh;
   private subject: Character | null = null;
+  /** The key aim() last set up, applied only while the bust's own pass draws. */
+  private key: { direction: Vector3; color: Color3; fade: { lo: number; hi: number } } | null =
+    null;
 
   constructor(
     private readonly scene: Scene,
@@ -206,6 +209,15 @@ export class Bust {
     this.room.billboardMode = AbstractMesh.BILLBOARDMODE_ALL;
     this.room.isPickable = false;
     this.room.setEnabled(false);
+    // The bust's key, fill and paint only while its own pass draws, so the villager standing
+    // in the world keeps the world's light (talk-world critic, round 17: sharing her
+    // materials, she turned glossy in the view, luma up to 247).
+    this.target.onBeforeRenderObservable.add(() => {
+      if (this.subject) this.light(this.subject);
+    });
+    this.target.onAfterRenderObservable.add(() => {
+      if (this.subject) this.unlight(this.subject);
+    });
   }
 
   get showing(): Character | null {
@@ -216,10 +228,6 @@ export class Bust {
   show(character: Character): void {
     if (this.subject && this.subject !== character) this.unlight(this.subject);
     this.subject = character;
-    for (const m of character.meshes) {
-      const mat = m.material;
-      if (mat) this.materials.setAmbient(mat as never, KEY_FILL);
-    }
     this.target.renderList = [...character.meshes, this.room];
     this.room.setEnabled(true);
     if (!this.scene.customRenderTargets.includes(this.target)) {
@@ -304,11 +312,16 @@ export class Bust {
     // bright as the face, where MM6's lower window is darker): the light full down to 0.04 of
     // the height under the eyes, six tenths at the window's foot, 0.11 under them.
     const fade = { lo: eyes.y - height * 0.11, hi: eyes.y - height * 0.04 };
-    for (const m of s.meshes) {
+    this.key = { direction: dir, color: KEY_COLOR, fade };
+  }
+
+  /** The bust's warm fill and key on the character's materials, for its own pass. */
+  private light(character: Character): void {
+    for (const m of character.meshes) {
       const mat = m.material;
-      if (mat) {
-        this.materials.setKeyLight(mat as never, { direction: dir, color: KEY_COLOR, fade });
-      }
+      if (!mat) continue;
+      this.materials.setAmbient(mat as never, KEY_FILL);
+      if (this.key) this.materials.setKeyLight(mat as never, this.key);
     }
   }
 
