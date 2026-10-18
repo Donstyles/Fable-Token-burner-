@@ -1,5 +1,6 @@
 import { DEFAULT_RENDER_PRESET, isRenderPreset, type RenderPreset } from '../render/resolution';
 import { DEFAULT_FILTER, FILTER_MODES, type FilterSettings } from '../render/filter';
+import { APP_VERSION } from './version';
 
 const KEY = 'ftb.settings.v1';
 
@@ -24,7 +25,12 @@ function num(v: unknown, fallback: number, min: number, max: number): number {
   return typeof v === 'number' && Number.isFinite(v) ? Math.min(max, Math.max(min, v)) : fallback;
 }
 
-/** localStorage can be absent or throw (private mode, cleared data); every access is guarded. */
+/**
+ * localStorage can be absent or throw (private mode, cleared data); every access is guarded.
+ * Settings saved by another build are dropped: they would hold the look of the day they were
+ * saved over every default changed since (owner's phone, 2026-10-18: a five-level posterise
+ * with dither, from tuning long gone, over the shipped look).
+ */
 export function loadSettings(): Settings {
   try {
     const raw = localStorage.getItem(KEY);
@@ -32,6 +38,7 @@ export function loadSettings(): Settings {
     const parsed: unknown = JSON.parse(raw);
     const obj =
       typeof parsed === 'object' && parsed !== null ? (parsed as Record<string, unknown>) : {};
+    if (obj.build !== APP_VERSION) return structuredClone(defaults);
     const f =
       typeof obj.filter === 'object' && obj.filter !== null
         ? (obj.filter as Record<string, unknown>)
@@ -61,7 +68,7 @@ export function loadSettings(): Settings {
 
 export function saveSettings(s: Settings): void {
   try {
-    localStorage.setItem(KEY, JSON.stringify(s));
+    localStorage.setItem(KEY, JSON.stringify({ ...s, build: APP_VERSION }));
   } catch {
     // Storage unavailable: settings stay in memory for this session.
   }

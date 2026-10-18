@@ -1,4 +1,10 @@
-/** On-screen tuning panel for development builds. Values persist per device. */
+/**
+ * On-screen tuning panel for development builds. Values persist per device for the build that
+ * saved them; a new build starts from its own defaults (owner's phone, 2026-10-18: tuning
+ * saved days before had held a five-level posterise over every look shipped since).
+ */
+import { APP_VERSION } from '../app/version';
+
 export type Field =
   | {
       kind: 'range';
@@ -33,11 +39,18 @@ export type Field =
 
 const STORAGE_KEY = 'ftb.dev.v1';
 
+/** The build that saved the values, kept beside them. */
+const BUILD_KEY = '__build';
+
 function loadStored(): Record<string, unknown> {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     const parsed: unknown = raw ? JSON.parse(raw) : {};
-    return typeof parsed === 'object' && parsed !== null ? (parsed as Record<string, unknown>) : {};
+    if (typeof parsed !== 'object' || parsed === null) return {};
+    const values = parsed as Record<string, unknown>;
+    if (values[BUILD_KEY] !== APP_VERSION) return {};
+    delete values[BUILD_KEY];
+    return values;
   } catch {
     return {};
   }
@@ -45,7 +58,7 @@ function loadStored(): Record<string, unknown> {
 
 function store(values: Record<string, unknown>): void {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(values));
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...values, [BUILD_KEY]: APP_VERSION }));
   } catch {
     // ignore
   }
