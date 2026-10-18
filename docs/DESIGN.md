@@ -2090,6 +2090,18 @@ HUD and round 17 for the talk panel and the world:
   lower core, not on the rims; the meadow 0.86 on ground under eight
   degrees, full on slopes past 23; the scree's mips picking their own
   colours at 0.7; the sky's 48 masses with thicker, shorter streaks.
+- **After scoring**: the bust's key and warm fill applied only inside its
+  own render pass (the render target's before- and after-render hooks), as
+  the talk-world critic's round-17 report asked: sharing the villager's
+  materials, the bust's light had made her glossy in the view behind the
+  panel.
+- **Scores, the night's last**: HUD 8.2 (round 18), screens 8.5 (round 17),
+  talk 9.0 and world 7.5 (round 17), each verdict still "not MM6 yet". The
+  critics' remaining asks are in their reports; the next round starts from
+  them: the clock as one canvas and every painted box on even UI pixels,
+  the rose's veins on its crack network, the type's stroke ends regrown,
+  the bust's camera position inside its pass, far crowns keeping their
+  black, the scree's ramp darker, the sky's streaks capped.
 
 ## 13. Decision log
 

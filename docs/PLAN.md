@@ -544,7 +544,9 @@ waterfalls and deserts, walkable end to end.
     **Round 16's talk and world scored 2026-10-18**: 8.5, 7.0. **Round 17
     scored**: HUD 8.1. **Round 18** (DESIGN 16.28): MM6's brass ramp, the
     talk bust in its own light, the wall tile on each face's plane, crowns
-    ranked by light, height and side; the scoring follows.
+    ranked by light, height and side. **Scored 2026-10-18, the night's
+    last**: HUD 8.2 (round 18), screens 8.5, talk 9.0, world 7.5 (round
+    17), no; the bust's light then kept inside its own pass.
 18. Remaining, in order: lasting buffs and Jump; weather states (rain, a
     sandstorm); music; the smith's hammer and the temple bell.
 
