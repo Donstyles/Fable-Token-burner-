@@ -16,6 +16,8 @@ export interface BitmapOptions {
   size: number;
   /** Tones per channel. */
   levels: number;
+  /** The grain before the posterise, in steps of a tone (half a step unless said). */
+  grain?: number;
 }
 
 function ready(texture: Texture): Promise<void> {
@@ -32,6 +34,7 @@ export function bitmapPixels(
   dh: number,
   levels: number,
   flipY: boolean,
+  grainSteps = 1,
 ): Uint8ClampedArray<ArrayBuffer> {
   const out = new Uint8ClampedArray(new ArrayBuffer(dw * dh * 4));
   const step = 255 / (levels - 1);
@@ -65,7 +68,7 @@ export function bitmapPixels(
         // breaks into speckle as a painted bitmap did, not into flat bands with stepped
         // edges (the blocks on the village walls, round 9).
         const hash = ((Math.imul(x, 73856093) ^ Math.imul(y, 19349663)) >>> 0) & 0xff;
-        const grain = (hash / 255 - 0.5) * step;
+        const grain = (hash / 255 - 0.5) * step * grainSteps;
         out[o] = Math.round((r / cover + grain) / step) * step;
         out[o + 1] = Math.round((g / cover + grain) / step) * step;
         out[o + 2] = Math.round((b / cover + grain) / step) * step;
@@ -90,7 +93,7 @@ export function bitmapTexture(
   scene: Scene,
   o: BitmapOptions,
 ): Promise<DynamicTexture> {
-  const key = `${source.url ?? source.name}|${o.size}|${o.levels}`;
+  const key = `${source.url ?? source.name}|${o.size}|${o.levels}|${o.grain ?? 0.5}`;
   const hit = cache.get(key);
   if (hit) return hit;
   const made = (async (): Promise<DynamicTexture> => {
@@ -104,7 +107,7 @@ export function bitmapTexture(
     const g = dyn.getContext();
     if (raw && raw.length >= sw * sh * 4) {
       // readPixels gives the rows bottom first; the canvas wants them top first.
-      const px = bitmapPixels(raw, sw, sh, sw, sh, o.levels, true);
+      const px = bitmapPixels(raw, sw, sh, sw, sh, o.levels, true, (o.grain ?? 0.5) * 2);
       g.putImageData(new ImageData(px, sw, sh), 0, 0);
     }
     dyn.hasAlpha = true;

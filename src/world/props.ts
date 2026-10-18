@@ -269,10 +269,14 @@ export async function loadPropModels(
       const full = await loadMesh(scene, urlOf(id, false), `prop:${id}`, measure);
       if (!full.texture) throw new Error(`prop ${id}: the model has no base colour texture`);
       const sways = spec.kind === 'tree' || spec.kind === 'bush';
-      // The skin as a 1998 bitmap (DESIGN.md 16.14): buildings at 256 pixels, the rest smaller.
+      // The skin as a 1998 bitmap (DESIGN.md 16.14): buildings at 1024 pixels, the rest smaller;
+      // a building's walls in sixteen tones with a grain of a step and a quarter, so a near
+      // wall is speckled rather than flat plates (world critic, round 12).
+      const building = spec.kind === 'building';
       const bitmap = await bitmapTexture(full.texture, scene, {
-        size: spec.kind === 'building' ? 1024 : 256,
-        levels: 10,
+        size: building ? 1024 : 256,
+        levels: building ? 16 : 10,
+        grain: building ? 1.25 : 0.5,
       });
       // Meshy paints buildings and stones a shade dark for daylight; a little lift reads
       // as sun on plaster rather than a cellar wall.
