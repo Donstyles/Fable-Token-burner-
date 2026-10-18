@@ -1919,6 +1919,59 @@ function paintSchoolIcon(
 }
 
 /**
+ * The knot strip beside the book's crease (screens critic, round 13: MM6's twelve pixels):
+ * two strands plaited on an eight-pixel repeat, each two pixels wide and shaded on its
+ * right, outlined dark, the one on top changing at every crossing; broken at its middle by
+ * a gold S-scroll in a bracket.
+ */
+function paintBinding(g: CanvasRenderingContext2D, x0: number, y0: number, y1: number): void {
+  const sw = 12;
+  const cx = x0 + sw / 2;
+  const ground = 'rgb(90,85,74)';
+  const outline = 'rgb(57,52,49)';
+  const mid = Math.round((y0 + y1) / 2);
+  const gap: [number, number] = [mid - 9, mid + 9];
+  g.fillStyle = ground;
+  g.fillRect(x0, y0, sw, y1 - y0);
+  const strand = (x: number, y: number): void => {
+    const xi = Math.round(x);
+    g.fillStyle = outline;
+    g.fillRect(xi - 2, y, 4, 1);
+    px(g, xi - 1, y, 'rgb(148,130,90)');
+    px(g, xi, y, 'rgb(132,105,82)');
+  };
+  for (let y = y0; y < y1; y++) {
+    if (y >= gap[0] && y <= gap[1]) continue;
+    const phase = ((y - y0) / 8) * Math.PI * 2;
+    const a = cx + 3 * Math.sin(phase);
+    const b = cx - 3 * Math.sin(phase);
+    // The strand on top changes at each crossing, every four rows.
+    const aOver = Math.floor((y - y0 + 2) / 4) % 2 === 0;
+    strand(aOver ? b : a, y);
+    strand(aOver ? a : b, y);
+  }
+  g.fillStyle = outline;
+  g.fillRect(x0, y0, 1, y1 - y0);
+  g.fillRect(x0 + sw - 1, y0, 1, y1 - y0);
+  // The bracket and the scroll.
+  for (const [y, dir] of [
+    [gap[0], 1],
+    [gap[1], -1],
+  ] as const) {
+    g.fillStyle = GOLD.dark;
+    g.fillRect(x0, y, sw, 1);
+    g.fillStyle = GOLD.light;
+    g.fillRect(x0 + 1, y + dir, sw - 2, 1);
+  }
+  const scroll = [
+    ...polyline(arc(cx, mid - 3, 2.5, 2.5, 0.3, -Math.PI * 1.5)),
+    ...polyline(arc(cx, mid + 3, 2.5, 2.5, -Math.PI / 2, Math.PI - 0.3)),
+  ];
+  for (const [x, y] of scroll) px(g, x + 1, y + 1, GOLD.dark);
+  for (const [x, y] of scroll) px(g, x, y, GOLD.light);
+}
+
+/**
  * An open book filling a screen, as MM6's spellbook and quest log (critics, rounds 8 to 11):
  * inside the screen's frame (the view's pillar down each side, its lintel above), a green
  * leather cover with a two-band rim under the lintel; one parchment page from the pillar to
@@ -1977,7 +2030,8 @@ export function paintBook(
   g.restore();
   const img = g.getImageData(left, top, pw, deep);
   const d = img.data;
-  const gx = pw * 0.09;
+  // The crease at seven hundredths of the page, MM6's (screens critic, round 13).
+  const gx = pw * 0.07;
   for (let x = 0; x < pw; x++) {
     const t = x / Math.max(1, pw - 1);
     const width = x < gx ? 5 : 14;
@@ -2001,6 +2055,7 @@ export function paintBook(
   g.putImageData(img, left, top);
   g.fillStyle = 'rgba(60,40,16,0.4)';
   g.fillRect(left, top, pw, 1);
+  paintBinding(g, left + Math.round(gx) + 4, top + 8, bottom - 14);
   const edgeTone = (l: number): string =>
     `rgb(${Math.round(l)},${Math.round(l * 0.94)},${Math.round(l * 0.82)})`;
   // The stack (screens critic, round 12): a mid-grey backing, its outer three columns
