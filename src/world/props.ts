@@ -193,6 +193,12 @@ async function spriteOf(
   // the opaque pixels ranked by the light they rendered before the posterise, ties at random;
   // the darkest 12% black; the rest a green seven tenths by rank and three by height, give or
   // take four fifths of a step; bark toned by its light over the sprite's 95th percentile.
+  // Each leaf by light, height and side together (talk-world critic, round 16: by light alone
+  // the darkest 12% sat on each crown's rims and top, the black's centroid at 0.32 to 0.55 of
+  // its height where MM6's is 0.55 to 0.63, the shaded lower right, and the tops a median 1.4
+  // over the feet, MM6's 7 to 16): a score four tenths the light's rank, four the height and
+  // two the left side, ranked among the leaves, ties at random; the lowest 15% of that rank
+  // black, the rest a green by it, give or take four fifths of a step.
   const leaf: [number, number, number][] = [
     [8, 24, 16],
     [16, 40, 16],
@@ -227,6 +233,20 @@ async function spriteOf(
   const lo = lum[lit[Math.floor(at)] ?? 0]!;
   const hi = lum[lit[Math.ceil(at)] ?? 0]!;
   const p95 = Math.max(1e-3, lo + (hi - lo) * (at - Math.floor(at)));
+  // Every opaque pixel but the bark's, by its score, and its rank among them.
+  const score = new Float64Array(n * n);
+  const leaves: number[] = [];
+  for (const i of lit) {
+    const x = i % n;
+    const y = Math.floor(i / n);
+    if (y >= trunk && brown[i]) continue;
+    score[i] =
+      0.4 * rank[i]! + 0.4 * (1 - (y - y0) / (y1 - y0 + 1)) + 0.2 * (1 - (x - x0) / (x1 - x0 + 1));
+    leaves.push(i);
+  }
+  leaves.sort((a, b) => score[a]! - score[b]! || tie[a]! - tie[b]!);
+  const srank = new Float64Array(n * n);
+  for (let k = 0; k < leaves.length; k++) srank[leaves[k]!] = k / Math.max(1, leaves.length - 1);
   for (let i = 0; i < n * n; i++) {
     const o = i * 4;
     if (px[o + 3]! < 128) continue;
@@ -237,13 +257,13 @@ async function spriteOf(
       px[o] = Math.round(t[0]);
       px[o + 1] = Math.round(t[1]);
       px[o + 2] = Math.round(t[2]);
-    } else if (rank[i]! < 0.12) {
+    } else if (srank[i]! < 0.15) {
       px[o] = 0;
       px[o + 1] = 0;
       px[o + 2] = 0;
     } else {
-      const s = (0.7 * (rank[i]! - 0.12)) / 0.88 + 0.3 * (1 - (y - y0) / (y1 - y0 + 1));
-      const k = Math.max(0, Math.min(5, Math.round(6 * s - 0.5 + (rr() - 0.5) * 1.6)));
+      const step = (6 * (srank[i]! - 0.15)) / 0.85;
+      const k = Math.max(0, Math.min(5, Math.round(step - 0.5 + (rr() - 0.5) * 1.6)));
       const t = leaf[k]!;
       px[o] = t[0];
       px[o + 1] = t[1];

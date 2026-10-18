@@ -90,6 +90,11 @@ varying vec3 vLight;
 varying vec3 vWorldPos;
 varying vec3 vNormal;
 varying float vFog;
+#ifdef DETAIL
+// A building's tile is laid from the position measured from its foot (talk-world critic, round
+// 16), so the fragment's derivatives of it stay precise 255 m from the world's origin.
+varying vec3 vDetail;
+#endif
 #ifdef TERRAIN
 varying vec3 vSplat;
 #else
@@ -147,6 +152,9 @@ void main(void) {
 #endif
   vWorldPos = wp.xyz;
   vNormal = n;
+#ifdef DETAIL
+  vDetail = wp.xyz - finalWorld[3].xyz;
+#endif
   float d = distance(wp.xyz, cameraPosition) * fogDensity;
   vFog = clamp(exp(-d * d), 0.0, 1.0);
   // Scene clip plane (water reflection and refraction passes); zero plane = no clipping.
@@ -163,8 +171,12 @@ void main(void) {
 `;
 
 ShaderStore.ShadersStore[`${SHADER}FragmentShader`] = /* glsl */ `
-#ifdef TERRAIN
+// Derivatives for the ground's level of detail and a wall's own plane (talk-world critic,
+// round 16); WebGL2 has them built in, and Babylon strips these lines there.
+#if defined(TERRAIN) || defined(DETAIL)
 #extension GL_OES_standard_derivatives : enable
+#endif
+#ifdef TERRAIN
 #extension GL_EXT_shader_texture_lod : enable
 #endif
 precision highp float;
@@ -178,6 +190,7 @@ varying float vFog;
 uniform sampler2D diffuseSampler;
 #ifdef DETAIL
 uniform sampler2D detailSampler;
+varying vec3 vDetail;
 #endif
 #ifdef TERRAIN
 uniform sampler2D pathSampler;
@@ -252,8 +265,12 @@ void main(void) {
     if (float(i) < priorityLights) carried += contribution;
     else pl += contribution;
   }
-  vec3 light = vLight + pl;
-  if (cloudShadow > 0.0) {
+  // A keyed bust takes no lantern, torch or cloud shade, only its own key and fill
+  // (talk-world critic, round 16: the torch's flicker, a lantern 2.4 m off and the drifting
+  // shade swung the face's tones about 20% from frame to frame, where MM6's filmed portraits
+  // held still).
+  vec3 light = vLight + pl * (1.0 - paint);
+  if (cloudShadow > 0.0 && paint < 0.5) {
     // Cloud shadows: patches of shade drift over slopes, trees and houses alike.
     vec2 cp = vWorldPos.xz * 0.0035 + time * vec2(0.012, 0.005);
     float cs = 0.65 * noise2(cp) + 0.35 * noise2(cp * 2.1 + 7.0);
@@ -268,7 +285,7 @@ void main(void) {
     float over = peak - lightKnee;
     light *= (lightKnee + over / (1.0 + 2.0 * over)) / peak;
   }
-  light = min(light + carried, vec3(1.6));
+  light = min(light + carried * (1.0 - paint), vec3(1.6));
   // The light in steps (DESIGN.md 16.14): sixteen flat levels, no dither (critics, round
   // 10: MM6 never dithered; a Bayer reads as a screen door over every wall; the colour
   // variety comes from the texels).
@@ -292,7 +309,10 @@ void main(void) {
   float steep = smoothstep(0.18, 0.45, 1.0 - abs(n.y));
   vec2 wall = abs(n.x) > abs(n.z) ? vec2(vWorldPos.z, vWorldPos.y) : vec2(-vWorldPos.x, vWorldPos.y);
   vec2 screeUV = mix(vUV, wall, steep) * splatScale.z;
-  vec3 albedo = tileAt(diffuseSampler, vUV * splatScale.x) * g +
+  // The meadow a step under the hills (talk-world critic, round 16: the meadow at luma p50 66
+  // under hills of 70, where MM6's field is 54 under hills of 73 to 74): grass on ground under
+  // 8 degrees at 0.86, full on slopes past 23.
+  vec3 albedo = tileAt(diffuseSampler, vUV * splatScale.x) * g * mix(0.86, 1.0, smoothstep(0.01, 0.08, 1.0 - n.y)) +
     tileAt(pathSampler, vUV * splatScale.y) * w.r +
     tileAt(screeSampler, screeUV) * w.g +
     tileAt(snowSampler, vUV * splatScale.w) * w.b;
@@ -314,10 +334,16 @@ void main(void) {
   // texels near and fades with its averaged mips. On a wall it runs along the wall's own
   // horizontal, from the world normal n (talk-world critic, round 15: laid on the xy or zy
   // plane it stretched 1.75 times along a house 55 degrees off it, runs 2.1 by 1.3 pixels).
-  vec2 duv = abs(n.y) > 0.7 ? vWorldPos.xz : vec2(dot(vWorldPos.xz, normalize(vec2(-n.z, n.x))), vWorldPos.y);
-  albedo *= texture2D(detailSampler, duv / 1.5).r * 2.0;
+  // From the face's geometric normal, not the vertex normal, and half as strong again
+  // (talk-world critic, round 16: Meshy's walls carry smoothed normals whose headings spread
+  // 45 to 106 degrees over one face, so the tile's u jumped 200 to 470 m across it and fell
+  // to its flat last mip, runs 7.5 by 5.6 pixels and 6 colours in 20 by 20 again).
+  vec3 gn = normalize(cross(dFdx(vDetail), dFdy(vDetail)));
+  vec2 duv = abs(gn.y) > 0.7 ? vDetail.xz : vec2(dot(vDetail.xz, normalize(vec2(-gn.z, gn.x))), vDetail.y);
+  albedo *= 1.0 + 1.5 * (texture2D(detailSampler, duv / 1.5).r * 2.0 - 1.0);
 #endif
 #endif
+  float sp = 0.0;
   if (paint > 0.5) {
     // The chest under the face (talk-world critic, round 13: rows 76 to 96 at luma 112 over a
     // face of 104, where MM6's tavern window is 65 under a face of 78), faded before the
@@ -335,8 +361,12 @@ void main(void) {
     // critic, round 15: at 1.3 and 1.25 the face ran p5/50/95 32/110/161 and none of it over
     // luma 180, MM6's 5-13/46-73/188-201 and 6 to 9%).
     albedo = pow(albedo, vec3(1.9));
+    // A warm highlight off the key in three steps (talk-world critic, round 16: the lit skin
+    // stopped at luma p95 154 with 1% of the face over 180, MM6's 188 to 201 and 6 to 9%).
+    vec3 hv = normalize(normalize(cameraPosition - vWorldPos) - lightDirection);
+    sp = floor(pow(max(dot(n, hv), 0.0), 24.0) * 3.0 + 0.5) / 3.0;
   }
-  vec3 c = mix(albedo * tint * light + emissive, vec3(1.0), flash);
+  vec3 c = mix(albedo * tint * light + emissive + paint * 0.9 * sp * vec3(1.0, 0.78, 0.55), vec3(1.0), flash);
   gl_FragColor = vec4(mix(fogColor, c, vFog), 1.0);
 }
 `;
@@ -361,7 +391,7 @@ export interface VertexLitOptions {
   billboard?: boolean;
   /**
    * A grey tile multiplied over the texture in world metres, 1.5 m a tile, along the face's
-   * own axis (building walls); its mean must be a half, since the shader doubles it.
+   * own axis (building walls); its mean must be a half, which the shader maps to 1.
    */
   detail?: BaseTexture;
   /**

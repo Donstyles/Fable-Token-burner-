@@ -689,12 +689,13 @@ const OWN_COLOURS = new Set(['grass', 'path', 'scree']);
 
 /**
  * How far a role's mip levels go from their mean toward their pick, where not a half: the
- * scree two fifths (talk-world critic, round 14: the hill's bare earth, minified 300 m off,
+ * scree seven tenths (talk-world critic, round 14: the hill's bare earth, minified 300 m off,
  * knitted at a neighbour |dL| of 7.0 and 0.16 of neighbours alike, MM6's bank 4.8 to 5.3
  * and 0.44 to 0.54; round 15: at a quarter it overshot into flatness, 44% of the far hill's
- * brown one colour, MM6's 10 to 14%).
+ * brown one colour, MM6's 10 to 14%; round 16: at two fifths the far hill's earth was still
+ * one plate, 0.37 of it its top colour, MM6's 0.10 to 0.14).
  */
-const PICK_SHARE: Record<string, number> = { scree: 0.4 };
+const PICK_SHARE: Record<string, number> = { scree: 0.7 };
 
 /** Paint every role's texture; `mipmaps` selects the sampling mode of the retro look. */
 export function paintRoleTextures(scene: Scene, mipmaps = true): RoleTextures {

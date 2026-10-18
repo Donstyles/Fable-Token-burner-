@@ -19,7 +19,7 @@ import type { Mesh } from '@babylonjs/core/Meshes/mesh';
 import type { Scene } from '@babylonjs/core/scene';
 import { isForcedLandscape, toAppPoint } from '../app/orientation';
 import type { RetroMaterials } from '../render/materials';
-import { type Character, DEFAULT_CHARACTER_FILL } from './character';
+import type { Character } from './character';
 
 // The target at the window's size (critics, round 9), so the face composes at the view's pitch.
 const SIZE = 96;
@@ -46,8 +46,12 @@ const GROUND = new Color4(0.118, 0.078, 0.047, 1);
 // That hue at 1.6 times over a fill of 0.02, from the side (talk-world critic, round 15: the
 // fill's 0.08 and the key's 0.64 came to 0.72, under the five levels' top step at 0.8, so no
 // face pixel passed about luma 165, where MM6's p95 runs 188 to 201).
-const KEY_COLOR = new Color3(1.15, 1.04, 0.86);
-const KEY_FILL = 0.02;
+// That hue at nine tenths over a warm fill of 0.16, nearer the front, with a stepped highlight
+// in the shader (talk-world critic, round 16: lit by the key and fill alone, the face ran
+// p5/50/95 0/52/119, 57% under luma 60; a grey fill greyed the skin to saturation 0.49 where
+// MM6's is 0.69).
+const KEY_COLOR = new Color3(0.648, 0.585, 0.486);
+const KEY_FILL = new Color3(0.253, 0.152, 0.076);
 /** The room behind the head, this far behind it, seen only by the bust's camera. */
 const ROOM_BACK = 1.2;
 const ROOM_LAYER = 0x10000000;
@@ -76,7 +80,9 @@ function paintRoom(size: number): HTMLCanvasElement {
   let x = 0;
   while (x < size) {
     const pw = 6 + Math.floor(rand() * 3);
-    const tone = (rand() - 0.5) * 20;
+    // Plank tones over 32 levels, not 20 (talk-world critic, round 16: 58 colours in the
+    // left strip, MM6's 65 to 96).
+    const tone = (rand() - 0.5) * 32;
     const lines: number[] = [];
     for (let lx = 2; lx < pw - 1; lx += 2 + Math.floor(rand() * 2)) lines.push(lx);
     for (let px = 0; px < pw && x + px < size; px++) {
@@ -89,7 +95,7 @@ function paintRoom(size: number): HTMLCanvasElement {
         // strips, MM6's 65 to 96).
         if (px > 0) l += (rand() - 0.5) * 10;
         const lamp =
-          (x + px) / size + y / size < 0.6 ? 10 * (1 - ((x + px) / size + y / size) / 0.6) : 0;
+          (x + px) / size + y / size < 0.6 ? 5 * (1 - ((x + px) / size + y / size) / 0.6) : 0;
         if (px === 0) put(x + px, y, 16, 8, 4);
         else {
           // A hue jitter on the fill (talk-world critic, round 14: every plank colour lay on
@@ -97,15 +103,17 @@ function paintRoom(size: number): HTMLCanvasElement {
           // eight down or up on a twentieth each, green four down or up on three fortieths.
           // A step darker, the lamp too (talk-world critic, round 15: the strips at luma 39 to
           // 45, where MM6's tavern is 23 to 24, so the side-lit face's shade read as a hole).
+          // Darker again, the lamp halved (talk-world critic, round 16: the strips at luma 37
+          // and 31, close to the darker face's shade at 59).
           const jr = rand();
           const jg = rand();
           const jb = rand();
           put(
             x + px,
             y,
-            40 + l + lamp + (jr < 0.05 ? -8 : jr < 0.1 ? 8 : 0),
-            26 + l * 0.7 + lamp * 0.8 + (jg < 0.075 ? -4 : jg < 0.15 ? 4 : 0),
-            15 + l * 0.4 + lamp * 0.5 + (jb < 0.05 ? -8 : jb < 0.1 ? 8 : 0),
+            34 + l + lamp + (jr < 0.05 ? -8 : jr < 0.1 ? 8 : 0),
+            22 + l * 0.7 + lamp * 0.8 + (jg < 0.075 ? -4 : jg < 0.15 ? 4 : 0),
+            13 + l * 0.4 + lamp * 0.5 + (jb < 0.05 ? -8 : jb < 0.1 ? 8 : 0),
           );
         }
       }
@@ -160,7 +168,7 @@ export class Bust {
   constructor(
     private readonly scene: Scene,
     private readonly canvas: HTMLCanvasElement,
-    private readonly materials: Pick<RetroMaterials, 'setKeyLight'>,
+    private readonly materials: Pick<RetroMaterials, 'setKeyLight' | 'setAmbient'>,
   ) {
     this.camera = new TargetCamera('bust', Vector3.Zero(), scene, false);
     this.camera.minZ = NEAR;
@@ -208,7 +216,10 @@ export class Bust {
   show(character: Character): void {
     if (this.subject && this.subject !== character) this.unlight(this.subject);
     this.subject = character;
-    character.setFill(KEY_FILL);
+    for (const m of character.meshes) {
+      const mat = m.material;
+      if (mat) this.materials.setAmbient(mat as never, KEY_FILL);
+    }
     this.target.renderList = [...character.meshes, this.room];
     this.room.setEnabled(true);
     if (!this.scene.customRenderTargets.includes(this.target)) {
@@ -282,9 +293,11 @@ export class Bust {
     const toFace = eyes.subtract(this.camera.position).normalize();
     const right = Vector3.Cross(Vector3.Up(), toFace).normalize();
     // Seventy-four degrees off the lens's axis (talk-world critic, round 15: at fifty-five
-    // the face was lit evenly, 19% of it under luma 60 where MM6's are 38 to 58%).
+    // the face was lit evenly, 19% of it under luma 60 where MM6's are 38 to 58%). Sixty
+    // (talk-world critic, round 16: at seventy-four the shaded half ran 0.61 of the lit one,
+    // MM6's 0.71 to 0.84; at seventy-nine the light split the face down the nose).
     const dir = toFace
-      .add(right.scale(-3.5))
+      .add(right.scale(-1.5))
       .add(new Vector3(0, -0.9, 0))
       .normalize();
     // The chest a step or two under the face (talk-world critic, round 13: rows 72 to 96 as
@@ -300,7 +313,8 @@ export class Bust {
   }
 
   private unlight(character: Character): void {
-    character.setFill(DEFAULT_CHARACTER_FILL);
+    // The character's own grey fill again, over the bust's warm one.
+    character.setFill(character.fill);
     for (const m of character.meshes) {
       const mat = m.material;
       if (mat) this.materials.setKeyLight(mat as never, null);

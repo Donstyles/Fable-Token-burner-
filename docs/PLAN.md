@@ -540,8 +540,11 @@ waterfalls and deserts, walkable end to end.
     bare banks, an even sky, the icons' grain. **Round 16 scored
     2026-10-18**: HUD 7.8, screens 8.3, no. **Round 17** (DESIGN 16.27): an
     open crown, banded brass, a second pillar collar, the rose's contrast,
-    MM6's binding, the quest log at MM6's size, every word on the grid; the
-    scoring follows.
+    MM6's binding, the quest log at MM6's size, every word on the grid.
+    **Round 16's talk and world scored 2026-10-18**: 8.5, 7.0. **Round 17
+    scored**: HUD 8.1. **Round 18** (DESIGN 16.28): MM6's brass ramp, the
+    talk bust in its own light, the wall tile on each face's plane, crowns
+    ranked by light, height and side; the scoring follows.
 18. Remaining, in order: lasting buffs and Jump; weather states (rain, a
     sandstorm); music; the smith's hammer and the temple bell.
 

@@ -323,14 +323,17 @@ export function paintSkyStrip(w: number, h: number, seed: number): HTMLCanvasEle
   // MM6's skies were streaked: long level strokes of cloud at every height, ragged along
   // their edges, with a few small cumulus; never one mass across the view. The strokes
   // slope a little, as a brush dragged across the sky does.
-  // Fifty-five strokes round the whole horizon, whatever the strip's size: the brush scales
+  // Forty-eight strokes round the whole horizon, whatever the strip's size: the brush scales
   // with the strip, so the cover stays the same. Fewer, lower and a fifth thinner than before
   // (talk-world critic, round 14: a hundred centred up to 0.85 of the strip covered 68% of
   // the sky in one sheet of elongation 6.1, where MM6's cover is 27 to 41% and its masses
   // 3.8 to 5.0): centred up to 0.6, at the price of open blue above about 42 degrees.
-  const masses = 55;
+  // Fewer again, their streaks thicker and shorter (talk-world critic, round 16: thin slivers
+  // of elongation 10.8 to 12.5 where MM6's masses stay under 5.8): the streaks' spread down
+  // from 1.5 times to once, their height up from 0.8 to 1.1.
+  const masses = 48;
   for (let m = 0; m < masses; m++) {
-    // Each in its own fifty-fifth of the horizon, widened by three tenths of one either side
+    // Each in its own share of the horizon, widened by three tenths of one either side
     // (talk-world critic, round 15: placed at random, fifty left the talk view's sky 15%
     // cloud and sixteen azimuths 20 to 33%, where MM6's views run 27 to 41%).
     const cx = ((m - 0.3 + 1.6 * r()) / masses) * w;
@@ -340,14 +343,14 @@ export function paintSkyStrip(w: number, h: number, seed: number): HTMLCanvasEle
     // MM6's bodies are streaks, elongation 4.3 to 5.6).
     const streak = r() < 0.75;
     const n = streak ? 5 + Math.floor(r() * 5) : 6 + Math.floor(r() * 6);
-    const spread = (streak ? (80 + r() * 140) * 1.5 : 20 + r() * 30) * (w / 1024);
+    const spread = (streak ? 80 + r() * 140 : 20 + r() * 30) * (w / 1024);
     const slope = (r() - 0.5) * 0.12;
     for (let k = 0; k < n; k++) {
       const t = (k / Math.max(1, n - 1) - 0.5) * spread;
       const x = cx + t + (r() - 0.5) * 10 * (w / 1024);
       const y = cy + t * slope + (r() - 0.5) * (streak ? 4 : 12) * (h / 192);
       const rx = (streak ? 22 + r() * 40 : 7 + r() * 12) * (w / 1024);
-      const ry = (streak ? 2.5 + r() * 3 : 5 + r() * 8) * (h / 192) * 0.8;
+      const ry = (streak ? 2.5 + r() * 3 : 5 + r() * 8) * (h / 192) * 1.1;
       dab(g, w, 0, x, y, rx, ry, slope, 255, 0.95);
       // Lumps along the top edge, so the stroke's edge is ragged rather than ruled.
       for (let j = 0; j < 2; j++) {

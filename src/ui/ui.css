@@ -48,9 +48,9 @@
   word-spacing: 3px;
 }
 /* A spell's name closer still (screens critic, round 16: seven pixels between its words,
-   MM6's five). */
+   MM6's five; round 17: with none added, three). */
 .screen-spells .ui-panel .spell-name .pxt {
-  word-spacing: 0;
+  word-spacing: 1.5px;
 }
 .pxs {
   position: absolute;

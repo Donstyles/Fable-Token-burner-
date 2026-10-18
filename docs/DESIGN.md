@@ -2060,7 +2060,43 @@ the next entry). Round 17:
   fourth change, +0.03), which needs the word painter exported from
   pixel-text.ts and an e2e check of the box.
 
+### 16.28 Round 18: MM6's brass ramp, and the talk bust in its own light (2026-10-18)
+
+Round 17 scored HUD 8.1 (the frame and band read as MM6's at a glance for
+the first time); round 16 scored talk 8.5 and world 7.0. Round 18 for the
+HUD and round 17 for the talk panel and the world:
+
+- **HUD**: the gold collars and plinth rings on MM6's brass ramp (seven
+  stops, 84 to 219, cream in the light and ochre in the shade, blue over
+  red from a third to four fifths by brightness, as MM6's) where they had
+  been one colour times the turn; the rest button's lower lit band down to
+  MM6's level (it reached 144, MM6's 104 to 113); the spandrels' slope a
+  soft lit edge (148, 134, 123) on their upper rows. The moon stays on the
+  rest button: the critic's tent is MM6's own icon, for the owner to
+  decide.
+- **Talk**: the bust lit by its own light alone, with no torch, lantern or
+  cloud shade riding on it (the talk-world critic's recalibrated simulator
+  found round 15's extra light was the party's torch and round 16's missing
+  highlight a passing cloud shadow); a darker key, 60 degrees off the lens,
+  over a warm fill (0.253, 0.152, 0.076); a highlight in three flat steps
+  on the brightest skin; the room behind darker again (fill 34/22/13, lamp
+  5, a wider plank tone); the frame's lit foot lines against the portrait,
+  as MM6's. Measured: face p5/50/95 17/69/189, 36% under 60, 6% over 180
+  (round 16: 22/98/154, 18%, 1%; MM6 5-13/46-73/188-201, 38-58%, 6-9%).
+- **World**: the wall tile laid on each face's own plane from its geometric
+  normal, measured from the building's foot, at half again the contrast
+  (Meshy's smoothed normals had collapsed it to flat); tree crowns ranked
+  by light, height and side together, so the black sits in the shaded
+  lower core, not on the rims; the meadow 0.86 on ground under eight
+  degrees, full on slopes past 23; the scree's mips picking their own
+  colours at 0.7; the sky's 48 masses with thicker, shorter streaks.
+
 ## 13. Decision log
+
+- 2026-10-18 – Round 18 (16.28): MM6's brass ramp, the rest button's
+  lower band, a lit spandrel edge; the talk bust in its own light with a
+  side key, a warm fill and a stepped highlight; the wall tile on each
+  face's plane, crowns ranked by light, height and side, a darker meadow.
 
 - 2026-10-18 – Round 17 (16.27): an open crown and banded brass, a second
   pillar collar, the alcove's shadow; the rose's contrast, MM6's binding,
