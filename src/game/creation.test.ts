@@ -93,7 +93,8 @@ describe('createCharacter', () => {
     expect(c.sex).toBe('female');
     expect(c.spells).toEqual(['torch-light', 'wizard-eye']);
     expect(c.sp).toBe(maxSp(c));
-    expect(c.sp).toBe(10 + (1 + 7) * 3 + 1);
+    // Meditation 1 adds the Sorcerer's 3 spell points a level (MM6-GAPS.md 4).
+    expect(c.sp).toBe(10 + (1 + 7) * 3 + 1 * 3);
     expect(c.hp).toBe(15 + (1 + 5) * 2);
   });
 

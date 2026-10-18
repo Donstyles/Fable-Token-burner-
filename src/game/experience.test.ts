@@ -4,6 +4,8 @@ import { afflict } from './conditions';
 import {
   addExperience,
   canLevelUp,
+  experienceWithLearning,
+  learningPercent,
   levelForXp,
   levelUp,
   nextLevelGains,
@@ -33,14 +35,28 @@ describe('experience curve', () => {
 describe('gaining experience', () => {
   it('applies the Learning bonus and skips the dead', () => {
     const [knight, archer, cleric] = testCharacters();
+    // Learning 2 at Expert: 9 + 2 × 2 = 13 %.
     knight!.skills.learning = { level: 2, rank: 'expert' };
-    expect(addExperience(knight!, 100)).toBe(104);
+    expect(addExperience(knight!, 100)).toBe(113);
     expect(addExperience(archer!, -5)).toBe(0);
     afflict(cleric!.conditions, 'dead', 0);
     expect(addExperience(cleric!, 100)).toBe(0);
     const shares = shareExperience([knight!, archer!, cleric!], 100);
-    expect(shares).toEqual([52, 50, 0]);
+    expect(shares).toEqual([56, 50, 0]);
     expect(xpToNextLevel(archer!)).toBe(950);
+  });
+
+  it('adds 9 % plus the skill, the skill part ×2 Expert, ×3 Master (MM6-GAPS.md 4, RPGC)', () => {
+    const [knight] = testCharacters();
+    const k = knight!;
+    expect(learningPercent(k)).toBe(0);
+    expect(experienceWithLearning(k, 100)).toBe(100);
+    k.skills.learning = { level: 5, rank: 'normal' };
+    expect(learningPercent(k)).toBe(14);
+    expect(experienceWithLearning(k, 100)).toBe(114);
+    k.skills.learning = { level: 10, rank: 'master' };
+    expect(learningPercent(k)).toBe(39);
+    expect(experienceWithLearning(k, 100)).toBe(139);
   });
 
   it('levels up at the trainer with skill points and the class gains', () => {

@@ -3,7 +3,8 @@
  * is plain JSON-safe data: identity, class, level, statistics, skills, hit and spell points,
  * conditions, known spells, inventory grid and equipment. The derived values follow MM6 as
  * DESIGN 14 records: hit points = class base + (level + Endurance bonus) × class factor +
- * Bodybuilding bonus; spell points likewise from the class's magic statistic(s) and Meditation;
+ * Bodybuilding skill × rank multiplier × class factor; spell points likewise from the class's
+ * magic statistic(s) and Meditation (MM6-GAPS.md 4, RPGC);
  * attack bonus = Accuracy bonus + weapon skill (Master doubles the skill); melee damage adds the
  * Might bonus; armour class = Speed bonus + equipment. Recovery is the weapon's seconds plus the
  * armour penalty, less 0.05 s per point of Speed bonus and per skill point from Expert rank,
@@ -67,10 +68,20 @@ export function currentStats(c: Character): Stats {
   return effectiveStats(c.stats, c.conditions);
 }
 
+/** Body Building adds skill × the class's hit points a level, ×2 Expert, ×3 Master (RPGC). */
+export function bodyBuildingHp(c: Character): number {
+  return skillBonus(c.skills, 'bodybuilding') * classDef(c.classId).hpFactor;
+}
+
+/** Meditation adds skill × the class's spell points a level, ×2 Expert, ×3 Master (RPGC). */
+export function meditationSp(c: Character): number {
+  return skillBonus(c.skills, 'meditation') * classDef(c.classId).spFactor;
+}
+
 export function maxHp(c: Character): number {
   const cls = classDef(c.classId);
   const endurance = statBonus(currentStats(c).endurance);
-  return Math.max(1, baseHp(cls, c.level, endurance) + skillBonus(c.skills, 'bodybuilding'));
+  return Math.max(1, baseHp(cls, c.level, endurance) + bodyBuildingHp(c));
 }
 
 export function maxSp(c: Character): number {
@@ -78,7 +89,7 @@ export function maxSp(c: Character): number {
   if (cls.spFactor === 0) return 0;
   const stats = currentStats(c);
   const bonuses = cls.spStats.reduce((sum, s) => sum + statBonus(stats[s]), 0);
-  return Math.max(0, baseSp(cls, c.level, bonuses) + skillBonus(c.skills, 'meditation'));
+  return Math.max(0, baseSp(cls, c.level, bonuses) + meditationSp(c));
 }
 
 /** Weapon skill contribution to hit: the level, doubled at Master. */

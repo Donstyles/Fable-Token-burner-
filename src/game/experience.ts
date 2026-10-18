@@ -5,7 +5,8 @@
  * level of the new level (ours; MM6 trainers charge by town). Each level brings five skill
  * points (ours; MM6's per-level grant is not agreed in community tables) and the class's hit
  * and spell point gains, added to the current points as well as to the maximum. Learning adds
- * one per cent of experience per point of its skill bonus (MM6 scales Learning by rank).
+ * 9 % plus 1 % per skill point, the skill part doubled at Expert and tripled at Master
+ * (MM6-GAPS.md 4, RPGC: skill 5 gives 14 %, 10 at Master 39 %).
  */
 import { type Character, clampToMax, isLiving, maxHp, maxSp } from './character';
 import { classDef, levelGains } from './classes';
@@ -39,9 +40,15 @@ export function trainingCost(newLevel: number, multiplier = 1): number {
   return Math.round(TRAINING_GOLD_PER_LEVEL * newLevel * multiplier);
 }
 
-/** Experience after the Learning bonus. */
+/** Learning's bonus in per cent: 9 + skill × 1 / 2 / 3 once learnt, else 0 (MM6-GAPS.md 4). */
+export function learningPercent(c: Character): number {
+  const skill = skillBonus(c.skills, 'learning');
+  return skill > 0 ? 9 + skill : 0;
+}
+
+/** Experience after the Learning bonus, rounded down. */
 export function experienceWithLearning(c: Character, amount: number): number {
-  return Math.floor(amount * (1 + skillBonus(c.skills, 'learning') / 100));
+  return Math.floor((amount * (100 + learningPercent(c))) / 100);
 }
 
 /** Add experience to one character (dead and gone members earn none). Returns what was added. */

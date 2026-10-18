@@ -659,12 +659,15 @@ stats plus a 50-point pool, two fixed and two picked skills), experience
 (24 spells across the nine schools, Normal/Expert/Master tiers; MM6's
 spell point costs by level, 1, 2, 3, 4, 5, 8, 10, 15, 20, 25 and 30, with
 Spirit Arrow at 1 / 1 / 0 by rank and Cure Disease at Body 8, MM6-GAPS.md
-7), the
-calendar clock and rest, town services (tavern, temple, guild, trainer,
-shop with Merchant), quests, the automap and versioned save files. Every
-rule followed and every simplification is tabled in `src/game/README.md`.
-The combat party (`party.ts`) is backed by a character sheet or, for test
-data, a plain definition.
+7), the calendar clock and rest, town services (tavern, temple, guild,
+trainer, shop with Merchant), quests, the automap and versioned save
+files. Skills as MM6 (MM6-GAPS.md 4, RPGC): Body Building adds skill × the
+class's hit points a level and Meditation skill × its spell points a
+level, doubled at Expert and tripled at Master; Learning adds 9 % of
+experience plus 1 % per skill point, the skill part doubled and tripled.
+Every rule followed and every simplification is tabled in
+`src/game/README.md`. The combat party (`party.ts`) is backed by a
+character sheet or, for test data, a plain definition.
 
 Screens (`src/ui/`, 2026-10-16): plain DOM and CSS in the dev build's
 house style (dark stone panels, gold rules, amber selection, monospace
@@ -1826,7 +1829,8 @@ credit grant to dial in the icons' style, one or two per school).
 
 - 2026-10-18 – MM6 rules, step 1 (MM6-GAPS.md 38; DESIGN 14): unconscious
   below 0 hit points, dead below minus Endurance; monsters hit by level;
-  MM6's spell costs, Cure Disease at Body 8.
+  MM6's spell costs, Cure Disease at Body 8; Body Building and Meditation
+  × class factor, Learning 9 % + skill.
 
 - 2026-10-17 – Round 12 (16.22): the spellbook as MM6's one spread with
   bookmarks and a place per spell level; spell icons as one bitmap on

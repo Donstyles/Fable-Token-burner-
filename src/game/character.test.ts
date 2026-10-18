@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   armorClass,
   attackBonus,
+  bodyBuildingHp,
   canActNow,
   clampToMax,
   damageCharacter,
@@ -13,6 +14,7 @@ import {
   isLiving,
   maxHp,
   maxSp,
+  meditationSp,
   recoverySec,
   restoreSp,
 } from './character';
@@ -32,16 +34,41 @@ function sorcerer() {
 describe('derived numbers', () => {
   it('computes hit and spell points from class, level, stats and skills', () => {
     const c = sorcerer();
+    // Her Meditation 1 adds the Sorcerer's 3 spell points a level.
     expect(maxHp(c)).toBe(27);
-    expect(maxSp(c)).toBe(35);
+    expect(maxSp(c)).toBe(37);
     c.skills.bodybuilding = { level: 2, rank: 'normal' };
     c.skills.meditation = { level: 2, rank: 'expert' };
-    expect(maxHp(c)).toBe(29);
-    expect(maxSp(c)).toBe(38);
+    expect(maxHp(c)).toBe(31);
+    expect(maxSp(c)).toBe(46);
     c.level = 3;
-    expect(maxHp(c)).toBe(33);
+    expect(maxHp(c)).toBe(35);
     const knight = createCharacter(knightInput());
     if (knight.ok) expect(maxSp(knight.character)).toBe(0);
+  });
+
+  it('adds Body Building and Meditation as skill × class factor, ×2 Expert, ×3 Master', () => {
+    // MM6-GAPS.md 4, RPGC: the skill times the class's points a level.
+    const c = sorcerer();
+    delete c.skills.meditation;
+    const hp = maxHp(c);
+    const sp = maxSp(c);
+    c.skills.bodybuilding = { level: 4, rank: 'normal' };
+    c.skills.meditation = { level: 4, rank: 'normal' };
+    expect(bodyBuildingHp(c)).toBe(4 * 2);
+    expect(meditationSp(c)).toBe(4 * 3);
+    expect(maxHp(c)).toBe(hp + 8);
+    expect(maxSp(c)).toBe(sp + 12);
+    c.skills.bodybuilding.rank = 'expert';
+    c.skills.meditation.rank = 'master';
+    expect(bodyBuildingHp(c)).toBe(4 * 2 * 2);
+    expect(meditationSp(c)).toBe(4 * 3 * 3);
+    const r = createCharacter(knightInput());
+    if (!r.ok) throw new Error('fixture');
+    const k = r.character;
+    k.skills.bodybuilding = { level: 3, rank: 'master' };
+    expect(bodyBuildingHp(k)).toBe(3 * 3 * 5);
+    expect(meditationSp(k)).toBe(0);
   });
 
   it('derives attack, damage, armour and recovery from equipment', () => {
@@ -117,12 +144,12 @@ describe('damage and healing', () => {
     expect(c.conditions.asleep).toBeUndefined();
     c.sp = 0;
     expect(restoreSp(c, 10)).toBe(10);
-    expect(restoreSp(c)).toBe(25);
+    expect(restoreSp(c)).toBe(27);
     c.hp = 999;
     c.sp = 999;
     clampToMax(c);
     expect(c.hp).toBe(27);
-    expect(c.sp).toBe(35);
+    expect(c.sp).toBe(37);
   });
 
   it('tells a character sheet from test data', () => {
