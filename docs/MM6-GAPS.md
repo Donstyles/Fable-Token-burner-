@@ -27,6 +27,21 @@ of MM6's systems; this document measures the distance.
 - Build artefacts in `public/levels/` were read for spawn counts. No build,
   test or script was run.
 
+## Deep dives
+
+Each area below has its own report in `docs/gaps/`, written against the
+code with MM6's numbers, sources, file and line references, sized fixes
+and the checks the owner can run in the original:
+
+- `monsters.md`: the monster record, special attacks, AI and the roster.
+- `magic.md`: all 99 spells, costs, recovery, resistances and cures.
+- `items.md`: the catalogue, enchantments, treasure, shops and alchemy.
+- `world.md`: the regions, towns, dungeons, houses, quests and services.
+- `characters.md`: creation, statistics, classes, skills, training, the
+  combat model, conditions, death, hazards, food and rest.
+- `interface.md`: movement, the controls and their touch translation, the
+  HUD's live parts, every screen, sound, music, day and night.
+
 ## First: what "the playable build" is
 
 This frames every section below.
