@@ -532,8 +532,12 @@ waterfalls and deserts, walkable end to end.
     6.5 (world), no; icons pass 4 a median 6. **Round 15** (DESIGN 16.25):
     coherent stone, the clock, tubes and plinth, stops kept, the sky's
     cover, wall detail, sealed seams, townsfolk's skins; icon passes 5 and
-    6 (9 credits; 99 of 100 spent, the recipe recorded); the scoring
-    follows.
+    6 (9 credits; 99 of 100 spent, the recipe recorded). **Round 15
+    scored 2026-10-18**: 7.5, 7.8, 8.5 (talk), 6.5 (world), no; icons
+    final a median 6. **Round 16** (DESIGN 16.26): the capital's crown,
+    polished brass, MM6's gem and sans quest log, the talk window on the
+    shared grid in MM6's frame, a side key, ranked tree crowns, larger
+    bare banks, an even sky, the icons' grain; the scoring follows.
 18. Remaining, in order: lasting buffs and Jump; weather states (rain, a
     sandstorm); music; the smith's hammer and the temple bell.
 

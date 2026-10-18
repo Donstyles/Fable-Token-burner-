@@ -323,14 +323,17 @@ export function paintSkyStrip(w: number, h: number, seed: number): HTMLCanvasEle
   // MM6's skies were streaked: long level strokes of cloud at every height, ragged along
   // their edges, with a few small cumulus; never one mass across the view. The strokes
   // slope a little, as a brush dragged across the sky does.
-  // Fifty strokes round the whole horizon, whatever the strip's size: the brush scales with
-  // the strip, so the cover stays the same. Fewer, lower and a fifth thinner than before
+  // Fifty-five strokes round the whole horizon, whatever the strip's size: the brush scales
+  // with the strip, so the cover stays the same. Fewer, lower and a fifth thinner than before
   // (talk-world critic, round 14: a hundred centred up to 0.85 of the strip covered 68% of
   // the sky in one sheet of elongation 6.1, where MM6's cover is 27 to 41% and its masses
   // 3.8 to 5.0): centred up to 0.6, at the price of open blue above about 42 degrees.
-  const masses = 50;
+  const masses = 55;
   for (let m = 0; m < masses; m++) {
-    const cx = r() * w;
+    // Each in its own fifty-fifth of the horizon, widened by three tenths of one either side
+    // (talk-world critic, round 15: placed at random, fifty left the talk view's sky 15%
+    // cloud and sixteen azimuths 20 to 33%, where MM6's views run 27 to 41%).
+    const cx = ((m - 0.3 + 1.6 * r()) / masses) * w;
     const v = 0.05 + r() * 0.55;
     const cy = h - v * h;
     // Three in four masses are wind-swept streaks, half as long again (critics, round 11:

@@ -311,10 +311,13 @@ export function generateValley(spec: ValleySpec): ValleyResult {
       // Round 14: still 51.5% brown, so cut higher again; and the patches are the river
       // bank's earth, the scree, not the village's darker road (they showed mauve on the far
       // hill, (77,51,45), where MM6's bare earth is (91,55,39)).
+      // Talk-world critic, round 15: the world's hill held 25 bare spots across the slope,
+      // median 234 px, where MM6's hold 11 or 12 banks, the largest 9835 to 17277 px; the
+      // period doubled to 140 m, so the same share of earth gathers in fewer, larger banks.
       const patch = smoothstep(
         0.06,
         0.2,
-        fbm(x + 0.7 * h, z - 0.5 * h, 70, seed + 17) + 0.12 * fbm(x, z, 9, seed + 29),
+        fbm(x + 0.7 * h, z - 0.5 * h, 140, seed + 17) + 0.12 * fbm(x, z, 9, seed + 29),
       );
       let scree =
         smoothstep(52, 64, s) + 0.6 * smoothstep(6, 2, dRiver) * (h < FLOOR + 0.5 ? 1 : 0);

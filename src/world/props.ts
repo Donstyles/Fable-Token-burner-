@@ -185,9 +185,14 @@ async function spriteOf(
   // Crowns lit from above (talk-world critic, round 14: each leaf drew its green at random,
   // whatever the light had rendered, so the crowns were salted and their tops no brighter than
   // their feet, where MM6's are lit 8 to 16 above; the dark pixels went bark brown, red over
-  // green on 14 to 34% of a crown, MM6's 1 to 10%): a leaf takes the green of its rendered
-  // light, give or take a step and a fifth; bark only in the sprite's lowest 35%, where the
-  // light rendered brown; above that the darkest pixels black, as 16 to 23% of MM6's crowns.
+  // green on 14 to 34% of a crown, MM6's 1 to 10%): bark only in the sprite's lowest 35%,
+  // where the light rendered brown.
+  // Each leaf by its rank in the sprite's own light (talk-world critic, round 15: this key and
+  // fill leave 68 to 98% of a sprite at or under 0.12 once posterised, so the fixed cut there
+  // blacked 40 to 67% of each crown, MM6's 5 to 32%, and darkened tops over green feet):
+  // the opaque pixels ranked by the light they rendered before the posterise, ties at random;
+  // the darkest 12% black; the rest a green seven tenths by rank and three by height, give or
+  // take four fifths of a step; bark toned by its light over the sprite's 95th percentile.
   const leaf: [number, number, number][] = [
     [8, 24, 16],
     [16, 40, 16],
@@ -200,26 +205,45 @@ async function spriteOf(
   const rr = die(n * 7 + 1);
   // Rows at or below this are the sprite's lowest 35%, where its trunk stands.
   const trunk = y1 + 1 - 0.35 * (y1 - y0 + 1);
+  // Each opaque pixel as the light rendered it, read from `raw` (rows bottom first), and its
+  // rank among the sprite's, 0 the darkest and 1 the lightest.
+  const lum = new Float64Array(n * n);
+  const brown = new Uint8Array(n * n);
+  const tie = new Float64Array(n * n);
+  const lit: number[] = [];
+  for (let i = 0; i < n * n; i++) {
+    if (!raw || px[i * 4 + 3]! < 128) continue;
+    const o = ((n - 1 - Math.floor(i / n)) * n + (i % n)) * 4;
+    lum[i] = (0.299 * raw[o]! + 0.587 * raw[o + 1]! + 0.114 * raw[o + 2]!) / 255;
+    brown[i] = raw[o + 1]! < raw[o]! * 0.95 ? 1 : 0;
+    tie[i] = rr();
+    lit.push(i);
+  }
+  lit.sort((a, b) => lum[a]! - lum[b]! || tie[a]! - tie[b]!);
+  const rank = new Float64Array(n * n);
+  for (let k = 0; k < lit.length; k++) rank[lit[k]!] = k / Math.max(1, lit.length - 1);
+  // The light's 95th percentile, read between the two nearest ranks.
+  const at = 0.95 * Math.max(0, lit.length - 1);
+  const lo = lum[lit[Math.floor(at)] ?? 0]!;
+  const hi = lum[lit[Math.ceil(at)] ?? 0]!;
+  const p95 = Math.max(1e-3, lo + (hi - lo) * (at - Math.floor(at)));
   for (let i = 0; i < n * n; i++) {
     const o = i * 4;
     if (px[o + 3]! < 128) continue;
-    const r0 = px[o]!;
-    const g0 = px[o + 1]!;
-    const b0 = px[o + 2]!;
-    const l = (0.299 * r0 + 0.587 * g0 + 0.114 * b0) / 255;
-    const low = Math.floor(i / n) >= trunk;
-    if (low && g0 < r0 * 0.95) {
-      const t = bark[Math.max(0, Math.min(15, Math.round(l * 15)))]!.warm;
+    const y = Math.floor(i / n);
+    if (y >= trunk && brown[i]) {
+      const tone = Math.round(Math.min(1, lum[i]! / p95) * 15);
+      const t = bark[Math.max(0, Math.min(15, tone))]!.warm;
       px[o] = Math.round(t[0]);
       px[o + 1] = Math.round(t[1]);
       px[o + 2] = Math.round(t[2]);
-    } else if (!low && l < 0.12) {
+    } else if (rank[i]! < 0.12) {
       px[o] = 0;
       px[o + 1] = 0;
       px[o + 2] = 0;
     } else {
-      let k = Math.round(Math.min(1, l / 0.45) * 5 + (rr() - 0.5) * 2.4);
-      k = Math.max(0, Math.min(5, k));
+      const s = (0.7 * (rank[i]! - 0.12)) / 0.88 + 0.3 * (1 - (y - y0) / (y1 - y0 + 1));
+      const k = Math.max(0, Math.min(5, Math.round(6 * s - 0.5 + (rr() - 0.5) * 1.6)));
       const t = leaf[k]!;
       px[o] = t[0];
       px[o + 1] = t[1];

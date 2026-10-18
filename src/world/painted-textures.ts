@@ -36,9 +36,10 @@ function grass(): HTMLCanvasElement {
   // green 38 over red where MM6's is (47,65,33) and 18): round 12's ramp with green 5% and
   // blue 12% down; the marks within three steps of the base, since a mark of any of the
   // sixteen tones is white noise (meadow hp3 9.6 to 11.2, MM6 6.0 to 8.8).
-  // That ramp's red and green times 0.88, blue kept (talk-world critic, round 14: the meadow a
-  // step bright, luma p50 66 where MM6's is 57; a plain x0.84 would turn the green yellow).
-  const tones = ramp('#1e3015', '#27391c', '#304523', '#39502a', '#435c31', '#506937');
+  // The step darker the round-14 critique asked for (red and green times 0.88) undone, since
+  // the hills wear this tile too (talk-world critic, round 15: it took the hill's green to
+  // (53,72,40) from (57,80,46), where MM6's is (61,84,44) to (62,84,45)).
+  const tones = ramp('#223715', '#2c411c', '#364e23', '#415b2a', '#4c6831', '#5b7737');
   const c = grain(T, T, 31, tones, { marks: 2400, spread: 3, clods: 120, clodSize: 5, base: 7 });
   // After the snap, a hue jitter on every texel: red eight down or up on an eighth each,
   // green four down or up on three tenths each, blue four up on seven twentieths.
@@ -159,8 +160,10 @@ function scree(): HTMLCanvasElement {
   // Steep faces, river banks and the hills' bare patches as MM6's brown scars (critics, round
   // 11: the olive scree read as grass). The earth's recipe on the river bank's ramp, the
   // dirt's times (1.18, 1.15, 1) (talk-world critic, round 14: the scars wore the road's
-  // darker tile and showed (77,51,45) on the far hill, MM6's bank (91,55,39)).
-  return earth(ramp('#432010', '#512b1a', '#603723', '#6e442d', '#764c33', '#906342'), 36);
+  // darker tile and showed (77,51,45) on the far hill, MM6's bank (91,55,39)), then times
+  // (0.90, 0.86, 0.86) (talk-world critic, round 15: the far hill's earth (104,65,46), luma
+  // p50 77, one orange plate where MM6's bank is (91,55,39) and 64).
+  return earth(ramp('#3c1c0e', '#492516', '#562f1e', '#633a27', '#6a412c', '#825539'), 36);
 }
 
 /** Stones drawn one by one on a grid, mortar between, each lit at its top left. */
@@ -686,11 +689,12 @@ const OWN_COLOURS = new Set(['grass', 'path', 'scree']);
 
 /**
  * How far a role's mip levels go from their mean toward their pick, where not a half: the
- * scree a quarter (talk-world critic, round 14: the hill's bare earth, minified 300 m off,
+ * scree two fifths (talk-world critic, round 14: the hill's bare earth, minified 300 m off,
  * knitted at a neighbour |dL| of 7.0 and 0.16 of neighbours alike, MM6's bank 4.8 to 5.3
- * and 0.44 to 0.54).
+ * and 0.44 to 0.54; round 15: at a quarter it overshot into flatness, 44% of the far hill's
+ * brown one colour, MM6's 10 to 14%).
  */
-const PICK_SHARE: Record<string, number> = { scree: 0.25 };
+const PICK_SHARE: Record<string, number> = { scree: 0.4 };
 
 /** Paint every role's texture; `mipmaps` selects the sampling mode of the retro look. */
 export function paintRoleTextures(scene: Scene, mipmaps = true): RoleTextures {

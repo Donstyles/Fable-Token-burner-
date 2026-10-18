@@ -260,9 +260,11 @@ void main(void) {
     light *= 1.0 - cloudShadow * 0.4 * smoothstep(0.5, 0.68, cs);
   }
   // Soft knee: light above lightKnee compresses towards lightKnee + 0.5, so a lamp in a
-  // corner brightens the wall without blowing it out to white (owner, 2026-10-15).
+  // corner brightens the wall without blowing it out to white (owner, 2026-10-15). Not on a
+  // keyed bust, whose one key is set to reach the top step (talk-world critic, round 15:
+  // with the knee the face's p95 stays at 155, MM6's 188 to 201).
   float peak = max(light.r, max(light.g, light.b));
-  if (peak > lightKnee) {
+  if (peak > lightKnee && paint < 0.5) {
     float over = peak - lightKnee;
     light *= (lightKnee + over / (1.0 + 2.0 * over)) / peak;
   }
@@ -308,9 +310,11 @@ void main(void) {
 #ifdef DETAIL
   // A grey tile in world metres over a building (talk-world critic, round 14: a near wall's
   // texels are 18 cm, runs of 8.8 by 6.2 pixels and 6 colours in 20 by 20, where MM6's walls
-  // run 1.1 to 1.4 pixels and 46 to 79): projected along the face's own axis, 1.5 m a tile,
-  // its mean a half, so it splits the texels near and fades with its averaged mips.
-  vec2 duv = abs(n.y) > 0.7 ? vWorldPos.xz : (abs(n.x) > abs(n.z) ? vWorldPos.zy : vWorldPos.xy);
+  // run 1.1 to 1.4 pixels and 46 to 79): 1.5 m a tile, its mean a half, so it splits the
+  // texels near and fades with its averaged mips. On a wall it runs along the wall's own
+  // horizontal, from the world normal n (talk-world critic, round 15: laid on the xy or zy
+  // plane it stretched 1.75 times along a house 55 degrees off it, runs 2.1 by 1.3 pixels).
+  vec2 duv = abs(n.y) > 0.7 ? vWorldPos.xz : vec2(dot(vWorldPos.xz, normalize(vec2(-n.z, n.x))), vWorldPos.y);
   albedo *= texture2D(detailSampler, duv / 1.5).r * 2.0;
 #endif
 #endif
@@ -324,13 +328,13 @@ void main(void) {
     // 4 luma of a neighbour, MM6's 19 to 23%).
     float q = (floor(lum * 5.0) + 0.5) / 5.0;
     light *= q / lum;
-    // The colour deepened before it is saturated, so the darks it has go deeper (face p5
-    // luma 50, MM6's 5 to 13); no lift after it and a milder saturation (talk-world critic,
-    // round 14: with x1.12 and 1.45 the face stood at luma p50 136, MM6's at 46 to 71, and
-    // the lit skin went orange, G/R 0.66 where MM6's is 0.71 to 0.74).
-    albedo = pow(albedo, vec3(1.3));
-    float grey = dot(albedo, vec3(0.299, 0.587, 0.114));
-    albedo = clamp(mix(vec3(grey), albedo, 1.25), 0.0, 1.0);
+    // The colour deepened, so the darks it has go deeper (face p5 luma 50, MM6's 5 to 13); no
+    // lift after it (talk-world critic, round 14: with x1.12 and 1.45 the face stood at luma
+    // p50 136, MM6's at 46 to 71, and the lit skin went orange, G/R 0.66 where MM6's is 0.71
+    // to 0.74). Deeper again and no saturation under the stronger side key (talk-world
+    // critic, round 15: at 1.3 and 1.25 the face ran p5/50/95 32/110/161 and none of it over
+    // luma 180, MM6's 5-13/46-73/188-201 and 6 to 9%).
+    albedo = pow(albedo, vec3(1.9));
   }
   vec3 c = mix(albedo * tint * light + emissive, vec3(1.0), flash);
   gl_FragColor = vec4(mix(fogColor, c, vFog), 1.0);

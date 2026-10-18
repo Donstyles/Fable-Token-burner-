@@ -1987,7 +1987,57 @@ spell icons a median 6. Round 15:
   and a shadows-only lift; pass 5 (batch 010) water walk and stun, pass 6
   (batch 011) meditation; 99 of the 100 credits spent.
 
+### 16.26 Round 16: the capital's crown, polished brass, ranked crowns, a side key (2026-10-18)
+
+Round 15 scored HUD 7.5, screens 7.8, talk 8.5, world 6.5, verdict no.
+Round 16:
+
+- **HUD**: the capital's crown fourteen pixels past the shaft over the
+  lintel, a dark scroll curling down at each end, the bell kept at six;
+  the rest button polished brass (MM6's darker top, a stretched tone ramp,
+  wider dies, a small hot specular, a lit upper-left rim); the tube caps
+  turned with the tube's cylinder; the gem MM6's upright lit stone, five
+  by seven; the clock's figures and day on the device grid of UI pixels;
+  a dark and a mid row at the band's foot; the spines' red band peaking
+  at MM6's (107, 20, 16).
+- **Screens**: the rose marble's cracks coarser, its grain fourteen, its
+  pale veins straight runs with kinks, its dark veins fewer and softer;
+  the binding's break MM6's olive corner fittings and an olive S, no
+  bright gold; each edge of the book's foot its own unrounded line and
+  tone; the quest log in Arimo; the equipment rows six to the box and the
+  last lengths on the sheet, rows, rest slabs and buttons on the
+  three-pixel grid; the rule under headings a shadow; the leather's worn
+  zones broader.
+- **Talk**: the window snapped to three CSS pixels, the grid the canvas
+  and the UI share, with the frame moved to ring it (the bust 192 device
+  pixels square, the bevel three all round); the frame MM6's rod, dark,
+  pewter and mid, its foot lit; the key 1.6 times stronger from 74
+  degrees off the lens, the fill 0.02, the colour deepened by a power of
+  1.9 and no saturation, the light's soft knee skipped on the keyed bust;
+  the room behind a step darker. Measured: face p5/50/95 22/98/154 (round
+  15: 46/116/160; MM6 5-13/46-73/188-201), so the shade landed and the
+  highlight did not.
+- **World**: tree crowns ranked by their own rendered light, the darkest
+  12% black and the rest stepped with a lift toward the top (round 15's
+  fixed cut had turned 40 to 67% of a crown black); the hill's bare earth
+  darker (the bank ramp times (0.90, 0.86, 0.86)) with a scree pick share
+  of 0.4, in half as many patches twice the size (noise period 140 m);
+  the wall tile laid along each wall's own horizontal; the sky's 55
+  masses spread round the horizon in jittered strata, so the talk view
+  has cloud; the meadow and hill green back to round 14's ramp.
+- **Spell icons**: the pictures' own grain kept inside a mapped subject
+  (half of a box sample over each pixel's middle third), reprocessed from
+  the paid pictures with no credits.
+- Deferred: the critic's one-pixel stair-step for the type, a small gain
+  that would change every screen's letters with no screens critic left to
+  check them before the morning.
+
 ## 13. Decision log
+
+- 2026-10-18 – Round 16 (16.26): the capital's crown and polished brass,
+  MM6's gem and sans quest log; the talk window on the shared grid in MM6's
+  frame rod, a side key; crowns ranked by their own light, darker and
+  larger bare banks, an even sky; the icons' grain kept at no cost.
 
 - 2026-10-18 – Death thresholds (docs/gaps/characters.md 12.1): down at 0
   hit points or less, dead at minus the base Endurance, a point each from

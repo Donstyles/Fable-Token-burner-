@@ -43,8 +43,11 @@ const GROUND = new Color4(0.118, 0.078, 0.047, 1);
 // The hue of (0.8, 0.72, 0.6) at nine tenths the strength (talk-world critic, round 14: the
 // key of (0.8, 0.68, 0.52) turned the lit skin orange, G/R 0.66 and B/R 0.34 where MM6's
 // faces are 0.71 to 0.74 and 0.40 to 0.52).
-const KEY_COLOR = new Color3(0.72, 0.65, 0.54);
-const KEY_FILL = 0.08;
+// That hue at 1.6 times over a fill of 0.02, from the side (talk-world critic, round 15: the
+// fill's 0.08 and the key's 0.64 came to 0.72, under the five levels' top step at 0.8, so no
+// face pixel passed about luma 165, where MM6's p95 runs 188 to 201).
+const KEY_COLOR = new Color3(1.15, 1.04, 0.86);
+const KEY_FILL = 0.02;
 /** The room behind the head, this far behind it, seen only by the bust's camera. */
 const ROOM_BACK = 1.2;
 const ROOM_LAYER = 0x10000000;
@@ -86,21 +89,23 @@ function paintRoom(size: number): HTMLCanvasElement {
         // strips, MM6's 65 to 96).
         if (px > 0) l += (rand() - 0.5) * 10;
         const lamp =
-          (x + px) / size + y / size < 0.6 ? 14 * (1 - ((x + px) / size + y / size) / 0.6) : 0;
+          (x + px) / size + y / size < 0.6 ? 10 * (1 - ((x + px) / size + y / size) / 0.6) : 0;
         if (px === 0) put(x + px, y, 16, 8, 4);
         else {
           // A hue jitter on the fill (talk-world critic, round 14: every plank colour lay on
           // one line of l, 22 to 24 colours in a strip where MM6's run 65 to 96): red and blue
           // eight down or up on a twentieth each, green four down or up on three fortieths.
+          // A step darker, the lamp too (talk-world critic, round 15: the strips at luma 39 to
+          // 45, where MM6's tavern is 23 to 24, so the side-lit face's shade read as a hole).
           const jr = rand();
           const jg = rand();
           const jb = rand();
           put(
             x + px,
             y,
-            52 + l + lamp + (jr < 0.05 ? -8 : jr < 0.1 ? 8 : 0),
-            34 + l * 0.7 + lamp * 0.8 + (jg < 0.075 ? -4 : jg < 0.15 ? 4 : 0),
-            20 + l * 0.4 + lamp * 0.5 + (jb < 0.05 ? -8 : jb < 0.1 ? 8 : 0),
+            40 + l + lamp + (jr < 0.05 ? -8 : jr < 0.1 ? 8 : 0),
+            26 + l * 0.7 + lamp * 0.8 + (jg < 0.075 ? -4 : jg < 0.15 ? 4 : 0),
+            15 + l * 0.4 + lamp * 0.5 + (jb < 0.05 ? -8 : jb < 0.1 ? 8 : 0),
           );
         }
       }
@@ -276,9 +281,10 @@ export class Bust {
     // The key light: from the camera's upper left, down onto the face.
     const toFace = eyes.subtract(this.camera.position).normalize();
     const right = Vector3.Cross(Vector3.Up(), toFace).normalize();
-    // Fifty-five degrees off the lens's axis.
+    // Seventy-four degrees off the lens's axis (talk-world critic, round 15: at fifty-five
+    // the face was lit evenly, 19% of it under luma 60 where MM6's are 38 to 58%).
     const dir = toFace
-      .add(right.scale(-1.1))
+      .add(right.scale(-3.5))
       .add(new Vector3(0, -0.9, 0))
       .normalize();
     // The chest a step or two under the face (talk-world critic, round 13: rows 72 to 96 as
