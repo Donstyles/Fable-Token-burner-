@@ -64,6 +64,12 @@ pipeline/        inbox/ (owner images), batches/, style.md
 public/          PWA manifest, icons, splash; levels/ is generated (git-ignored)
 ```
 
+MM6's own material (the reference pages, screenshots and spell icons the critics
+measure against, and the critics' reports and scripts) lives in the private
+repository `Donstyles/fable-mm6-reference`, never here: this repository is public
+for GitHub Pages. A critic round clones it beside the game and points at its
+`screenshots/`.
+
 ---
 
 ## Phase 0 – Foundation
