@@ -4,11 +4,11 @@
  * for the runtime to perform (light, heal, cure, projectile, buff, stun, jump). The list covers
  * the slice (Torch Light, Water Walk, Jump, Heal, Fire Bolt, Sparks, Stun, Protection from
  * Fire, Bless, Cure Wounds, Awaken), every school's first spell, and the MM6 cure for each
- * condition. Simplifications, all ours until the MM6 tables are confirmed: the cost is the
- * spell level at every rank (MM6 lowers some costs at Expert and Master); durations are an hour
- * plus five game minutes per skill point, MM6's common pattern; "Heal" is MM6's First Aid;
- * damage dice are our estimates. A spell of level 1 to 4 needs Normal rank in its school, 5 to
- * 8 Expert, 9 to 11 Master (MM6's guild tiers).
+ * condition. Costs are MM6's by spell level, 1, 2, 3, 4, 5, 8, 10, 15, 20, 25 and 30, with Spirit
+ * Arrow at 1 / 1 / 0 by rank (MM6-GAPS.md 7, RPGC). Simplifications, ours until the MM6 tables
+ * are confirmed: durations are an hour plus five game minutes per skill point, MM6's common
+ * pattern; "Heal" is MM6's First Aid; damage dice are our estimates. A spell of level 1 to 4
+ * needs Normal rank in its school, 5 to 8 Expert, 9 to 11 Master (MM6's guild tiers).
  */
 import type { ConditionId } from './conditions';
 import type { Dice } from './rng';
@@ -95,8 +95,16 @@ export function rankForSpellLevel(level: number): SkillRank {
   return 'master';
 }
 
-function flat(level: number): Record<SkillRank, number> {
-  return { normal: level, expert: level, master: level };
+/**
+ * Spell points by spell level in the seven common schools, the same at every rank
+ * (MM6-GAPS.md 7, RPGC): index 0 is level 1.
+ */
+export const SPELL_COST_BY_LEVEL: readonly number[] = [1, 2, 3, 4, 5, 8, 10, 15, 20, 25, 30];
+
+/** MM6's cost for a spell of `level`, at every rank. */
+function levelCost(level: number): Record<SkillRank, number> {
+  const cost = SPELL_COST_BY_LEVEL[level - 1] ?? level;
+  return { normal: cost, expert: cost, master: cost };
 }
 
 /** An hour plus five minutes per skill point. */
@@ -132,7 +140,7 @@ function cureSpell(
     name,
     school,
     level,
-    cost: flat(level),
+    cost: levelCost(level),
     target: 'member',
     effects: (ctx) =>
       reach(ctx).flatMap((m) => [{ kind: 'cure', condition, member: m }, ...after(m)]),
@@ -149,7 +157,7 @@ export const SPELLS: Record<SpellId, SpellDef> = {
     name: 'Torch Light',
     school: 'fire',
     level: 1,
-    cost: flat(1),
+    cost: levelCost(1),
     target: 'world',
     effects: (ctx) => [{ kind: 'light', power: rankIndex(ctx.rank) + 1, minutes: 60 * ctx.skill }],
   },
@@ -158,7 +166,7 @@ export const SPELLS: Record<SpellId, SpellDef> = {
     name: 'Protection from Fire',
     school: 'fire',
     level: 3,
-    cost: flat(3),
+    cost: levelCost(3),
     target: 'party',
     effects: (ctx) =>
       members(ctx).map((m) => ({
@@ -174,7 +182,7 @@ export const SPELLS: Record<SpellId, SpellDef> = {
     name: 'Fire Bolt',
     school: 'fire',
     level: 4,
-    cost: flat(4),
+    cost: levelCost(4),
     target: 'monster',
     effects: (ctx) => [
       {
@@ -190,7 +198,7 @@ export const SPELLS: Record<SpellId, SpellDef> = {
     name: 'Wizard Eye',
     school: 'air',
     level: 1,
-    cost: flat(1),
+    cost: levelCost(1),
     target: 'world',
     effects: (ctx) => [
       {
@@ -206,7 +214,7 @@ export const SPELLS: Record<SpellId, SpellDef> = {
     name: 'Sparks',
     school: 'air',
     level: 4,
-    cost: flat(4),
+    cost: levelCost(4),
     target: 'monster',
     effects: (ctx) => [
       {
@@ -222,7 +230,7 @@ export const SPELLS: Record<SpellId, SpellDef> = {
     name: 'Jump',
     school: 'air',
     level: 8,
-    cost: flat(8),
+    cost: levelCost(8),
     target: 'world',
     effects: () => [{ kind: 'jump', heightMetres: 2 }],
   },
@@ -232,7 +240,7 @@ export const SPELLS: Record<SpellId, SpellDef> = {
     name: 'Water Walk',
     school: 'water',
     level: 5,
-    cost: flat(5),
+    cost: levelCost(5),
     target: 'world',
     effects: (ctx) => [
       { kind: 'party-buff', buff: 'water-walk', power: 1, minutes: 10 * ctx.skill },
@@ -243,7 +251,7 @@ export const SPELLS: Record<SpellId, SpellDef> = {
     name: 'Stun',
     school: 'earth',
     level: 1,
-    cost: flat(1),
+    cost: levelCost(1),
     target: 'monster',
     effects: (ctx) => [
       { kind: 'stun', seconds: 1 + rankIndex(ctx.rank), knockbackMetres: 1 + rankIndex(ctx.rank) },
@@ -255,7 +263,8 @@ export const SPELLS: Record<SpellId, SpellDef> = {
     name: 'Spirit Arrow',
     school: 'spirit',
     level: 1,
-    cost: flat(1),
+    // MM6-GAPS.md 7, RPGC: free at Master.
+    cost: { normal: 1, expert: 1, master: 0 },
     target: 'monster',
     effects: (ctx) => [
       {
@@ -271,7 +280,7 @@ export const SPELLS: Record<SpellId, SpellDef> = {
     name: 'Bless',
     school: 'spirit',
     level: 2,
-    cost: flat(2),
+    cost: levelCost(2),
     target: 'member',
     effects: (ctx) =>
       masterParty(ctx).map((m) => ({
@@ -297,7 +306,7 @@ export const SPELLS: Record<SpellId, SpellDef> = {
     name: 'Resurrection',
     school: 'spirit',
     level: 11,
-    cost: flat(11),
+    cost: levelCost(11),
     target: 'member',
     effects: (ctx) => [
       { kind: 'cure', condition: 'eradicated', member: ctx.member },
@@ -310,7 +319,7 @@ export const SPELLS: Record<SpellId, SpellDef> = {
     name: 'Meditation',
     school: 'mind',
     level: 1,
-    cost: flat(1),
+    cost: levelCost(1),
     target: 'member',
     effects: (ctx) =>
       masterParty(ctx).flatMap((m) =>
@@ -332,7 +341,7 @@ export const SPELLS: Record<SpellId, SpellDef> = {
     name: 'Heal',
     school: 'body',
     level: 2,
-    cost: flat(2),
+    cost: levelCost(2),
     target: 'member',
     effects: (ctx) => [
       { kind: 'heal', amount: 5 + ctx.skill * RANK_MULTIPLIER[ctx.rank], member: ctx.member },
@@ -343,7 +352,7 @@ export const SPELLS: Record<SpellId, SpellDef> = {
     name: 'Cure Wounds',
     school: 'body',
     level: 5,
-    cost: flat(5),
+    cost: levelCost(5),
     target: 'member',
     effects: (ctx) => [
       {
@@ -354,7 +363,8 @@ export const SPELLS: Record<SpellId, SpellDef> = {
     ],
   },
   'cure-poison': cureSpell('cure-poison', 'Cure Poison', 'body', 6, 'poisoned'),
-  'cure-disease': cureSpell('cure-disease', 'Cure Disease', 'body', 10, 'diseased'),
+  // Body's eighth spell in MM6, 15 spell points (MM6-GAPS.md 7, RPGC).
+  'cure-disease': cureSpell('cure-disease', 'Cure Disease', 'body', 8, 'diseased'),
 };
 
 export function isSpellId(value: unknown): value is SpellId {

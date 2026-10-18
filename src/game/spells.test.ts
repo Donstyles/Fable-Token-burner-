@@ -7,6 +7,7 @@ import {
   applySpell,
   firstSpellOf,
   rankForSpellLevel,
+  SPELL_COST_BY_LEVEL,
   SPELL_IDS,
   SPELLS,
   spellCost,
@@ -38,6 +39,36 @@ describe('spell table', () => {
     expect(rankForSpellLevel(4)).toBe('normal');
     expect(rankForSpellLevel(5)).toBe('expert');
     expect(rankForSpellLevel(9)).toBe('master');
+  });
+
+  it('costs MM6’s spell points by level, Spirit Arrow 1 / 1 / 0 (MM6-GAPS.md 7, RPGC)', () => {
+    expect(SPELL_COST_BY_LEVEL).toEqual([1, 2, 3, 4, 5, 8, 10, 15, 20, 25, 30]);
+    for (const id of SPELL_IDS) {
+      if (id === 'spirit-arrow') continue;
+      const s = SPELLS[id];
+      for (const rank of ['normal', 'expert', 'master'] as const) {
+        expect(spellCost(s, rank)).toBe(SPELL_COST_BY_LEVEL[s.level - 1]);
+      }
+    }
+    const costs = Object.fromEntries(SPELL_IDS.map((id) => [id, spellCost(SPELLS[id], 'normal')]));
+    expect(costs).toMatchObject({
+      'torch-light': 1,
+      'protection-from-fire': 3,
+      'fire-bolt': 4,
+      sparks: 4,
+      jump: 15,
+      'water-walk': 5,
+      'stone-to-flesh': 10,
+      'remove-curse': 5,
+      'raise-dead': 20,
+      resurrection: 30,
+      'cure-insanity': 20,
+      'cure-wounds': 5,
+      'cure-poison': 8,
+      'cure-disease': 15,
+    });
+    expect(spellDef('cure-disease').level).toBe(8);
+    expect(SPELLS['spirit-arrow'].cost).toEqual({ normal: 1, expert: 1, master: 0 });
   });
 
   it('scales effects with skill and rank', () => {
@@ -97,6 +128,19 @@ describe('spellbook', () => {
     c.skills.water.rank = 'expert';
     expect(learnSpell(c, 'water-walk')).toEqual({ ok: true });
     expect(knownSpellsOfSchool(c, 'fire').map((s) => s.id)).toEqual(['torch-light', 'fire-bolt']);
+  });
+
+  it('casts Spirit Arrow free at Master', () => {
+    const [, , tobin] = testCharacters();
+    const c = tobin!;
+    expect(c.spells).toContain('spirit-arrow');
+    const sp = c.sp;
+    c.skills.spirit = { level: 7, rank: 'master' };
+    const r = castSpell(c, 'spirit-arrow', { member: 2, partySize: 4 }, () => 0.9);
+    expect(r.ok && r.cost).toBe(0);
+    expect(c.sp).toBe(sp);
+    c.sp = 0;
+    expect(canCast(c, 'spirit-arrow').ok).toBe(true);
   });
 
   it('casts for spell points, fails when cursed and refuses when unable', () => {

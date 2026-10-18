@@ -656,7 +656,10 @@ grid with equipment slots, the character sheet (HP, SP, attack, damage,
 armour, recovery from stats, skills and equipment), creation (class base
 stats plus a 50-point pool, two fixed and two picked skills), experience
 (1000 × L × (L − 1) / 2, levels at a trainer), spells and the spellbook
-(24 spells across the nine schools, Normal/Expert/Master tiers), the
+(24 spells across the nine schools, Normal/Expert/Master tiers; MM6's
+spell point costs by level, 1, 2, 3, 4, 5, 8, 10, 15, 20, 25 and 30, with
+Spirit Arrow at 1 / 1 / 0 by rank and Cure Disease at Body 8, MM6-GAPS.md
+7), the
 calendar clock and rest, town services (tavern, temple, guild, trainer,
 shop with Merchant), quests, the automap and versioned save files. Every
 rule followed and every simplification is tabled in `src/game/README.md`.
@@ -1822,7 +1825,8 @@ credit grant to dial in the icons' style, one or two per school).
 ## 13. Decision log
 
 - 2026-10-18 – MM6 rules, step 1 (MM6-GAPS.md 38; DESIGN 14): unconscious
-  below 0 hit points, dead below minus Endurance; monsters hit by level.
+  below 0 hit points, dead below minus Endurance; monsters hit by level;
+  MM6's spell costs, Cure Disease at Body 8.
 
 - 2026-10-17 – Round 12 (16.22): the spellbook as MM6's one spread with
   bookmarks and a place per spell level; spell icons as one bitmap on
