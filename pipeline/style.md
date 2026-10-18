@@ -31,6 +31,32 @@ this prefix is for Meshy's eyes only (owner, 2026-10-15):
 > fur, no transparent cloth, muted natural colours, flat even lighting, no
 > text, no watermark, no signature.
 
+## Portrait prefix
+
+Party portraits are the owner's ChatGPT images (owner, 2026-10-18). MM6's
+faces were photographed actors, not paintings, so portraits leave the painted
+style prefix for this one; the game's portrait tool crops, scales and
+palettises them afterwards, as it does the spell icons:
+
+> A photographic head-and-shoulders portrait of a costumed actor, like a
+> video-captured character portrait from a classic 1990s first-person party
+> role-playing game. Real skin with pores and small imperfections, no
+> retouching, no glamour or beauty lighting, no smooth or plastic skin,
+> slightly soft focus, natural muted colours. One soft warm tungsten key light
+> from the upper left, a dim warm fill from the right, no rim light. A plain,
+> flat, very dark warm-brown background with nothing in it. Portrait format
+> 2:3; the person faces the camera squarely and looks straight into the lens;
+> head and shoulders centred, the top of the hair a little below the top edge,
+> the eyes at two fifths of the height, the shoulders reaching the bottom edge
+> and filling most of the width. Clothing: only a plain, undyed, slightly worn
+> linen shirt with a simple open collar; no armour, mail, hood, hat, jewellery
+> or cloak, so the face can play any class. No text, border, frame, vignette,
+> lens flare or bokeh.
+
+Expressions are edits of the neutral portrait in the same ChatGPT chat, so
+the face, hair, light and framing stay as they are; the portrait tool takes
+only what changed and rejects an edit that moved the face.
+
 ## Forbidden
 
 - Text, letters, logos or watermarks in the image.
