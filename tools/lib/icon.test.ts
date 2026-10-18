@@ -8,6 +8,7 @@ import {
   ICON_SIZE,
   lift,
   lightEnough,
+  middleThirds,
   postProcessIcon,
   subjectStats,
 } from './icon';
@@ -158,5 +159,17 @@ describe('icon parchment key', () => {
     const at = (x: number, y: number): number => data[(y * width + x) * 4 + 3]!;
     expect(at(4, 27)).toBe(0);
     expect(at(36, 27)).toBe(255);
+  });
+});
+
+describe('icon grain', () => {
+  it('averages the middle third of each pixel’s footprint, as a box sample at three times', () => {
+    const src = Buffer.alloc(9 * 9);
+    for (let y = 0; y < 9; y++) for (let x = 0; x < 9; x++) src[y * 9 + x] = x + 10 * y;
+    // The middle block of three by three: columns and rows 3 to 5.
+    expect(middleThirds(src, 9, 9, 1, 1, 1)[0]).toBeCloseTo(4 + 40);
+    const two = middleThirds(src, 9, 9, 1, 3, 3);
+    expect(two[0]).toBeCloseTo(1 + 10);
+    expect(two[8]).toBeCloseTo(7 + 70);
   });
 });

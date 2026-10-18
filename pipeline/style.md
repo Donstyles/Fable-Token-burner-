@@ -104,5 +104,9 @@ plans the batch, `run <nnn> --dry-run` then `run <nnn>` makes it, and
   their distance less four over sixteen, unmixed; parchment enclosed by
   the subject stays), 255 colours with alpha as a fourth channel, so in
   the game the icon sits on the page's own shadow (paint.ts `ellipse`,
-  multiplied), as an empty place does. `icon reprocess <nnn>` runs a better recipe again on
+  multiplied), as an empty place does. Inside a mapped subject, where it is at least 160
+  covered two pixels in, half of a coarser sample is mixed back (a box average over each
+  pixel's middle third), so the models' grainy 1998 textures survive the downscale
+  (icon critic, final pass: meditation's mail from 4.6 to 7.7, MM6 about 10); a light
+  effect keeps the smooth sample. `icon reprocess <nnn>` runs a better recipe again on
   pictures already paid for.

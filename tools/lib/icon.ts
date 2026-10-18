@@ -59,6 +59,12 @@ export interface IconOptions {
   expose?: 'map' | 'keep';
   /** Key the parchment out so the page shows through (default on). */
   keyParchment?: boolean;
+  /**
+   * The share of the picture's own grain put back inside a mapped subject (default 0.5; 0
+   * leaves the smooth lanczos3 sample alone; a kept light effect never takes it). See
+   * `middleThirds`.
+   */
+  grain?: number;
 }
 
 const luma = (r: number, g: number, b: number): number => 0.299 * r + 0.587 * g + 0.114 * b;
@@ -335,6 +341,46 @@ function softKey(box: Buffer, w: number, h: number, parch: readonly number[]): v
 }
 
 /** True inside the oval of `w` by `h` centred at (cx, cy), pixel centres. */
+/**
+ * A box downscale of a `sw` by `sh` picture to three times `w` by `h`, sampled at each
+ * block's centre: every output pixel the mean of the source pixels whose centres fall in the
+ * middle third of its footprint (as PIL's box filter counts them). It keeps the picture's
+ * coarse texture, which lanczos3 smooths away at 68 pixels (icon critic, final pass:
+ * meditation's mail kept a detail of 5.2 against MM6's 10.5; half of this brought 8.2).
+ */
+export function middleThirds(
+  src: Buffer,
+  sw: number,
+  sh: number,
+  channels: number,
+  w: number,
+  h: number,
+): Float32Array {
+  const span = (n: number, size: number, out: number): [number, number] => {
+    const s = size / (out * 3);
+    const half = Math.max(s, 1) / 2;
+    const centre = (3 * n + 1.5) * s;
+    const lo = Math.max(0, Math.floor(centre - half - 0.5) + 1);
+    const hi = Math.min(size - 1, Math.floor(centre + half - 0.5));
+    return lo <= hi ? [lo, hi] : [Math.min(size - 1, lo), Math.min(size - 1, lo)];
+  };
+  const out = new Float32Array(w * h * channels);
+  for (let y = 0; y < h; y++) {
+    const [y0, y1] = span(y, sh, h);
+    for (let x = 0; x < w; x++) {
+      const [x0, x1] = span(x, sw, w);
+      const k = 1 / ((y1 - y0 + 1) * (x1 - x0 + 1));
+      for (let c = 0; c < channels; c++) {
+        let sum = 0;
+        for (let v = y0; v <= y1; v++)
+          for (let u = x0; u <= x1; u++) sum += src[(v * sw + u) * channels + c]!;
+        out[(y * w + x) * channels + c] = sum * k;
+      }
+    }
+  }
+  return out;
+}
+
 function inOval(x: number, y: number, cx: number, cy: number, w: number, h: number): boolean {
   const dx = (x + 0.5 - cx) / (w / 2);
   const dy = (y + 0.5 - cy) / (h / 2);
@@ -561,6 +607,41 @@ export async function postProcessIcon(
   };
   const col = await sample(rgb, 3, [...parch]);
   const alpha = await sample(cover, 1, [0]);
+  // The picture's grain put back where the subject is solid, at least 160 covered two pixels
+  // in, so its edges and alpha stay on lanczos3; a pure light effect keeps its smooth glow
+  // (icon critic, final pass: at half strength every p5 and edge step within 3 of before).
+  const grain = (o.expose ?? 'map') === 'map' ? (o.grain ?? 0.5) : 0;
+  if (grain > 0) {
+    const padded = await sharp(rgb, { raw: { width, height, channels: 3 } })
+      .extend({ ...ext, background: { r: parch[0]!, g: parch[1]!, b: parch[2]! } })
+      .raw()
+      .toBuffer({ resolveWithObject: true });
+    const cropped = await sharp(padded.data, {
+      raw: { width: padded.info.width, height: padded.info.height, channels: 3 },
+    })
+      .extract(region)
+      .raw()
+      .toBuffer();
+    const fine = middleThirds(cropped, region.width, region.height, 3, W, H);
+    let solid = Uint8Array.from(alpha, (a) => (a >= 160 ? 1 : 0));
+    for (let pass = 0; pass < 2; pass++) {
+      const next = new Uint8Array(W * H);
+      for (let y = 1; y < H - 1; y++) {
+        for (let x = 1; x < W - 1; x++) {
+          const i = y * W + x;
+          next[i] = solid[i]! & solid[i - 1]! & solid[i + 1]! & solid[i - W]! & solid[i + W]!;
+        }
+      }
+      solid = next;
+    }
+    for (let i = 0; i < W * H; i++) {
+      if (!solid[i]) continue;
+      for (let c = 0; c < 3; c++) {
+        const v = col[i * 3 + c]!;
+        col[i * 3 + c] = Math.max(0, Math.min(255, Math.round(v + grain * (fine[i * 3 + c]! - v))));
+      }
+    }
+  }
   // The subject's light, judged on what is at least half covered.
   const sub = Buffer.alloc(W * H * 4);
   for (let i = 0; i < W * H; i++) {
