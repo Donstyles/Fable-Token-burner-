@@ -106,7 +106,8 @@
   color: var(--ink-pale);
 }
 .inv-slot {
-  min-height: 28.5px;
+  /* Rows of 22 UI pixels, on the grid (screens critic, round 14). */
+  min-height: 33px;
 }
 .inv-give {
   display: flex;
@@ -128,6 +129,8 @@
 
 /* Rest: the clock in white on a near-black green well (paint.ts `plaque`), as MM6's. */
 .rest-well {
+  box-sizing: border-box;
+  height: 63px;
   padding: 6px 7.5px 7.5px;
   text-align: center;
   background: var(--paint) center / 100% 100% no-repeat;

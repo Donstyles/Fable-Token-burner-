@@ -124,26 +124,30 @@ function paintSlate(w: number, h: number, seed: number): HTMLCanvasElement {
   // Round 12 (screens critic): a warmer grey base, deeper mottle, darker seams, dark
   // blotches, streaks along one heading instead of round smudges, a jitter on red only, and
   // MM6's sixteen bits. Round 13 (it overshot dark, L 64 against MM6's 68 to 71): the base
-  // (71,70,67), the blotches lighter, the seams on more of the edges.
+  // (71,70,67), the blotches lighter, the seams on more of the edges. Round 14 (its plates
+  // read as facets): flat plates, a smaller step between them, seams that wander, and two
+  // finer octaves.
   const c = cloudy(w, h, seed, {
     base: [71, 70, 67],
     octaves: [
       [40, 6],
       [24, 10],
-      [10, 7],
+      [12, 10],
+      [6, 9],
     ],
     tint: 3,
     grain: 10,
   });
   const g = c.getContext('2d')!;
   stoneField(g, w, h, seed + 5, {
-    offset: 9,
-    slope: 6,
+    offset: 6,
+    slope: 0,
     light: 16,
     dark: 20,
     streaks: Math.round((w * h) / 150),
     smudges: 0,
     seams: -0.15,
+    warp: 5,
   });
   const img = g.getImageData(0, 0, w, h);
   const d = img.data;
@@ -352,6 +356,12 @@ function paintMahogany(w: number, h: number, seed: number): HTMLCanvasElement {
       // Multiplied, so a dark band stays brown rather than greying.
       for (let ch = 0; ch < 3; ch++)
         d[i + ch] = Math.max(0, Math.min(255, d[i + ch]! * (1 + v / 100)));
+      // A little hue apart from the light (talk-world critic, round 14: one factor on all
+      // three channels moved every tone along one line, and RGB565 kept a few of it).
+      const jr = r();
+      d[i] = Math.max(0, Math.min(255, d[i]! + (jr < 0.04 ? -8 : jr < 0.08 ? 8 : 0)));
+      const jb = r();
+      d[i + 2] = Math.max(0, Math.min(255, d[i + 2]! + (jb < 0.04 ? -8 : jb < 0.08 ? 8 : 0)));
     }
   }
   g.putImageData(img, 0, 0);
@@ -396,9 +406,9 @@ function paintLeather(w: number, h: number, seed: number): HTMLCanvasElement {
     }
   }
   g.putImageData(img, 0, 0);
-  // Flecks on a twenty-fifth, a jitter of five (screens critic, round 13).
+  // Flecks on a fifteenth, a jitter of five (screens critic, rounds 13 and 14).
   const fr = die(seed + 17);
-  for (let i = 0; i < (w * h) / 25; i++) {
+  for (let i = 0; i < (w * h) / 15; i++) {
     g.fillStyle = fr() < 0.5 ? 'rgba(118,68,18,0.35)' : 'rgba(88,48,8,0.4)';
     g.fillRect(Math.floor(fr() * w), Math.floor(fr() * h), 1, 1);
   }
@@ -423,7 +433,7 @@ function paintParchment(w: number, h: number, seed: number): HTMLCanvasElement {
       [12, 2],
     ],
     tint: 3,
-    grain: 0,
+    grain: 0.5,
   });
   quantise(c.getContext('2d')!, w, h, 2);
   return c;
@@ -461,9 +471,10 @@ function paintRose(w: number, h: number, seed: number): HTMLCanvasElement {
   // as wide in pitch and softer, a seventh of the dark veins a deeper brown, MM6's sixteen
   // bits. Round 13 (MM6's fine detail is half ours): a calmer ground, the cracks a pixel
   // wide at half strength, fewer and longer pale veins, fewer dark ones, half the chroma.
+  // Round 14: the pale veins a third as many, on the stone's flow; the dark ones darker.
   crazed2(g, w, h, seed + 11, 110, [196, 151, 128], [120, 80, 56], 6, { alpha: 0.5, width: 1 });
   roseVeins(g, w, h, seed + 19, {
-    pale: Math.round((w * h) / 1600),
+    pale: Math.round((w * h) / 5000),
     dark: Math.round((w * h * 0.85) / 3000),
     paleTint: [1, 0.86, 0.8],
     darkColor: [120, 80, 56],
@@ -1684,14 +1695,14 @@ export function paintMarbleFrame(
   const rw = s.rose.width;
   const rh = s.rose.height;
   const rr = die(w * 5 + h);
-  // The rose averaged over three rows (screens critic, round 12: its crazing cores made the
-  // pillar four times as busy along its length as MM6's; round 13: over five it went half as
-  // busy).
+  // The rose averaged over two rows (screens critic, round 12: its crazing cores made the
+  // pillar four times as busy along its length as MM6's; rounds 13 and 14: over five, then
+  // three, it went half as busy).
   const roseAt = (x: number, y: number, ch: number): number => {
     let sum = 0;
-    for (let k = -1; k <= 1; k++)
+    for (let k = 0; k <= 1; k++)
       sum += rose[(((((y + k) % rh) + rh) % rh) * rw + (x % rw)) * 4 + ch]!;
-    return sum / 3;
+    return sum / 2;
   };
   for (let y = 0; y < h; y++) {
     const stir = (rr() - 0.5) * 4;
@@ -1919,50 +1930,51 @@ function paintSchoolIcon(
 }
 
 /**
- * The knot strip beside the book's crease (screens critic, round 13: MM6's twelve pixels):
- * two strands plaited on an eight-pixel repeat, each two pixels wide and shaded on its
- * right, outlined dark, the one on top changing at every crossing; broken at its middle by
- * a gold S-scroll in a bracket.
+ * The knot strip beside the book's crease (screens critic, rounds 13 and 14: MM6's twelve
+ * pixels, never darker than its ground): two strands plaited on a twelve-row repeat, each a
+ * one-pixel pen line with a dull pixel either side, the one on top changing at every
+ * crossing; broken at its middle by a gold S-scroll between two gold triangles.
  */
 function paintBinding(g: CanvasRenderingContext2D, x0: number, y0: number, y1: number): void {
   const sw = 12;
-  const cx = x0 + sw / 2;
-  const ground = 'rgb(90,85,74)';
-  const outline = 'rgb(57,52,49)';
+  const cx = x0 + sw / 2 - 0.5;
   const mid = Math.round((y0 + y1) / 2);
-  const gap: [number, number] = [mid - 9, mid + 9];
-  g.fillStyle = ground;
+  const tri = 9;
+  const gap: [number, number] = [mid - 9 - tri, mid + 9 + tri];
+  g.fillStyle = 'rgb(90,85,74)';
   g.fillRect(x0, y0, sw, y1 - y0);
   const strand = (x: number, y: number): void => {
     const xi = Math.round(x);
-    g.fillStyle = outline;
-    g.fillRect(xi - 2, y, 4, 1);
-    px(g, xi - 1, y, 'rgb(148,130,90)');
-    px(g, xi, y, 'rgb(132,105,82)');
+    px(g, xi - 1, y, 'rgb(99,93,82)');
+    px(g, xi, y, 'rgb(148,130,90)');
+    px(g, xi + 1, y, 'rgb(107,97,90)');
   };
   for (let y = y0; y < y1; y++) {
     if (y >= gap[0] && y <= gap[1]) continue;
-    const phase = ((y - y0) / 8) * Math.PI * 2;
-    const a = cx + 3 * Math.sin(phase);
-    const b = cx - 3 * Math.sin(phase);
-    // The strand on top changes at each crossing, every four rows.
-    const aOver = Math.floor((y - y0 + 2) / 4) % 2 === 0;
+    const phase = ((y - y0) / 12) * Math.PI * 2;
+    const a = cx + 3.5 * Math.sin(phase);
+    const b = cx - 3.5 * Math.sin(phase);
+    // The strand on top changes at each crossing, every six rows.
+    const aOver = Math.floor((y - y0 + 3) / 6) % 2 === 0;
     strand(aOver ? b : a, y);
     strand(aOver ? a : b, y);
   }
-  g.fillStyle = outline;
-  g.fillRect(x0, y0, 1, y1 - y0);
-  g.fillRect(x0 + sw - 1, y0, 1, y1 - y0);
-  // The bracket and the scroll.
-  for (const [y, dir] of [
-    [gap[0], 1],
-    [gap[1], -1],
+  // The triangles, eleven wide and nine tall, pointing away from the scroll.
+  for (const [base, dir] of [
+    [mid - 9, -1],
+    [mid + 9, 1],
   ] as const) {
-    g.fillStyle = GOLD.dark;
-    g.fillRect(x0, y, sw, 1);
-    g.fillStyle = GOLD.light;
-    g.fillRect(x0 + 1, y + dir, sw - 2, 1);
+    for (let k = 0; k < tri; k++) {
+      const half = Math.round(5 * (1 - k / (tri - 1)));
+      const y = base + dir * k;
+      g.fillStyle = GOLD.body;
+      g.fillRect(x0 + 6 - half, y, 2 * half - 1 || 1, 1);
+      px(g, x0 + 6 - half, y, GOLD.light);
+      px(g, x0 + 4 + half, y, GOLD.dark);
+    }
   }
+  g.fillStyle = 'rgb(90,85,74)';
+  g.fillRect(x0, mid - 8, sw, 17);
   const scroll = [
     ...polyline(arc(cx, mid - 3, 2.5, 2.5, 0.3, -Math.PI * 1.5)),
     ...polyline(arc(cx, mid + 3, 2.5, 2.5, -Math.PI / 2, Math.PI - 0.3)),
@@ -2055,7 +2067,8 @@ export function paintBook(
   g.putImageData(img, left, top);
   g.fillStyle = 'rgba(60,40,16,0.4)';
   g.fillRect(left, top, pw, 1);
-  paintBinding(g, left + Math.round(gx) + 4, top + 8, bottom - 14);
+  // The spellbook's binding only: the quest log and the map write across that margin.
+  if (schools.length) paintBinding(g, left + Math.round(gx) + 4, top + 8, bottom - 14);
   const edgeTone = (l: number): string =>
     `rgb(${Math.round(l)},${Math.round(l * 0.94)},${Math.round(l * 0.82)})`;
   // The stack (screens critic, round 12): a mid-grey backing, its outer three columns
@@ -2096,8 +2109,26 @@ export function paintBook(
     [123, 121, 107],
     [66, 65, 57],
   ];
-  const baseAt = (x: number): number => bottom + Math.round(8 * sweep(x) + common[x]! * 2);
+  // Each edge its own wander (screens critic, round 14: all nine stepped at one x): the
+  // band's top a pixel either way, and where an edge's noise rises a row of the mean of it
+  // and the edge above opens between them, so edges part and meet without crossing.
+  const wander = noise1(pw + 12, 20, w * 13 + h);
+  const parts = footRgb.map((_, j) => noise1(pw + 12, 40 + 10 * (j % 3), w * 17 + j));
+  const baseAt = (x: number): number =>
+    bottom + Math.round(8 * sweep(x) + common[x]! * 2 + wander[x]! * 2);
+  const rowsAt = (x: number): Rgb[] => {
+    const rows: Rgb[] = [];
+    footRgb.forEach((col, j) => {
+      if (j > 0 && parts[j]![x]! > 0.15) {
+        const above = footRgb[j - 1]!;
+        rows.push([0, 1, 2].map((k) => Math.round((above[k]! + col[k]!) / 2)) as Rgb);
+      }
+      rows.push(col);
+    });
+    return rows;
+  };
   const shade = g.getImageData(left, top, pw, deep);
+  let before: Rgb[] = rowsAt(0);
   for (let x = 0; x < pw + 10; x++) {
     const base = baseAt(x);
     if (x < pw) {
@@ -2113,12 +2144,14 @@ export function paintBook(
       }
     }
     const step = x > 0 ? base - baseAt(x - 1) : 0;
-    footRgb.forEach((col, j) => {
-      const was = footRgb[Math.max(0, Math.min(footRgb.length - 1, j + step))]!;
+    const rows = rowsAt(x);
+    rows.forEach((col, j) => {
+      const was = before[Math.max(0, Math.min(before.length - 1, j + step))]!;
       const [r0, g0, b0] = step ? col.map((v, k) => Math.round((v + was[k]!) / 2)) : col;
       px(g, left + x, base + j, `rgb(${r0},${g0},${b0})`);
     });
-    const under = base + footRgb.length;
+    before = rows;
+    const under = base + rows.length;
     const end = top + deep;
     if (end > under)
       g.drawImage(cover, left + x - B, under - B, 1, end - under, left + x, under, 1, end - under);

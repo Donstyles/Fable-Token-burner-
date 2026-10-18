@@ -37,6 +37,16 @@
   display: inline-block;
   vertical-align: top;
 }
+/* MM6's word space on the stone screens is four pixels (screens critic, round 14); the books
+   keep two. */
+.ui-panel .pxt {
+  word-spacing: 6px;
+}
+.screen-spells .ui-panel .pxt,
+.screen-quests .ui-panel .pxt,
+.screen-map .ui-panel .pxt {
+  word-spacing: 3px;
+}
 .pxs {
   position: absolute;
   width: 1px;
@@ -330,7 +340,7 @@
   color: #f07060;
 }
 .ui-h {
-  margin: 4.5px 0 1.5px;
+  margin: 3px 0 0;
   font:
     italic 22.5px/24px 'Tinos',
     Georgia,
@@ -434,7 +444,7 @@
   display: grid;
   grid-template-columns: 1fr auto auto;
   gap: 0 12px;
-  padding: 1.5px 0;
+  padding: 0;
 }
 .sheet-bonus {
   color: var(--ink-pale);
@@ -454,10 +464,14 @@
 .sheet-cost {
   opacity: 0.6;
 }
-/* The sheet holds ten lines a column: lines of fifteen UI pixels there. */
+/* The sheet holds ten lines of sixteen UI pixels a column, its boxes without gaps
+   (screens critic, round 14: lines of fifteen fell a device pixel off the grid). */
 .screen-sheet .ui-col,
 .screen-sheet .ui-v {
-  line-height: 22.5px;
+  line-height: 24px;
+}
+.screen-sheet .ui-col {
+  gap: 0;
 }
 /* A skill row is the button (critics, round 8: MM6 had no "+" ovals): a tap on the name
    spends the points; a row that cannot be raised sits dim. */
@@ -584,4 +598,19 @@
 .screen-quests .ui-foot,
 .screen-rest .ui-foot {
   color: #5a2a0a;
+}
+
+/* The quest log's lines are MM6's book type, upright, black and 14 UI pixels; its headings
+   keep the italic (screens critic, round 14). */
+.screen-quests .ui-col {
+  font-style: normal;
+  font-size: 21px;
+  line-height: 24px;
+  color: #000000;
+}
+.screen-quests .ui-note,
+.screen-quests .ui-row .sub {
+  font-size: 21px;
+  line-height: 24px;
+  color: #000000;
 }

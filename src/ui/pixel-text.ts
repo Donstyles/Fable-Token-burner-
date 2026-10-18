@@ -198,6 +198,7 @@ function inkOf(word: string, f: Face, w: number, h: number): Uint8Array {
   const H = t.height;
   const b = new Uint8Array(W * H);
   for (let i = 0; i < b.length; i++) b[i] = d[i * 4 + 3]! >= 128 ? 1 : 0;
+  const cut = b.slice();
   thin(b, W, H);
   for (let y = 0; y < h; y++) {
     for (let x = 0; x < w; x++) {
@@ -207,27 +208,37 @@ function inkOf(word: string, f: Face, w: number, h: number): Uint8Array {
       ink[y * w + x] = n >= 2 ? 1 : 0;
     }
   }
-  // Every mark keeps its pixels: a stop or the dot of an i thins to a point, which the
-  // pooling alone would drop.
+  // Every mark keeps a pixel: a stop or the dot of an i can thin to nothing (screens critic,
+  // round 14: Zhang and Suen wear a 2x2 blob away whole), so the marks are found in the cut
+  // before thinning, and one with no ink gets its fullest block.
   const seen = new Uint8Array(W * H);
-  for (let start = 0; start < b.length; start++) {
-    if (!b[start] || seen[start]) continue;
-    const blocks = new Set<number>();
+  for (let start = 0; start < cut.length; start++) {
+    if (!cut[start] || seen[start]) continue;
+    const blocks = new Map<number, number>();
     const stack = [start];
     seen[start] = 1;
     while (stack.length) {
       const i = stack.pop()!;
-      blocks.add(Math.floor(Math.floor(i / W) / s) * w + Math.floor((i % W) / s));
+      const k = Math.floor(Math.floor(i / W) / s) * w + Math.floor((i % W) / s);
+      blocks.set(k, (blocks.get(k) ?? 0) + 1);
       for (let dy = -1; dy <= 1; dy++)
         for (let dx = -1; dx <= 1; dx++) {
           const j = i + dy * W + dx;
-          if (j >= 0 && j < b.length && b[j] && !seen[j] && Math.abs((j % W) - (i % W)) <= 1) {
+          if (j >= 0 && j < cut.length && cut[j] && !seen[j] && Math.abs((j % W) - (i % W)) <= 1) {
             seen[j] = 1;
             stack.push(j);
           }
         }
     }
-    if (![...blocks].some((k) => ink[k])) for (const k of blocks) ink[k] = 1;
+    if ([...blocks.keys()].some((k) => ink[k])) continue;
+    let best = -1;
+    let most = 0;
+    for (const [k, n] of blocks)
+      if (n > most) {
+        most = n;
+        best = k;
+      }
+    if (best >= 0) ink[best] = 1;
   }
   return ink;
 }

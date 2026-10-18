@@ -770,10 +770,15 @@ export function stoneField(
     smudges: number;
     /** Where along the cells' edges the seams run: over this, on a noise of -1 to 1. */
     seams?: number;
+    /** Pixels the plates' lookup wanders either way, so their seams are not straight. */
+    warp?: number;
   },
 ): void {
   const img = g.getImageData(0, 0, w, h);
   const d = img.data;
+  const warp = o.warp ?? 0;
+  const wx = warp ? valueNoise(w, h, 18, seed + 7) : null;
+  const wy = warp ? valueNoise(w, h, 18, seed + 8) : null;
   const worley = (pitch: number, s: number): { edge: Uint8Array; lift: Float32Array } => {
     const rr = die(s);
     const nx = Math.max(1, Math.round(w / pitch));
@@ -800,9 +805,11 @@ export function stoneField(
         let best = 0;
         let bx = 0;
         let by = 0;
+        const qx = wx ? x + 2 * warp * wx[y * w + x]! : x;
+        const qy = wy ? y + 2 * warp * wy[y * w + x]! : y;
         for (let i = 0; i < pts.length; i++) {
-          let dx = x - pts[i]![0]!;
-          let dy = y - pts[i]![1]!;
+          let dx = qx - pts[i]![0]!;
+          let dy = qy - pts[i]![1]!;
           if (dx > w / 2) dx -= w;
           if (dx < -w / 2) dx += w;
           if (dy > h / 2) dy -= h;
@@ -900,20 +907,26 @@ export function roseVeins(
   const d = img.data;
   const at = (x: number, y: number): number =>
     ((((Math.floor(y) % h) + h) % h) * w + (((Math.floor(x) % w) + w) % w)) * 4;
-  // The pale veins (screens critic, round 13: MM6's are long, soft and nearly straight, ours
-  // curled and crisp): 60 to 180 steps turning at most 0.04 a step, two pixels wide with a
-  // half-lit pixel each side, never more than 75 over the marble's mean.
+  // The pale veins (screens critic, rounds 13 and 14: MM6's are long, soft and few, and they
+  // follow the stone's flow rather than lying straight like straws): 150 to 350 steps, each
+  // turning toward a flow field that wanders over 140 pixels, one branch a vein; two pixels
+  // wide with a half-lit pixel each side, never more than 75 over the marble's mean.
   const mean = [0, 1, 2].map((k) => {
     let sum = 0;
     for (let i = k; i < d.length; i += 4) sum += d[i]!;
     return sum / (w * h);
   });
+  const flow = valueNoise(w, h, 140, seed + 29);
+  const along = r() * Math.PI;
+  // An angle folded into a half turn: a vein runs both ways along the flow.
+  const fold = (a: number): number =>
+    ((((a + Math.PI / 2) % Math.PI) + Math.PI) % Math.PI) - Math.PI / 2;
   const paths: [number, number][][] = [];
-  for (let v = 0; v < o.pale; v++) {
-    let x = r() * w;
-    let y = r() * h;
-    let ang = r() * Math.PI * 2;
-    const len = Math.round(60 + r() * 120);
+  const walk = (x0: number, y0: number, a0: number, len: number, v: number, branch: boolean) => {
+    let x = x0;
+    let y = y0;
+    let ang = a0;
+    let branched = branch;
     const n = noise1(len, 12, seed * 7 + v);
     const pts: [number, number][] = [];
     const seen = new Set<number>();
@@ -928,7 +941,8 @@ export function roseVeins(
         );
     };
     for (let t = 0; t < len; t++) {
-      ang += (r() - 0.5) * 0.08;
+      const f = along + 1.2 * Math.PI * 2 * flow[at(x, y) / 4]!;
+      ang += 0.06 * fold(f - ang) + (r() - 0.5) * 0.03;
       x += Math.cos(ang);
       y += Math.sin(ang);
       pts.push([x, y]);
@@ -941,11 +955,18 @@ export function roseVeins(
       lift(x + ax, y + ay, amount);
       lift(x - ax, y - ay, amount / 2);
       lift(x + 2 * ax, y + 2 * ay, amount / 2);
+      if (!branched && t > 20 && r() < 1 / 70) {
+        branched = true;
+        const turn = (r() < 0.5 ? -1 : 1) * (0.35 + r() * 0.35);
+        walk(x, y, ang + turn, Math.round((len - t) * (0.3 + r() * 0.3)), v + 1000, true);
+      }
     }
     paths.push(pts);
-  }
+  };
+  for (let v = 0; v < o.pale; v++)
+    walk(r() * w, r() * h, r() * Math.PI * 2, Math.round(150 + r() * 200), v, false);
   for (let v = 0; v < o.dark; v++) {
-    const alpha = 0.35 + r() * 0.25;
+    const alpha = 0.5 + r() * 0.35;
     const wide = r() < 0.3;
     let run: [number, number][] = [];
     if (paths.length && r() < 0.6) {

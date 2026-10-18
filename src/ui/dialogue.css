@@ -26,8 +26,9 @@
   min-width: 0;
   min-height: 0;
   display: grid;
-  /* The window a tenth of the width, as MM6's (critics, round 10). */
-  grid-template-columns: 96px minmax(0, 1fr);
+  /* The window a tenth of the width, as MM6's (critics, round 10); the side an even 206 UI
+     pixels, so centred words land on whole pixels (talk-world critic, round 14). */
+  grid-template-columns: 96px 309px;
   grid-template-rows: 96px auto;
   gap: 6px 10px;
   padding: 8px;

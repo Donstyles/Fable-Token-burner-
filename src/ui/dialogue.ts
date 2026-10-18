@@ -12,6 +12,7 @@ import type { GameState } from '../game/state';
 import { toLocalRect } from '../app/orientation';
 import { chooseTopic, dialogueView } from './dialogue-model';
 import { el } from './dom';
+import { PX } from './pixel-text';
 
 export interface DialogueHooks {
   /** The villager says something: play the talk clip. */
@@ -57,7 +58,11 @@ export function createDialogue(
 
   const measure = (): void => {
     if (!open_) return;
-    const hole = open_.window.getBoundingClientRect();
+    // The well on the grid of UI pixels and 96 CSS pixels square (talk-world critic, round
+    // 14: it had grown to 97 and fallen two device pixels off the grid).
+    const raw = open_.window.getBoundingClientRect();
+    const snap = (v: number): number => Math.round(v / PX) * PX;
+    const hole = new DOMRect(snap(raw.x), snap(raw.y), 96, 96);
     // The mask is cut in the planks' own pixels, which the rotated phone layout turns.
     const local = toLocalRect(hole, open_.wood.getBoundingClientRect());
     open_.wood.style.setProperty('--hole-x', `${local.x}px`);
