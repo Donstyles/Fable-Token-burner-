@@ -2,17 +2,17 @@
  * Party portraits (DESIGN.md 12.2): the owner's ChatGPT pictures cut to the band's oval. Each
  * appearance's head box is set once on its neutral picture (pipeline/portraits.json); every
  * expression, an edit of the neutral one in the same framing, is cut by the same box. The cut
- * is resampled in full colour (lanczos3, no posterising) to three image pixels a UI pixel, the
- * phone's own pixel (owner, 2026-10-18: "the portrait is still too pixelated" at one image
- * pixel a UI pixel), and keyed to the ring's opening, each UI pixel of the oval in or out
- * whole, so its edge steps with the ring's.
+ * is resampled (lanczos3) to one image pixel a UI pixel, the shell's own pitch, and put on
+ * MM6's sixteen bits as the shell's pieces are, with no posterising, then keyed to the ring's
+ * opening (owner, 2026-10-18: posterised to 128 colours it was "still too pixelated"; at three
+ * image pixels a UI pixel it was "too high res, not matching the UI").
  */
 import sharp from 'sharp';
 
 /** The band ring's opening in UI pixels: `.hud-frame` (src/ui/hud.css), 66 by 90, less its five bands. */
 export const PORTRAIT_SIZE = { width: 56, height: 80 } as const;
-/** Image pixels a UI pixel: the phone's three device pixels to the CSS pixel. */
-export const PORTRAIT_DENSITY = 3;
+/** Image pixels a UI pixel: one, so the face is drawn on the shell's own grid. */
+export const PORTRAIT_DENSITY = 1;
 
 /** The head's box in the neutral picture, in its pixels. */
 export interface HeadBox {
@@ -37,9 +37,15 @@ export function inOval(x: number, y: number, w: number, h: number): boolean {
   return dx * dx + dy * dy <= 1;
 }
 
+/** A channel to five or six bits and back, the low bits copied from the high (brush.ts). */
+export function to565(v: number, bits: 5 | 6): number {
+  const q = v >> (8 - bits);
+  return bits === 5 ? (q << 3) | (q >> 2) : (q << 2) | (q >> 4);
+}
+
 /**
  * Cut one picture to the opening: the head box resampled to `density` image pixels a UI pixel
- * of `size`, keyed to the opening's oval by whole UI pixels.
+ * of `size`, on sixteen bits, keyed to the opening's oval by whole UI pixels.
  */
 export async function cutPortrait(
   input: string,
@@ -64,7 +70,9 @@ export async function cutPortrait(
       if (!inOval(Math.floor(x / density), Math.floor(y / density), size.width, size.height))
         continue;
       const i = y * width + x;
-      const [r, g, b] = [rgb[i * 3]!, rgb[i * 3 + 1]!, rgb[i * 3 + 2]!];
+      const r = to565(rgb[i * 3]!, 5);
+      const g = to565(rgb[i * 3 + 1]!, 6);
+      const b = to565(rgb[i * 3 + 2]!, 5);
       rgba[i * 4] = r;
       rgba[i * 4 + 1] = g;
       rgba[i * 4 + 2] = b;

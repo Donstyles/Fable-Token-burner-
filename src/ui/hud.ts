@@ -119,7 +119,7 @@ export function createHud(parent: HTMLElement, party: Party, hooks: HudHooks): H
     const cameo = el('div', 'hud-cameo');
     const face = m.character ? portraitOf(m.character.portrait) : null;
     if (face) {
-      // Three image pixels to the UI pixel, smooth, in the ring's opening (hud.css).
+      // One image pixel to the UI pixel, in the ring's opening (hud.css).
       cameo.classList.add('portrait');
       cameo.style.setProperty('--face', `url("${face}")`);
     } else cameo.dataset['paint'] = `sigil-${m.character?.classId ?? 'knight'}`;

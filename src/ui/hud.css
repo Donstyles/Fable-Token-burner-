@@ -86,8 +86,10 @@
   gap: 4px;
   height: 102px;
   margin: 12px 0 0 88px;
-  /* The cells start a whole number of UI pixels in (critics, round 10: one grid). */
-  padding: 0 0 0 45px;
+  /* The cells start a whole number of UI pixels in (critics, round 10: one grid), close to
+     the clock, so all four clear the shelf inside the phone's safe areas (59 pixels each
+     side in landscape; owner's phone, 2026-10-18: the fourth's tubes were under the books). */
+  padding: 0 0 0 10px;
 }
 .hud-band::before {
   /* MM6's cell top run across the gaps and over the clock: one light, one dark, one gold row
@@ -112,8 +114,9 @@
   display: flex;
   align-items: flex-start;
   gap: 4px;
-  width: 120px;
-  flex: 0 0 120px;
+  /* The oval, the gap and the tubes, 102 pixels, with two to spare: 110 apart, MM6's 113. */
+  width: 106px;
+  flex: 0 0 106px;
   padding: 8px 6px 0;
   background: var(--paint) center / 100% 100% no-repeat;
   image-rendering: pixelated;
@@ -155,11 +158,11 @@
   background: var(--paint) center / 100% 100% no-repeat;
   image-rendering: pixelated;
 }
-/* A portrait (tools/portrait.ts): 56 by 80 UI pixels at three image pixels each, the ring's
-   opening inside its five bands, smooth rather than pixel for pixel: the phone's own pixel. */
+/* A portrait (tools/portrait.ts): 56 by 80 UI pixels, the ring's opening inside its five
+   bands, pixel for pixel as the rest of the shell (owner, 2026-10-18). */
 .hud-cameo.portrait {
   background: var(--face) 5px 5px / 56px 80px no-repeat;
-  image-rendering: auto;
+  image-rendering: pixelated;
 }
 .hud-bars {
   position: relative;

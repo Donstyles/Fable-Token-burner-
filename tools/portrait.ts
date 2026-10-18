@@ -47,7 +47,7 @@ async function main(): Promise<void> {
     upsertAsset(manifest, {
       id: `portrait-${appearance}-${expression}`,
       kind: 'portrait',
-      source: `The owner's ChatGPT image ${from}, its head box cut to the band's oval at ${r.width} by ${r.height}, three pixels to the UI pixel (tools/portrait.ts)`,
+      source: `The owner's ChatGPT image ${from}, its head box cut to the band's oval at ${r.width} by ${r.height}, one pixel to the UI pixel, on sixteen bits (tools/portrait.ts)`,
       licence:
         "The owner's ChatGPT image (OpenAI's terms: the output is the user's): owner holds full rights",
       files: [to],

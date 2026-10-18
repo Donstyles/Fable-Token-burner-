@@ -3,7 +3,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import sharp from 'sharp';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { cutPortrait, inOval, PORTRAIT_DENSITY, PORTRAIT_SIZE } from './portrait';
+import { cutPortrait, inOval, PORTRAIT_DENSITY, PORTRAIT_SIZE, to565 } from './portrait';
 
 let dir = '';
 beforeAll(async () => {
@@ -14,7 +14,7 @@ afterAll(async () => {
 });
 
 describe('portrait cut', () => {
-  it('cuts the head box to the opening at three pixels a UI pixel, keyed by whole UI pixels', async () => {
+  it('cuts the head box to the opening on the UI grid, keyed by whole UI pixels', async () => {
     // A 400 by 600 picture: a warm ground left of x 300, a cool one right of it.
     const w = 400;
     const h = 600;
@@ -38,9 +38,9 @@ describe('portrait cut', () => {
     const at = (x: number, y: number): number[] => [
       ...data.subarray((y * W + x) * 4, (y * W + x) * 4 + 4),
     ];
-    // Outside the oval clear, inside it the head box's warm ground in full colour.
+    // Outside the oval clear, inside it the head box's warm ground on sixteen bits.
     expect(at(0, 0)[3]).toBe(0);
-    expect(at(W / 2, H / 2)).toEqual([200, 120, 60, 255]);
+    expect(at(W / 2, H / 2)).toEqual([to565(200, 5), to565(120, 6), to565(60, 5), 255]);
     // Every UI pixel is in or out whole, as the ring's opening is.
     for (let y = 0; y < PORTRAIT_SIZE.height; y++) {
       for (let x = 0; x < PORTRAIT_SIZE.width; x++) {

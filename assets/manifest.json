@@ -523,7 +523,7 @@
     {
       "id": "portrait-alric-neutral",
       "kind": "portrait",
-      "source": "The owner's ChatGPT image pipeline/inbox/portraits/alric/neutral.png, its head box cut to the band's oval at 168 by 240, three pixels to the UI pixel (tools/portrait.ts)",
+      "source": "The owner's ChatGPT image pipeline/inbox/portraits/alric/neutral.png, its head box cut to the band's oval at 56 by 80, one pixel to the UI pixel, on sixteen bits (tools/portrait.ts)",
       "licence": "The owner's ChatGPT image (OpenAI's terms: the output is the user's): owner holds full rights",
       "files": ["assets/portraits/alric/neutral.png"],
       "date": "2026-10-18",
