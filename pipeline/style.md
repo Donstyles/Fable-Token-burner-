@@ -68,9 +68,14 @@ plans the batch, `run <nnn> --dry-run` then `run <nnn>` makes it, and
   leather; the subject washed in its magic's colour; the magic as light
   with a white-hot core, coloured edges, deeper tips and a soft halo. Say
   "no person" for an effect-only icon, or the model adds a caster.
-- **Light**: mostly mid-tones, the subject a little darker than its ground
-  (icon critic, pass 2: high-key overshot to luma 180 against MM6's 148),
-  on a mid-tone parchment ground (about #B8AC96). The post-process maps the
+- **Light**: people and things mostly mid-tones, a little darker than
+  their ground (icon critic, pass 2: high-key overshot to luma 180 against
+  MM6's 148); magic on its own, with no person or thing, pale: a little
+  lighter than the ground, its darkest parts no darker than a mid-tone,
+  its colour in pale tints (pass 3: MM6's twenty pure effects average
+  181, three over their parchment; ours came 126 to 172). All on a
+  mid-tone parchment ground (about #B8AC96), the subject wider than tall
+  wherever its shape allows. The post-process maps the
   picture's tones so its ground lands on the parchment's 173 (black, 60 and
   white kept); a pure light effect (a bolt, sparks, a fire spiral) keeps
   its own exposure (`expose: 'keep'`). It still lifts, never darkens, a
@@ -79,7 +84,8 @@ plans the batch, `run <nnn> --dry-run` then `run <nnn>` makes it, and
 - **Only what is named**: the style text says no extra people, casters,
   hands or wands; a subject sentence for an effect says "and nothing else".
 - **Bitmap** (`tools/lib/icon.ts`): the subject fitted 68 by 50 (wider,
-  up to 100, for a bolt), the whole box taken from the picture round it
+  up to 100, for a bolt), its box blind to specks (a pixel counts with
+  twenty covered in its nine-by-nine window), the whole box taken from the picture round it
   so a glow runs to the oval's edge, on MM6's 68 by 52 parchment oval
   (184,172,150) with a four-level mottle in a 72 by 54 box, keyed outside
   the oval, 255 colours; then the parchment keyed out, so in the game the

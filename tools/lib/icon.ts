@@ -366,15 +366,37 @@ export async function postProcessIcon(
     }
   }
   // What the picture shows: the bounding box of its pixels at least a third covered (half,
-  // when keyed, so a slight shading of the ground does not count).
+  // when keyed, so a slight shading of the ground does not count), leaving out specks: a
+  // pixel with fewer than twenty covered in its nine-by-nine window (icon critic, pass 3: a
+  // grainy ground's specks spread stun's box over the whole frame).
   const edge = cut.kind === 'key' ? 128 : 85;
+  const sum = new Int32Array((width + 1) * (height + 1));
+  for (let y = 0; y < height; y++) {
+    let row = 0;
+    for (let x = 0; x < width; x++) {
+      if (cover[y * width + x]! >= edge) row++;
+      sum[(y + 1) * (width + 1) + x + 1] = sum[y * (width + 1) + x + 1]! + row;
+    }
+  }
+  const near = (x: number, y: number): number => {
+    const ax = Math.max(0, x - 4);
+    const ay = Math.max(0, y - 4);
+    const bx = Math.min(width, x + 5);
+    const by = Math.min(height, y + 5);
+    return (
+      sum[by * (width + 1) + bx]! -
+      sum[ay * (width + 1) + bx]! -
+      sum[by * (width + 1) + ax]! +
+      sum[ay * (width + 1) + ax]!
+    );
+  };
   let x0 = width;
   let y0 = height;
   let x1 = -1;
   let y1 = -1;
   for (let y = 0; y < height; y++) {
     for (let x = 0; x < width; x++) {
-      if (cover[y * width + x]! < edge) continue;
+      if (cover[y * width + x]! < edge || near(x, y) < 20) continue;
       if (x < x0) x0 = x;
       if (x > x1) x1 = x;
       if (y < y0) y0 = y;

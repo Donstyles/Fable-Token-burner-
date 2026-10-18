@@ -1,0 +1,142 @@
+{
+  "number": 9,
+  "name": "spell-icons-pass-3b",
+  "created": "2026-10-18",
+  "approved": false,
+  "items": [
+    {
+      "assetId": "meditation",
+      "step": "text-to-image",
+      "params": {
+        "prompt": "A frontal, symmetrical head-and-shoulders bust, eyes closed, plain carved-wood face, in a grainy grey-brown mail coif and broad mail shoulders reaching both edges, brown leather straps, no white cloth; on the brow a head-wide gold sun-wheel, dark-blue jewel, pale-blue rays; all mid-tone sepia. A tiny spell icon from a 1998 fantasy PC role-playing game's spellbook: a small pre-rendered 3D Studio picture, low-polygon models with coarse, slightly grainy textures and smooth shading, the magic painted over them as glowing 2D light. Soft, even light from the front and above. People and things are mostly mid-tones, as a whole a little darker than the background, their shadows warm mid-browns or the deep colour of the magic, never black, with only small highlights near white. Magic on its own, with no person or thing, is pale: as a whole a little lighter than the background, its darkest parts no darker than a mid-tone. Muted, slightly faded colours: grey mail, off-white linen, tan and brown leather, dull gold; everything is lit by the magic and takes on its colour. Slim adults with realistic proportions, small heads and simple faces. Magic is light: a white-hot core, pale tints of its colour around it, a little deeper colour at its edges and tips, and an uneven glow, brightest where it touches the magic and fading slowly into the background, never a flat disc. Show only what the description names: no extra people, casters, hands or wands. One subject, centred and spread wide, wider than it is tall wherever its shape allows, filling the whole width of the picture and most of its height, on a plain, flat, evenly lit, mid-tone greyish-beige background like old parchment in shade (about #B8AC96), with no ground, floor, base or cast shadow. No text, no border, no frame, no black outlines, no cartoon or chibi proportions, not photorealistic, not modern.",
+        "subject": "A frontal, symmetrical head-and-shoulders bust, eyes closed, plain carved-wood face, in a grainy grey-brown mail coif and broad mail shoulders reaching both edges, brown leather straps, no white cloth; on the brow a head-wide gold sun-wheel, dark-blue jewel, pale-blue rays; all mid-tone sepia.",
+        "ai_model": "nano-banana-2-lite",
+        "aspect_ratio": "4:3",
+        "remove_background": false
+      },
+      "estimatedCredits": 3,
+      "estimateBasis": "documented (DESIGN.md 10.0), nano-banana-2-lite"
+    },
+    {
+      "assetId": "water-walk",
+      "step": "text-to-image",
+      "params": {
+        "prompt": "A slim soldier striding left to right, seen from the side, his whole body dark cool blue-grey with navy shadows, no glow round him, on a thick band of choppy water spanning almost the full width: dozens of crisp, sharp-edged navy, teal and cyan wavelets, white-crested, shin-high; no shore. A tiny spell icon from a 1998 fantasy PC role-playing game's spellbook: a small pre-rendered 3D Studio picture, low-polygon models with coarse, slightly grainy textures and smooth shading, the magic painted over them as glowing 2D light. Soft, even light from the front and above. People and things are mostly mid-tones, as a whole a little darker than the background, their shadows warm mid-browns or the deep colour of the magic, never black, with only small highlights near white. Magic on its own, with no person or thing, is pale: as a whole a little lighter than the background, its darkest parts no darker than a mid-tone. Muted, slightly faded colours: grey mail, off-white linen, tan and brown leather, dull gold; everything is lit by the magic and takes on its colour. Slim adults with realistic proportions, small heads and simple faces. Magic is light: a white-hot core, pale tints of its colour around it, a little deeper colour at its edges and tips, and an uneven glow, brightest where it touches the magic and fading slowly into the background, never a flat disc. Show only what the description names: no extra people, casters, hands or wands. One subject, centred and spread wide, wider than it is tall wherever its shape allows, filling the whole width of the picture and most of its height, on a plain, flat, evenly lit, mid-tone greyish-beige background like old parchment in shade (about #B8AC96), with no ground, floor, base or cast shadow. No text, no border, no frame, no black outlines, no cartoon or chibi proportions, not photorealistic, not modern.",
+        "subject": "A slim soldier striding left to right, seen from the side, his whole body dark cool blue-grey with navy shadows, no glow round him, on a thick band of choppy water spanning almost the full width: dozens of crisp, sharp-edged navy, teal and cyan wavelets, white-crested, shin-high; no shore.",
+        "ai_model": "nano-banana-2-lite",
+        "aspect_ratio": "4:3",
+        "remove_background": false
+      },
+      "estimatedCredits": 3,
+      "estimateBasis": "documented (DESIGN.md 10.0), nano-banana-2-lite"
+    },
+    {
+      "assetId": "stun",
+      "step": "text-to-image",
+      "params": {
+        "prompt": "A slim soldier facing us in a wide braced stance, a long sword held diagonally across his whole body, point beyond his head at upper left; mail, tabard, skin and boots all rust-orange and copper, no grey or white; round him, touching nowhere, a thin white chalk loop a head's width out, plain background between. A tiny spell icon from a 1998 fantasy PC role-playing game's spellbook: a small pre-rendered 3D Studio picture, low-polygon models with coarse, slightly grainy textures and smooth shading, the magic painted over them as glowing 2D light. Soft, even light from the front and above. People and things are mostly mid-tones, as a whole a little darker than the background, their shadows warm mid-browns or the deep colour of the magic, never black, with only small highlights near white. Magic on its own, with no person or thing, is pale: as a whole a little lighter than the background, its darkest parts no darker than a mid-tone. Muted, slightly faded colours: grey mail, off-white linen, tan and brown leather, dull gold; everything is lit by the magic and takes on its colour. Slim adults with realistic proportions, small heads and simple faces. Magic is light: a white-hot core, pale tints of its colour around it, a little deeper colour at its edges and tips, and an uneven glow, brightest where it touches the magic and fading slowly into the background, never a flat disc. Show only what the description names: no extra people, casters, hands or wands. One subject, centred and spread wide, wider than it is tall wherever its shape allows, filling the whole width of the picture and most of its height, on a plain, flat, evenly lit, mid-tone greyish-beige background like old parchment in shade (about #B8AC96), with no ground, floor, base or cast shadow. No text, no border, no frame, no black outlines, no cartoon or chibi proportions, not photorealistic, not modern.",
+        "subject": "A slim soldier facing us in a wide braced stance, a long sword held diagonally across his whole body, point beyond his head at upper left; mail, tabard, skin and boots all rust-orange and copper, no grey or white; round him, touching nowhere, a thin white chalk loop a head's width out, plain background between.",
+        "ai_model": "nano-banana-2-lite",
+        "aspect_ratio": "4:3",
+        "remove_background": false
+      },
+      "estimatedCredits": 3,
+      "estimateBasis": "documented (DESIGN.md 10.0), nano-banana-2-lite"
+    },
+    {
+      "assetId": "sparks",
+      "step": "text-to-image",
+      "params": {
+        "prompt": "Electric sparks and nothing else, wider than tall: from a white-hot core in a pale-cyan glow, left of centre, fifteen thin crooked forking streaks of uneven length, the longest to the top-left corner and right edge, the lower right nearly empty; mid-tone slate-teal edges, pale-cyan centres, a white-cyan spark at each tip; no person. A tiny spell icon from a 1998 fantasy PC role-playing game's spellbook: a small pre-rendered 3D Studio picture, low-polygon models with coarse, slightly grainy textures and smooth shading, the magic painted over them as glowing 2D light. Soft, even light from the front and above. People and things are mostly mid-tones, as a whole a little darker than the background, their shadows warm mid-browns or the deep colour of the magic, never black, with only small highlights near white. Magic on its own, with no person or thing, is pale: as a whole a little lighter than the background, its darkest parts no darker than a mid-tone. Muted, slightly faded colours: grey mail, off-white linen, tan and brown leather, dull gold; everything is lit by the magic and takes on its colour. Slim adults with realistic proportions, small heads and simple faces. Magic is light: a white-hot core, pale tints of its colour around it, a little deeper colour at its edges and tips, and an uneven glow, brightest where it touches the magic and fading slowly into the background, never a flat disc. Show only what the description names: no extra people, casters, hands or wands. One subject, centred and spread wide, wider than it is tall wherever its shape allows, filling the whole width of the picture and most of its height, on a plain, flat, evenly lit, mid-tone greyish-beige background like old parchment in shade (about #B8AC96), with no ground, floor, base or cast shadow. No text, no border, no frame, no black outlines, no cartoon or chibi proportions, not photorealistic, not modern.",
+        "subject": "Electric sparks and nothing else, wider than tall: from a white-hot core in a pale-cyan glow, left of centre, fifteen thin crooked forking streaks of uneven length, the longest to the top-left corner and right edge, the lower right nearly empty; mid-tone slate-teal edges, pale-cyan centres, a white-cyan spark at each tip; no person.",
+        "ai_model": "nano-banana-2-lite",
+        "aspect_ratio": "4:3",
+        "remove_background": false,
+        "expose": "keep"
+      },
+      "estimatedCredits": 3,
+      "estimateBasis": "documented (DESIGN.md 10.0), nano-banana-2-lite"
+    },
+    {
+      "assetId": "spirit-arrow",
+      "step": "text-to-image",
+      "params": {
+        "prompt": "A compass star of light and nothing else: four long hair-thin rays up, down, left and right almost to the edges, four shorter diagonals, meeting in a bright point; each a crisp flat blade of pale silver edged lavender-pink; behind it a soft cream-white glow over most of the picture, fading out before the edges; no arrow. A tiny spell icon from a 1998 fantasy PC role-playing game's spellbook: a small pre-rendered 3D Studio picture, low-polygon models with coarse, slightly grainy textures and smooth shading, the magic painted over them as glowing 2D light. Soft, even light from the front and above. People and things are mostly mid-tones, as a whole a little darker than the background, their shadows warm mid-browns or the deep colour of the magic, never black, with only small highlights near white. Magic on its own, with no person or thing, is pale: as a whole a little lighter than the background, its darkest parts no darker than a mid-tone. Muted, slightly faded colours: grey mail, off-white linen, tan and brown leather, dull gold; everything is lit by the magic and takes on its colour. Slim adults with realistic proportions, small heads and simple faces. Magic is light: a white-hot core, pale tints of its colour around it, a little deeper colour at its edges and tips, and an uneven glow, brightest where it touches the magic and fading slowly into the background, never a flat disc. Show only what the description names: no extra people, casters, hands or wands. One subject, centred and spread wide, wider than it is tall wherever its shape allows, filling the whole width of the picture and most of its height, on a plain, flat, evenly lit, mid-tone greyish-beige background like old parchment in shade (about #B8AC96), with no ground, floor, base or cast shadow. No text, no border, no frame, no black outlines, no cartoon or chibi proportions, not photorealistic, not modern.",
+        "subject": "A compass star of light and nothing else: four long hair-thin rays up, down, left and right almost to the edges, four shorter diagonals, meeting in a bright point; each a crisp flat blade of pale silver edged lavender-pink; behind it a soft cream-white glow over most of the picture, fading out before the edges; no arrow.",
+        "ai_model": "nano-banana-2-lite",
+        "aspect_ratio": "4:3",
+        "remove_background": false,
+        "expose": "keep"
+      },
+      "estimatedCredits": 3,
+      "estimateBasis": "documented (DESIGN.md 10.0), nano-banana-2-lite"
+    }
+  ],
+  "estimatedCredits": 15,
+  "runs": [
+    {
+      "started": "2026-10-18T01:27:59.573Z",
+      "taskIds": [
+        "01a14c9f-73c6-749a-92b1-7f604bbfcbb3",
+        "01a14ca0-401c-705d-957b-a63300af2a36",
+        "01a14ca0-c494-70e1-a5d6-856745426cf9",
+        "01a14ca1-3518-7310-a30f-ba4a3d384d37",
+        "01a14ca1-b981-71f4-9f70-ab9e70771d2e"
+      ],
+      "tasks": {
+        "meditation": {
+          "text-to-image": {
+            "taskId": "01a14c9f-73c6-749a-92b1-7f604bbfcbb3",
+            "status": "SUCCEEDED",
+            "consumedCredits": 3,
+            "operationId": "b009-meditation-text-to-image-r1-a1"
+          }
+        },
+        "water-walk": {
+          "text-to-image": {
+            "taskId": "01a14ca0-401c-705d-957b-a63300af2a36",
+            "status": "SUCCEEDED",
+            "consumedCredits": 3,
+            "operationId": "b009-water-walk-text-to-image-r1-a1"
+          }
+        },
+        "stun": {
+          "text-to-image": {
+            "taskId": "01a14ca0-c494-70e1-a5d6-856745426cf9",
+            "status": "SUCCEEDED",
+            "consumedCredits": 3,
+            "operationId": "b009-stun-text-to-image-r1-a1"
+          }
+        },
+        "sparks": {
+          "text-to-image": {
+            "taskId": "01a14ca1-3518-7310-a30f-ba4a3d384d37",
+            "status": "SUCCEEDED",
+            "consumedCredits": 3,
+            "operationId": "b009-sparks-text-to-image-r1-a1"
+          }
+        },
+        "spirit-arrow": {
+          "text-to-image": {
+            "taskId": "01a14ca1-b981-71f4-9f70-ab9e70771d2e",
+            "status": "SUCCEEDED",
+            "consumedCredits": 3,
+            "operationId": "b009-spirit-arrow-text-to-image-r1-a1"
+          }
+        }
+      },
+      "balanceBefore": 1912,
+      "attempts": {
+        "meditation/text-to-image": 1,
+        "water-walk/text-to-image": 1,
+        "stun/text-to-image": 1,
+        "sparks/text-to-image": 1,
+        "spirit-arrow/text-to-image": 1
+      },
+      "balanceAfter": 1897,
+      "consumedCredits": 15,
+      "finished": "2026-10-18T01:30:53.164Z"
+    }
+  ],
+  "grant": "spell-icons"
+}
