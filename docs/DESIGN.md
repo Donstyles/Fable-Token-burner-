@@ -2032,7 +2032,39 @@ Round 16:
   that would change every screen's letters with no screens critic left to
   check them before the morning.
 
+### 16.27 Round 17: an open crown, banded brass, the rose's contrast, MM6's binding (2026-10-18)
+
+Round 16 scored HUD 7.8 and screens 8.3, verdict no (talk and world: see
+the next entry). Round 17:
+
+- **HUD**: the capital's crown with lit leaf heads and an open scroll of
+  five by eight where it had ended in a closed ring that read as a "6",
+  the curls back to twenty and the field on the bell's grid (the bell had
+  darkened, 22% of it under 40); the rest button with MM6's dark band and
+  second lit band and a body die of twenty (its grain had overshot to 52%);
+  a second gold collar on both pillars at rows 120 to 130, as MM6's left
+  pillar has; a four-pixel shadow down the alcove's left inside (107, 57,
+  33, 16); the tube bars sixty CSS pixels, so the band's new foot clears
+  the slots' lip.
+- **Screens**: the rose's cracks in MM6's shade (92, 72, 62) and its pale
+  web whiter and stronger (a tint of (0.8, 0.95, 1), a lift of 14 to 52,
+  capped at the mean plus 85); the quest log in Arimo at sixteen UI pixels,
+  untracked; the binding's fittings point-symmetric as MM6's, two bars a
+  row apart over a corner with a lit slope and a groove, and an S eleven by
+  twenty-three drawn with a two-pixel pen; the foot's edges in dashes of
+  tone, two to six columns long; every word canvas an even height, a run
+  that lands half a UI pixel off the grid moved back onto it, the head's
+  gap six; the school names on one line; a spell's name with no added word
+  space.
+- Deferred: the clock as one canvas on whole CSS pixels (the HUD critic's
+  fourth change, +0.03), which needs the word painter exported from
+  pixel-text.ts and an e2e check of the box.
+
 ## 13. Decision log
+
+- 2026-10-18 – Round 17 (16.27): an open crown and banded brass, a second
+  pillar collar, the alcove's shadow; the rose's contrast, MM6's binding,
+  dashed foot edges, the quest log at MM6's size, every word on the grid.
 
 - 2026-10-18 – Round 16 (16.26): the capital's crown and polished brass,
   MM6's gem and sans quest log; the talk window on the shared grid in MM6's

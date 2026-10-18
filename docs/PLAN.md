@@ -537,7 +537,11 @@ waterfalls and deserts, walkable end to end.
     final a median 6. **Round 16** (DESIGN 16.26): the capital's crown,
     polished brass, MM6's gem and sans quest log, the talk window on the
     shared grid in MM6's frame, a side key, ranked tree crowns, larger
-    bare banks, an even sky, the icons' grain; the scoring follows.
+    bare banks, an even sky, the icons' grain. **Round 16 scored
+    2026-10-18**: HUD 7.8, screens 8.3, no. **Round 17** (DESIGN 16.27): an
+    open crown, banded brass, a second pillar collar, the rose's contrast,
+    MM6's binding, the quest log at MM6's size, every word on the grid; the
+    scoring follows.
 18. Remaining, in order: lasting buffs and Jump; weather states (rain, a
     sandstorm); music; the smith's hammer and the temple bell.
 

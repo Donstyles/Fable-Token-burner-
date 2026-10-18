@@ -1227,11 +1227,27 @@ export function paintGem(w: number, h: number, kind: string): HTMLCanvasElement 
   return c;
 }
 
+/** MM6's gold collar under the capital, eleven rows in five bands; the shaft wears it again. */
+const COLLAR: readonly Rgb[] = [
+  [192, 172, 122],
+  [170, 147, 92],
+  [170, 147, 92],
+  [170, 147, 92],
+  [170, 147, 92],
+  [175, 154, 101],
+  [175, 154, 101],
+  [175, 154, 101],
+  [175, 154, 101],
+  [190, 173, 123],
+  [199, 184, 139],
+];
+
 /**
  * A marble pillar as MM6 shaded it (critics, rounds 9 to 11): veins running down the shaft
  * within thirty degrees of upright, painted on a wider tile and cropped, then every column
  * scaled to the convex profile 96 plus 75 times the cosine of a quarter turn over t to the
- * 0.7, the highlight 171 one pixel in; on RGB565. The right pillar is this one mirrored.
+ * 0.7, the highlight 171 one pixel in; the capital's collar again at rows 120 to 130; on
+ * RGB565. The right pillar is this one mirrored.
  */
 export function paintPillar(w: number, h: number, marble: HTMLCanvasElement): HTMLCanvasElement {
   void marble;
@@ -1272,6 +1288,19 @@ export function paintPillar(w: number, h: number, marble: HTMLCanvasElement): HT
       d[i + 2] = Math.min(255, d[i + 2]! * f);
     }
   }
+  // The collar again at rows 120 to 130, turned as the capital's (HUD critic, round 16:
+  // MM6's shaft wears it at 31 to 41 and again at 120 to 130, in the same colours, in all
+  // four screenshots; ours ran 146 plain rows to the plinth).
+  if (h >= 160)
+    for (let x = 0; x < w; x++) {
+      const k = 0.72 + 0.54 * Math.cos((Math.PI / 2) * Math.pow(x / Math.max(1, w - 1), 0.7));
+      COLLAR.forEach(([r, gr, b], j) => {
+        const i = ((120 + j) * w + x) * 4;
+        d[i] = Math.round(r * k);
+        d[i + 1] = Math.round(gr * k);
+        d[i + 2] = Math.round(b * k);
+      });
+    }
   g.putImageData(img, 0, 0);
   quantise565(g, w, h);
   return c;
@@ -1302,12 +1331,12 @@ export function paintRail(w: number, h: number): HTMLCanvasElement {
 }
 
 /**
- * A capital or a plinth. The capital (HUD critic, rounds 13 to 15): MM6's stands thirty-one
- * rows from the screen's top over an eleven-row collar. Three abacus rows and a crown that
- * stands over the lintel with a scroll curling down at each end; a bell, flaring twice, then
- * tapering to the shaft by the twenty-sixth row, its mass a smooth field of greys (a
- * two-pixel mottle read as granite) carved by twenty-eight short dark curls hanging down,
- * each lit three pixels up its upper left; seven pushed past the outline,
+ * A capital or a plinth. The capital (HUD critic, rounds 13 to 16): MM6's stands thirty-one
+ * rows from the screen's top over an eleven-row collar. Three abacus rows and a crown of lit
+ * leaf heads that stands over the lintel with an open scroll curling down at each end; a
+ * bell, flaring twice, then tapering to the shaft by the twenty-sixth row, its mass a smooth
+ * field of greys (a two-pixel mottle read as granite) carved by twenty short dark curls
+ * hanging down, each lit three pixels up its upper left; seven pushed past the outline,
  * curling down with the sky left under them; a five-row astragal; MM6's collar bands. No
  * regular tiers: those read as fish scales or a brick wall. The plinth: the ring over MM6's
  * turned base of tori and grooves. Both turned with the shaft's cosine, on RGB565.
@@ -1439,9 +1468,11 @@ function paintAcanthus(w: number, h: number): HTMLCanvasElement {
     }
   });
   // The mass: a smooth field on cells four across and six down (HUD critic, round 14: the
-  // two-pixel mottle was white noise, MM6's stone correlates 0.6 with the pixel below).
+  // two-pixel mottle was white noise, MM6's stone correlates 0.6 with the pixel below), laid
+  // on the bell's own grid (HUD critic, round 16: read across the crown's width, the bell
+  // fell on twelve cells instead of eight and went darker and busier).
   const fr = die(27 * 7 + h);
-  const gw = (w >> 2) + 2;
+  const gw = (bw >> 2) + 2;
   const gh = Math.floor(h / 6) + 2;
   const grid = Array.from({ length: gw * gh }, () => (fr() + fr() + fr() - 1.5) * 2);
   const smooth = (t: number): number => t * t * (3 - 2 * t);
@@ -1456,25 +1487,28 @@ function paintAcanthus(w: number, h: number): HTMLCanvasElement {
     const bottom0 = cell(x0, y0 + 1) * (1 - fx) + cell(x0 + 1, y0 + 1) * fx;
     return 22 * (top0 * (1 - fy) + bottom0 * fy);
   };
+  // One base of 88, the crown's too (HUD critic, round 16: its 72 read as a dark slab; the
+  // leaves light it now).
+  const base = 88;
   for (let y = 3; y < neck; y++)
     for (let x = 0; x < w; x++) {
       if (!inside[y * w + x]) continue;
-      const base = y < 7 && (x < off + 2 || x >= w - off - 2) ? 72 : 88;
       const l =
         base * (1 - (0.18 * (y - 3)) / 24) +
-        field(x, y) -
+        field(Math.max(0, x - off), y) -
         10 * (x / Math.max(1, w - 1) - 0.5) +
         (rr() - 0.5) * 6;
       grey(x, y, l, [1, 0.94, 0.91]);
     }
   // The curls: twenty short hooks of three to five pixels hanging down, a pixel wide, each lit
-  // three pixels up its upper left (never over 160).
+  // three pixels up its upper left (never over 160); no more, now the leaves cover the crown
+  // (HUD critic, round 16: twenty-four of twenty-eight started in the bell and darkened it).
   const dark = (): Rgb => (rr() < 0.6 ? [24, 20, 16] : [33, 32, 33]);
   const lit = (x: number, y: number, v: number): void => {
     if (y >= 3 && x >= 0 && inside[y * w + x] && d[(y * w + x) * 4]! > 60)
       grey(x, y, v, [1, 0.96, 0.93]);
   };
-  for (let k = 0; k < 28 && neck > 4; k++) {
+  for (let k = 0; k < 20 && neck > 4; k++) {
     let y = 3 + rr() * Math.min(21, neck - 4);
     let x = w / 2 + (rr() * 2 - 1) * Math.max(0, half(Math.floor(y)) - 1);
     let a = Math.PI / 2 + (rr() - 0.5) * 1.4;
@@ -1516,13 +1550,41 @@ function paintAcanthus(w: number, h: number): HTMLCanvasElement {
     put(tx, y + 2 + drop, [33, 32, 33]);
     for (let j = 0; j < 2; j++) if (rr() < 0.6) put(edge - side * j, y + 2, sky, 0);
   }
-  // A scroll curling down at each end of the crown, as MM6's (HUD critic, round 15).
-  const hook = ['  ###   ', ' ##oo#  ', '##o++#= ', '#o#==##=', '#o#  ## ', '##o#    ', ' ###    '];
+  // The crown's leaves (HUD critic, round 16: MM6's crown is lit leaves, 72 with a fifth over
+  // 110, ours was a dark mass of 54): heads two or three pixels wide on rows 3 and 4 or 4 and
+  // 5, darkening to the right, one to three pixels apart, each shadowed a pixel down and right.
+  for (let x = 5 + Math.floor(rr() * 2); x < w - 6;) {
+    const hw = 2 + (rr() < 0.45 ? 1 : 0);
+    const y0 = rr() < 0.55 ? 3 : 4;
+    const v = 122 + rr() * 24;
+    for (let j = 0; j < hw && x + j < w - 5; j++) {
+      grey(x + j, y0, v - 5 * j, [1, 0.96, 0.93]);
+      grey(x + j, y0 + 1, (v - 5 * j) * 0.84, [1, 0.96, 0.93]);
+      if (j < hw - 1 || rr() < 0.5) put(x + j + 1, y0 + 2, dark());
+    }
+    x += hw + 1 + Math.floor(rr() * 3);
+  }
+  // Their underside hanging below them, between the scroll and the bell at each end (HUD
+  // critic, round 16: MM6's two rows under the leaves average 25, ours were 42).
+  const under: [number, number, number][] = [
+    [5, 7, 40],
+    [6, 7, 28],
+    [7, 7, 52],
+    [8, 7, 24],
+    [9, 7, 36],
+    [6, 8, 26],
+    [8, 8, 30],
+  ];
+  for (const [x, y, l] of under) {
+    grey(x, y, l, [1, 0.95, 0.92]);
+    grey(w - 1 - x, y, l, [1, 0.95, 0.92]);
+  }
+  // A scroll curling down at each end of the crown, as MM6's (HUD critic, round 15), open on
+  // a two-pixel stroke with no light inside (HUD critic, round 16: closed, it read as a "6").
+  const hook = ['##   ', '##   ', '###  ', ' ####', '   ##', '   #=', '   =#', '    #'];
   const ink: Record<string, Rgb> = {
     '#': [24, 20, 16],
     '=': [41, 40, 41],
-    '+': [96, 92, 88],
-    o: [146, 140, 134],
   };
   hook.forEach((row, i) => {
     for (let x = 0; x < row.length; x++) {
@@ -1566,21 +1628,8 @@ function paintAcanthus(w: number, h: number): HTMLCanvasElement {
     }
   });
   // MM6's collar: eleven rows in five bands.
-  const bands: Rgb[] = [
-    [192, 172, 122],
-    [170, 147, 92],
-    [170, 147, 92],
-    [170, 147, 92],
-    [170, 147, 92],
-    [175, 154, 101],
-    [175, 154, 101],
-    [175, 154, 101],
-    [175, 154, 101],
-    [190, 173, 123],
-    [199, 184, 139],
-  ];
   for (let j = 0; j < collar; j++) {
-    const [r, gr, b] = bands[Math.min(bands.length - 1, j)]!;
+    const [r, gr, b] = COLLAR[Math.min(COLLAR.length - 1, j)]!;
     for (let x = 0; x < w; x++) {
       if (x < m || x >= m + shaft) {
         put(x, top + j, sky, 0);
@@ -1619,6 +1668,12 @@ export function paintAlcove(w: number, h: number, marble: HTMLCanvasElement): HT
   const wood = 6;
   g.fillStyle = '#100e0a';
   g.fillRect(0, 6, w, h - 6 - wood);
+  // The frame falls into the recess over four columns at the left (HUD critic, round 16:
+  // MM6's runs 165, 107, 57, 33, 16 into its recess, where ours stepped from 170 to 14).
+  ['#6b6563', '#393431', '#212021', '#101010'].forEach((tone, x) => {
+    g.fillStyle = tone;
+    g.fillRect(x, 6, 1, h - 6 - wood);
+  });
   g.fillStyle = '#000000';
   g.fillRect(0, 3, w, 3);
   g.fillStyle = '#392410';
@@ -1637,9 +1692,10 @@ export function paintAlcove(w: number, h: number, marble: HTMLCanvasElement): HT
  * The rest button, as MM6's oval (HUD critic, round 12): twenty-two by forty (aspect 0.55)
  * in its box, an (8,8,0) outline; a three-pixel bevel whose light follows the angle round the
  * oval (bright at the top, dark at the left and lower left), a one-pixel (214,178,99) rim
- * light at the lower right; the body (125,103,62) falling from 150 near the top to 60 at
- * the foot with a three-pixel mottle and a die; a (247,247,214) specular near the top; the
- * moon near black, a third of the width in radius, a warm edge at its lower right. RGB565.
+ * light at the lower right; the body (125,103,62) lit near the top, dark past the middle and
+ * lit again before the foot, with a three-pixel mottle and a die; a (247,247,214) specular
+ * near the top; the moon near black, a third of the width in radius, a warm edge at its
+ * lower right. RGB565.
  */
 export function paintCartouche(w: number, h: number, pressed: boolean): HTMLCanvasElement {
   const [c, g] = canvas(w, h);
@@ -1657,16 +1713,20 @@ export function paintCartouche(w: number, h: number, pressed: boolean): HTMLCanv
   const bevel = [85, 50, 60, 130, 130, 105, 70, 60, 50, 60, 90, 95, 85];
   const rowLum = (t: number): number => {
     // MM6's polished brass (HUD critic, round 15): darker at the very top, brightest a fifth
-    // of the way down, falling to 42.
+    // of the way down; then its reflected horizon (HUD critic, round 16: MM6's four buttons
+    // all dip to 51-82 at 0.45 to 0.65 of the height and rise to 104-113 at 0.7 to 0.85,
+    // where ours fell the whole way): down to 62, a second lit band of 128, then 48.
     const pts: [number, number][] = [
       [0, 96],
       [0.1, 124],
       [0.19, 146],
-      [0.3, 128],
-      [0.5, 104],
-      [0.7, 86],
-      [0.9, 50],
-      [1, 42],
+      [0.32, 124],
+      [0.45, 84],
+      [0.57, 62],
+      [0.7, 100],
+      [0.8, 128],
+      [0.9, 84],
+      [1, 48],
     ];
     for (let k = 1; k < pts.length; k++) {
       if (t <= pts[k]![0]) {
@@ -1675,7 +1735,7 @@ export function paintCartouche(w: number, h: number, pressed: boolean): HTMLCanv
         return l0 + ((t - t0) / (t1 - t0)) * (l1 - l0);
       }
     }
-    return 42;
+    return 48;
   };
   const lift = pressed ? 12 : 0;
   for (let y = 0; y < oh; y++) {
@@ -1701,9 +1761,10 @@ export function paintCartouche(w: number, h: number, pressed: boolean): HTMLCanv
         if (inOval(x, y, ow, oh, 3) && deg >= 310 && deg <= 340) col = [214, 178, 99];
         if (inOval(x, y, ow, oh, 3) && deg >= 95 && deg <= 165) col = [231, 219, 156];
       } else {
-        // The tones stretched a half again about 100, a wider die (HUD critic, round 15:
-        // MM6's brass spans more, with fewer equal neighbours).
-        let lum = rowLum(y / Math.max(1, oh - 1)) + n3[y * ow + x]! * 20 + (r() - 0.5) * 30;
+        // The tones stretched a half again about 100 (HUD critic, round 15: MM6's brass spans
+        // more, with fewer equal neighbours) on a die of 20 (HUD critic, round 16: 30 sanded
+        // it, half its pixels over twelve off their neighbours' mean, MM6's 35 to 46%).
+        let lum = rowLum(y / Math.max(1, oh - 1)) + n3[y * ow + x]! * 20 + (r() - 0.5) * 20;
         lum = 100 + (lum - 100) * 1.45;
         col = [125 * (lum / 106), 103 * (lum / 106), 62 * (lum / 106)];
         col = [col[0] + lift, col[1] + lift, col[2] + lift];

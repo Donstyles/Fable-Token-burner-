@@ -184,9 +184,12 @@
 }
 .hud-bar {
   position: relative;
-  /* Four UI pixels, nearer MM6's slender rods at the band's scale (HUD critic, round 14). */
+  /* Four UI pixels, nearer MM6's slender rods at the band's scale (HUD critic, round 14).
+     Forty tall, the track thirty between the caps' five, so the slot's light lip stands over
+     three rows of marble before the band's dark foot, as MM6's does (HUD critic, round 16:
+     at forty-four the foot covered the lip). */
   width: 6px;
-  height: 66px;
+  height: 60px;
   background: var(--paint) center / 100% 100% no-repeat;
   image-rendering: pixelated;
 }
