@@ -521,6 +521,15 @@
       "notes": "batch 005; 4161 triangles, 10 clips"
     },
     {
+      "id": "portrait-alric-neutral",
+      "kind": "portrait",
+      "source": "The owner's ChatGPT image pipeline/inbox/portraits/alric/neutral.png, its head box cut to the band's oval at 168 by 240, three pixels to the UI pixel (tools/portrait.ts)",
+      "licence": "The owner's ChatGPT image (OpenAI's terms: the output is the user's): owner holds full rights",
+      "files": ["assets/portraits/alric/neutral.png"],
+      "date": "2026-10-18",
+      "notes": "head box {\"left\":124,\"top\":46,\"width\":782,\"height\":1117} of pipeline/inbox/portraits/alric/neutral.png"
+    },
+    {
       "id": "prop-cart",
       "kind": "prop",
       "source": "Meshy text-to-3D (smart topology, preview then refine)",

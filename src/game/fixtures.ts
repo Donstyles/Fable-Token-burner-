@@ -11,7 +11,7 @@ export function knightInput(): CreationInput {
   return {
     ...defaultCreation('knight'),
     name: 'Alric',
-    portrait: 'm01',
+    portrait: 'alric',
     stats: stats({
       might: 32,
       intellect: 7,

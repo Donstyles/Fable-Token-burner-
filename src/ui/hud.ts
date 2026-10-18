@@ -1,9 +1,10 @@
 /**
  * The HUD (DESIGN.md 9): MM6's marble band along the foot of the view. Four gold oval frames
- * hold the party, each with the member's class sigil painted in gold pixels (paint.ts
- * `sigil-<class>`; portrait art comes from the owner later and drops into the same frame), a
- * green hit point tube and a blue spell point tube standing beside the frame, and a condition
- * gem above them. A tap on a frame selects that member; a second tap opens their sheet.
+ * hold the party, each with the member's portrait (the owner's, cut by tools/portrait.ts,
+ * DESIGN.md 12.2) or, until theirs comes, their class sigil painted in gold pixels (paint.ts
+ * `sigil-<class>`), a green hit point tube and a blue spell point tube standing beside the
+ * frame, and a condition gem above them. A tap on a frame selects that member; a second tap
+ * opens their sheet.
  */
 import type { Party } from '../game/party';
 import { maxSp } from '../game/character';
@@ -13,6 +14,18 @@ import { el } from './dom';
 import { installPaint, installPaintedButtons, paintNumerals } from './paint';
 import { installPixelText, PX } from './pixel-text';
 import './hud.css';
+
+/** The portraits cut into assets/portraits/<appearance>/<expression>.png, by path. */
+const PORTRAITS = import.meta.glob('../../assets/portraits/*/*.png', {
+  eager: true,
+  query: '?url',
+  import: 'default',
+}) as Record<string, string>;
+
+/** An appearance's portrait in an expression, if it has been cut. */
+function portraitOf(appearance: string, expression = 'neutral'): string | null {
+  return PORTRAITS[`../../assets/portraits/${appearance}/${expression}.png`] ?? null;
+}
 
 export interface Hud {
   update(now: number): void;
@@ -104,7 +117,12 @@ export function createHud(parent: HTMLElement, party: Party, hooks: HudHooks): H
     const frame = el('div', 'hud-frame');
     frame.dataset['paint'] = 'ring';
     const cameo = el('div', 'hud-cameo');
-    cameo.dataset['paint'] = `sigil-${m.character?.classId ?? 'knight'}`;
+    const face = m.character ? portraitOf(m.character.portrait) : null;
+    if (face) {
+      // Three image pixels to the UI pixel, smooth, in the ring's opening (hud.css).
+      cameo.classList.add('portrait');
+      cameo.style.setProperty('--face', `url("${face}")`);
+    } else cameo.dataset['paint'] = `sigil-${m.character?.classId ?? 'knight'}`;
     frame.appendChild(cameo);
     const bars = el('div', 'hud-bars');
     const gem = el('div', 'hud-gem good');

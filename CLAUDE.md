@@ -30,6 +30,9 @@ anything. Both are the source of truth; update them when a decision changes.
   `build`, `build:dev` or `dev`; CI and Pages do)
 - `npm run textures` – fetch the CC0 role textures listed in
   `pipeline/textures.json`
+- `npm run portrait -- <appearance> [<expression>...]` – cut the owner's
+  portraits in `pipeline/inbox/portraits/<appearance>/` to the band's oval
+  (head box in `pipeline/portraits.json`)
 - `npm run asset -- <command>` – asset pipeline: `manifest`, `validate`,
   `card <kind> <id> "<subject>"`, `batch new <name> <id>:<height-m>[:civilian]|show|approve`, `run <nnn> [--dry-run] [--force]` (runs only a batch the owner approved by number)
 

@@ -147,12 +147,19 @@
   image-rendering: pixelated;
 }
 .hud-cameo {
-  /* The class sigil in gold pixels (paint.ts `sigil-<class>`) until the portraits come. */
+  /* The member's portrait in the ring's opening (tools/portrait.ts), or their class sigil in
+     gold pixels (paint.ts `sigil-<class>`) until their portraits come. */
   position: absolute;
   inset: 0;
   z-index: 1;
   background: var(--paint) center / 100% 100% no-repeat;
   image-rendering: pixelated;
+}
+/* A portrait (tools/portrait.ts): 56 by 80 UI pixels at three image pixels each, the ring's
+   opening inside its five bands, smooth rather than pixel for pixel: the phone's own pixel. */
+.hud-cameo.portrait {
+  background: var(--face) 5px 5px / 56px 80px no-repeat;
+  image-rendering: auto;
 }
 .hud-bars {
   position: relative;
