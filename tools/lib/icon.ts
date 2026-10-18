@@ -1,31 +1,33 @@
 /**
  * Spell icons from Meshy pictures (DESIGN.md 16.22), built as MM6 built its icons: one
  * bitmap of the subject on a parchment oval (icon critic, pass 1: 68 by 52, (184,172,150),
- * the same oval as an empty slot), the subject's soft edge and glow running into the
+ * the same oval as an empty slot; drawn half again as large since the shell's pixel went
+ * from one and a half CSS pixels to one, so the icon keeps its size on the page), the
+ * subject's soft edge and glow running into the
  * parchment, transparent only outside the oval where the subject is under half there, 255
  * colours. A picture generated on a plain ground is keyed by its distance from the ground's
  * colour and its tones mapped onto the parchment (icon critic, pass 2: the ground to 173,
  * black, 60 and white kept), so the subject sits darker than its oval as MM6's do; a pure
  * light effect keeps its own exposure. A picture with an alpha channel (Meshy's background
- * removal) is un-premultiplied and its haze dropped. The subject is fitted 68 by 50 in the
- * oval (a bolt wider, up to 84, the page's place) and the whole box is taken from the
+ * removal) is un-premultiplied and its haze dropped. The subject is fitted 102 by 75 in the
+ * oval (a bolt wider, up to 126, the page's place) and the whole box is taken from the
  * picture around it, so a glow runs on to the oval's edge; the parchment carries a mottle of
  * four levels. A subject darker than MM6's is lifted, never darkened.
  */
 import sharp from 'sharp';
 
 /** The smallest icon box, in UI pixels; a wide subject widens it. */
-export const ICON_SIZE = { width: 72, height: 54 } as const;
-/** MM6's oval in every icon and every empty slot. */
-export const ICON_OVAL = { width: 68, height: 52 } as const;
+export const ICON_SIZE = { width: 108, height: 81 } as const;
+/** MM6's oval in every icon and every empty slot (paint.ts `paintEllipse`), half again. */
+export const ICON_OVAL = { width: 102, height: 78 } as const;
 /** MM6's parchment inside the oval: flat, about four levels either way. */
 export const ICON_PARCHMENT = [184, 172, 150] as const;
 /**
- * The subject's fit (icon critic, pass 2: MM6's subjects span 68 by 49); wide ones overhang
- * the oval, at most to the place's 84 pixels (screens critic, round 13: a 100-pixel bolt ran
- * into its neighbour).
+ * The subject's fit (icon critic, pass 2: MM6's subjects span 68 by 49), half again; wide
+ * ones overhang the oval, at most to the place's 126 pixels (screens critic, round 13: a bolt
+ * of 100 old pixels ran into its neighbour).
  */
-export const ICON_FIT = { width: 68, height: 50, wide: 84 } as const;
+export const ICON_FIT = { width: 102, height: 75, wide: 126 } as const;
 
 export interface SubjectStats {
   /** Mean luma (Rec. 601) of the subject's pixels, its 5th percentile, its share under 50. */
@@ -546,7 +548,7 @@ export async function postProcessIcon(
   if (x1 < 0) throw new Error(`${input}: no subject left after the matte`);
   const bw = x1 - x0 + 1;
   const bh = y1 - y0 + 1;
-  // The fit: 68 by 50 in the oval; wider than the oval only for a subject much wider than
+  // The fit: 102 by 75 in the oval; wider than the oval only for a subject much wider than
   // tall (a bolt), as 36 of MM6's 99 are.
   const aspect = bw / bh;
   let scale: number;

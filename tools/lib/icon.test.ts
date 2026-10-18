@@ -4,6 +4,7 @@ import { join } from 'node:path';
 import sharp from 'sharp';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import {
+  ICON_OVAL,
   ICON_PARCHMENT,
   ICON_SIZE,
   lift,
@@ -12,6 +13,11 @@ import {
   postProcessIcon,
   subjectStats,
 } from './icon';
+
+/** The oval's left rim, the icon's centre column and its middle row. */
+const left = (ICON_SIZE.width - ICON_OVAL.width) / 2;
+const centre = ICON_SIZE.width / 2;
+const middle = Math.floor(ICON_SIZE.height / 2);
 
 let dir = '';
 beforeAll(async () => {
@@ -75,12 +81,12 @@ describe('spell icon post-process', () => {
     for (let i = 3; i < data.length; i += 4) expect([0, 255]).toContain(data[i]);
     expect(at(0, 0)[3]).toBe(0);
     // The rim is parchment, give or take its four-level mottle.
-    const rim = at(2, 27);
+    const rim = at(left, middle);
     for (let c = 0; c < 3; c++)
       expect(Math.abs(rim[c]! - ICON_PARCHMENT[c]!)).toBeLessThanOrEqual(5);
     expect(rim[3]).toBe(255);
     // The disc sits in the middle.
-    expect(at(36, 27)[0]).toBeGreaterThan(200);
+    expect(at(centre, middle)[0]).toBeGreaterThan(200);
   });
 
   it('keys a picture on a plain background and keeps its glow', async () => {
@@ -157,8 +163,8 @@ describe('icon parchment key', () => {
     await postProcessIcon(input, output, { lift: false });
     const { data, width } = await pixels(output);
     const at = (x: number, y: number): number => data[(y * width + x) * 4 + 3]!;
-    expect(at(4, 27)).toBe(0);
-    expect(at(36, 27)).toBe(255);
+    expect(at(left + 2, middle)).toBe(0);
+    expect(at(centre, middle)).toBe(255);
   });
 });
 
