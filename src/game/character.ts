@@ -6,10 +6,12 @@
  * Bodybuilding skill × rank multiplier × class factor; spell points likewise from the class's
  * magic statistic(s) and Meditation (MM6-GAPS.md 4, RPGC);
  * attack bonus = Accuracy bonus + weapon skill (Master doubles the skill); melee damage adds the
- * Might bonus; armour class = Speed bonus + equipment. Recovery is the weapon's seconds plus the
- * armour penalty, less 0.05 s per point of Speed bonus and per skill point from Expert rank,
- * never under half a second. Death as MM6 (MM6-GAPS.md 11, MMW): unconscious below 0 hit points,
- * dead below minus the Endurance score.
+ * Might bonus; armour class = Speed bonus + equipment. Recovery is MM6's sum in its units: the
+ * weapon type's base plus worn armour, less the Speed effect and, from Expert in Sword, Axe or
+ * Bow, the skill; at least 30 for melee, 0 for bows; a struck member recovers 20 − Endurance
+ * effect (MM6-GAPS.md 8, GF-M). `recoverySec` converts at 60 units a second (ours, DESIGN 14.2).
+ * Death as MM6 (MM6-GAPS.md 11, MMW): unconscious below 0 hit points, dead below minus the
+ * Endurance score.
  */
 import { baseHp, baseSp, classDef, type ClassId } from './classes';
 import {
@@ -31,7 +33,14 @@ import {
   rangedWeapon,
 } from './inventory';
 import type { Dice } from './rng';
-import { skillBonus, skillLevel, skillRank, type SkillSet } from './skills';
+import {
+  rankAtLeast,
+  skillBonus,
+  type SkillId,
+  skillLevel,
+  skillRank,
+  type SkillSet,
+} from './skills';
 import type { SpellId } from './spells';
 import { statBonus, type Stats } from './stats';
 
@@ -120,14 +129,46 @@ export function armorClass(c: Character): number {
   return Math.max(0, statBonus(currentStats(c).speed) + equipmentArmor(c.equipment, c.skills));
 }
 
-export function recoverySec(c: Character, ranged = false): number {
+/**
+ * MM6's recovery units in one real second. MM6-GAPS.md 8 leaves the rate unverified: MMX's tick
+ * is 1/128 s, and MM7's engine (OpenEnroth) multiplies recovery by 2.1333 in real time, which
+ * makes 60 a second; ours until MM6 is measured.
+ */
+export const RECOVERY_UNITS_PER_SECOND = 60;
+
+/** Melee recovers no faster than this; bows have no floor in real time (GF-M). */
+export const MIN_MELEE_RECOVERY = 30;
+
+/** Weapon skills whose Expert rank takes the skill off recovery (MM6-GAPS.md 4, RPGC; GF-M). */
+const RECOVERY_SKILLS: ReadonlySet<SkillId> = new Set<SkillId>(['sword', 'axe', 'bow']);
+
+/** Attack recovery in MM6's units: weapon + armour − Speed effect − skill (MM6-GAPS.md 8). */
+export function recoveryUnits(c: Character, ranged = false): number {
   const weapon = ranged ? rangedWeapon(c.equipment) : meleeWeapon(c.equipment);
   if (!weapon) return Infinity;
-  let t = weapon.recoverySec + equipmentRecoveryPenalty(c.equipment, c.skills);
-  t -= 0.05 * statBonus(currentStats(c).speed);
+  let t = weapon.recovery + equipmentRecoveryPenalty(c.equipment, c.skills);
+  t -= statBonus(currentStats(c).speed);
   const skill = weapon.def?.skill;
-  if (skill && skillRank(c.skills, skill) !== 'normal') t -= 0.05 * skillLevel(c.skills, skill);
-  return Math.max(0.5, t);
+  const rank = skill ? skillRank(c.skills, skill) : null;
+  if (skill && rank && RECOVERY_SKILLS.has(skill) && rankAtLeast(rank, 'expert')) {
+    t -= skillLevel(c.skills, skill);
+  }
+  return Math.max(ranged ? 0 : MIN_MELEE_RECOVERY, t);
+}
+
+/** Attack recovery in real seconds, for the runtime. */
+export function recoverySec(c: Character, ranged = false): number {
+  return recoveryUnits(c, ranged) / RECOVERY_UNITS_PER_SECOND;
+}
+
+/** Recovery from a blow for an Endurance score: 20 − its effect, at least 0 (GF-M). */
+export function hitRecovery(endurance: number): number {
+  return Math.max(0, 20 - statBonus(endurance));
+}
+
+/** The recovery a struck character suffers, in MM6's units (MM6-GAPS.md 3, 8, GF-M). */
+export function hitRecoveryUnits(c: Character): number {
+  return hitRecovery(currentStats(c).endurance);
 }
 
 /** Alive as a body: not dead, stoned or eradicated. */

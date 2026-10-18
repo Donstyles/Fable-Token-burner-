@@ -1,9 +1,11 @@
 /**
  * The party in combat (DESIGN.md 14.2): four members, one selected; tapping a monster attacks
  * with the selected member if ready, then the selection advances to the next ready member,
- * MM6-style. Recovery is per member. A member is backed either by a full `Character` sheet
- * (creation, levels, equipment and conditions drive its numbers and its hit points live on the
- * sheet) or, for test data, by a plain `MemberDef`; `TEST_PARTY` uses the latter.
+ * MM6-style. Recovery is per member; a struck member also recovers (20 − Endurance effect, GF-M)
+ * and, if selected, hands the selection on (GF-P) when the runtime passes the time. A member is
+ * backed either by a full `Character` sheet (creation, levels, equipment and conditions drive its
+ * numbers and its hit points live on the sheet) or, for test data, by a plain `MemberDef`;
+ * `TEST_PARTY` uses the latter.
  */
 import {
   armorClass as characterArmor,
@@ -12,9 +14,13 @@ import {
   type Character,
   damageCharacter,
   damageDice,
+  hitRecovery,
+  hitRecoveryUnits,
   isCharacter,
   isConscious,
   maxHp,
+  MIN_MELEE_RECOVERY,
+  RECOVERY_UNITS_PER_SECOND,
   recoverySec as characterRecovery,
 } from './character';
 import { resolveAttack, type AttackResult } from './combat';
@@ -29,7 +35,7 @@ export interface MemberDef {
   /** Weapon skill ranks, added to the attack bonus. */
   meleeSkill: number;
   weapon: Dice;
-  /** Seconds until the member can act again after an attack, before the speed bonus. */
+  /** Seconds until the member can act again after an attack, before the Speed effect. */
   recoverySec: number;
   /** Armour value, added to the speed bonus for armour class. */
   armor: number;
@@ -124,10 +130,20 @@ export class PartyMember {
     return this.def.weapon;
   }
 
-  /** Recovery shortens with speed; never under half a second. */
+  /** Seconds of recovery after an attack; test data takes MM6's Speed term and melee floor. */
   get recoverySec(): number {
     if (this.character) return characterRecovery(this.character);
-    return Math.max(0.5, this.def.recoverySec - 0.05 * statBonus(this.def.stats.speed));
+    const units = this.def.recoverySec * RECOVERY_UNITS_PER_SECOND;
+    const speed = statBonus(this.def.stats.speed);
+    return Math.max(MIN_MELEE_RECOVERY, units - speed) / RECOVERY_UNITS_PER_SECOND;
+  }
+
+  /** Seconds of recovery a blow costs: 20 − Endurance effect in MM6's units (GF-M). */
+  get hitRecoverySec(): number {
+    const units = this.character
+      ? hitRecoveryUnits(this.character)
+      : hitRecovery(this.def.stats.endurance);
+    return units / RECOVERY_UNITS_PER_SECOND;
   }
 
   /** The chance an action fails before it starts (Cursed). */
@@ -140,10 +156,14 @@ export class PartyMember {
     return this.character ? canActNow(this.character) : true;
   }
 
-  /** Damage at game minute `gameMinute`; a character sheet handles falling and dying. */
-  takeDamage(amount: number, gameMinute = 0): void {
+  /**
+   * Damage at game minute `gameMinute`; a character sheet handles falling and dying. With the
+   * simulated time `now`, the blow also sets the member's recovery to at least its hit recovery.
+   */
+  takeDamage(amount: number, gameMinute = 0, now?: number): void {
     if (this.character) damageCharacter(this.character, amount, gameMinute);
     else this.legacyHp -= Math.max(0, amount);
+    if (now !== undefined) this.readyAt = Math.max(this.readyAt, now + this.hitRecoverySec);
   }
 }
 
@@ -208,12 +228,18 @@ export class Party {
     }
   }
 
-  /** Damage to one member; the selection leaves a member who drops. */
-  takeDamage(index: number, amount: number, gameMinute = 0): void {
+  /**
+   * Damage to one member at game minute `gameMinute`; the selection leaves a member who drops.
+   * With the simulated time `now` the blow costs hit recovery, and a selected member it leaves
+   * recovering hands the selection to the next ready one (MM6-GAPS.md 8, GF-M, GF-P).
+   */
+  takeDamage(index: number, amount: number, gameMinute = 0, now?: number): void {
     const m = this.members[index];
     if (!m) return;
-    m.takeDamage(amount, gameMinute);
-    if (!m.alive && this.selected === index) this.advance(0, index);
+    m.takeDamage(amount, gameMinute, now);
+    if (this.selected !== index) return;
+    if (!m.alive) this.advance(now ?? 0, index);
+    else if (now !== undefined && !m.isReady(now)) this.advance(now, index);
   }
 
   /** A living member chosen by the attacker, uniformly. */

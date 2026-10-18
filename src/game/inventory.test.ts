@@ -21,7 +21,15 @@ import {
   RING_SLOTS,
   unequip,
 } from './inventory';
-import { createItem, ITEM_IDS, ITEMS, itemDef } from './items';
+import {
+  ARMOR_RECOVERY,
+  createItem,
+  ITEM_IDS,
+  ITEMS,
+  UNARMED_RECOVERY,
+  WEAPON_RECOVERY,
+  weaponRecovery,
+} from './items';
 import type { SkillSet } from './skills';
 
 describe('item table', () => {
@@ -35,7 +43,7 @@ describe('item table', () => {
       if (def.kind === 'weapon') {
         expect(def.damage).toBeDefined();
         expect(def.skill).toBeDefined();
-        expect(def.recoverySec).toBeGreaterThan(0);
+        expect(Object.keys(WEAPON_RECOVERY)).toContain(def.skill);
       }
       if (def.kind === 'armor' || def.kind === 'shield') {
         expect(def.armor).toBeGreaterThan(0);
@@ -43,6 +51,28 @@ describe('item table', () => {
       }
       if (def.kind === 'potion' || def.kind === 'scroll') expect(def.use).toBeDefined();
     }
+  });
+});
+
+describe('recovery by type (MM6-GAPS.md 8, GF-M)', () => {
+  it('gives each weapon type and armour type MM6’s recovery', () => {
+    expect(WEAPON_RECOVERY).toEqual({
+      staff: 100,
+      sword: 90,
+      dagger: 60,
+      axe: 100,
+      spear: 80,
+      bow: 100,
+      mace: 80,
+    });
+    expect(ARMOR_RECOVERY).toEqual({ shield: 10, leather: 10, chain: 20, plate: 30 });
+    expect(UNARMED_RECOVERY).toBe(100);
+    expect(weaponRecovery(ITEMS['short-sword'])).toBe(90);
+    expect(weaponRecovery(ITEMS['long-sword'])).toBe(90);
+    expect(weaponRecovery(null)).toBe(100);
+    const eq = createEquipment();
+    equipItem(eq, createItem('chain-mail'), { chain: { level: 1, rank: 'normal' } });
+    expect(equipmentRecoveryPenalty(eq, { chain: { level: 1, rank: 'normal' } })).toBe(20);
   });
 });
 
@@ -145,7 +175,7 @@ describe('equipment', () => {
     equipItem(eq, createItem('helmet'), skills);
     // Leather 4 + expert 3×1, shield 4 + 2×1, helmet 2.
     expect(equipmentArmor(eq, skills)).toBe(4 + 3 + 4 + 2 + 2);
-    expect(equipmentRecoveryPenalty(eq, skills)).toBeCloseTo(itemDef('shield').recoveryPenaltySec!);
+    expect(equipmentRecoveryPenalty(eq, skills)).toBe(ARMOR_RECOVERY.shield);
     const broken = createItem('helmet');
     broken.broken = true;
     eq.helmet = broken;

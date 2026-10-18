@@ -1,8 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import { afflict } from './conditions';
 import { testCharacters } from './fixtures';
-import { Party, PartyMember } from './party';
+import { Party, PartyMember, TEST_PARTY } from './party';
 import { newGame } from './state';
+import { statBonus } from './stats';
 
 function outfittedParty() {
   const r = newGame(testCharacters(), {
@@ -24,7 +25,8 @@ describe('character-backed members', () => {
     expect(m.attackBonus).toBe(6);
     expect(m.damage).toEqual({ count: 3, sides: 3, bonus: 7 });
     expect(m.armorClass).toBe(9);
-    expect(m.recoverySec).toBeCloseTo(1.05);
+    // A long sword's 90 and leather's 10, less the Speed effect, at 60 units a second.
+    expect(m.recoverySec).toBeCloseTo((90 + 10 - statBonus(21)) / 60);
     expect(m.def.meleeSkill).toBe(1);
     expect(m.def.armor).toBe(4);
     expect(m.isReady(0)).toBe(true);
@@ -51,6 +53,27 @@ describe('character-backed members', () => {
     expect(party.readyIndex(0)).toBe(2);
   });
 
+  it('costs a struck member its hit recovery and hands the selection on (GF-M, GF-P)', () => {
+    const chars = outfittedParty();
+    const party = new Party(chars);
+    const knight = party.members[0]!;
+    expect(knight.hitRecoverySec).toBeCloseTo((20 - statBonus(chars[0]!.stats.endurance)) / 60);
+    party.takeDamage(0, 1, 0, 10);
+    expect(knight.readyAt).toBeCloseTo(10 + knight.hitRecoverySec);
+    expect(knight.isReady(10)).toBe(false);
+    expect(party.selected).toBe(1);
+    // A longer recovery already running is kept.
+    party.members[1]!.readyAt = 20;
+    party.takeDamage(1, 1, 0, 10);
+    expect(party.members[1]!.readyAt).toBe(20);
+    expect(party.selected).toBe(2);
+    // Without the time, as the runtime calls it today, a blow costs no recovery.
+    party.takeDamage(3, 1);
+    expect(party.members[3]!.readyAt).toBe(0);
+    const legacy = new PartyMember(TEST_PARTY[0]!);
+    expect(legacy.hitRecoverySec).toBeCloseTo((20 - statBonus(15)) / 60);
+  });
+
   it('fails half of a cursed member’s attacks and still spends the recovery', () => {
     const chars = outfittedParty();
     afflict(chars[0]!.conditions, 'cursed', 0);
@@ -58,7 +81,7 @@ describe('character-backed members', () => {
     const dummy = { armorClass: 0, taken: 0, takeDamage: (n: number) => void (dummy.taken += n) };
     const failed = party.attack(dummy, 0, () => 0.1);
     expect(failed?.result).toEqual({ hit: false, damage: 0, chance: 0 });
-    expect(party.members[0]!.readyAt).toBeCloseTo(1.05);
+    expect(party.members[0]!.readyAt).toBeCloseTo((90 + 10 - statBonus(21)) / 60);
     expect(dummy.taken).toBe(0);
     party.members[0]!.readyAt = 0;
     party.selected = 0;

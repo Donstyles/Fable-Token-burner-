@@ -3,13 +3,14 @@
  * grid, a value in gold and, by kind, weapon dice with the skill that wields them, an armour
  * value with the skill that wears it, or a use for potions and scrolls. The starter set covers
  * the slice: dice and values follow the MM6 item table as community lists give it (dagger 2d2,
- * long sword 3d3, staff 2d4, long bow 3d3, leather +4, chain +8); recovery times in seconds are
- * ours, as DESIGN 14.2 notes for all recovery. Simplifications: no enchantments or stat
- * requirements yet; the paper-doll art ids come with the Phase 4 doll pipeline.
+ * long sword 3d3, staff 2d4, long bow 3d3, leather +4, chain +8). Recovery is MM6's by weapon and
+ * armour type, in MM6's units (MM6-GAPS.md 8, GF-M), not per item. Simplifications: no
+ * enchantments or stat requirements yet; the paper-doll art ids come with the Phase 4 doll
+ * pipeline.
  */
 import type { ConditionId } from './conditions';
 import type { Dice } from './rng';
-import type { SkillId } from './skills';
+import type { ArmorSkill, SkillId, WeaponSkill } from './skills';
 import type { SpellId } from './spells';
 
 export const ITEM_KINDS = [
@@ -48,11 +49,7 @@ export interface ItemDef {
   damage?: Dice;
   twoHanded?: boolean;
   ranged?: boolean;
-  /** Seconds between attacks before Speed and skill bonuses. */
-  recoverySec?: number;
   armor?: number;
-  /** Seconds added to recovery while worn, lifted by Expert rank in its skill. */
-  recoveryPenaltySec?: number;
   use?: ItemUse;
 }
 
@@ -87,7 +84,6 @@ export const ITEMS: Record<ItemId, ItemDef> = {
     value: 15,
     skill: 'dagger',
     damage: { count: 2, sides: 2 },
-    recoverySec: 0.8,
   },
   'short-sword': {
     id: 'short-sword',
@@ -98,7 +94,6 @@ export const ITEMS: Record<ItemId, ItemDef> = {
     value: 30,
     skill: 'sword',
     damage: { count: 2, sides: 3 },
-    recoverySec: 1.0,
   },
   'long-sword': {
     id: 'long-sword',
@@ -109,7 +104,6 @@ export const ITEMS: Record<ItemId, ItemDef> = {
     value: 50,
     skill: 'sword',
     damage: { count: 3, sides: 3 },
-    recoverySec: 1.2,
   },
   mace: {
     id: 'mace',
@@ -120,7 +114,6 @@ export const ITEMS: Record<ItemId, ItemDef> = {
     value: 50,
     skill: 'mace',
     damage: { count: 2, sides: 4 },
-    recoverySec: 1.1,
   },
   axe: {
     id: 'axe',
@@ -131,7 +124,6 @@ export const ITEMS: Record<ItemId, ItemDef> = {
     value: 50,
     skill: 'axe',
     damage: { count: 3, sides: 2 },
-    recoverySec: 1.3,
   },
   spear: {
     id: 'spear',
@@ -143,7 +135,6 @@ export const ITEMS: Record<ItemId, ItemDef> = {
     skill: 'spear',
     damage: { count: 1, sides: 9 },
     twoHanded: true,
-    recoverySec: 1.1,
   },
   staff: {
     id: 'staff',
@@ -155,7 +146,6 @@ export const ITEMS: Record<ItemId, ItemDef> = {
     skill: 'staff',
     damage: { count: 2, sides: 4 },
     twoHanded: true,
-    recoverySec: 1.3,
   },
   bow: {
     id: 'bow',
@@ -167,7 +157,6 @@ export const ITEMS: Record<ItemId, ItemDef> = {
     skill: 'bow',
     damage: { count: 3, sides: 3 },
     ranged: true,
-    recoverySec: 1.3,
   },
   'leather-armor': {
     id: 'leather-armor',
@@ -178,7 +167,6 @@ export const ITEMS: Record<ItemId, ItemDef> = {
     value: 30,
     skill: 'leather',
     armor: 4,
-    recoveryPenaltySec: 0.1,
   },
   'chain-mail': {
     id: 'chain-mail',
@@ -189,7 +177,6 @@ export const ITEMS: Record<ItemId, ItemDef> = {
     value: 150,
     skill: 'chain',
     armor: 8,
-    recoveryPenaltySec: 0.3,
   },
   shield: {
     id: 'shield',
@@ -200,7 +187,6 @@ export const ITEMS: Record<ItemId, ItemDef> = {
     value: 40,
     skill: 'shield',
     armor: 4,
-    recoveryPenaltySec: 0.1,
   },
   helmet: {
     id: 'helmet',
@@ -279,7 +265,42 @@ export function createItem(id: ItemId, identified = true): ItemInstance {
 
 /** Bare hands, MM6's 1d3. */
 export const UNARMED: Dice = { count: 1, sides: 3 };
-export const UNARMED_RECOVERY_SEC = 0.8;
+
+/** MM6's recovery by weapon type, in MM6's recovery units (MM6-GAPS.md 8, GF-M). */
+export const WEAPON_RECOVERY: Readonly<Record<WeaponSkill, number>> = {
+  staff: 100,
+  sword: 90,
+  dagger: 60,
+  axe: 100,
+  spear: 80,
+  bow: 100,
+  mace: 80,
+};
+
+/** Bare hands recover as slowly as a staff: MM6 has no Unarmed skill (GF-M). */
+export const UNARMED_RECOVERY = 100;
+
+/** Recovery added while armour or a shield is worn, before skill (MM6-GAPS.md 8, GF-M). */
+export const ARMOR_RECOVERY: Readonly<Record<ArmorSkill, number>> = {
+  shield: 10,
+  leather: 10,
+  chain: 20,
+  plate: 30,
+};
+
+/** A weapon's recovery by its type; bare hands for no weapon. */
+export function weaponRecovery(def: ItemDef | null): number {
+  const skill = def?.skill;
+  if (skill && skill in WEAPON_RECOVERY) return WEAPON_RECOVERY[skill as WeaponSkill];
+  return UNARMED_RECOVERY;
+}
+
+/** The recovery a worn piece adds by its type before its skill acts; 0 for most pieces. */
+export function armorRecovery(def: ItemDef): number {
+  const skill = def.skill;
+  if (skill && skill in ARMOR_RECOVERY) return ARMOR_RECOVERY[skill as ArmorSkill];
+  return 0;
+}
 
 export const EQUIPPABLE_KINDS: readonly ItemKind[] = [
   'weapon',

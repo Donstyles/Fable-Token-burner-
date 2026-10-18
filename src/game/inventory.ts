@@ -8,12 +8,13 @@
  * be equipped. Simplification: no second weapon in the off hand (MM6 has none either).
  */
 import {
+  armorRecovery,
   itemDef,
   type ItemDef,
   type ItemInstance,
   UNARMED,
-  UNARMED_RECOVERY_SEC,
   isEquippable,
+  weaponRecovery,
 } from './items';
 import type { Dice } from './rng';
 import { hasSkill, rankIndex, RANK_MULTIPLIER, type SkillSet } from './skills';
@@ -221,15 +222,16 @@ export function equipmentArmor(eq: Equipment, skills: SkillSet): number {
   return ac;
 }
 
-/** Recovery added by armour and shield, lifted once their skill is Expert. */
+/** Recovery added by armour and shield in MM6's units, lifted once their skill is Expert. */
 export function equipmentRecoveryPenalty(eq: Equipment, skills: SkillSet): number {
   let penalty = 0;
   for (const item of equippedItems(eq)) {
     const def = itemDef(item);
-    if (!def.recoveryPenaltySec) continue;
+    const added = armorRecovery(def);
+    if (!added) continue;
     const s = def.skill ? skills[def.skill] : undefined;
     if (s && rankIndex(s.rank) >= 1) continue;
-    penalty += def.recoveryPenaltySec;
+    penalty += added;
   }
   return penalty;
 }
@@ -238,7 +240,8 @@ export interface WeaponInHand {
   item: ItemInstance | null;
   def: ItemDef | null;
   damage: Dice;
-  recoverySec: number;
+  /** MM6's recovery for the weapon's type, in MM6's units. */
+  recovery: number;
   ranged: boolean;
 }
 
@@ -250,7 +253,7 @@ export function meleeWeapon(eq: Equipment): WeaponInHand {
       item: null,
       def: null,
       damage: UNARMED,
-      recoverySec: UNARMED_RECOVERY_SEC,
+      recovery: weaponRecovery(null),
       ranged: false,
     };
   }
@@ -259,7 +262,7 @@ export function meleeWeapon(eq: Equipment): WeaponInHand {
     item,
     def,
     damage: def.damage ?? UNARMED,
-    recoverySec: def.recoverySec ?? UNARMED_RECOVERY_SEC,
+    recovery: weaponRecovery(def),
     ranged: false,
   };
 }
@@ -273,7 +276,7 @@ export function rangedWeapon(eq: Equipment): WeaponInHand | null {
     item,
     def,
     damage: def.damage ?? UNARMED,
-    recoverySec: def.recoverySec ?? UNARMED_RECOVERY_SEC,
+    recovery: weaponRecovery(def),
     ranged: true,
   };
 }

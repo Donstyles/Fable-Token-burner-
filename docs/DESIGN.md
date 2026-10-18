@@ -591,9 +591,18 @@ wider steps above; 3 is −5, 0 is −6). Should the manual differ, the table in
 - Falling and death (MM6-GAPS.md 11, MMW): a member at 0 hit points still
   stands; below 0 it is Unconscious; below minus its Endurance score it is
   Dead (at Endurance 30, death at −31).
-- Recovery: each member has a weapon recovery in seconds, shortened by
-  0.05 s per point of Speed bonus, never under 0.5 s. (MM6 counts recovery
-  in ticks; the mapping to seconds is ours until confirmed.)
+- Recovery is MM6's sum in its units (MM6-GAPS.md 8, GF-M): the weapon
+  type's base (Staff, Axe, Bow and bare hands 100, Sword 90, Spear and Mace
+  80, Dagger 60) plus worn armour (Shield and Leather 10, Chain 20, Plate
+  30), less the Speed effect and, from Expert in Sword, Axe or Bow, the
+  skill; at least 30 for melee, 0 for a bow. A struck member recovers 20 −
+  Endurance effect (nothing from Endurance 350), keeping any longer
+  recovery, and a selected member left recovering hands the selection to
+  the next ready one (GF-P); `Party.takeDamage` does this when the runtime
+  passes the simulated time, which `src/dev` does not yet. MM6's real-time
+  rate is unverified; we run 60 units a second, as MM7's engine does
+  (OpenEnroth multiplies recovery by 2.1333 at MMX's 128 ticks a second).
+  MM6-GAPS.md 8's reading of 128 alone would halve every recovery.
 - Tapping a monster attacks with the selected member if ready, otherwise
   the next ready one; the selection then advances to the next ready member
   (DESIGN 7.1). A fallen member is skipped.
@@ -1830,7 +1839,8 @@ credit grant to dial in the icons' style, one or two per school).
 - 2026-10-18 – MM6 rules, step 1 (MM6-GAPS.md 38; DESIGN 14): unconscious
   below 0 hit points, dead below minus Endurance; monsters hit by level;
   MM6's spell costs, Cure Disease at Body 8; Body Building and Meditation
-  × class factor, Learning 9 % + skill.
+  × class factor, Learning 9 % + skill; recovery in MM6's units at 60 a
+  second (ours), with hit recovery.
 
 - 2026-10-17 – Round 12 (16.22): the spellbook as MM6's one spread with
   bookmarks and a place per spell level; spell icons as one bitmap on
