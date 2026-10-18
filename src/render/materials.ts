@@ -176,6 +176,9 @@ uniform float clipEnabled;
 varying vec3 vNormal;
 varying float vFog;
 uniform sampler2D diffuseSampler;
+#ifdef DETAIL
+uniform sampler2D detailSampler;
+#endif
 #ifdef TERRAIN
 uniform sampler2D pathSampler;
 uniform sampler2D screeSampler;
@@ -302,6 +305,14 @@ void main(void) {
   }
 #else
   vec3 albedo = texture2D(diffuseSampler, vUV).rgb;
+#ifdef DETAIL
+  // A grey tile in world metres over a building (talk-world critic, round 14: a near wall's
+  // texels are 18 cm, runs of 8.8 by 6.2 pixels and 6 colours in 20 by 20, where MM6's walls
+  // run 1.1 to 1.4 pixels and 46 to 79): projected along the face's own axis, 1.5 m a tile,
+  // its mean a half, so it splits the texels near and fades with its averaged mips.
+  vec2 duv = abs(n.y) > 0.7 ? vWorldPos.xz : (abs(n.x) > abs(n.z) ? vWorldPos.zy : vWorldPos.xy);
+  albedo *= texture2D(detailSampler, duv / 1.5).r * 2.0;
+#endif
 #endif
   if (paint > 0.5) {
     // The chest under the face (talk-world critic, round 13: rows 76 to 96 at luma 112 over a
@@ -314,10 +325,12 @@ void main(void) {
     float q = (floor(lum * 5.0) + 0.5) / 5.0;
     light *= q / lum;
     // The colour deepened before it is saturated, so the darks it has go deeper (face p5
-    // luma 50, MM6's 5 to 13).
-    albedo = pow(albedo, vec3(1.3)) * 1.12;
+    // luma 50, MM6's 5 to 13); no lift after it and a milder saturation (talk-world critic,
+    // round 14: with x1.12 and 1.45 the face stood at luma p50 136, MM6's at 46 to 71, and
+    // the lit skin went orange, G/R 0.66 where MM6's is 0.71 to 0.74).
+    albedo = pow(albedo, vec3(1.3));
     float grey = dot(albedo, vec3(0.299, 0.587, 0.114));
-    albedo = clamp(mix(vec3(grey), albedo, 1.45), 0.0, 1.0);
+    albedo = clamp(mix(vec3(grey), albedo, 1.25), 0.0, 1.0);
   }
   vec3 c = mix(albedo * tint * light + emissive, vec3(1.0), flash);
   gl_FragColor = vec4(mix(fogColor, c, vFog), 1.0);
@@ -342,6 +355,11 @@ export interface VertexLitOptions {
   flatLight?: boolean;
   /** A sprite: the quad turns to face the camera and discards its clear pixels. */
   billboard?: boolean;
+  /**
+   * A grey tile multiplied over the texture in world metres, 1.5 m a tile, along the face's
+   * own axis (building walls); its mean must be a half, since the shader doubles it.
+   */
+  detail?: BaseTexture;
   /**
    * Ambient light for this material instead of the environment's: characters carry a fill so
    * they never go black between lamps, like MM6's minimum sprite brightness.
@@ -401,6 +419,7 @@ export class RetroMaterials {
     if (opts.doubleSided) defines.push('#define TWOSIDED');
     if (opts.splat) defines.push('#define TERRAIN');
     if (opts.billboard) defines.push('#define BILLBOARD', '#define ALPHATEST');
+    if (opts.detail) defines.push('#define DETAIL');
     const attributes = [
       'position',
       'normal',
@@ -442,10 +461,11 @@ export class RetroMaterials {
         'heat',
         'cloudShadow',
       ],
-      samplers: ['diffuseSampler', 'pathSampler', 'screeSampler', 'snowSampler'],
+      samplers: ['diffuseSampler', 'pathSampler', 'screeSampler', 'snowSampler', 'detailSampler'],
       defines,
     });
     mat.setTexture('diffuseSampler', opts.texture);
+    if (opts.detail) mat.setTexture('detailSampler', opts.detail);
     if (opts.splat) {
       mat.setTexture('pathSampler', opts.splat.path);
       mat.setTexture('screeSampler', opts.splat.scree);

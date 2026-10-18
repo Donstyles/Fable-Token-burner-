@@ -755,8 +755,9 @@ generated from a seed by `kernel/terrain/` and compiled by
   takes only trunks within 150 m of the road or the ravine: the full set
   made recast drop the road at the pass.
 - Chunks: 32 cells per side, three detail levels (every vertex, every
-  second, every fourth) with 6 m skirts so cracks between levels never show
-  the sky; the loader enables one level per chunk by distance (2.2 and 5
+  second, every fourth) with skirts wound outward and hung 12 m below the
+  lowest border any level reaches nearby (round 15: 6 m inward skirts let
+  the sky through the seams), so cracks between levels never show the sky; the loader enables one level per chunk by distance (2.2 and 5
   chunk widths). Quantized GLB (16-bit positions, 8-bit normals and
   colours), no stored UVs: 2.8 MB for the region, 230k triangles at full
   detail but under 100k on screen.
@@ -1432,8 +1433,9 @@ strip, and skinned its models in a few hundred texels. So:
   is the art; no far models (`far: null`).
 - **Bitmap skins** (`src/render/bitmap.ts`). Every loaded albedo (houses,
   props, characters) is read back from the GPU's own mip level nearest
-  the target (512 pixels for a building, 256 for a character, 192 for a
-  prop), posterised to ten tones a channel and re-uploaded as a
+  the target (512 pixels for a building or a townsperson, 256 for a
+  creature, 192 for a prop; round 15: townsfolk and buildings in sixteen
+  tones with a grain, the rest ten), posterised to ten tones a channel and re-uploaded as a
   nearest-sampled bitmap, once per source file. The texels show and the
   shading steps as a painter's did.
 - **A painted sky strip** (`paintSkyStrip` in `src/render/brush.ts`). The
@@ -1944,7 +1946,49 @@ spell icons' third pass a median 6. Round 14:
   on its own pale and wide; meditation, water walk, stun, sparks and
   spirit arrow; a speck-proof subject box.
 
+### 16.25 Round 15: the stone made coherent, the sky thinned (2026-10-18)
+
+Round 14 scored HUD 7, screens 7.5, talk 8, world 6.5, verdict no; the
+spell icons a median 6. Round 15:
+
+- **HUD**: the capital's mass a smooth field instead of a two-pixel
+  mottle (MM6's stone correlates with the pixel below; ours had been white
+  noise), twenty short curls hanging down, each lit three pixels up its
+  upper left, two flares, the breakers at MM6's rows, no lone specks; the
+  spines' gold rules and red bands lit as a round back; the clock's plain
+  zero, even gaps, a whole-pixel margin; the tubes four pixels wide; the
+  plinth MM6's turned base of tori and grooves; the band's top rows over
+  the clock; the emblems' gold a tenth lower; the rings' outer band
+  darkening toward the top.
+- **Screens**: every stop kept (the marks found before thinning); four
+  pixels between words on the stone screens; the quest log upright and
+  black; the slate's plates flat with wandering seams; the rose's pale
+  veins few, long and on the stone's flow, branching once; the foot's
+  edges parting and meeting; the page grain at half a level; the knot
+  strip on the spellbook alone; the sheet, the bag's slots and the rest
+  well on the three-pixel grid.
+- **Talk**: hue in the wood's grain and the room's planks; the portrait
+  well snapped to the grid; townsfolk's skins at 512 pixels in sixteen
+  tones with a grain; a cooler, weaker key without the extra gain; the
+  room billboard a texel larger than the window.
+- **World**: the sky's cover back to MM6's third (fifty masses, lower and
+  flatter, a wider feather); a world-space detail tile on building walls;
+  the meadow a step darker; the hill's bare patches on the scree channel
+  in a warm bank brown with their own colours and calmer far mips, the
+  valley's fog halved; tree crowns shaded by the light that rendered them;
+  terrain skirts wound outward and deep enough to seal every seam.
+- **Spell icons**: the critic's style text the house recipe (the colours
+  only those the description names; only the magic glows); the soft key
+  and a shadows-only lift; pass 5 (batch 010) water walk and stun, pass 6
+  (batch 011) meditation; 99 of the 100 credits spent.
+
 ## 13. Decision log
+
+- 2026-10-18 – Round 15 (16.25): coherent stone for the capital, MM6's
+  clock figures, tubes and plinth; stops kept and the quest log upright;
+  the sky's cover thinned, a wall detail tile, sealed terrain seams;
+  townsfolk at full skin resolution; the spell-icon recipe recorded as
+  dialled in (99 of 100 credits).
 
 - 2026-10-18 – Round 14 (16.24): monoline bitmap type on the line box
   (a 4x skeleton pooled back), screens fitted to their frames, MM6's

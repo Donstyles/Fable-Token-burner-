@@ -60,7 +60,10 @@ export const ENVIRONMENTS: Record<EnvironmentPreset, LightingEnvironment> = {
     // MM6's sky (critics, rounds 7 and 9: (41,69,140) flat to the treeline, no fog, no
     // glow, a step darker high above).
     fogColor: c(0.16, 0.27, 0.55),
-    fogDensity: 0.0008,
+    // Half the density, a quarter of the haze (talk-world critic, round 14: about 6% of the
+    // sky's blue at 300 m turned the hills' bare earth mauve; 1.5% at 0.0004). A region's
+    // sidecar sets its own (kernel/terrain/build.ts).
+    fogDensity: 0.0004,
     skyZenith: c(0.14, 0.25, 0.52),
     skyHorizon: c(0.16, 0.27, 0.55),
     cloudColor: c(0.67, 0.63, 0.55),

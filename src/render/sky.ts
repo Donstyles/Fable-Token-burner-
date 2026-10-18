@@ -78,8 +78,9 @@ void main(void) {
   // giving the steps their ragged run.
   float thr = 0.5 + (0.5 - cloudAmount) * 0.5;
   // Feathered wider (critics, round 11: four to seven per cent of the sky's pixels
-  // intermediate, as MM6's; talk-world critic, round 13: 9.2% where MM6's run 12 to 24%).
-  float cov = smoothstep(thr - 0.4, thr + 0.4, strip.r) * step(0.03, up);
+  // intermediate, as MM6's; talk-world critic, round 13: 9.2% where MM6's run 12 to 24%;
+  // round 14: wider again over the thinner strip, which keeps 12% of the sky in between).
+  float cov = smoothstep(thr - 0.48, thr + 0.48, strip.r) * step(0.03, up);
   float body = floor(cov * 5.0 + 0.5) / 5.0;
   float tone = strip.g;
   // Lit top to shaded underside as one soft run (critics, round 6: beige-white 166,157,140

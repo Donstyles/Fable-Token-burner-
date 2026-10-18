@@ -144,11 +144,13 @@ const VALLEY_ENV: RegionEnvironment = {
   // MM6's day (critics, rounds 7 to 9): a warm key, a flat ambient, the sky one deep blue
   // (41,69,140) to the treeline with a step darker high above, the fog the sky's own blue
   // and thin, so the far hills keep their green. This sidecar is what the runtime applies
-  // over `mm6-day`; the dome's haze band of earlier rounds came from here.
+  // over `mm6-day`; the dome's haze band of earlier rounds came from here. Half as thick
+  // again (talk-world critic, round 14: a fifteenth of the sky's blue on the hill at 300 m
+  // turned its bare earth mauve; MM6's is a sixtieth).
   lightColor: [0.86, 0.8, 0.7],
   ambientColor: [0.4, 0.4, 0.44],
   fogColor: [0.16, 0.27, 0.55],
-  fogDensity: 0.0005,
+  fogDensity: 0.00025,
   skyZenith: [0.14, 0.25, 0.52],
   skyHorizon: [0.16, 0.27, 0.55],
   cloudAmount: 0.4,

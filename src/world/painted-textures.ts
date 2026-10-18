@@ -36,7 +36,9 @@ function grass(): HTMLCanvasElement {
   // green 38 over red where MM6's is (47,65,33) and 18): round 12's ramp with green 5% and
   // blue 12% down; the marks within three steps of the base, since a mark of any of the
   // sixteen tones is white noise (meadow hp3 9.6 to 11.2, MM6 6.0 to 8.8).
-  const tones = ramp('#223715', '#2c411c', '#364e23', '#415b2a', '#4c6831', '#5b7737');
+  // That ramp's red and green times 0.88, blue kept (talk-world critic, round 14: the meadow a
+  // step bright, luma p50 66 where MM6's is 57; a plain x0.84 would turn the green yellow).
+  const tones = ramp('#1e3015', '#27391c', '#304523', '#39502a', '#435c31', '#506937');
   const c = grain(T, T, 31, tones, { marks: 2400, spread: 3, clods: 120, clodSize: 5, base: 7 });
   // After the snap, a hue jitter on every texel: red eight down or up on an eighth each,
   // green four down or up on three tenths each, blue four up on seven twentieths.
@@ -55,19 +57,21 @@ function grass(): HTMLCanvasElement {
   return c;
 }
 
-function dirt(): HTMLCanvasElement {
-  // MM6's earth (critics, rounds 9 to 12): thirty-two steps from (57,28,16) to (122,86,66),
-  // each step with a cool twin used in patches, as MM6's (82,48,33)/(82,52,33) pairs.
-  // (talk-world critic, round 13: the body was flat felt, k varying by only 2.6 steps, and the
-  // pebbles were confetti, 2.5% of the near ground over luma 90 where clean MM6 has 0.09%):
-  // the variance in blobs of sixteen and four texels at sixteen and twenty steps, cracks and
-  // veins walked into a darkening before the tones are chosen, a hue jitter on top, pits in
-  // two dark tones; no pebbles and no snap.
-  const tones = expand(ramp('#391c10', '#45251a', '#513023', '#5d3b2d', '#644233', '#7a5642'), 32);
-  const n16 = valueNoise(T, T, 16, 32);
-  const n4 = valueNoise(T, T, 4, 35);
-  const cool = valueNoise(T, T, 24, 34);
-  const r = die(33);
+/**
+ * Bare earth: thirty-two steps of a ramp, each step with a cool twin used in patches, as MM6's
+ * (82,48,33)/(82,52,33) pairs (talk-world critic, round 13: the body was flat felt, k varying
+ * by only 2.6 steps, and the pebbles were confetti, 2.5% of the near ground over luma 90 where
+ * clean MM6 has 0.09%): the variance in blobs of sixteen and four texels at sixteen and twenty
+ * steps, cracks and veins walked into a darkening before the tones are chosen, a hue jitter
+ * on top, pits in two dark tones; no pebbles and no snap. The noises and the die take `seed`
+ * and the three after it.
+ */
+function earth(stops: Tone[], seed: number): HTMLCanvasElement {
+  const tones = expand(stops, 32);
+  const n16 = valueNoise(T, T, 16, seed);
+  const n4 = valueNoise(T, T, 4, seed + 3);
+  const cool = valueNoise(T, T, 24, seed + 2);
+  const r = die(seed + 1);
   // The darkening, in steps of the ramp: random walks of unit steps, each texel as deep as
   // the deepest walk over it. They replace round 12's sixteen dark strokes.
   const dk = new Float32Array(T * T);
@@ -130,6 +134,11 @@ function dirt(): HTMLCanvasElement {
   return c;
 }
 
+function dirt(): HTMLCanvasElement {
+  // MM6's earth (critics, rounds 9 to 12): thirty-two steps from (57,28,16) to (122,86,66).
+  return earth(ramp('#391c10', '#45251a', '#513023', '#5d3b2d', '#644233', '#7a5642'), 32);
+}
+
 function sand(): HTMLCanvasElement {
   return grain(T, T, 34, ramp('#a68a56', '#baa06a', '#ccb47e', '#dcc892', '#ead8a8'), {
     marks: 2200,
@@ -147,13 +156,11 @@ function snow(): HTMLCanvasElement {
 }
 
 function scree(): HTMLCanvasElement {
-  // Steep faces as MM6's brown scars (critics, round 11: the olive scree read as grass; the
-  // earth's browns (57,28,16) to (107,73,57)).
-  return grain(T, T, 36, ramp('#391c10', '#45251a', '#513023', '#5d3b2d', '#6b4939'), {
-    marks: 2600,
-    clods: 130,
-    clodSize: 5,
-  });
+  // Steep faces, river banks and the hills' bare patches as MM6's brown scars (critics, round
+  // 11: the olive scree read as grass). The earth's recipe on the river bank's ramp, the
+  // dirt's times (1.18, 1.15, 1) (talk-world critic, round 14: the scars wore the road's
+  // darker tile and showed (77,51,45) on the far hill, MM6's bank (91,55,39)).
+  return earth(ramp('#432010', '#512b1a', '#603723', '#6e442d', '#764c33', '#906342'), 36);
 }
 
 /** Stones drawn one by one on a grid, mortar between, each lit at its top left. */
@@ -565,14 +572,19 @@ export const PAINTERS: Record<string, { paint: () => HTMLCanvasElement; metresPe
  * Mip levels that keep the tile's tones and some of its grain (critics, rounds 11 to 13). Two
  * chains run down the levels: the mean of every two by two of the level above, carried
  * unsnapped, and one texel of every two by two picked by a hash so no lattice shows (round
- * 12's picked levels). Each level is uploaded halfway from its mean to its pick, snapped to
- * the nearest of the tile's own colours, so a far road keeps the ground's palette instead of
- * fading into in-between browns (talk-world critic, round 13: the mean alone flattened the
- * far hill to hp5 1.2, picking alone salted it to 10.9; MM6's is 4.1 to 8.5). Uploaded
- * straight into the WebGL texture after Babylon generated its chain; elsewhere the generated
- * chain stays.
+ * 12's picked levels). Each level is uploaded `share` of the way from its mean to its pick (a
+ * half, or the role's in PICK_SHARE), snapped to the nearest of the tile's own colours, so a
+ * far road keeps the ground's palette instead of fading into in-between browns (talk-world
+ * critic, round 13: the mean alone flattened the far hill to hp5 1.2, picking alone salted it
+ * to 10.9; MM6's is 4.1 to 8.5). Uploaded straight into the WebGL texture after Babylon
+ * generated its chain; elsewhere the generated chain stays.
  */
-function snappedMips(scene: Scene, texture: DynamicTexture, picture: HTMLCanvasElement): void {
+function snappedMips(
+  scene: Scene,
+  texture: DynamicTexture,
+  picture: HTMLCanvasElement,
+  share: number,
+): void {
   const engine = scene.getEngine() as unknown as {
     _gl?: WebGL2RenderingContext;
     _bindTextureDirectly?(target: number, texture: unknown, forUpdate?: boolean): boolean;
@@ -630,10 +642,10 @@ function snappedMips(scene: Scene, texture: DynamicTexture, picture: HTMLCanvasE
         const px = Math.min(w - 1, 2 * x + (pick & 1));
         const py = Math.min(h - 1, 2 * y + (pick >> 1));
         const s = (py * w + px) * 3;
-        // Uploaded halfway from the mean to the pick.
+        // Uploaded `share` of the way from the mean to the pick.
         for (let c = 0; c < 3; c++) {
           nextPicked[d + c] = picked[s + c]!;
-          target[c] = next[d + c]! + 0.5 * (nextPicked[d + c]! - next[d + c]!);
+          target[c] = next[d + c]! + share * (nextPicked[d + c]! - next[d + c]!);
         }
         let best = 0;
         let bestD = Infinity;
@@ -665,11 +677,20 @@ function snappedMips(scene: Scene, texture: DynamicTexture, picture: HTMLCanvasE
 }
 
 /**
- * The ground's two tiles keep their own colours, as each of MM6's bitmaps carried its own
+ * The ground's tiles keep their own colours, as each of MM6's bitmaps carried its own
  * palette: snapped to the frame's 256 the dirt fell from 384 colours to 17 and the grass to
- * 11 (talk-world critic, round 13: the near dirt flat, 19 colours to MM6's 85).
+ * 11 (talk-world critic, round 13: the near dirt flat, 19 colours to MM6's 85); the scree
+ * too, since it took the dirt's recipe (round 14).
  */
-const OWN_COLOURS = new Set(['grass', 'path']);
+const OWN_COLOURS = new Set(['grass', 'path', 'scree']);
+
+/**
+ * How far a role's mip levels go from their mean toward their pick, where not a half: the
+ * scree a quarter (talk-world critic, round 14: the hill's bare earth, minified 300 m off,
+ * knitted at a neighbour |dL| of 7.0 and 0.16 of neighbours alike, MM6's bank 4.8 to 5.3
+ * and 0.44 to 0.54).
+ */
+const PICK_SHARE: Record<string, number> = { scree: 0.25 };
 
 /** Paint every role's texture; `mipmaps` selects the sampling mode of the retro look. */
 export function paintRoleTextures(scene: Scene, mipmaps = true): RoleTextures {
@@ -683,7 +704,7 @@ export function paintRoleTextures(scene: Scene, mipmaps = true): RoleTextures {
     const texture = new DynamicTexture(`painted-${role}`, { width: T, height: T }, scene, mips);
     texture.getContext().drawImage(picture, 0, 0);
     texture.update(false);
-    if (mips) snappedMips(scene, texture, picture);
+    if (mips) snappedMips(scene, texture, picture, PICK_SHARE[role] ?? 0.5);
     // A tile repeats across the world; a dynamic texture clamps unless told otherwise, and
     // clamped it paints the whole ground in its corner texel.
     texture.wrapU = Constants.TEXTURE_WRAP_ADDRESSMODE;
@@ -703,4 +724,61 @@ export function paintRoleTextures(scene: Scene, mipmaps = true): RoleTextures {
     emissive: new Color3(0.06, 0.11, 0.13),
   });
   return out;
+}
+
+const details = new WeakMap<Scene, DynamicTexture>();
+
+/**
+ * The grey tile over building walls (VertexLitOptions.detail; talk-world critic, round 14: the
+ * 1024-pixel skins leave a near wall's texels 18 cm, flat plates where MM6's walls are a
+ * speckle). 64 texels to a 1.5 m tile, 2.4 cm a texel, about a render pixel at eight metres.
+ * Each texel is 0.5 (1 + 0.14 white + 0.10 vn2 + 0.08 vn6), vn a value noise from -1 to 1 of
+ * period two or six texels, cut to six levels between its 1st and 99th percentiles and centred
+ * on a half, so a far wall, where the averaged mips have flattened it, keeps its colour. One a
+ * scene.
+ */
+export function wallDetail(scene: Scene): DynamicTexture {
+  const hit = details.get(scene);
+  if (hit) return hit;
+  const n = 64;
+  const r = die(61);
+  const vn2 = valueNoise(n, n, 2, 62);
+  const vn6 = valueNoise(n, n, 6, 63);
+  const v = new Float32Array(n * n);
+  for (let i = 0; i < n * n; i++) {
+    v[i] = 0.14 * (2 * r() - 1) + 0.1 * 2 * vn2[i]! + 0.08 * 2 * vn6[i]!;
+  }
+  const sorted = Float32Array.from(v).sort();
+  const percentile = (p: number): number => {
+    const f = p * (sorted.length - 1);
+    const i = Math.floor(f);
+    return sorted[i]! + (sorted[Math.min(sorted.length - 1, i + 1)]! - sorted[i]!) * (f - i);
+  };
+  const lo = percentile(0.01);
+  const hi = percentile(0.99);
+  let mean = 0;
+  for (let i = 0; i < n * n; i++) {
+    const k = Math.max(0, Math.min(5, Math.round(((v[i]! - lo) / (hi - lo)) * 5)));
+    v[i] = lo + ((hi - lo) * k) / 5;
+    mean += v[i]! / (n * n);
+  }
+  const [c, g] = canvas(n, n);
+  const img = g.createImageData(n, n);
+  for (let i = 0; i < n * n; i++) {
+    const t = Math.round(127.5 * (1 + v[i]! - mean));
+    img.data[i * 4] = t;
+    img.data[i * 4 + 1] = t;
+    img.data[i * 4 + 2] = t;
+    img.data[i * 4 + 3] = 255;
+  }
+  g.putImageData(img, 0, 0);
+  const texture = new DynamicTexture('wall-detail', { width: n, height: n }, scene, true);
+  texture.getContext().drawImage(c, 0, 0);
+  texture.update(false);
+  texture.wrapU = Constants.TEXTURE_WRAP_ADDRESSMODE;
+  texture.wrapV = Constants.TEXTURE_WRAP_ADDRESSMODE;
+  // Nearest texels over the GPU's own averaged mips, so the grain fades past about 20 m.
+  applyRetroSampling(texture, true);
+  details.set(scene, texture);
+  return texture;
 }

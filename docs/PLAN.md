@@ -528,7 +528,12 @@ waterfalls and deserts, walkable end to end.
     every screen fitted to its frame, MM6's capital, slab, rings, gold
     and clock, the book's foot, softer rose marble, the critics' ground,
     grass, splat edges, sky, room and face; icon pass 3b (15 credits, 10
-    of the grant left); the scoring follows.
+    of the grant left). **Round 14 scored 2026-10-18**: 7, 7.5, 8 (talk),
+    6.5 (world), no; icons pass 4 a median 6. **Round 15** (DESIGN 16.25):
+    coherent stone, the clock, tubes and plinth, stops kept, the sky's
+    cover, wall detail, sealed seams, townsfolk's skins; icon passes 5 and
+    6 (9 credits; 99 of 100 spent, the recipe recorded); the scoring
+    follows.
 18. Remaining, in order: lasting buffs and Jump; weather states (rain, a
     sandstorm); music; the smith's hammer and the temple bell.
 

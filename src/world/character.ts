@@ -15,13 +15,23 @@ import type { Scene } from '@babylonjs/core/scene';
 import type { Vector3 } from '@babylonjs/core/Maths/math.vector';
 import { Color3 } from '@babylonjs/core/Maths/math.color';
 import type { ShaderMaterial } from '@babylonjs/core/Materials/shaderMaterial';
-import { ONE_SHOT_CLIPS } from '../../kernel/characters/clips';
+import { CIVILIAN_CLIPS, ONE_SHOT_CLIPS } from '../../kernel/characters/clips';
 import type { AnimationStepper } from '../render/animation-step';
-import { bitmapTexture } from '../render/bitmap';
+import { bitmapTexture, type BitmapOptions } from '../render/bitmap';
 import { type RetroMaterials } from '../render/materials';
 
 /** Fill light on characters, so they read between lamps (MM6 never drew a black sprite). */
 export const DEFAULT_CHARACTER_FILL = 0.22;
+
+/** The skin as a 1998 bitmap: 256 pixels, ten tones a channel (DESIGN.md 16.14). */
+const SKIN: BitmapOptions = { size: 256, levels: 10 };
+/**
+ * Townsfolk, whose faces fill the talk panel's window, keep the atlas's 512 pixels in the
+ * buildings' sixteen tones and grain (talk-world critic, round 14: at 256 half a face was a
+ * 24 by 26 texel island shown at two pixels a texel, 49% of it in flat plateaus where MM6's
+ * faces have 19 to 23%). A megabyte a model; the creatures keep the small skin.
+ */
+const TALK_SKIN: BitmapOptions = { size: 512, levels: 16, grain: 1.25 };
 
 export interface CharacterOptions {
   name: string;
@@ -155,12 +165,16 @@ export async function loadCharacter(
   const root = container.meshes.find((m) => !m.parent);
   if (!root) throw new Error(`${url}: no root node`);
   const meshes = container.meshes.filter((m) => m.getTotalVertices() > 0);
+  // Townsfolk carry the civilian clips only (DESIGN.md 10.1): they are the ones who talk.
+  const groups = container.animationGroups;
+  const townsfolk =
+    groups.length > 0 &&
+    groups.every((g) => (CIVILIAN_CLIPS as readonly string[]).includes(g.name));
   for (const mesh of meshes) {
     const pbr = mesh.material as PBRMaterial | null;
     const texture = pbr?.albedoTexture as Texture | null;
     if (!texture) throw new Error(`${url}: ${mesh.name} has no base colour texture`);
-    // The skin as a 1998 bitmap: 256 pixels, ten tones a channel (DESIGN.md 16.14).
-    const bitmap = await bitmapTexture(texture, scene, { size: 256, levels: 10 });
+    const bitmap = await bitmapTexture(texture, scene, townsfolk ? TALK_SKIN : SKIN);
     // Meshy marks thin sheets (cloak, apron) double-sided; culling them cuts holes in the front.
     mesh.material = materials.create({
       name: `${opts.name}-${mesh.name}`,

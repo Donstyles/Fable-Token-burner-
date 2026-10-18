@@ -308,14 +308,17 @@ export function generateValley(spec: ValleySpec): ValleyResult {
       // Talk-world critic, round 13: the noise read (x, z) only, so a cliff hung in vertical
       // curtains of green and brown, and the talk view's mountains were 52% brown (MM6 41 to
       // 44%). The patch noise is read at a place sheared by the height, and cut higher.
+      // Round 14: still 51.5% brown, so cut higher again; and the patches are the river
+      // bank's earth, the scree, not the village's darker road (they showed mauve on the far
+      // hill, (77,51,45), where MM6's bare earth is (91,55,39)).
       const patch = smoothstep(
-        0.0,
-        0.14,
+        0.06,
+        0.2,
         fbm(x + 0.7 * h, z - 0.5 * h, 70, seed + 17) + 0.12 * fbm(x, z, 9, seed + 29),
       );
-      path = Math.max(path, patch * smoothstep(18, 28, sS) * (1 - smoothstep(55, 62, sS)));
       let scree =
         smoothstep(52, 64, s) + 0.6 * smoothstep(6, 2, dRiver) * (h < FLOOR + 0.5 ? 1 : 0);
+      scree = Math.max(scree, patch * smoothstep(18, 28, sS) * (1 - smoothstep(55, 62, sS)));
       let snow = 0;
       const total = path + scree + snow;
       if (total > 1) {

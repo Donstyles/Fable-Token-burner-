@@ -40,7 +40,10 @@ const GROUND = new Color4(0.118, 0.078, 0.047, 1);
 /** The key: a hard warm light from the camera's upper left, as a painted portrait's. */
 // A warmer, harder key and almost no fill (talk critic, round 12: 2% of the face under luma
 // 60 against MM6's 45 to 66%; the far cheek, the sockets and under the nose drop a level).
-const KEY_COLOR = new Color3(0.8, 0.68, 0.52);
+// The hue of (0.8, 0.72, 0.6) at nine tenths the strength (talk-world critic, round 14: the
+// key of (0.8, 0.68, 0.52) turned the lit skin orange, G/R 0.66 and B/R 0.34 where MM6's
+// faces are 0.71 to 0.74 and 0.40 to 0.52).
+const KEY_COLOR = new Color3(0.72, 0.65, 0.54);
 const KEY_FILL = 0.08;
 /** The room behind the head, this far behind it, seen only by the bust's camera. */
 const ROOM_BACK = 1.2;
@@ -85,7 +88,21 @@ function paintRoom(size: number): HTMLCanvasElement {
         const lamp =
           (x + px) / size + y / size < 0.6 ? 14 * (1 - ((x + px) / size + y / size) / 0.6) : 0;
         if (px === 0) put(x + px, y, 16, 8, 4);
-        else put(x + px, y, 52 + l + lamp, 34 + l * 0.7 + lamp * 0.8, 20 + l * 0.4 + lamp * 0.5);
+        else {
+          // A hue jitter on the fill (talk-world critic, round 14: every plank colour lay on
+          // one line of l, 22 to 24 colours in a strip where MM6's run 65 to 96): red and blue
+          // eight down or up on a twentieth each, green four down or up on three fortieths.
+          const jr = rand();
+          const jg = rand();
+          const jb = rand();
+          put(
+            x + px,
+            y,
+            52 + l + lamp + (jr < 0.05 ? -8 : jr < 0.1 ? 8 : 0),
+            34 + l * 0.7 + lamp * 0.8 + (jg < 0.075 ? -4 : jg < 0.15 ? 4 : 0),
+            20 + l * 0.4 + lamp * 0.5 + (jb < 0.05 ? -8 : jb < 0.1 ? 8 : 0),
+          );
+        }
       }
     }
     x += pw;
@@ -253,8 +270,9 @@ export class Bust {
     // The room behind, filling the window.
     const back = distance + ROOM_BACK;
     this.room.position.copyFrom(eyes.subtract(forward.scale(ROOM_BACK)));
-    // A hair larger than the window, so a texel is about a view pixel and no edge shows.
-    this.room.scaling.setAll(2 * back * Math.tan(FOV / 2) * 1.04);
+    // A texel larger than the window, so no edge shows and a texel is a view pixel but for
+    // one column (talk-world critic, round 14: at 1.04 the 96 texels spread over 100 pixels).
+    this.room.scaling.setAll((2 * back * Math.tan(FOV / 2) * (SIZE + 1)) / SIZE);
     // The key light: from the camera's upper left, down onto the face.
     const toFace = eyes.subtract(this.camera.position).normalize();
     const right = Vector3.Cross(Vector3.Up(), toFace).normalize();

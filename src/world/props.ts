@@ -18,6 +18,7 @@ import { PROPS, type PropCatalogue, type PropMeasure } from '../../kernel/terrai
 import { type RetroMaterials } from '../render/materials';
 import { bitmapPixels, bitmapTexture } from '../render/bitmap';
 import { die, expand, ramp } from '../render/brush';
+import { wallDetail } from './painted-textures';
 import { Camera } from '@babylonjs/core/Cameras/camera';
 import { TargetCamera } from '@babylonjs/core/Cameras/targetCamera';
 import { Constants } from '@babylonjs/core/Engines/constants';
@@ -158,42 +159,6 @@ async function spriteOf(
   const raw = (await target.readPixels()) as Uint8Array | null;
   // readPixels gives the rows bottom first; the canvas wants them top first.
   const px = raw ? bitmapPixels(raw, n, n, n, n, 10, true) : new Uint8ClampedArray(n * n * 4);
-  // Leaves in MM6's six greens and bark in its browns (critics, round 9): each opaque pixel
-  // keeps its luminance and takes the ramp's tone.
-  // Crowns as a per-leaf stipple of MM6's six greens (critics, round 10: three in ten
-  // dark, four mid, three light, the lit side a step up), bark by luminance in its browns.
-  const leaf: [number, number, number][] = [
-    [8, 24, 16],
-    [16, 40, 16],
-    [33, 60, 33],
-    [33, 73, 33],
-    [49, 89, 41],
-    [57, 121, 57],
-  ];
-  const bark = expand(ramp('#1c1208', '#2c1c0e', '#3e2a16', '#4e3620', '#5a4028'), 16);
-  const rr = die(n * 7 + 1);
-  for (let i = 0; i < n * n; i++) {
-    const o = i * 4;
-    if (px[o + 3]! < 128) continue;
-    const r0 = px[o]!;
-    const g0 = px[o + 1]!;
-    const b0 = px[o + 2]!;
-    if (g0 >= r0 * 0.95) {
-      const u = rr();
-      let k = u < 0.3 ? (u < 0.15 ? 0 : 1) : u < 0.7 ? (u < 0.5 ? 2 : 3) : u < 0.85 ? 4 : 5;
-      if (i % n > n / 2 && rr() < 0.5) k = Math.min(5, k + 1);
-      const t = leaf[k]!;
-      px[o] = t[0];
-      px[o + 1] = t[1];
-      px[o + 2] = t[2];
-    } else {
-      const lum = (0.299 * r0 + 0.587 * g0 + 0.114 * b0) / 255;
-      const t = bark[Math.max(0, Math.min(15, Math.round(lum * 15)))]!.warm;
-      px[o] = Math.round(t[0]);
-      px[o + 1] = Math.round(t[1]);
-      px[o + 2] = Math.round(t[2]);
-    }
-  }
   // The quad covers only the painted pixels: a spruce in its square is two thirds air, and
   // every transparent texel still costs a fragment on a phone (and a second on a CPU).
   let x0 = n;
@@ -214,6 +179,52 @@ async function spriteOf(
     y0 = 0;
     x1 = n - 1;
     y1 = n - 1;
+  }
+  // Leaves in MM6's six greens and bark in its browns (critics, round 9): each opaque pixel
+  // keeps its luminance and takes the ramp's tone.
+  // Crowns lit from above (talk-world critic, round 14: each leaf drew its green at random,
+  // whatever the light had rendered, so the crowns were salted and their tops no brighter than
+  // their feet, where MM6's are lit 8 to 16 above; the dark pixels went bark brown, red over
+  // green on 14 to 34% of a crown, MM6's 1 to 10%): a leaf takes the green of its rendered
+  // light, give or take a step and a fifth; bark only in the sprite's lowest 35%, where the
+  // light rendered brown; above that the darkest pixels black, as 16 to 23% of MM6's crowns.
+  const leaf: [number, number, number][] = [
+    [8, 24, 16],
+    [16, 40, 16],
+    [33, 60, 33],
+    [33, 73, 33],
+    [49, 89, 41],
+    [57, 121, 57],
+  ];
+  const bark = expand(ramp('#1c1208', '#2c1c0e', '#3e2a16', '#4e3620', '#5a4028'), 16);
+  const rr = die(n * 7 + 1);
+  // Rows at or below this are the sprite's lowest 35%, where its trunk stands.
+  const trunk = y1 + 1 - 0.35 * (y1 - y0 + 1);
+  for (let i = 0; i < n * n; i++) {
+    const o = i * 4;
+    if (px[o + 3]! < 128) continue;
+    const r0 = px[o]!;
+    const g0 = px[o + 1]!;
+    const b0 = px[o + 2]!;
+    const l = (0.299 * r0 + 0.587 * g0 + 0.114 * b0) / 255;
+    const low = Math.floor(i / n) >= trunk;
+    if (low && g0 < r0 * 0.95) {
+      const t = bark[Math.max(0, Math.min(15, Math.round(l * 15)))]!.warm;
+      px[o] = Math.round(t[0]);
+      px[o + 1] = Math.round(t[1]);
+      px[o + 2] = Math.round(t[2]);
+    } else if (!low && l < 0.12) {
+      px[o] = 0;
+      px[o + 1] = 0;
+      px[o + 2] = 0;
+    } else {
+      let k = Math.round(Math.min(1, l / 0.45) * 5 + (rr() - 0.5) * 2.4);
+      k = Math.max(0, Math.min(5, k));
+      const t = leaf[k]!;
+      px[o] = t[0];
+      px[o + 1] = t[1];
+      px[o + 2] = t[2];
+    }
   }
   const sprite = new DynamicTexture(`sprite:${id}`, { width: n, height: n }, scene, false);
   sprite.getContext().putImageData(new ImageData(px, n, n), 0, 0);
@@ -291,6 +302,10 @@ export async function loadPropModels(
         // Walls and roofs lit flat, as MM6's: the bitmap carries the picture, no face
         // brighter than another, no posterised bands across a curve (critics, round 5).
         ...(sways ? {} : { flatLight: true }),
+        // A grey speckle in world metres over a building (talk-world critic, round 14: at
+        // eight metres the skin's 18 cm texels stood as flat plates on the walls, 6 colours in
+        // 20 by 20 where MM6's show 46 to 79).
+        ...(building ? { detail: wallDetail(scene) } : {}),
       });
       full.mesh.material = material;
       if (sways) {

@@ -323,12 +323,15 @@ export function paintSkyStrip(w: number, h: number, seed: number): HTMLCanvasEle
   // MM6's skies were streaked: long level strokes of cloud at every height, ragged along
   // their edges, with a few small cumulus; never one mass across the view. The strokes
   // slope a little, as a brush dragged across the sky does.
-  // Sixty strokes round the whole horizon, whatever the strip's size: the brush scales with
-  // the strip, so the cover stays the same.
-  const masses = 100;
+  // Fifty strokes round the whole horizon, whatever the strip's size: the brush scales with
+  // the strip, so the cover stays the same. Fewer, lower and a fifth thinner than before
+  // (talk-world critic, round 14: a hundred centred up to 0.85 of the strip covered 68% of
+  // the sky in one sheet of elongation 6.1, where MM6's cover is 27 to 41% and its masses
+  // 3.8 to 5.0): centred up to 0.6, at the price of open blue above about 42 degrees.
+  const masses = 50;
   for (let m = 0; m < masses; m++) {
     const cx = r() * w;
-    const v = 0.1 + r() * 0.75;
+    const v = 0.05 + r() * 0.55;
     const cy = h - v * h;
     // Three in four masses are wind-swept streaks, half as long again (critics, round 11:
     // MM6's bodies are streaks, elongation 4.3 to 5.6).
@@ -341,7 +344,7 @@ export function paintSkyStrip(w: number, h: number, seed: number): HTMLCanvasEle
       const x = cx + t + (r() - 0.5) * 10 * (w / 1024);
       const y = cy + t * slope + (r() - 0.5) * (streak ? 4 : 12) * (h / 192);
       const rx = (streak ? 22 + r() * 40 : 7 + r() * 12) * (w / 1024);
-      const ry = (streak ? 2.5 + r() * 3 : 5 + r() * 8) * (h / 192);
+      const ry = (streak ? 2.5 + r() * 3 : 5 + r() * 8) * (h / 192) * 0.8;
       dab(g, w, 0, x, y, rx, ry, slope, 255, 0.95);
       // Lumps along the top edge, so the stroke's edge is ragged rather than ruled.
       for (let j = 0; j < 2; j++) {
