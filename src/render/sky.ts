@@ -67,18 +67,20 @@ void main(void) {
   // wind; its red channel is the cloud's density, cut at a threshold the weather sets, its
   // green the painter's tone: lit top, body, shaded underside.
   float az = atan(d.x, d.z);
-  // The strip's rows run with the elevation angle, not its sine, so the rows near the
-  // horizon are not stretched into drips (round 10).
-  vec2 suv = vec2(az / 6.2831853 + time * 0.0015, asin(clamp(up, 0.0, 1.0)) / 1.5707963);
+  // The strip's rows as a flat sky's (talk-world critic, round 13: MM6's cloud runs shrink
+  // toward the horizon, 4.0 pixels tall at the top of the field shot to 1.4 at its foot,
+  // where rows by the elevation angle, round 10's, kept one size): a texel 2.6 pixels tall at
+  // the top of the view, 0.94 at the horizon.
+  vec2 suv = vec2(az / 6.2831853 + time * 0.0015, 1.0 - 0.6 * sqrt(1.0 - up * up) / (up + 0.6));
   vec2 strip = texture2D(skySampler, suv).rg;
-  // The cover blended in four steps round the weather's threshold (critics, round 10:
+  // The cover blended in five steps round the weather's threshold (critics, round 10:
   // MM6's cloud edges carry intermediate tones, not a cliff), the strip's stippled edges
   // giving the steps their ragged run.
   float thr = 0.5 + (0.5 - cloudAmount) * 0.5;
-  // Feathered a third wider (critics, round 11: four to seven per cent of the sky's pixels
-  // intermediate, as MM6's).
-  float cov = smoothstep(thr - 0.24, thr + 0.24, strip.r) * step(0.03, up);
-  float body = floor(cov * 4.0 + 0.5) / 4.0;
+  // Feathered wider (critics, round 11: four to seven per cent of the sky's pixels
+  // intermediate, as MM6's; talk-world critic, round 13: 9.2% where MM6's run 12 to 24%).
+  float cov = smoothstep(thr - 0.4, thr + 0.4, strip.r) * step(0.03, up);
+  float body = floor(cov * 5.0 + 0.5) / 5.0;
   float tone = strip.g;
   // Lit top to shaded underside as one soft run (critics, round 6: beige-white 166,157,140
   // to violet-grey 131,125,140), no outline; the palette steps it.
@@ -87,7 +89,10 @@ void main(void) {
   // pinned at 140 with the sky's.
   vec3 cream = min(cloudColor * vec3(1.16, 1.16, 1.0), vec3(0.96));
   vec3 grey = cloudColor * vec3(0.77, 0.73, 1.0);
-  vec3 cloud = mix(grey, cream, smoothstep(0.15, 0.85, tone));
+  // The tone mixed linearly (talk-world critic, round 13: with the strip's clamp, the
+  // smoothstep piled the cloud on its two ends, the cream 25.5% of cloud pixels and the grey
+  // 13.4%, where MM6's top two tones are 11 to 24% together).
+  vec3 cloud = mix(grey, cream, clamp((tone - 0.15) / 0.75, 0.0, 1.0));
   float cover = body;
   vec3 c = mix(sky, cloud, cover);
   // No sun disc: MM6 painted none; a faint warmth toward it only.

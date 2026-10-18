@@ -23,17 +23,19 @@ export function renderRest(ctx: ScreenContext): void {
     );
     if (v.hungry) left.appendChild(note('No food: resting heals nothing and weakens.', 'warn'));
     left.appendChild(heading('Party'));
+    // A line a member, so the party fits the frame (screens critic, round 13); the condition
+    // only when it is not Good.
     for (const m of v.members) {
-      const line = el('div', 'ui-row');
+      const line = el('div', 'ui-row rest-member');
       if (!m.living) line.classList.add('dim');
-      const text = el('div', 'grow');
-      text.append(el('div', '', m.name), el('div', 'sub', m.condition));
       const points = el(
         'div',
         'ui-v',
         `${m.hp}/${m.maxHp}${m.maxSp ? `  ${m.sp}/${m.maxSp}` : ''}`,
       );
-      line.append(text, points);
+      line.appendChild(el('div', 'grow', m.name));
+      if (m.condition !== 'Good') line.appendChild(el('div', 'sub', m.condition));
+      line.appendChild(points);
       left.appendChild(line);
     }
 

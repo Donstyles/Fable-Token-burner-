@@ -41,6 +41,9 @@ export interface PointLightDesc {
 
 export const MAX_POINT_LIGHTS = 4;
 
+/** A key light's fade that changes nothing: it lies below the world, so all is lit full. */
+const NO_FADE = { lo: -100000, hi: -99999 };
+
 /** Outdoor weather fed to every material (DESIGN.md 15.7). */
 export interface Weather {
   /** 1 in the desert: far geometry wavers, far sand mirrors the sky and glints. */
@@ -198,9 +201,13 @@ uniform float lightKnee;
 uniform float priorityLights;
 // Hit flash: 1 paints the surface white (DESIGN.md 14.4).
 uniform float flash;
-// The painter's hand (DESIGN.md 16.12): 1 quantises the light into four flat tones and
+// The painter's hand (DESIGN.md 16.12): 1 quantises the light into five flat tones and
 // deepens the colour, so the talking head reads as a painted portrait, not a render.
 uniform float paint;
+// The painted light falls from full above fadeHi to six tenths below fadeLo (world heights):
+// the bust's chest under its face. Every other material's fade lies below the world.
+uniform float fadeLo;
+uniform float fadeHi;
 uniform float toon;
 // Weather (DESIGN.md 15.7): drifting cloud shadows and the desert's mirage and glint.
 uniform float time;
@@ -266,6 +273,16 @@ void main(void) {
   // texture of steep faces, is projected along the face's own horizontal axis where the
   // ground tips past 35°, so cliffs do not smear the flat projection into streaks.
   vec3 w = clamp(vSplat, 0.0, 1.0);
+  // Hard, ragged edges (talk-world critic, round 13: grass met earth over three pixels of
+  // in-between colour, MM6 over none or one): the edge falls where the vertex weight crosses
+  // a threshold that wanders over 1.4 m, hard at every distance with no dither, its outline
+  // irregular as MM6's transition tiles. Where path and scree both pass their thresholds,
+  // they share the texel rather than add up.
+  float e1 = 0.3 + 0.4 * noise2(vWorldPos.xz * 0.7);
+  float e2 = 0.3 + 0.4 * noise2(vWorldPos.xz * 0.7 + 19.0);
+  w.r = smoothstep(e1 - 0.04, e1 + 0.04, w.r);
+  w.g = smoothstep(e2 - 0.04, e2 + 0.04, w.g);
+  w /= max(1.0, w.r + w.g + w.b);
   float g = max(0.0, 1.0 - w.r - w.g - w.b);
   float steep = smoothstep(0.18, 0.45, 1.0 - abs(n.y));
   vec2 wall = abs(n.x) > abs(n.z) ? vec2(vWorldPos.z, vWorldPos.y) : vec2(-vWorldPos.x, vWorldPos.y);
@@ -287,9 +304,18 @@ void main(void) {
   vec3 albedo = texture2D(diffuseSampler, vUV).rgb;
 #endif
   if (paint > 0.5) {
+    // The chest under the face (talk-world critic, round 13: rows 76 to 96 at luma 112 over a
+    // face of 104, where MM6's tavern window is 65 under a face of 78), faded before the
+    // light is stepped, so it falls in flat tones too.
+    light *= mix(0.6, 1.0, smoothstep(fadeLo, fadeHi, vWorldPos.y));
     float lum = max(dot(light, vec3(0.333)), 0.001);
-    float q = (floor(lum * 3.0) + 0.5) / 3.0;
+    // Five levels, not three (talk-world critic, round 13: 49% of the face's pixels within
+    // 4 luma of a neighbour, MM6's 19 to 23%).
+    float q = (floor(lum * 5.0) + 0.5) / 5.0;
     light *= q / lum;
+    // The colour deepened before it is saturated, so the darks it has go deeper (face p5
+    // luma 50, MM6's 5 to 13).
+    albedo = pow(albedo, vec3(1.3)) * 1.12;
     float grey = dot(albedo, vec3(0.299, 0.587, 0.114));
     albedo = clamp(mix(vec3(grey), albedo, 1.45), 0.0, 1.0);
   }
@@ -343,7 +369,10 @@ export class RetroMaterials {
   private readonly materials = new Set<ShaderMaterial>();
   private readonly ambientOverride = new Map<ShaderMaterial, Color3>();
   /** A key light of a material's own: the talking head is lit from the camera's upper left. */
-  private readonly keyOverride = new Map<ShaderMaterial, { direction: Vector3; color: Color3 }>();
+  private readonly keyOverride = new Map<
+    ShaderMaterial,
+    { direction: Vector3; color: Color3; fade?: { lo: number; hi: number } }
+  >();
   private readonly observer: Observer<Scene>;
   readonly lights: PointLightDesc[] = [];
   env: LightingEnvironment;
@@ -404,6 +433,8 @@ export class RetroMaterials {
         'splatScale',
         'flash',
         'paint',
+        'fadeLo',
+        'fadeHi',
         'toon',
         'time',
         'wind',
@@ -485,9 +516,13 @@ export class RetroMaterials {
 
   /**
    * Light this material by its own key instead of the sun, or by the sun again (`null`); a
-   * keyed material is also painted: its light in flat tones, its colour deepened.
+   * keyed material is also painted: its light in flat tones, its colour deepened. A `fade`
+   * (world heights) dims its light from full above `hi` to six tenths below `lo`.
    */
-  setKeyLight(mat: ShaderMaterial, key: { direction: Vector3; color: Color3 } | null): void {
+  setKeyLight(
+    mat: ShaderMaterial,
+    key: { direction: Vector3; color: Color3; fade?: { lo: number; hi: number } } | null,
+  ): void {
     if (key) this.keyOverride.set(mat, key);
     else this.keyOverride.delete(mat);
     mat.setFloat('paint', key ? 1 : 0);
@@ -528,6 +563,9 @@ export class RetroMaterials {
     const key = this.keyOverride.get(mat);
     mat.setVector3('lightDirection', key?.direction ?? this.env.lightDirection);
     mat.setColor3('lightColor', key?.color ?? this.env.lightColor);
+    const fade = key?.fade ?? NO_FADE;
+    mat.setFloat('fadeLo', fade.lo);
+    mat.setFloat('fadeHi', fade.hi);
     mat.setColor3('ambientColor', this.ambientOverride.get(mat) ?? this.env.ambientColor);
     mat.setColor3('fogColor', this.env.fogColor);
     mat.setFloat('fogDensity', this.env.fogDensity);

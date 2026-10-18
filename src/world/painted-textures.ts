@@ -19,7 +19,6 @@ import {
   grain,
   posterise,
   ramp,
-  snap,
   stroke,
   type Tone,
   valueNoise,
@@ -33,80 +32,101 @@ const T = 128;
 function grass(): HTMLCanvasElement {
   // MM6's turf (critics, round 9: (61,84,45), green twenty levels over red; round 11: clumps
   // of eight to twelve texels; round 12: the step down overshot, lifted back about 15%).
-  return grain(T, T, 31, ramp('#264418', '#325021', '#3d6129', '#497131', '#568239', '#67943f'), {
-    marks: 3200,
-    clods: 120,
-    clodSize: 5,
-    base: 7,
-  });
+  // (talk-world critic, round 13: the lift overshot everywhere, the meadow (53,91,45) and
+  // green 38 over red where MM6's is (47,65,33) and 18): round 12's ramp with green 5% and
+  // blue 12% down; the marks within three steps of the base, since a mark of any of the
+  // sixteen tones is white noise (meadow hp3 9.6 to 11.2, MM6 6.0 to 8.8).
+  const tones = ramp('#223715', '#2c411c', '#364e23', '#415b2a', '#4c6831', '#5b7737');
+  const c = grain(T, T, 31, tones, { marks: 2400, spread: 3, clods: 120, clodSize: 5, base: 7 });
+  // After the snap, a hue jitter on every texel: red eight down or up on an eighth each,
+  // green four down or up on three tenths each, blue four up on seven twentieths.
+  const g = c.getContext('2d')!;
+  const img = g.getImageData(0, 0, T, T);
+  const d = img.data;
+  const r = die(37);
+  for (let i = 0; i < d.length; i += 4) {
+    const jr = r();
+    const jg = r();
+    d[i] = d[i]! + (jr < 0.125 ? -8 : jr < 0.25 ? 8 : 0);
+    d[i + 1] = d[i + 1]! + (jg < 0.3 ? -4 : jg < 0.6 ? 4 : 0);
+    d[i + 2] = d[i + 2]! + (r() < 0.35 ? 4 : 0);
+  }
+  g.putImageData(img, 0, 0);
+  return c;
 }
 
 function dirt(): HTMLCanvasElement {
-  // MM6's earth (critics, rounds 9 to 12): its variance in blobs of thirty-two and eight
-  // texels, not white noise, over thirty-two steps from (57,28,16) to (122,86,66), each step
-  // with a cool twin used in patches, as MM6's (82,48,33)/(82,52,33) pairs; cracks; dark pits
-  // over four per cent; brighter pebbles over three, each with a shadow texel under it.
+  // MM6's earth (critics, rounds 9 to 12): thirty-two steps from (57,28,16) to (122,86,66),
+  // each step with a cool twin used in patches, as MM6's (82,48,33)/(82,52,33) pairs.
+  // (talk-world critic, round 13: the body was flat felt, k varying by only 2.6 steps, and the
+  // pebbles were confetti, 2.5% of the near ground over luma 90 where clean MM6 has 0.09%):
+  // the variance in blobs of sixteen and four texels at sixteen and twenty steps, cracks and
+  // veins walked into a darkening before the tones are chosen, a hue jitter on top, pits in
+  // two dark tones; no pebbles and no snap.
   const tones = expand(ramp('#391c10', '#45251a', '#513023', '#5d3b2d', '#644233', '#7a5642'), 32);
-  const n32 = valueNoise(T, T, 32, 32);
-  const n8 = valueNoise(T, T, 8, 33);
+  const n16 = valueNoise(T, T, 16, 32);
+  const n4 = valueNoise(T, T, 4, 35);
   const cool = valueNoise(T, T, 24, 34);
   const r = die(33);
+  // The darkening, in steps of the ramp: random walks of unit steps, each texel as deep as
+  // the deepest walk over it. They replace round 12's sixteen dark strokes.
+  const dk = new Float32Array(T * T);
+  const walk = (steps: number, depth: number): void => {
+    let x = r() * T;
+    let y = r() * T;
+    let ang = r() * Math.PI * 2;
+    const mark = (): void => {
+      const i = (((Math.floor(y) % T) + T) % T) * T + (((Math.floor(x) % T) + T) % T);
+      dk[i] = Math.max(dk[i]!, depth);
+    };
+    mark();
+    for (let s = 0; s < steps; s++) {
+      ang += (r() - 0.5) * 0.9;
+      x += Math.cos(ang);
+      y += Math.sin(ang);
+      mark();
+    }
+  };
+  // Seventy cracks ten to thirty-four steps long and eight to eleven deep; six hundred veins
+  // three to nine long and eight to twelve deep.
+  for (let i = 0; i < 70; i++) walk(10 + Math.floor(r() * 25), 8 + Math.floor(r() * 4));
+  for (let i = 0; i < 600; i++) walk(3 + Math.floor(r() * 7), 8 + Math.floor(r() * 5));
   const [c, g] = canvas(T, T);
   const img = g.createImageData(T, T);
   const d = img.data;
   for (let i = 0; i < T * T; i++) {
     const k = Math.max(
       0,
-      Math.min(31, Math.round(15.5 + 12 * n32[i]! + 6 * n8[i]! + 1.5 * (2 * r() - 1))),
+      Math.min(31, Math.round(15.5 + 16 * n16[i]! + 20 * n4[i]! + 5 * (2 * r() - 1) - dk[i]!)),
     );
     const t = tones[k]!.warm;
     const twin = cool[i]! > 0 ? [0, 5, 4] : [0, 0, 0];
+    // The hue jitter: green four down on a fifth of the texels and four up on a fifth, blue
+    // four up on a quarter.
+    const jg = r() < 0.2 ? -4 : r() < 0.25 ? 4 : 0;
+    const jb = r() < 0.25 ? 4 : 0;
     d[i * 4] = Math.round(t[0] + twin[0]!);
-    d[i * 4 + 1] = Math.round(t[1] + twin[1]!);
-    d[i * 4 + 2] = Math.round(t[2] + twin[2]!);
+    d[i * 4 + 1] = Math.round(t[1] + twin[1]! + jg);
+    d[i * 4 + 2] = Math.round(t[2] + twin[2]! + jb);
     d[i * 4 + 3] = 255;
   }
   g.putImageData(img, 0, 0);
-  for (let i = 0; i < 16; i++) {
-    let x = r() * T;
-    let y = r() * T;
-    let ang = r() * Math.PI * 2;
-    const pts: [number, number][] = [[x, y]];
-    const len = 10 + r() * 24;
-    for (let t = 0; t < len; t += 2) {
-      ang += (r() - 0.5) * 0.9;
-      x += Math.cos(ang) * 2;
-      y += Math.sin(ang) * 2;
-      pts.push([x, y]);
-    }
-    stroke(g, T, T, pts, '#3a1c10', 1);
-  }
-  const blob = (x: number, y: number, n: number, colour: string, under?: string): void => {
+  const blob = (x: number, y: number, n: number, colour: string): void => {
     let bx = x;
     let by = y;
+    g.fillStyle = colour;
     for (let k = 0; k < n; k++) {
       const px = ((Math.floor(bx) % T) + T) % T;
       const py = ((Math.floor(by) % T) + T) % T;
-      if (under) {
-        g.fillStyle = under;
-        g.fillRect(px, (py + 1) % T, 1, 1);
-      }
-      g.fillStyle = colour;
       g.fillRect(px, py, 1, 1);
       if (r() < 0.5) bx += r() < 0.5 ? -1 : 1;
       else by += r() < 0.5 ? -1 : 1;
     }
   };
-  for (let i = 0; i < 260; i++) blob(r() * T, r() * T, 1 + Math.floor(r() * 4), '#261008');
-  for (let i = 0; i < 200; i++) {
-    blob(r() * T, r() * T, 1 + Math.floor(r() * 4), r() < 0.5 ? '#96765c' : '#a58468', '#462e20');
+  // A hundred and sixty pits, half in each dark tone.
+  for (let i = 0; i < 160; i++) {
+    blob(r() * T, r() * T, 1 + Math.floor(r() * 4), i % 2 ? '#311509' : '#261008');
   }
-  // Snapped to the steps, their twins and the pit, pebble and shadow tones, kept apart.
-  const twins = tones.map((t) => ({
-    warm: [t.warm[0], t.warm[1] + 5, t.warm[2] + 4] as [number, number, number],
-    cool: [t.warm[0], t.warm[1] + 5, t.warm[2] + 4] as [number, number, number],
-  }));
-  snap(g, T, T, [...tones, ...twins, ...ramp('#261008', '#96765c', '#a58468', '#462e20')]);
   return c;
 }
 
@@ -542,11 +562,15 @@ export const PAINTERS: Record<string, { paint: () => HTMLCanvasElement; metresPe
 };
 
 /**
- * Mip levels that keep the tile's tones (critics, rounds 11 and 12): each level the mean of
- * every two by two of the one above (picking one texel in four salted the far hills), then
- * snapped to the nearest of the tile's own colours, so a far road keeps the ground's palette
- * instead of fading into in-between browns. Uploaded straight into the WebGL texture after
- * Babylon generated its chain; elsewhere the generated chain stays.
+ * Mip levels that keep the tile's tones and some of its grain (critics, rounds 11 to 13). Two
+ * chains run down the levels: the mean of every two by two of the level above, carried
+ * unsnapped, and one texel of every two by two picked by a hash so no lattice shows (round
+ * 12's picked levels). Each level is uploaded halfway from its mean to its pick, snapped to
+ * the nearest of the tile's own colours, so a far road keeps the ground's palette instead of
+ * fading into in-between browns (talk-world critic, round 13: the mean alone flattened the
+ * far hill to hp5 1.2, picking alone salted it to 10.9; MM6's is 4.1 to 8.5). Uploaded
+ * straight into the WebGL texture after Babylon generated its chain; elsewhere the generated
+ * chain stays.
  */
 function snappedMips(scene: Scene, texture: DynamicTexture, picture: HTMLCanvasElement): void {
   const engine = scene.getEngine() as unknown as {
@@ -574,12 +598,16 @@ function snappedMips(scene: Scene, texture: DynamicTexture, picture: HTMLCanvasE
     level[j + 1] = base[i + 1]!;
     level[j + 2] = base[i + 2]!;
   }
+  // The picked chain starts from the same picture.
+  let picked = level;
+  const target = new Float32Array(3);
   engine._bindTextureDirectly(gl.TEXTURE_2D, internal, true);
   gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
   for (let mip = 1; w > 1 || h > 1; mip++) {
     const nw = Math.max(1, w >> 1);
     const nh = Math.max(1, h >> 1);
     const next = new Float32Array(nw * nh * 3);
+    const nextPicked = new Float32Array(nw * nh * 3);
     const out = new Uint8ClampedArray(nw * nh * 4);
     for (let y = 0; y < nh; y++) {
       for (let x = 0; x < nw; x++) {
@@ -595,12 +623,24 @@ function snappedMips(scene: Scene, texture: DynamicTexture, picture: HTMLCanvasE
           }
           next[d + c] = sum / 4;
         }
+        // Round 12's pick: one texel of the two by two of the picked level above, by a hash
+        // of its place and level.
+        const pick =
+          Math.imul((x * 73856093) ^ (y * 19349663) ^ (mip * 83492791), 2654435761) >>> 30;
+        const px = Math.min(w - 1, 2 * x + (pick & 1));
+        const py = Math.min(h - 1, 2 * y + (pick >> 1));
+        const s = (py * w + px) * 3;
+        // Uploaded halfway from the mean to the pick.
+        for (let c = 0; c < 3; c++) {
+          nextPicked[d + c] = picked[s + c]!;
+          target[c] = next[d + c]! + 0.5 * (nextPicked[d + c]! - next[d + c]!);
+        }
         let best = 0;
         let bestD = Infinity;
         for (let k = 0; k < palette.length; k += 3) {
-          const dr = next[d]! - palette[k]!;
-          const dg = next[d + 1]! - palette[k + 1]!;
-          const db = next[d + 2]! - palette[k + 2]!;
+          const dr = target[0]! - palette[k]!;
+          const dg = target[1]! - palette[k + 1]!;
+          const db = target[2]! - palette[k + 2]!;
           const dd = dr * dr + dg * dg + db * db;
           if (dd < bestD) {
             bestD = dd;
@@ -615,19 +655,28 @@ function snappedMips(scene: Scene, texture: DynamicTexture, picture: HTMLCanvasE
       }
     }
     gl.texSubImage2D(gl.TEXTURE_2D, mip, 0, 0, nw, nh, gl.RGBA, gl.UNSIGNED_BYTE, out);
+    // The mean runs on unsnapped, the pick on its own picks.
     level = next;
+    picked = nextPicked;
     w = nw;
     h = nh;
   }
   engine._bindTextureDirectly(gl.TEXTURE_2D, null);
 }
 
+/**
+ * The ground's two tiles keep their own colours, as each of MM6's bitmaps carried its own
+ * palette: snapped to the frame's 256 the dirt fell from 384 colours to 17 and the grass to
+ * 11 (talk-world critic, round 13: the near dirt flat, 19 colours to MM6's 85).
+ */
+const OWN_COLOURS = new Set(['grass', 'path']);
+
 /** Paint every role's texture; `mipmaps` selects the sampling mode of the retro look. */
 export function paintRoleTextures(scene: Scene, mipmaps = true): RoleTextures {
   const out: RoleTextures = new Map();
   for (const [role, { paint, metresPerTile }] of Object.entries(PAINTERS)) {
     const id = ROLE[role as keyof typeof ROLE];
-    const picture = palettise(paint());
+    const picture = OWN_COLOURS.has(role) ? paint() : palettise(paint());
     // Mipmaps on the ground too: a magnified texel is a block whether or not the texture
     // has mipmaps, and without them the distance shimmered into colour noise (round 7).
     const mips = mipmaps;

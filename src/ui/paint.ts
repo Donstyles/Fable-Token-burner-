@@ -121,11 +121,12 @@ function paintMarble(
  * against blue, 64 levels with no checker inside the plates.
  */
 function paintSlate(w: number, h: number, seed: number): HTMLCanvasElement {
-  // Round 12 (screens critic): a warmer grey base (67,66,63), deeper mottle, darker seams,
-  // dark blotches, streaks along one heading instead of round smudges, a jitter on red only,
-  // and MM6's sixteen bits.
+  // Round 12 (screens critic): a warmer grey base, deeper mottle, darker seams, dark
+  // blotches, streaks along one heading instead of round smudges, a jitter on red only, and
+  // MM6's sixteen bits. Round 13 (it overshot dark, L 64 against MM6's 68 to 71): the base
+  // (71,70,67), the blotches lighter, the seams on more of the edges.
   const c = cloudy(w, h, seed, {
-    base: [67, 66, 63],
+    base: [71, 70, 67],
     octaves: [
       [40, 6],
       [24, 10],
@@ -142,13 +143,14 @@ function paintSlate(w: number, h: number, seed: number): HTMLCanvasElement {
     dark: 20,
     streaks: Math.round((w * h) / 150),
     smudges: 0,
+    seams: -0.15,
   });
   const img = g.getImageData(0, 0, w, h);
   const d = img.data;
   const blot = valueNoise(w, h, 16, seed + 31);
   for (let i = 0; i < w * h; i++) {
     if (blot[i]! >= -0.28) continue;
-    for (let ch = 0; ch < 3; ch++) d[i * 4 + ch] = Math.max(0, d[i * 4 + ch]! - 14);
+    for (let ch = 0; ch < 3; ch++) d[i * 4 + ch] = Math.max(0, d[i * 4 + ch]! - 8);
   }
   g.putImageData(img, 0, 0);
   const sr = die(seed + 37);
@@ -255,23 +257,26 @@ function paintMahogany(w: number, h: number, seed: number): HTMLCanvasElement {
   g.fillStyle = '#808080';
   g.fillRect(0, 0, w, h);
   const grey = (t: number): string => `rgb(${Math.round(t)},${Math.round(t)},${Math.round(t)})`;
-  for (let i = 0; i < 8; i++) {
+  // The broad figure (talk critic, round 13: MM6's panel varies over fifteen pixels twice
+  // as much): five long dabs, darker and lighter.
+  for (let i = 0; i < 5; i++) {
     dab(
       g,
       w,
       h,
       r() * w,
       r() * h,
-      12 + r() * 24,
-      60 + r() * 100,
+      18 + r() * 22,
+      80 + r() * 120,
       (r() - 0.5) * 0.1,
-      r() < 0.5 ? 104 : 150,
-      0.3,
+      r() < 0.5 ? 70 : 175,
+      0.45,
     );
   }
   // One wobble for the whole slab, so the bands run side by side and never cross (talk
   // critic, round 12: 120 strokes, the darks one to three pixels wide and dashed, each over a
-  // brown stroke two pixels wider so its edge steps through dark brown, not black).
+  // brown stroke two pixels wider so its edge steps through dark brown, not black; round 13:
+  // that stroke at a grey that lands a tone above the dark, (51,25,14), so the edge steps).
   const phi = r() * 10;
   const bands = 120;
   const order = Array.from({ length: bands }, (_, i) => i);
@@ -292,7 +297,7 @@ function paintMahogany(w: number, h: number, seed: number): HTMLCanvasElement {
     }
     if (dark) {
       const width = r() < 0.25 ? 1 : r() < 0.67 ? 2 : 3;
-      stroke(g, w, h, pts, grey(75), width + 2);
+      stroke(g, w, h, pts, grey(108), width + 2);
       let k = 0;
       while (k < pts.length - 1) {
         const dash = 1 + Math.floor(r() * 4);
@@ -326,17 +331,23 @@ function paintMahogany(w: number, h: number, seed: number): HTMLCanvasElement {
     24,
     220,
   );
-  // The grain after the colour (critics, round 11: per-pixel specks read as static, MM6's
-  // grain runs with the wood): fourteen levels, smeared four pixels down.
   const img = g.getImageData(0, 0, w, h);
   const d = img.data;
-  const noise = new Float32Array(w * (h + 3));
-  for (let i = 0; i < noise.length; i++) noise[i] = (r() - 0.5) * 28;
+  // The darks broken up (talk critic, round 13: MM6's dark runs are two or three pixels long,
+  // ours six to twelve): three in ten of the two darkest tones lifted to (42,14,8).
+  for (let i = 0; i < d.length; i += 4) {
+    if (d[i + 2] !== 0 || d[i]! > 24 || r() >= 0.3) continue;
+    d[i] = 42;
+    d[i + 1] = 14;
+    d[i + 2] = 8;
+  }
+  // The grain after the colour (critics, round 11: per-pixel specks read as static, MM6's
+  // grain runs with the wood; round 13: stronger and over two rows, so RGB565 keeps it).
+  const noise = new Float32Array(w * (h + 1));
+  for (let i = 0; i < noise.length; i++) noise[i] = (r() - 0.5) * 44;
   for (let y = 0; y < h; y++) {
     for (let x = 0; x < w; x++) {
-      let v = 0;
-      for (let k = 0; k < 4; k++) v += noise[(y + k) * w + x]!;
-      v /= 2;
+      const v = (noise[y * w + x]! + noise[(y + 1) * w + x]!) / Math.SQRT2;
       const i = (y * w + x) * 4;
       // Multiplied, so a dark band stays brown rather than greying.
       for (let ch = 0; ch < 3; ch++)
@@ -385,12 +396,13 @@ function paintLeather(w: number, h: number, seed: number): HTMLCanvasElement {
     }
   }
   g.putImageData(img, 0, 0);
+  // Flecks on a twenty-fifth, a jitter of five (screens critic, round 13).
   const fr = die(seed + 17);
-  for (let i = 0; i < (w * h) / 10; i++) {
-    g.fillStyle = fr() < 0.5 ? 'rgba(130,70,8,0.35)' : 'rgba(96,46,0,0.4)';
+  for (let i = 0; i < (w * h) / 25; i++) {
+    g.fillStyle = fr() < 0.5 ? 'rgba(118,68,18,0.35)' : 'rgba(88,48,8,0.4)';
     g.fillRect(Math.floor(fr() * w), Math.floor(fr() * h), 1, 1);
   }
-  chroma(g, w, h, seed + 3, 7, true);
+  chroma(g, w, h, seed + 3, 5, true);
   // MM6's hide carries no blue in its lights: blue at most a twentieth of the red.
   const lit = g.getImageData(0, 0, w, h);
   for (let i = 0; i < lit.data.length; i += 4) {
@@ -408,10 +420,10 @@ function paintParchment(w: number, h: number, seed: number): HTMLCanvasElement {
     base: [182, 172, 155],
     octaves: [
       [32, 8],
-      [8, 4],
+      [12, 2],
     ],
     tint: 3,
-    grain: 3,
+    grain: 0,
   });
   quantise(c.getContext('2d')!, w, h, 2);
   return c;
@@ -438,7 +450,7 @@ function paintRose(w: number, h: number, seed: number): HTMLCanvasElement {
       [196, 150, 130],
       Math.max(0, Math.min(1, 0.5 + zone[i]! * 1.6)),
     );
-    const l = nA[i]! * 36 + nB[i]! * 10 + (r() - 0.5) * 8 - 10;
+    const l = nA[i]! * 36 + nB[i]! * 6 + (r() - 0.5) * 3 - 10;
     d[i * 4] = Math.max(0, Math.min(255, base[0] + l));
     d[i * 4 + 1] = Math.max(0, Math.min(255, base[1] + l));
     d[i * 4 + 2] = Math.max(0, Math.min(255, base[2] + l));
@@ -446,22 +458,23 @@ function paintRose(w: number, h: number, seed: number): HTMLCanvasElement {
   }
   g.putImageData(img, 0, 0);
   // Round 12 (screens critic: a crisp crackle where MM6 has soft veins): the crazing twice
-  // as wide in pitch and softer, fewer pale veins, a seventh of the dark ones a deeper
-  // brown, MM6's sixteen bits.
-  crazed2(g, w, h, seed + 11, 110, [196, 151, 128], [120, 80, 56], 6);
+  // as wide in pitch and softer, a seventh of the dark veins a deeper brown, MM6's sixteen
+  // bits. Round 13 (MM6's fine detail is half ours): a calmer ground, the cracks a pixel
+  // wide at half strength, fewer and longer pale veins, fewer dark ones, half the chroma.
+  crazed2(g, w, h, seed + 11, 110, [196, 151, 128], [120, 80, 56], 6, { alpha: 0.5, width: 1 });
   roseVeins(g, w, h, seed + 19, {
-    pale: Math.round((w * h) / 900),
-    dark: Math.round((w * h * 0.85) / 1500),
+    pale: Math.round((w * h) / 1600),
+    dark: Math.round((w * h * 0.85) / 3000),
     paleTint: [1, 0.86, 0.8],
     darkColor: [120, 80, 56],
   });
   roseVeins(g, w, h, seed + 23, {
     pale: 0,
-    dark: Math.round((w * h * 0.15) / 1500),
+    dark: Math.round((w * h * 0.15) / 3000),
     paleTint: [1, 0.86, 0.8],
     darkColor: [72, 44, 30],
   });
-  chroma(g, w, h, seed + 2, 6, true);
+  chroma(g, w, h, seed + 2, 3, true);
   quantise565(g, w, h);
   return c;
 }
@@ -691,12 +704,14 @@ export const SIGIL_ART: Record<string, () => Pt[]> = {
 };
 
 /**
- * Gold line art onto a canvas, modelled (HUD critic, round 12: two tones read as stamped
- * foil; MM6's emblems carry 84 to 149): each gold pixel toned by which way it faces, the
- * light (255,231,181) where only its upper-left neighbour is clear, the shade (156,121,57)
- * where only its lower-right is, (232,210,140) where both are, the body (214,186,99)
- * inside; lighter toward the top of the art by up to twenty levels, a die of six; the
- * shadow (115,85,41) a pixel down and right where no gold falls.
+ * Gold line art onto a canvas as rods (HUD critic, rounds 12 and 13: MM6's emblem strokes are
+ * two to four pixels, a dark edge, a bright core; ours were one-pixel wires): each stroke
+ * thickened a pixel (to the right, or below where it runs level), the art pixels with gold
+ * at their lower right the core (222,195,107), those clear at the upper left (200,170,90),
+ * the rest (189,158,82), the added pixels the edge (150,118,57); a glint (255,231,181) on
+ * one core pixel in three in the art's top quarter only; lighter toward the top by up to
+ * twenty levels, a die of six; the shadow (82,60,28) a pixel down and right where no gold
+ * falls. `thin` keeps a lattice (the globe) one pixel wide.
  */
 function drawGold(
   g: CanvasRenderingContext2D,
@@ -706,19 +721,35 @@ function drawGold(
   ox: number,
   oy: number,
   seed: number,
+  thin = false,
 ): void {
   const img = g.getImageData(0, 0, w, h);
   const d = img.data;
-  const gold = new Uint8Array(w * h);
+  const art = new Uint8Array(w * h);
   let top = h;
   let bottom = 0;
   for (const [x, y] of pixels) {
     const X = Math.round(x + ox);
     const Y = Math.round(y + oy);
     if (X >= 0 && X < w && Y >= 0 && Y < h) {
-      gold[Y * w + X] = 1;
+      art[Y * w + X] = 1;
       top = Math.min(top, Y);
       bottom = Math.max(bottom, Y);
+    }
+  }
+  const at = (m: Uint8Array, x: number, y: number): number =>
+    x < 0 || y < 0 || x >= w || y >= h ? 0 : m[y * w + x]!;
+  // 1 for an art pixel, 2 for a pixel added to thicken the stroke.
+  const gold = Uint8Array.from(art);
+  if (!thin) {
+    for (let y = 0; y < h; y++) {
+      for (let x = 0; x < w; x++) {
+        if (!art[y * w + x]) continue;
+        const level = at(art, x - 1, y) || at(art, x + 1, y);
+        const nx = level ? x : x + 1;
+        const ny = level ? y + 1 : y;
+        if (nx < w && ny < h && !gold[ny * w + nx]) gold[ny * w + nx] = 2;
+      }
     }
   }
   const set = (i: number, r0: number, g0: number, b0: number): void => {
@@ -729,20 +760,23 @@ function drawGold(
   };
   for (let y = 0; y < h - 1; y++) {
     for (let x = 0; x < w - 1; x++) {
-      if (gold[y * w + x] && !gold[(y + 1) * w + x + 1]) set((y + 1) * w + x + 1, 115, 85, 41);
+      if (gold[y * w + x] && !gold[(y + 1) * w + x + 1]) set((y + 1) * w + x + 1, 82, 60, 28);
     }
   }
   const r = die(seed);
-  const at = (x: number, y: number): number =>
-    x < 0 || y < 0 || x >= w || y >= h ? 0 : gold[y * w + x]!;
+  let k = 0;
+  const quarter = top + (bottom - top) / 4;
   for (let y = 0; y < h; y++) {
     for (let x = 0; x < w; x++) {
       const i = y * w + x;
-      if (!gold[i]) continue;
-      const ul = !at(x - 1, y - 1);
-      const lr = !at(x + 1, y + 1);
-      const base: Rgb =
-        ul && lr ? [232, 210, 140] : ul ? [255, 231, 181] : lr ? [156, 121, 57] : [214, 186, 99];
+      const kind = gold[i];
+      if (!kind) continue;
+      let base: Rgb;
+      if (kind === 2) base = [150, 118, 57];
+      else if (at(gold, x + 1, y + 1)) {
+        base = y <= quarter && k++ % 3 === 0 ? [255, 231, 181] : [222, 195, 107];
+      } else if (!at(gold, x - 1, y - 1)) base = [200, 170, 90];
+      else base = [189, 158, 82];
       const ramp = 20 - (40 * (y - top)) / Math.max(1, bottom - top);
       const n = (r() - 0.5) * 12;
       set(i, base[0] + ramp + n, base[1] + ramp + n, base[2] + (ramp + n) * 0.6);
@@ -867,49 +901,39 @@ export function paintSlab(w: number, h: number, pressed: boolean): HTMLCanvasEle
 }
 
 /**
- * The portrait frame at MM6's proportions (HUD critic, round 12: MM6's rings are five to
- * eight pixels in a 69-pixel oval, leaving 71 to 83% open; ours had copied fourteen bands
- * into an oval half the size). Five bands from the outside in: grey stone for the others,
- * a silver and gold thread for the member in hand only; the stone a step lighter above and
- * darker below; the opening dark, lighter toward the bottom.
+ * The portrait frame at MM6's proportions (HUD critic, rounds 12 and 13): five bands from
+ * the outside in, banded radially only (no step at the equator): grey stone lined with a
+ * light grey for the others, a gold, cream and gold wire lined with grey for the member in
+ * hand; the opening one dark tone until the portraits come.
  */
 export function paintRing(w: number, h: number, active: boolean): HTMLCanvasElement {
   const [c, g] = canvas(w, h);
   const bands: Rgb[] = active
     ? [
         [41, 44, 41],
-        [173, 166, 165],
-        [222, 215, 156],
-        [173, 142, 82],
-        [33, 32, 33],
+        [165, 142, 82],
+        [222, 215, 181],
+        [156, 142, 90],
+        [140, 134, 132],
       ]
     : [
         [49, 48, 41],
-        [82, 81, 74],
+        [74, 73, 66],
         [90, 89, 90],
-        [123, 121, 115],
+        [140, 134, 132],
         [33, 32, 33],
       ];
-  // The grey and silver bands take the light; the gold and the dark lines do not.
-  const lit = active ? [false, true, false, false, false] : [false, true, true, true, false];
   for (let y = 0; y < h; y++) {
     for (let x = 0; x < w; x++) {
       if (!inOval(x, y, w, h, 0)) continue;
       let k = 0;
       while (k < bands.length && inOval(x, y, w, h, k + 1)) k++;
       if (k >= bands.length) {
-        const t = y / Math.max(1, h - 1);
-        px(g, x, y, t < 0.5 ? 'rgb(18,14,10)' : 'rgb(30,24,18)');
+        px(g, x, y, 'rgb(16,12,8)');
         continue;
       }
-      let [r0, g0, b0] = bands[k]!;
-      if (lit[k]) {
-        const shift = y < h / 2 ? 12 : -16;
-        r0 += shift;
-        g0 += shift;
-        b0 += shift;
-      }
-      px(g, x, y, `rgb(${Math.max(0, r0)},${Math.max(0, g0)},${Math.max(0, b0)})`);
+      const [r0, g0, b0] = bands[k]!;
+      px(g, x, y, `rgb(${r0},${g0},${b0})`);
     }
   }
   quantise565(g, w, h);
@@ -933,11 +957,12 @@ export function paintSlot(w: number, h: number): HTMLCanvasElement {
 }
 
 /**
- * A member's panel, with MM6's edges (HUD critic, round 12): along the top one light, one
- * dark and one gold row, then the marble; a dark left edge on the first cell only (the
- * others meet the previous cell's light ridge); along the right two light columns and along
- * the foot two light rows; and MM6's gold spandrel in the top-left corner, seven rows from
- * (165,146,82) to (189,174,123) out to the portrait oval's centre line, a dark line under it.
+ * A member's place in the band (HUD critic, round 13: MM6's band is one marble slab, no cell
+ * boundaries): transparent, so the band's marble runs on under every cell, holding only the
+ * first cell's dark edge against the pillar and MM6's gold spandrel in the top-left corner, a
+ * concave triangle of eleven rows under the gold row (the band's top rows are in hud.css),
+ * lighter rows over darker ones, its first pixel and its tip darker, a dark line along its
+ * slope.
  */
 export function paintRecess(
   w: number,
@@ -945,40 +970,32 @@ export function paintRecess(
   marble: HTMLCanvasElement,
   first = false,
 ): HTMLCanvasElement {
+  void marble;
   const [c, g] = canvas(w, h);
-  for (let y = 0; y < h; y += marble.height) {
-    for (let x = 0; x < w; x += marble.width) g.drawImage(marble, x + 37, y + 61, w, h, x, y, w, h);
-  }
-  ['#b5b2ad', '#635d5a', '#9c864a'].forEach((tone, i) => {
-    g.fillStyle = tone;
-    g.fillRect(0, i, w, 1);
-  });
   if (first) {
     g.fillStyle = '#313031';
     g.fillRect(0, 0, 1, h);
     g.fillStyle = '#4a494a';
-    g.fillRect(1, 1, 1, h - 1);
+    g.fillRect(1, 0, 1, h);
   }
-  // The spandrel, to the oval's centre line (hud.css: the frame stands four pixels in and
-  // is thirty-six wide).
   const x0 = first ? 2 : 0;
-  const x1 = Math.min(w, 22);
-  for (let i = 0; i < 7; i++) {
-    const t = i / 6;
-    const col = mix([165, 146, 82], [189, 174, 123], t);
+  const widths = [14, 11, 9, 7, 6, 4, 3, 3, 2, 1, 1];
+  widths.forEach((wd, i) => {
+    const y = 3 + i;
+    if (y >= h) return;
+    const col =
+      i <= 6
+        ? mix([168, 149, 92], [176, 159, 110], i / 6)
+        : mix([159, 142, 96], [140, 117, 66], (i - 7) / 3);
     g.fillStyle = `rgb(${col.map(Math.round).join(',')})`;
-    g.fillRect(x0, 3 + i, x1 - x0, 1);
-  }
-  g.fillStyle = '#635d5a';
-  g.fillRect(x0, 10, x1 - x0, 1);
-  g.fillStyle = '#adaa9c';
-  g.fillRect(w - 2, 3, 1, h - 3);
-  g.fillStyle = '#c6bebd';
-  g.fillRect(w - 1, 3, 1, h - 3);
-  g.fillStyle = '#b5aead';
-  g.fillRect(2, h - 2, w - 2, 1);
-  g.fillStyle = '#bdb6b5';
-  g.fillRect(1, h - 1, w - 1, 1);
+    g.fillRect(x0, y, Math.min(wd, w - x0), 1);
+    g.fillStyle = 'rgb(140,117,66)';
+    g.fillRect(x0, y, 1, 1);
+    g.fillStyle = 'rgb(99,93,82)';
+    if (x0 + wd < w) g.fillRect(x0 + wd, y, 1, 1);
+  });
+  g.fillStyle = 'rgb(99,93,82)';
+  g.fillRect(x0, 3 + widths.length, 1, 1);
   return c;
 }
 
@@ -1064,7 +1081,8 @@ export function paintSpine(w: number, h: number, emblem: string | null = null): 
     g.fillRect(2, y + 5, w - 4, 1);
   }
   const art = emblem ? EMBLEM_ART[emblem] : undefined;
-  if (art) drawGold(g, w, h, art(), Math.floor((w - 18) / 2), bandTop + 6, w * 17 + h);
+  if (art)
+    drawGold(g, w, h, art(), Math.floor((w - 18) / 2), bandTop + 6, w * 17 + h, emblem === 'map');
   dither(g, w, h, 2);
   quantise565(g, w, h);
   return c;
@@ -1236,10 +1254,13 @@ export function paintRail(w: number, h: number): HTMLCanvasElement {
 }
 
 /**
- * A capital or a plinth. The capital (critics, rounds 9 to 12): an abacus of three rows, lit
- * on top and dark beneath; a mid-grey bell of seven to nine irregular acanthus leaves, a few
- * tips breaking its outline; a small dark volute at each upper corner; the collar MM6's five
- * row bands turned with the shaft's cosine. The plinth: two steps. On RGB565.
+ * A capital or a plinth. The capital (HUD critic, round 13): MM6's stands thirty-one rows
+ * from the screen's top over an eleven-row collar. Three abacus rows; a bell full width to
+ * the ninth row, then tapering to the shaft by the twenty-sixth, its mass a dark grey
+ * mottled in two-pixel blocks and carved by twenty-four dark curls, each lit on its upper
+ * left; seven of them pushed past the outline, curling down with the sky left under them; a
+ * five-row astragal; MM6's collar bands. No regular tiers: those read as fish scales. The
+ * plinth: two steps. Both turned with the shaft's cosine, on RGB565.
  */
 export function paintCapital(
   w: number,
@@ -1247,117 +1268,21 @@ export function paintCapital(
   marble: HTMLCanvasElement,
   ring: 'below' | 'above',
 ): HTMLCanvasElement {
+  if (ring === 'below') return paintAcanthus(w, h);
   const [c, g] = canvas(w, h);
   const shaft = Math.max(4, Math.round(w * 0.72));
   const margin = Math.floor((w - shaft) / 2);
   const collar = 10;
   const rows: [number, number][] = [];
   for (let y = 0; y < h; y++) {
-    let inset: number;
-    if (ring === 'below') {
-      const bell = h - collar;
-      inset =
-        y < 3 ? 0 : y >= bell ? margin : Math.round((margin * (y - 3)) / Math.max(1, bell - 3));
-    } else {
-      inset =
-        y < collar
-          ? margin
-          : y < collar + Math.floor((h - collar) / 2)
-            ? Math.floor(margin / 2)
-            : 0;
-    }
+    const inset =
+      y < collar ? margin : y < collar + Math.floor((h - collar) / 2) ? Math.floor(margin / 2) : 0;
     rows.push([inset, w - 2 * inset]);
   }
   rows.forEach(([x, rw], y) => {
     g.drawImage(marble, 12 + x, 40 + y, rw, 1, x, y, rw, 1);
   });
-  if (ring === 'below') {
-    const bell = h - collar;
-    g.fillStyle = 'rgba(255,250,240,0.35)';
-    g.fillRect(0, 0, w, 1);
-    g.fillStyle = 'rgba(20,16,12,0.6)';
-    g.fillRect(0, 2, w, 1);
-    // The bell (HUD critic, round 12: two rows of identical lobes read as pearls): a
-    // mid-grey ground and seven to nine leaves, each a tear-drop three or four wide and four
-    // to six tall with its tip turned out and down, jittered and sized apart, lit at the
-    // upper left and never over 160, a dark pixel at its lower right; a few tips break the
-    // bell's outline over the view.
-    for (let y = 3; y < bell; y++) {
-      const [x, rw2] = rows[y]!;
-      g.fillStyle = 'rgb(90,85,82)';
-      g.fillRect(x, y, rw2, 1);
-    }
-    const rr = die(w * 13 + h);
-    const leafAt = new Uint8Array(w * h);
-    const count = 7 + Math.floor(rr() * 3);
-    const perRow = Math.ceil(count / 2);
-    let tips = 0;
-    for (let k = 0; k < count; k++) {
-      const row = k % 2;
-      const slot = Math.floor(k / 2);
-      const cx = Math.round(((slot + 0.5 + row * 0.5) * w) / perRow + (rr() - 0.5) * 2);
-      const cy = Math.round(3 + (row ? 5 : 0) + (rr() - 0.5) * 2);
-      const lw = 3 + Math.floor(rr() * 2);
-      const lh = 4 + Math.floor(rr() * 3);
-      const out = cx < w / 2 ? -1 : 1;
-      const breaks = tips < 4 && (cx < w * 0.2 || cx > w * 0.8) && rr() < 0.8;
-      if (breaks) tips++;
-      for (let dy = 0; dy < lh; dy++) {
-        const t = (dy + 0.5) / lh;
-        const half = Math.max(
-          0.5,
-          (lw / 2) * Math.pow(Math.sin(Math.PI * Math.min(1, t * 1.15)), 0.7),
-        );
-        const shift = Math.round(out * Math.max(0, t - 0.5) * 3);
-        const y = cy + dy;
-        if (y < 3 || y >= bell + (breaks ? 2 : 0)) continue;
-        for (let dx = -Math.floor(half); dx <= Math.ceil(half) - 1; dx++) {
-          const x = cx + dx + shift;
-          if (x < 0 || x >= w) continue;
-          const [ix, iw] = rows[Math.min(y, h - 1)]!;
-          const inside = x >= ix && x < ix + iw && y < bell;
-          if (!inside && !(breaks && dy >= lh - 3)) continue;
-          const upperLeft = dx <= -Math.floor(half) + 1 && t < 0.6;
-          const lum = upperLeft ? 140 + rr() * 16 : t < 0.5 ? 120 + rr() * 10 : 100 + rr() * 12;
-          px(
-            g,
-            x,
-            y,
-            `rgb(${Math.round(lum)},${Math.round(lum * 0.95)},${Math.round(lum * 0.92)})`,
-          );
-          leafAt[y * w + x] = 1;
-        }
-      }
-    }
-    for (let y = 3; y < bell + 2 && y < h - 1; y++) {
-      for (let x = 0; x < w - 1; x++) {
-        if (!leafAt[y * w + x] || leafAt[(y + 1) * w + x + 1]) continue;
-        const [ix, iw] = rows[Math.min(y + 1, h - 1)]!;
-        if (x + 1 < ix || x + 1 >= ix + iw || y + 1 >= bell) continue;
-        px(g, x + 1, y + 1, rr() < 0.5 ? 'rgb(24,20,16)' : 'rgb(41,40,41)');
-      }
-    }
-    // The volutes: a small dark C at each upper corner with one light pixel, no eye.
-    for (const [vx, dir] of [
-      [2, 1],
-      [w - 3, -1],
-    ] as const) {
-      for (const [dx, dy] of [
-        [-1, -1],
-        [0, -1],
-        [1, -1],
-        [-1, 0],
-        [-1, 1],
-        [0, 1],
-        [1, 1],
-      ] as const) {
-        px(g, vx + dir * dx, 4 + dy, 'rgb(41,40,41)');
-      }
-      px(g, vx, 4, 'rgb(140,134,132)');
-    }
-  }
-  const [rx, rw] = rows[ring === 'below' ? h - 1 : 0]!;
-  const y0 = ring === 'below' ? h - collar : 0;
+  const [rx, rw] = rows[0]!;
   const bands: Rgb[] = [
     [192, 172, 122],
     [170, 147, 92],
@@ -1378,11 +1303,153 @@ export function paintCapital(
       px(
         g,
         x,
-        y0 + y,
+        y,
         `rgb(${Math.min(255, Math.round(band[0] * k))},${Math.min(255, Math.round(band[1] * k))},${Math.min(255, Math.round(band[2] * k))})`,
       );
     }
   }
+  quantise565(g, w, h);
+  return c;
+}
+
+/** MM6's capital; see `paintCapital`. It overhangs the shaft six pixels each side. */
+function paintAcanthus(w: number, h: number): HTMLCanvasElement {
+  const [c, g] = canvas(w, h);
+  const img = g.createImageData(w, h);
+  const d = img.data;
+  const rr = die(w * 13 + h);
+  const collar = Math.min(11, h);
+  const top = h - collar;
+  const neck = Math.max(3, top - 5);
+  const shaft = Math.max(4, w - 12);
+  const m = Math.floor((w - shaft) / 2);
+  const put = (x: number, y: number, [r, gr, b]: Rgb, a = 255): void => {
+    if (x < 0 || y < 0 || x >= w || y >= h) return;
+    const i = (y * w + x) * 4;
+    d[i] = Math.max(0, Math.min(255, Math.round(r)));
+    d[i + 1] = Math.max(0, Math.min(255, Math.round(gr)));
+    d[i + 2] = Math.max(0, Math.min(255, Math.round(b)));
+    d[i + 3] = a;
+  };
+  const grey = (x: number, y: number, l: number, [tr, tg, tb]: Rgb): void =>
+    put(x, y, [l * tr, l * tg, l * tb]);
+  const sky: Rgb = [0, 0, 0];
+  // The shaft's cosine across (critics, round 12: it fits MM6's eight columns to 0.05).
+  const turn = (x: number): number =>
+    0.72 +
+    0.54 * Math.cos((Math.PI / 2) * Math.pow(Math.max(0, x - m) / Math.max(1, shaft - 1), 0.7));
+  const half = (y: number): number =>
+    y < 3
+      ? w / 2
+      : y < 9
+        ? w / 2 - 1.5
+        : y < neck
+          ? w / 2 -
+            1.5 -
+            (w / 2 - 1.5 - shaft / 2) * Math.pow((y - 9) / Math.max(1, neck - 9), 1.15)
+          : shaft / 2;
+  const inset = (y: number): number => Math.max(0, Math.round(w / 2 - half(y)));
+  const inside = new Uint8Array(w * h);
+  for (let y = 0; y < neck; y++)
+    for (let x = inset(y); x < w - inset(y); x++) inside[y * w + x] = 1;
+  // The abacus: lit on top, dark beneath, falling to the right.
+  [166, 124, 44].forEach((l, y) => {
+    if (y >= neck) return;
+    for (let x = 0; x < w; x++)
+      grey(x, y, l * (1.08 - (0.16 * x) / Math.max(1, w - 1)) + (rr() - 0.5) * 8, [1, 0.96, 0.94]);
+  });
+  // The mass: no flat ground anywhere.
+  const mw = (w >> 1) + 1;
+  const mottle = Array.from({ length: mw * ((h >> 1) + 1) }, () => (rr() + rr() + rr() - 1.5) * 2);
+  for (let y = 3; y < neck; y++)
+    for (let x = 0; x < w; x++) {
+      if (!inside[y * w + x]) continue;
+      const l =
+        80 * (1 - (0.18 * (y - 3)) / 24) +
+        16 * mottle[(y >> 1) * mw + (x >> 1)]! -
+        10 * (x / Math.max(1, w - 1) - 0.5) +
+        (rr() - 0.5) * 10;
+      grey(x, y, l, [1, 0.94, 0.91]);
+    }
+  // The curls: hooks of four to eight pixels, a pixel wide, turning 0.35 to 0.7 a pixel,
+  // each lit on its upper left (never over 160).
+  const dark = (): Rgb => (rr() < 0.6 ? [24, 20, 16] : [41, 40, 41]);
+  for (let k = 0; k < 24 && neck > 4; k++) {
+    let y = 3 + rr() * Math.min(21, neck - 4);
+    let x = w / 2 + (rr() * 2 - 1) * Math.max(0, half(Math.floor(y)) - 1);
+    let a = rr() * 2 * Math.PI;
+    const bend = (rr() < 0.5 ? -1 : 1) * (0.35 + rr() * 0.35);
+    const length = 4 + Math.floor(rr() * 5);
+    for (let i = 0; i < length; i++) {
+      const cx = Math.round(x);
+      const cy = Math.round(y);
+      if (cy >= 3 && cy < neck && cx >= 0 && cx < w) {
+        put(cx, cy, dark());
+        inside[cy * w + cx] = 1;
+        const lx = cx - 1;
+        const ly = cy - 1;
+        if (ly >= 3 && lx >= 0 && inside[ly * w + lx] && d[(ly * w + lx) * 4]! > 60)
+          grey(lx, ly, 140 + rr() * 20, [1, 0.96, 0.93]);
+      }
+      x += Math.cos(a);
+      y += Math.sin(a) * 0.8;
+      a += bend;
+    }
+  }
+  // Seven breakers: a curl two pixels thick pushed two to four past the outline, its tip
+  // curling down, a dark pixel under the tip and the sky left beneath it.
+  const free = Array.from({ length: Math.max(0, Math.min(19, neck - 7)) }, (_, i) => 5 + i);
+  for (let k = 0; k < 7 && free.length > 0; k++) {
+    const y = free.splice(Math.floor(rr() * free.length), 1)[0]!;
+    const side = rr() < 0.5 ? -1 : 1;
+    const reach = 2 + Math.floor(rr() * 3);
+    const edge = side < 0 ? inset(y) : w - 1 - inset(y);
+    for (let j = 1; j <= reach; j++) {
+      const tip = j === reach;
+      put(edge + side * j, y, tip ? [24, 20, 16] : [82, 77, 74]);
+      put(edge + side * j, y + 1, tip ? [24, 20, 16] : [66, 62, 60]);
+    }
+    const tx = edge + side * reach;
+    const drop = 1 + Math.floor(rr() * 2);
+    for (let j = 0; j < drop; j++) put(tx, y + 2 + j, [24, 20, 16]);
+    put(tx, y + 2 + drop, [33, 32, 33]);
+    for (let j = 0; j < 2; j++) if (rr() < 0.6) put(edge - side * j, y + 2, sky, 0);
+  }
+  // The astragal across the shaft only (MM6 rows 27 to 30: 34-85, 26-79, 42-120, 67-151).
+  [60, 44, 36, 92, 132].forEach((l, j) => {
+    const y = neck + j;
+    if (y >= top) return;
+    for (let x = 0; x < w; x++) {
+      if (x >= m && x < m + shaft) grey(x, y, l * turn(x) + (rr() - 0.5) * 8, [1, 0.95, 0.93]);
+      else put(x, y, sky, 0);
+    }
+  });
+  // MM6's collar: eleven rows in five bands.
+  const bands: Rgb[] = [
+    [192, 172, 122],
+    [170, 147, 92],
+    [170, 147, 92],
+    [170, 147, 92],
+    [170, 147, 92],
+    [175, 154, 101],
+    [175, 154, 101],
+    [175, 154, 101],
+    [175, 154, 101],
+    [190, 173, 123],
+    [199, 184, 139],
+  ];
+  for (let j = 0; j < collar; j++) {
+    const [r, gr, b] = bands[Math.min(bands.length - 1, j)]!;
+    for (let x = 0; x < w; x++) {
+      if (x < m || x >= m + shaft) {
+        put(x, top + j, sky, 0);
+        continue;
+      }
+      const k = turn(x);
+      put(x, top + j, [r * k, gr * k, b * k]);
+    }
+  }
+  g.putImageData(img, 0, 0);
   quantise565(g, w, h);
   return c;
 }
@@ -1483,7 +1550,7 @@ export function paintCartouche(w: number, h: number, pressed: boolean): HTMLCanv
       if (!inOval(x, y, ow, oh, 4)) {
         const k = Math.floor(deg / 30);
         const f = deg / 30 - k;
-        const lum = bevel[k]! + f * (bevel[k + 1]! - bevel[k]!);
+        const lum = bevel[k]! + f * (bevel[k + 1]! - bevel[k]!) + (r() - 0.5) * 12;
         col = toned(lum + lift);
         // The rim light on the bevel's inner row, from -20 to -50 degrees.
         if (inOval(x, y, ow, oh, 3) && deg >= 310 && deg <= 340) col = [214, 178, 99];
@@ -1491,9 +1558,11 @@ export function paintCartouche(w: number, h: number, pressed: boolean): HTMLCanv
         const lum = rowLum(y / Math.max(1, oh - 1)) + n3[y * ow + x]! * 20 + (r() - 0.5) * 12;
         col = [125 * (lum / 106), 103 * (lum / 106), 62 * (lum / 106)];
         col = [col[0] + lift, col[1] + lift, col[2] + lift];
+        // The specular a fifth of the way down and softer (HUD critic, round 13: at an eighth it
+        // turned the top rows white, 217 to 243 where MM6's run 118 to 158).
         const dx = (x + 0.5 - ow * 0.5) / 3.5;
-        const dy = (y + 0.5 - oh * (pressed ? 0.18 : 0.12)) / 2.6;
-        col = mix(col, [247, 247, 214], Math.min(1, Math.exp(-(dx * dx + dy * dy) / 2)));
+        const dy = (y + 0.5 - oh * (pressed ? 0.26 : 0.21)) / 2.6;
+        col = mix(col, [247, 247, 214], 0.6 * Math.min(1, Math.exp(-(dx * dx + dy * dy) / 2)));
       }
       px(
         g,
@@ -1615,13 +1684,14 @@ export function paintMarbleFrame(
   const rw = s.rose.width;
   const rh = s.rose.height;
   const rr = die(w * 5 + h);
-  // The rose averaged over five rows (screens critic, round 12: its crazing cores made the
-  // pillar four times as busy along its length as MM6's).
+  // The rose averaged over three rows (screens critic, round 12: its crazing cores made the
+  // pillar four times as busy along its length as MM6's; round 13: over five it went half as
+  // busy).
   const roseAt = (x: number, y: number, ch: number): number => {
     let sum = 0;
-    for (let k = -2; k <= 2; k++)
+    for (let k = -1; k <= 1; k++)
       sum += rose[(((((y + k) % rh) + rh) % rh) * rw + (x % rw)) * 4 + ch]!;
-    return sum / 5;
+    return sum / 3;
   };
   for (let y = 0; y < h; y++) {
     const stir = (rr() - 0.5) * 4;
@@ -1954,15 +2024,27 @@ export function paintBook(
       px(g, x, top + y, edgeTone(L + jitter[i]![y]! * 6));
     });
   }
-  // The foot: the page's last two rows shaded, a (107,101,82) backing, seven edges sharing
-  // one bow, then two rows down to the cover.
+  // The foot (screens critic, round 13): the page's last two rows shaded, then MM6's band
+  // of page edges seen from below, two lit and seven alternating, sharing one slow bow, a
+  // step's pixel the mean of the rows it joins; the cover below it, never the page.
   const sweep = (x: number): number =>
     Math.sin((Math.PI * Math.min(x, pw - 1)) / Math.max(1, pw - 1));
-  const common = noise1(pw + 12, 40, w * 11 + h);
-  const footL = [165, 140, 107, 115, 132, 156, 173];
+  const common = noise1(pw + 12, 160, w * 11 + h);
+  const footRgb: Rgb[] = [
+    [173, 164, 148],
+    [165, 156, 140],
+    [140, 130, 115],
+    [115, 111, 99],
+    [123, 121, 107],
+    [107, 101, 90],
+    [82, 77, 66],
+    [123, 121, 107],
+    [66, 65, 57],
+  ];
+  const baseAt = (x: number): number => bottom + Math.round(8 * sweep(x) + common[x]! * 2);
   const shade = g.getImageData(left, top, pw, deep);
   for (let x = 0; x < pw + 10; x++) {
-    const base = bottom + Math.round(8 * sweep(x) + common[x]! * 6);
+    const base = baseAt(x);
     if (x < pw) {
       for (const [dy, k] of [
         [2, 0.96],
@@ -1975,11 +2057,16 @@ export function paintBook(
         px(g, left + x, base - dy, `rgb(${col[0]},${col[1]},${col[2]})`);
       }
     }
-    g.fillStyle = 'rgb(107,101,82)';
-    g.fillRect(left + x, base, 1, footL.length);
-    footL.forEach((L, j) => px(g, left + x, base + j, edgeTone(L)));
-    px(g, left + x, base + footL.length, 'rgb(123,121,115)');
-    px(g, left + x, base + footL.length + 1, 'rgb(82,81,74)');
+    const step = x > 0 ? base - baseAt(x - 1) : 0;
+    footRgb.forEach((col, j) => {
+      const was = footRgb[Math.max(0, Math.min(footRgb.length - 1, j + step))]!;
+      const [r0, g0, b0] = step ? col.map((v, k) => Math.round((v + was[k]!) / 2)) : col;
+      px(g, left + x, base + j, `rgb(${r0},${g0},${b0})`);
+    });
+    const under = base + footRgb.length;
+    const end = top + deep;
+    if (end > under)
+      g.drawImage(cover, left + x - B, under - B, 1, end - under, left + x, under, 1, end - under);
   }
   // Bookmarks (screens critic, round 12): MM6's pennants, page-textured and swallowtailed,
   // coming out from under the page over the stack and the board, one per school known at a
@@ -2017,6 +2104,8 @@ export function paintBook(
     g.restore();
     paintSchoolIcon(g, fx + 14, ty + 3 - (isOpen ? 3 : 0), school);
   });
+  // MM6's page holds a few tones in broad runs (screens critic, round 13).
+  quantise565(g, w, h);
   return c;
 }
 
@@ -2165,23 +2254,30 @@ export function paintTablet(w: number, h: number, marble: HTMLCanvasElement): HT
  */
 export function paintPlaque(w: number, h: number, kind: 'hud' | 'rest' = 'hud'): HTMLCanvasElement {
   if (kind === 'hud') {
-    const c = cloudy(w, h, w * 7 + h, { base: [16, 28, 24], octaves: [[12, 2]], grain: 1 });
-    const g = c.getContext('2d')!;
-    g.fillStyle = '#292c29';
+    // MM6's number well (HUD critic, round 13: MM6 has no clock in the band; its food and gold
+    // sit in wells of the band's marble darkened by a third, under a dark top edge, over a
+    // light lower lip).
+    const [c, g] = canvas(w, h);
+    const s = surfaces ?? installPaint();
+    for (let y = 0; y < h; y += s.marble.height) {
+      for (let x = 0; x < w; x += s.marble.width)
+        g.drawImage(s.marble, x + 23, y + 41, w, h, x, y, w, h);
+    }
+    g.fillStyle = 'rgba(0,0,0,0.34)';
+    g.fillRect(0, 0, w, h);
+    g.fillStyle = 'rgb(82,81,74)';
     g.fillRect(0, 0, w, 1);
+    g.fillStyle = 'rgb(57,52,49)';
+    g.fillRect(0, 1, w, 1);
     g.fillRect(0, 0, 1, h);
-    g.fillStyle = '#4a4542';
-    g.fillRect(1, 1, w - 1, 1);
-    g.fillRect(1, 1, 1, h - 1);
-    g.fillStyle = '#a59a94';
+    g.fillStyle = 'rgb(148,121,107)';
+    g.fillRect(0, h - 2, w, 1);
+    g.fillStyle = 'rgb(165,142,132)';
     g.fillRect(0, h - 1, w, 1);
     g.fillRect(w - 1, 0, 1, h);
     quantise565(g, w, h);
     return c;
   }
-  // The rest clock's well (screens critic, round 12: wisps over 4% where MM6's cover 23 to
-  // 30%): a base mottle of eight and four, twelve long wisps of forty to a hundred and
-  // twenty pixels and many short ones in (48,62,50).
   const c = cloudy(w, h, w * 7 + h, {
     base: [10, 18, 13],
     octaves: [
@@ -2191,7 +2287,7 @@ export function paintPlaque(w: number, h: number, kind: 'hud' | 'rest' = 'hud'):
     grain: 2,
   });
   const g = c.getContext('2d')!;
-  wisps(g, w, h, w * 3 + h, 12, [40, 120], [48, 62, 50], 0.8, 0.4);
+  wisps(g, w, h, w * 3 + h, 20, [40, 120], [48, 62, 50], 0.8, 0.4);
   wisps(g, w, h, w * 5 + h, Math.round((w * h) / 70), [2, 8], [48, 62, 50], 0.8, 0.4);
   g.fillStyle = '#c6927b';
   g.fillRect(0, 0, w, 1);
@@ -2428,4 +2524,51 @@ export function installPaintedButtons(root: HTMLElement): void {
     attributes: true,
     attributeFilter: ['data-paint'],
   });
+}
+
+/** MM6's yellow numerals, five by eight with one-pixel strokes (HUD critic, round 13). */
+const NUMERALS: Record<string, readonly string[]> = {
+  '0': [' ### ', '#   #', '#  ##', '# # #', '##  #', '#   #', '#   #', ' ### '],
+  '1': ['  #  ', ' ##  ', '  #  ', '  #  ', '  #  ', '  #  ', '  #  ', ' ### '],
+  '2': [' ### ', '#   #', '    #', '   # ', '  #  ', ' #   ', '#    ', '#####'],
+  '3': [' ### ', '#   #', '    #', '  ## ', '    #', '    #', '#   #', ' ### '],
+  '4': ['   # ', '  ## ', ' # # ', '#  # ', '#####', '   # ', '   # ', '   # '],
+  '5': ['#####', '#    ', '#### ', '    #', '    #', '    #', '#   #', ' ### '],
+  '6': ['  ## ', ' #   ', '#    ', '#### ', '#   #', '#   #', '#   #', ' ### '],
+  '7': ['#####', '    #', '   # ', '   # ', '  #  ', '  #  ', ' #   ', ' #   '],
+  '8': [' ### ', '#   #', '#   #', ' ### ', '#   #', '#   #', '#   #', ' ### '],
+  '9': [' ### ', '#   #', '#   #', '#   #', ' ####', '    #', '   # ', ' ##  '],
+  ':': [' ', ' ', '#', ' ', ' ', '#', ' ', ' '],
+};
+
+const numeralCache = new Map<string, HTMLCanvasElement>();
+
+/**
+ * A number in MM6's well type: pure yellow (255,255,0) at an eight-pixel advance, a colon
+ * in three, each lit pixel with a black one at its lower right. One canvas pixel per UI pixel.
+ */
+export function paintNumerals(text: string): HTMLCanvasElement {
+  const hit = numeralCache.get(text);
+  if (hit) return hit;
+  const glyphs = [...text].map((ch) => NUMERALS[ch]).filter((g): g is readonly string[] => !!g);
+  const advance = (glyph: readonly string[]): number => (glyph[0]!.length === 1 ? 3 : 8);
+  const width = Math.max(1, glyphs.reduce((sum, glyph) => sum + advance(glyph), 0) - 2);
+  const [c, g] = canvas(width, 9);
+  for (const [colour, off] of [
+    ['#000000', 1],
+    ['#ffff00', 0],
+  ] as const) {
+    let x0 = 0;
+    for (const glyph of glyphs) {
+      const left = glyph[0]!.length === 1 ? x0 + 1 : x0;
+      glyph.forEach((row, y) => {
+        for (let x = 0; x < row.length; x++) {
+          if (row[x] === '#') px(g, left + x + off, y + off, colour);
+        }
+      });
+      x0 += advance(glyph);
+    }
+  }
+  numeralCache.set(text, c);
+  return c;
 }

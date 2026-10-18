@@ -79,6 +79,9 @@ function paintRoom(size: number): HTMLCanvasElement {
         if (px === 0) l = -36;
         else if (px === 1) l += 22;
         else if (lines.includes(px)) l += rand() < 0.5 ? -8 : 8;
+        // A grain on the fill (talk-world critic, round 13: 16 to 21 colours in the room's
+        // strips, MM6's 65 to 96).
+        if (px > 0) l += (rand() - 0.5) * 10;
         const lamp =
           (x + px) / size + y / size < 0.6 ? 14 * (1 - ((x + px) / size + y / size) / 0.6) : 0;
         if (px === 0) put(x + px, y, 16, 8, 4);
@@ -95,12 +98,14 @@ function paintRoom(size: number): HTMLCanvasElement {
     put(xx, sy + 2, 70, 46, 26);
     put(xx, sy + 3, 12, 6, 2);
   }
-  // Three jugs and bowls on it, each lit on its left.
-  for (const [cx, ht, wd, l] of [
-    [12, 10, 6, 96],
-    [40, 6, 10, 72],
-    [78, 9, 7, 112],
+  // Three jugs and bowls on it, each lit on its left, placed by fractions of the width so
+  // all three stand on the canvas (at 12, 40 and 78 of 96).
+  for (const [fx, ht, wd, l] of [
+    [0.125, 10, 6, 96],
+    [0.417, 6, 10, 72],
+    [0.8125, 9, 7, 112],
   ] as const) {
+    const cx = Math.round(size * fx);
     for (let yy = 0; yy < ht; yy++) {
       const t = yy / ht;
       const half = Math.round(
@@ -152,14 +157,12 @@ export class Bust {
     this.layer.isEnabled = false;
     // The room: a painted wall behind the head, on a layer only the bust's camera sees.
     this.camera.layerMask = 0x0fffffff | ROOM_LAYER;
-    const wall = new DynamicTexture(
-      'bust-room',
-      { width: SIZE / 2, height: SIZE / 2 },
-      scene,
-      false,
-    );
-    wall.getContext().drawImage(paintRoom(SIZE / 2), 0, 0);
-    wall.update(false);
+    // At the window's size, one texel a view pixel, and flipped on upload as the sky's strip
+    // is (talk-world critic, round 13: at half size the planks doubled and the third jug fell
+    // off the canvas; unflipped, the shelf hung upside down over the bonnet).
+    const wall = new DynamicTexture('bust-room', { width: SIZE, height: SIZE }, scene, false);
+    wall.getContext().drawImage(paintRoom(SIZE), 0, 0);
+    wall.update(true);
     wall.updateSamplingMode(Constants.TEXTURE_NEAREST_SAMPLINGMODE);
     const mat = new StandardMaterial('bust-room', scene);
     mat.disableLighting = true;
@@ -260,9 +263,15 @@ export class Bust {
       .add(right.scale(-1.1))
       .add(new Vector3(0, -0.9, 0))
       .normalize();
+    // The chest a step or two under the face (talk-world critic, round 13: rows 72 to 96 as
+    // bright as the face, where MM6's lower window is darker): the light full down to 0.04 of
+    // the height under the eyes, six tenths at the window's foot, 0.11 under them.
+    const fade = { lo: eyes.y - height * 0.11, hi: eyes.y - height * 0.04 };
     for (const m of s.meshes) {
       const mat = m.material;
-      if (mat) this.materials.setKeyLight(mat as never, { direction: dir, color: KEY_COLOR });
+      if (mat) {
+        this.materials.setKeyLight(mat as never, { direction: dir, color: KEY_COLOR, fade });
+      }
     }
   }
 

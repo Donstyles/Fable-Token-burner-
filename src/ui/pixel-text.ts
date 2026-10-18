@@ -26,10 +26,23 @@ interface Face {
   shadow: [number, number, number] | null;
   /** Dark ink cut into brass: a pale line under each stroke instead of a dark one beside it. */
   engrave: boolean;
+  /** The glyphs' width over Tinos's: MM6's stone-screen italic is wider at a like height. */
+  stretch: number;
+  /** UI pixels between letters, from the element's letter-spacing. */
+  tracking: number;
+  /** The element's line box in UI pixels, and the baseline's row in it. */
+  line: number;
+  base: number;
 }
 
 const cache = new Map<string, HTMLCanvasElement>();
 let ready = false;
+let measurer: CanvasRenderingContext2D | null = null;
+
+function measure(): CanvasRenderingContext2D {
+  measurer ??= document.createElement('canvas').getContext('2d')!;
+  return measurer;
+}
 
 function parseColor(css: string): [number, number, number] {
   const m = /rgba?\(\s*([\d.]+)[ ,]+([\d.]+)[ ,]+([\d.]+)/.exec(css);
@@ -47,7 +60,7 @@ function faceOf(el: Element): Face {
   const lum = (0.299 * fill[0] + 0.587 * fill[1] + 0.114 * fill[2]) / 255;
   const italic = family !== 'Pirata One' && cs.fontStyle === 'italic';
   const engrave = cs.getPropertyValue('--engrave').trim() === '1';
-  return {
+  const face: Face = {
     family,
     size,
     weight: family === 'Pirata One' ? 0.25 : 0,
@@ -57,81 +70,207 @@ function faceOf(el: Element): Face {
     // MM6's did.
     shadow: engrave ? [250, 238, 196] : lum < 0.45 ? null : [SHADOW[0]!, SHADOW[1]!, SHADOW[2]!],
     engrave,
+    stretch: parseFloat(cs.getPropertyValue('--pxt-stretch')) || 1,
+    tracking: Math.max(0, Math.round((parseFloat(cs.letterSpacing) || 0) / PX)),
+    line: 0,
+    base: 0,
   };
+  // The word's canvas is the line box itself, its baseline where the browser puts the
+  // line's, so a line's pitch is the CSS line height whatever the glyphs (screens critic,
+  // round 13: canvases taller than the line spread the sheet's lines to 19.5 pixels).
+  const m = measure();
+  m.font = cssFont(face);
+  const met = m.measureText('Hg');
+  const asc = met.fontBoundingBoxAscent || met.actualBoundingBoxAscent + 2;
+  const desc = met.fontBoundingBoxDescent || 3;
+  const lh = parseFloat(cs.lineHeight);
+  face.line = Number.isFinite(lh) ? Math.max(1, Math.round(lh / PX)) : Math.ceil(asc + desc);
+  face.base = Math.round((face.line - asc - desc) / 2 + asc);
+  return face;
 }
 
 function key(word: string, f: Face): string {
-  return `${f.family}|${f.size}|${f.italic ? 'i' : 'r'}|${f.weight}|${f.fill.join(',')}|${f.shadow ? (f.engrave ? 'e' : 's') : '-'}|${word}`;
+  return `${f.family}|${f.size}|${f.italic ? 'i' : 'r'}|${f.weight}|${f.fill.join(',')}|${f.shadow ? (f.engrave ? 'e' : 's') : '-'}|${f.stretch}|${f.tracking}|${f.line}|${f.base}|${word}`;
 }
 
 function cssFont(f: Face): string {
   return `${f.italic ? 'italic ' : ''}${f.size}px "${f.family}"`;
 }
 
-function stamp(
-  g: CanvasRenderingContext2D,
-  word: string,
-  f: Face,
-  w: number,
-  h: number,
-  asc: number,
-  color: [number, number, number],
-  ox: number,
-  oy: number,
-): void {
+/** The word set on a context whose transform puts its origin at the baseline. */
+function setWord(g: CanvasRenderingContext2D, word: string, f: Face): void {
+  if (!f.tracking) {
+    g.fillText(word, 0, 0);
+    return;
+  }
+  let x = 0;
+  for (const ch of word) {
+    g.fillText(ch, x, 0);
+    x += g.measureText(ch).width + f.tracking / f.stretch;
+  }
+}
+
+/** The word's width in UI pixels as `setWord` sets it. */
+function wordWidth(word: string, f: Face): number {
+  const m = measure();
+  m.font = cssFont(f);
+  if (!f.tracking) return m.measureText(word).width * f.stretch;
+  let x = 0;
+  for (const ch of word) x += m.measureText(ch).width * f.stretch + f.tracking;
+  return x - f.tracking;
+}
+
+/**
+ * Zhang and Suen's thinning: a binary picture worn down to a one-pixel skeleton that keeps
+ * every stroke joined.
+ */
+function thin(b: Uint8Array, w: number, h: number): void {
+  const gone: number[] = [];
+  for (let changed = true; changed;) {
+    changed = false;
+    for (let pass = 0; pass < 2; pass++) {
+      gone.length = 0;
+      for (let y = 1; y < h - 1; y++) {
+        for (let x = 1; x < w - 1; x++) {
+          const i = y * w + x;
+          if (!b[i]) continue;
+          const p2 = b[i - w]!;
+          const p3 = b[i - w + 1]!;
+          const p4 = b[i + 1]!;
+          const p5 = b[i + w + 1]!;
+          const p6 = b[i + w]!;
+          const p7 = b[i + w - 1]!;
+          const p8 = b[i - 1]!;
+          const p9 = b[i - w - 1]!;
+          const n = p2 + p3 + p4 + p5 + p6 + p7 + p8 + p9;
+          if (n < 2 || n > 6) continue;
+          const turns =
+            Number(!p2 && p3) +
+            Number(!p3 && p4) +
+            Number(!p4 && p5) +
+            Number(!p5 && p6) +
+            Number(!p6 && p7) +
+            Number(!p7 && p8) +
+            Number(!p8 && p9) +
+            Number(!p9 && p2);
+          if (turns !== 1) continue;
+          if (pass === 0 ? p2 * p4 * p6 || p4 * p6 * p8 : p2 * p4 * p8 || p2 * p6 * p8) continue;
+          gone.push(i);
+        }
+      }
+      for (const i of gone) b[i] = 0;
+      if (gone.length) changed = true;
+    }
+  }
+}
+
+/**
+ * Which pixels of a word's canvas are ink. Tinos is set at four times the size, cut at half
+ * cover, thinned to a skeleton and pooled four to one, ink where two of the skeleton's
+ * pixels fall: MM6's type is monoline (screens critic, round 13: two thirds or more of its
+ * runs one pixel, every hairline kept, where a cut at the UI size left two-pixel stems and
+ * dropped the hairlines of o, r, n, t and g). Pirata One keeps its weight, cut at the UI
+ * size.
+ */
+function inkOf(word: string, f: Face, w: number, h: number): Uint8Array {
+  const ink = new Uint8Array(w * h);
+  const monoline = f.family === 'Tinos';
+  const s = monoline ? 4 : 1;
   const t = document.createElement('canvas');
-  t.width = w;
-  t.height = h;
+  t.width = w * s;
+  t.height = h * s;
   const tg = t.getContext('2d');
-  if (!tg) return;
+  if (!tg) return ink;
+  tg.setTransform(s * f.stretch, 0, 0, s, s, s * f.base);
   tg.font = cssFont(f);
   tg.fillStyle = '#000';
   tg.strokeStyle = '#000';
   tg.lineWidth = f.weight;
   tg.lineJoin = 'round';
-  if (f.weight > 0) tg.strokeText(word, 1 + ox, asc + oy);
-  tg.fillText(word, 1 + ox, asc + oy);
-  const id = tg.getImageData(0, 0, w, h);
-  const d = id.data;
-  // The coverage a pixel needs to be ink: the talk panel's topic lines (italic Tinos at 13 UI
-  // pixels, 19.5 CSS, and up) thickened at 100 (talk critic, round 12: 0.26 ink against MM6's
-  // 0.18), so they cut at 125; at 150 their thin strokes broke, and smaller type keeps 100.
-  const cut = /tinos/i.test(f.family) && f.italic && f.size >= 13 ? 125 : 100;
-  for (let i = 0; i < d.length; i += 4) {
-    if (d[i + 3]! >= cut) {
-      d[i] = color[0];
-      d[i + 1] = color[1];
-      d[i + 2] = color[2];
-      d[i + 3] = 255;
-    } else d[i + 3] = 0;
+  if (f.weight > 0) tg.strokeText(word, 0, 0);
+  setWord(tg, word, f);
+  const d = tg.getImageData(0, 0, t.width, t.height).data;
+  if (!monoline) {
+    for (let i = 0; i < ink.length; i++) ink[i] = d[i * 4 + 3]! >= 100 ? 1 : 0;
+    return ink;
   }
-  tg.putImageData(id, 0, 0);
-  g.drawImage(t, 0, 0);
+  const W = t.width;
+  const H = t.height;
+  const b = new Uint8Array(W * H);
+  for (let i = 0; i < b.length; i++) b[i] = d[i * 4 + 3]! >= 128 ? 1 : 0;
+  thin(b, W, H);
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      let n = 0;
+      for (let dy = 0; dy < s; dy++)
+        for (let dx = 0; dx < s; dx++) n += b[(y * s + dy) * W + x * s + dx]!;
+      ink[y * w + x] = n >= 2 ? 1 : 0;
+    }
+  }
+  // Every mark keeps its pixels: a stop or the dot of an i thins to a point, which the
+  // pooling alone would drop.
+  const seen = new Uint8Array(W * H);
+  for (let start = 0; start < b.length; start++) {
+    if (!b[start] || seen[start]) continue;
+    const blocks = new Set<number>();
+    const stack = [start];
+    seen[start] = 1;
+    while (stack.length) {
+      const i = stack.pop()!;
+      blocks.add(Math.floor(Math.floor(i / W) / s) * w + Math.floor((i % W) / s));
+      for (let dy = -1; dy <= 1; dy++)
+        for (let dx = -1; dx <= 1; dx++) {
+          const j = i + dy * W + dx;
+          if (j >= 0 && j < b.length && b[j] && !seen[j] && Math.abs((j % W) - (i % W)) <= 1) {
+            seen[j] = 1;
+            stack.push(j);
+          }
+        }
+    }
+    if (![...blocks].some((k) => ink[k])) for (const k of blocks) ink[k] = 1;
+  }
+  return ink;
 }
 
 /** Paint one word in a face; cached by word and face. */
-function paintWord(word: string, f: Face): { canvas: HTMLCanvasElement; descent: number } {
+function paintWord(word: string, f: Face): HTMLCanvasElement {
   const k = key(word, f);
   const hit = cache.get(k);
-  const m = document.createElement('canvas').getContext('2d')!;
+  if (hit) return hit;
+  const m = measure();
   m.font = cssFont(f);
-  const met = m.measureText(word);
-  const asc = Math.ceil(met.fontBoundingBoxAscent || met.actualBoundingBoxAscent + 2);
-  const desc = Math.ceil(met.fontBoundingBoxDescent || 3);
-  if (hit) return { canvas: hit, descent: desc };
-  const w = Math.ceil(met.width) + 2;
-  const h = asc + desc + 2;
+  const below = Math.ceil(m.measureText(word).actualBoundingBoxDescent || 0);
+  // A pixel of margin left and right (the shadow's), the width even so the next word starts
+  // on the grid of three CSS pixels (screens critic, round 13).
+  let w = Math.ceil(wordWidth(word, f)) + 2;
+  w += w % 2;
+  const h = Math.max(f.line, f.base + below + 2);
   const c = document.createElement('canvas');
   c.width = Math.max(1, w);
   c.height = Math.max(1, h);
   const g = c.getContext('2d');
   if (g) {
-    if (f.shadow) stamp(g, word, f, w, h, asc, f.shadow, f.engrave ? 0 : 1, 1);
-    stamp(g, word, f, w, h, asc, f.fill, 0, 0);
+    const ink = inkOf(word, f, w, h);
+    const img = g.createImageData(w, h);
+    const d = img.data;
+    const put = (x: number, y: number, [r, gr, b]: [number, number, number]): void => {
+      if (x < 0 || y < 0 || x >= w || y >= h) return;
+      const i = (y * w + x) * 4;
+      d[i] = r;
+      d[i + 1] = gr;
+      d[i + 2] = b;
+      d[i + 3] = 255;
+    };
+    const ox = f.engrave ? 0 : 1;
+    if (f.shadow)
+      for (let i = 0; i < ink.length; i++)
+        if (ink[i]) put((i % w) + ox, Math.floor(i / w) + 1, f.shadow);
+    for (let i = 0; i < ink.length; i++) if (ink[i]) put(i % w, Math.floor(i / w), f.fill);
+    g.putImageData(img, 0, 0);
   }
   if (cache.size > 3000) cache.clear();
   cache.set(k, c);
-  return { canvas: c, descent: desc };
+  return c;
 }
 
 /** Replace a text node with a span of word canvases the browser can still wrap. */
@@ -155,7 +294,7 @@ function convert(node: Text): void {
       span.appendChild(document.createTextNode(' '));
       continue;
     }
-    const { canvas, descent } = paintWord(part, f);
+    const canvas = paintWord(part, f);
     const img = document.createElement('canvas');
     img.width = canvas.width;
     img.height = canvas.height;
@@ -163,7 +302,9 @@ function convert(node: Text): void {
     img.className = 'pxw';
     img.style.width = `${canvas.width * PX}px`;
     img.style.height = `${canvas.height * PX}px`;
-    img.style.verticalAlign = `${-(descent + 1) * PX}px`;
+    // A descender below the line box hangs into the leading under it, as MM6's do, without
+    // opening the line.
+    if (canvas.height > f.line) img.style.marginBottom = `${-(canvas.height - f.line) * PX}px`;
     span.appendChild(img);
   }
   node.replaceWith(span);

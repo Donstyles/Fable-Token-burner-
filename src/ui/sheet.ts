@@ -74,10 +74,16 @@ function skillsColumn(v: SheetView, onRaise: (id: SkillId) => void): HTMLElement
         e.preventDefault();
         onRaise(row.id);
       });
-      const name = el('div', 'grow');
-      name.append(el('div', '', row.name), el('div', 'sub', `${row.rankLabel} · ${row.cost} pt`));
+      // One line a skill, as MM6's: the rank named only above Normal, the price to raise it
+      // dim beside the level (screens critic, round 13: two lines a skill ran off the box).
+      const name = el(
+        'div',
+        'grow',
+        row.rankLabel === 'Normal' ? row.name : `${row.name} ${row.rankLabel}`,
+      );
+      const cost = el('div', 'sub sheet-cost', `${row.cost} pt`);
       const level = el('div', 'ui-v sheet-level', String(row.level));
-      line.append(name, level);
+      line.append(name, cost, level);
       col.appendChild(line);
     }
   }

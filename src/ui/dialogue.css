@@ -85,19 +85,22 @@
   display: inline;
   margin-left: 0.3em;
   font:
-    italic 18px/19.5px 'Tinos',
+    19.5px/21px 'Tinos',
     Georgia,
     serif;
+  letter-spacing: 1.5px;
   color: #109aef;
 }
 .dlg-name {
-  /* "Greta the Goodwife" in MM6's blue under the window, wrapping when it must. */
+  /* "Greta the Goodwife" in MM6's blue under the window, wrapping when it must: upright and
+     spaced a pixel apart, as MM6's names (talk critic, round 13). */
   display: inline;
   margin: 0;
   font:
-    italic 18px/19.5px 'Tinos',
+    19.5px/21px 'Tinos',
     Georgia,
     serif;
+  letter-spacing: 1.5px;
   color: #109aef;
 }
 
@@ -126,18 +129,19 @@
 .dlg-topics {
   display: flex;
   flex-direction: column;
-  gap: 1px;
-  padding-top: 4px;
+  gap: 1.5px;
+  padding-top: 4.5px;
 }
+/* The topics a size up, 16 UI pixels, so their thin strokes hold (talk critic, round 13). */
 .dlg-topic,
 .dlg-bye {
   appearance: none;
   background: none;
   border: 0;
   padding: 3px 6px;
-  min-height: 26px;
+  min-height: 27px;
   font:
-    italic 19.5px/24px 'Tinos',
+    italic 24px/27px 'Tinos',
     Georgia,
     serif;
   color: var(--ink-pale);

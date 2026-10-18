@@ -10,7 +10,7 @@ import { maxSp } from '../game/character';
 import { worstCondition, type ConditionId } from '../game/conditions';
 import { formatDate, formatTime } from '../game/time';
 import { el } from './dom';
-import { installPaint, installPaintedButtons } from './paint';
+import { installPaint, installPaintedButtons, paintNumerals } from './paint';
 import { installPixelText, PX } from './pixel-text';
 import './hud.css';
 
@@ -162,7 +162,17 @@ export function createHud(parent: HTMLElement, party: Party, hooks: HudHooks): H
       });
     },
     setClock(minutes) {
-      clockTime.textContent = formatTime(minutes);
+      // The hour in MM6's yellow well numerals, drawn whole-pixel (paint.ts `paintNumerals`).
+      const time = formatTime(minutes);
+      if (clockTime.dataset['time'] !== time) {
+        clockTime.dataset['time'] = time;
+        const digits = paintNumerals(time);
+        digits.className = 'hud-numerals';
+        digits.style.width = `${digits.width * PX}px`;
+        digits.style.height = `${digits.height * PX}px`;
+        clockTime.replaceChildren(digits);
+        clockTime.setAttribute('aria-label', time);
+      }
       clockDate.textContent = formatDate(minutes).split(',')[0] ?? '';
     },
     dispose() {

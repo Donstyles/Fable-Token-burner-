@@ -84,7 +84,7 @@ plans the batch, `run <nnn> --dry-run` then `run <nnn>` makes it, and
 - **Only what is named**: the style text says no extra people, casters,
   hands or wands; a subject sentence for an effect says "and nothing else".
 - **Bitmap** (`tools/lib/icon.ts`): the subject fitted 68 by 50 (wider,
-  up to 100, for a bolt), its box blind to specks (a pixel counts with
+  up to 84, the page's place, for a bolt), its box blind to specks (a pixel counts with
   twenty covered in its nine-by-nine window), the whole box taken from the picture round it
   so a glow runs to the oval's edge, on MM6's 68 by 52 parchment oval
   (184,172,150) with a four-level mottle in a 72 by 54 box, keyed outside

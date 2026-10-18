@@ -8,9 +8,9 @@
  * black, 60 and white kept), so the subject sits darker than its oval as MM6's do; a pure
  * light effect keeps its own exposure. A picture with an alpha channel (Meshy's background
  * removal) is un-premultiplied and its haze dropped. The subject is fitted 68 by 50 in the
- * oval (a bolt wider, up to 100) and the whole box is taken from the picture around it, so a
- * glow runs on to the oval's edge; the parchment carries a mottle of four levels. A subject
- * darker than MM6's is lifted, never darkened.
+ * oval (a bolt wider, up to 84, the page's place) and the whole box is taken from the
+ * picture around it, so a glow runs on to the oval's edge; the parchment carries a mottle of
+ * four levels. A subject darker than MM6's is lifted, never darkened.
  */
 import sharp from 'sharp';
 
@@ -20,8 +20,12 @@ export const ICON_SIZE = { width: 72, height: 54 } as const;
 export const ICON_OVAL = { width: 68, height: 52 } as const;
 /** MM6's parchment inside the oval: flat, about four levels either way. */
 export const ICON_PARCHMENT = [184, 172, 150] as const;
-/** The subject's fit (icon critic, pass 2: MM6's subjects span 68 by 49); wide ones overhang. */
-export const ICON_FIT = { width: 68, height: 50, wide: 100 } as const;
+/**
+ * The subject's fit (icon critic, pass 2: MM6's subjects span 68 by 49); wide ones overhang
+ * the oval, at most to the place's 84 pixels (screens critic, round 13: a 100-pixel bolt ran
+ * into its neighbour).
+ */
+export const ICON_FIT = { width: 68, height: 50, wide: 84 } as const;
 
 export interface SubjectStats {
   /** Mean luma (Rec. 601) of the subject's pixels, its 5th percentile, its share under 50. */

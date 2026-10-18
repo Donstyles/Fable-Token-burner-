@@ -522,7 +522,13 @@ waterfalls and deserts, walkable end to end.
     6, 6, 7 (talk), 6 (world), no; icons pass 2 a median 5. **Round 13**
     (DESIGN 16.23): the page's shadow under the spells, MM6's pennants,
     whole-pixel lengths, the critics' recipes across the shell and the
-    world; icon pass 3a (15 credits); the scoring follows.
+    world; icon pass 3a (15 credits). **Round 13 scored 2026-10-18**:
+    6.5, 6.5, 7.5 (talk), 6 (world), no; icons pass 3a a median 6.
+    **Round 14** (DESIGN 16.24): monoline bitmap type on the line box,
+    every screen fitted to its frame, MM6's capital, slab, rings, gold
+    and clock, the book's foot, softer rose marble, the critics' ground,
+    grass, splat edges, sky, room and face; icon pass 3b (15 credits, 10
+    of the grant left); the scoring follows.
 18. Remaining, in order: lasting buffs and Jump; weather states (rain, a
     sandstorm); music; the smith's hammer and the temple bell.
 

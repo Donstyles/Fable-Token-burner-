@@ -42,12 +42,15 @@
   image-rendering: pixelated;
 }
 .hud-clock-time {
-  /* White serif with a black shadow in a dark well (paint.ts `plaque`), as MM6's clock. */
-  font:
-    19.5px/21px 'Tinos',
-    Georgia,
-    serif;
-  color: #ffffff;
+  /* The hour in MM6's yellow well numerals (paint.ts `paintNumerals`), centred, whole pixels. */
+  display: flex;
+  justify-content: center;
+  height: 15px;
+  padding-top: 1.5px;
+}
+.hud-numerals {
+  display: block;
+  image-rendering: pixelated;
 }
 .hud-clock-date {
   font:
@@ -55,6 +58,7 @@
     Georgia,
     serif;
   color: #ffffff;
+  letter-spacing: 1.5px;
 }
 .hud-band {
   /* The four members on one marble surface with a seam round each (paint.ts `recess`); a
@@ -271,11 +275,12 @@
   image-rendering: pixelated;
 }
 .view-capital {
-  /* The capital overhangs the shaft four pixels each side and stands twenty-four tall. */
-  top: 6px;
+  /* MM6's capital (HUD critic, round 13): from the screen's top, thirty-one rows over an
+     eleven-row collar, overhanging the shaft six pixels each side. */
+  top: 0;
   left: -9px;
   right: -9px;
-  height: 36px;
+  height: 63px;
 }
 .view-plinth {
   bottom: 0;

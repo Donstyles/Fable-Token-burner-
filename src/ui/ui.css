@@ -11,8 +11,9 @@
   --ink-pale: #ffffff;
   --ink-brown: #3a2608;
   --ink-label: #ffffff;
-  /* 14 UI pixels at the grid of pixel-text.ts, as MM6's body: white italic, a hard shadow. */
-  --serif-italic: italic 21px/25.5px 'Tinos', Georgia, serif;
+  /* MM6's body (screens critic, round 13): a white italic at 15 UI pixels on lines of 16,
+     a hard shadow; on the stone screens a quarter wider and tracked a pixel (.ui-panel). */
+  --serif-italic: italic 22.5px/24px 'Tinos', Georgia, serif;
 }
 /* Every painted surface and every bitmap glyph is shown pixel for pixel. */
 .ui-modal,
@@ -22,13 +23,19 @@
 .pxw {
   image-rendering: pixelated;
 }
-/* Bitmap words sit in a span with real spaces between, so lines still wrap; the spaces of
-   the big CSS face are too wide for the small glyphs. */
+/* Bitmap words sit in a span with real spaces between, so lines still wrap: each space two
+   UI pixels whatever the face, each word's canvas the line box itself (pixel-text.ts), set
+   at its top, so every word starts on the grid of three CSS pixels. The span itself takes
+   no height, so the line is the element's own. */
 .pxt {
-  word-spacing: -0.3em;
+  font-size: 0;
+  line-height: 0;
+  letter-spacing: 0;
+  word-spacing: 3px;
 }
 .pxw {
   display: inline-block;
+  vertical-align: top;
 }
 .pxs {
   position: absolute;
@@ -179,13 +186,18 @@
   box-shadow: none;
   color: var(--ink-pale);
   font: var(--serif-italic);
+  /* MM6's stone-screen italic is wider than Tinos's at a like height (screens critic, round
+     13: "Intellect" 66 pixels to our 45): drawn a quarter wider and a pixel apart. */
+  --pxt-stretch: 1.25;
+  letter-spacing: 1.5px;
 }
 .ui-head {
-  /* No title band (critics, round 5): the title sits on the stone, the exit oval beside it. */
+  /* No title band (critics, round 5): the title sits on the stone, the exit oval beside it,
+     both at the head's top. */
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 7.5px;
-  padding: 3px 7.5px 0;
+  padding: 6px 9px 0;
   min-height: 36px;
   border-bottom: 0;
   box-shadow: none;
@@ -220,12 +232,14 @@
   display: none;
 }
 .ui-body {
+  /* MM6 clips nothing: every screen fits its frame, its boxes on the grid of three CSS
+     pixels (screens critic, round 13). */
   flex: 1;
   min-height: 0;
-  overflow: auto;
-  padding: 4.5px 7.5px 7.5px;
+  overflow: hidden;
+  padding: 6px 9px 6px;
   display: flex;
-  gap: 4.5px;
+  gap: 6px;
   touch-action: pan-x pan-y;
 }
 .ui-foot {
@@ -274,7 +288,7 @@
   display: flex;
   flex-direction: column;
   gap: 3px;
-  padding: 6px 7.5px;
+  padding: 6px 9px;
   background: var(--stone-dark) 0 0 / var(--stone-dark-size);
   border: 0;
   /* MM6's boxes are carved, not outlined (critics, round 6): a line of #101010, one of
@@ -297,7 +311,7 @@
   display: flex;
   justify-content: space-between;
   gap: 7.5px;
-  padding: 1.5px 0;
+  padding: 0;
 }
 .ui-k {
   color: var(--ink-label);
@@ -419,7 +433,7 @@
 .sheet-stats {
   display: grid;
   grid-template-columns: 1fr auto auto;
-  gap: 3px 12px;
+  gap: 0 12px;
   padding: 1.5px 0;
 }
 .sheet-bonus {
@@ -436,6 +450,14 @@
   min-width: 2em;
   text-align: right;
   font-size: 16px;
+}
+.sheet-cost {
+  opacity: 0.6;
+}
+/* The sheet holds ten lines a column: lines of fifteen UI pixels there. */
+.screen-sheet .ui-col,
+.screen-sheet .ui-v {
+  line-height: 22.5px;
 }
 /* A skill row is the button (critics, round 8: MM6 had no "+" ovals): a tap on the name
    spends the points; a row that cannot be raised sits dim. */
@@ -468,6 +490,9 @@
   background: var(--paint) center / 100% 100% no-repeat;
   box-shadow: none;
   color: #3a2a10;
+  /* The book's type is upright, black and Tinos's own width (screens critic, round 13). */
+  --pxt-stretch: 1;
+  letter-spacing: 0;
 }
 .screen-spells .ui-head,
 .screen-quests .ui-head,
@@ -484,8 +509,8 @@
 .screen-spells .ui-body,
 .screen-quests .ui-body,
 .screen-map .ui-body {
-  gap: 24px;
-  padding: 10.5px 13.5px 7.5px 12px;
+  gap: 21px;
+  padding: 9px 12px;
 }
 .screen-spells .ui-col,
 .screen-quests .ui-col,

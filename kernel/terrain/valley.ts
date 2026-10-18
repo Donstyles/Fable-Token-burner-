@@ -305,10 +305,13 @@ export function generateValley(spec: ValleySpec): ValleyResult {
       const gx = (hf.get(ci(i + 3), j) - hf.get(ci(i - 3), j)) / (6 * hf.cell);
       const gz = (hf.get(i, ci(j + 3)) - hf.get(i, ci(j - 3))) / (6 * hf.cell);
       const sS = (Math.atan(Math.hypot(gx, gz)) * 180) / Math.PI;
+      // Talk-world critic, round 13: the noise read (x, z) only, so a cliff hung in vertical
+      // curtains of green and brown, and the talk view's mountains were 52% brown (MM6 41 to
+      // 44%). The patch noise is read at a place sheared by the height, and cut higher.
       const patch = smoothstep(
-        -0.05,
-        0.1,
-        fbm(x, z, 70, seed + 17) + 0.12 * fbm(x, z, 9, seed + 29),
+        0.0,
+        0.14,
+        fbm(x + 0.7 * h, z - 0.5 * h, 70, seed + 17) + 0.12 * fbm(x, z, 9, seed + 29),
       );
       path = Math.max(path, patch * smoothstep(18, 28, sS) * (1 - smoothstep(55, 62, sS)));
       let scree =

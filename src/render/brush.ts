@@ -245,14 +245,15 @@ export function snap(g: CanvasRenderingContext2D, w: number, h: number, tones: T
 /**
  * Hard-edged pixel grain (DESIGN.md 16.14): clods a tone up or down, then single pixels and
  * short dashes in every tone of the ramp, the extremes rarer, as a 1998 ground tile was
- * dotted in by hand. No soft brush: every texel is one of the ramp's tones.
+ * dotted in by hand. No soft brush: every texel is one of the ramp's tones. With `spread`,
+ * each mark keeps within that many steps of the base instead of taking any tone.
  */
 export function grain(
   w: number,
   h: number,
   seed: number,
   tones: Tone[],
-  o: { marks?: number; clods?: number; clodSize?: number; base?: number },
+  o: { marks?: number; clods?: number; clodSize?: number; base?: number; spread?: number },
 ): HTMLCanvasElement {
   const r = die(seed);
   const [c, g] = canvas(w, h);
@@ -290,7 +291,12 @@ export function grain(
   }
   const marks = (o.marks ?? 2500) * 2;
   for (let i = 0; i < marks; i++) {
-    const k = Math.min(n - 1, Math.floor(r() * n));
+    // A mark of any tone is white noise (talk-world critic, round 13); the grass keeps its
+    // marks within three steps of the base.
+    const k =
+      o.spread === undefined
+        ? Math.min(n - 1, Math.floor(r() * n))
+        : Math.max(0, Math.min(n - 1, base + Math.round((2 * r() - 1) * o.spread)));
     g.fillStyle = hex(tones[k]!);
     const x = Math.floor(r() * w);
     const y = Math.floor(r() * h);
@@ -407,13 +413,17 @@ export function paintSkyStrip(w: number, h: number, seed: number): HTMLCanvasEle
       const i = y * w + x;
       if (density[i]! < 0.3) continue;
       const here = db(x, y);
+      // A soft clip, not a clamp (talk-world critic, round 13: the clamp piled a quarter of
+      // the cloud on one cream, (197,186,140), where MM6's top tone is 6 to 12%): no upper
+      // clamp on the light, and the tone through a logistic, so the lit tops spread over the
+      // upper tones.
       const base = Math.max(
         0.15,
-        Math.min(1, 0.62 + 1.6 * (here - db(x, y - 3)) - 0.9 * Math.max(0, here - db(x, y + 3))),
+        0.62 + 1.6 * (here - db(x, y - 3)) - 0.9 * Math.max(0, here - db(x, y + 3)),
       );
       const m = mottle[i]! * 0.7;
       const st = stria[y * sw + Math.min(sw - 1, x >> 1)]! * 0.46;
-      tones[i] = Math.max(0, Math.min(1, base + m + st));
+      tones[i] = 1 / (1 + Math.exp(-4 * (base + m + st - 0.45)));
     }
   }
   for (let i = 0; i < w * h; i++) {
@@ -496,6 +506,7 @@ export function crazed2(
   line: Rgb,
   shade: Rgb,
   tone: number,
+  crack: { alpha?: number; width?: number } = {},
 ): void {
   const r = die(seed);
   const pts: [number, number, number][] = [];
@@ -566,12 +577,12 @@ export function crazed2(
       if (dropped) continue;
       const wave = 0.5 + 0.5 * Math.sin(x * 0.11 + y * 0.07 + phase);
       const alpha = Math.min(1, strength * (0.55 + 0.45 * wave));
-      const width = 1 + Math.round(3 * wave * strength);
+      const width = crack.width ?? 1 + Math.round(3 * wave * strength);
       if (alpha > 0.7) {
         g.fillStyle = `rgb(${shade[0]},${shade[1]},${shade[2]})`;
         g.fillRect((x + 1) % w, (y + 1) % h, 1, 1);
       }
-      g.fillStyle = paleRgba(alpha);
+      g.fillStyle = paleRgba(alpha * (crack.alpha ?? 1));
       g.fillRect(x - Math.floor((width - 1) / 2), y - Math.floor((width - 1) / 2), width, width);
     }
   }
@@ -757,6 +768,8 @@ export function stoneField(
     dark: number;
     streaks: number;
     smudges: number;
+    /** Where along the cells' edges the seams run: over this, on a noise of -1 to 1. */
+    seams?: number;
   },
 ): void {
   const img = g.getImageData(0, 0, w, h);
@@ -821,7 +834,7 @@ export function stoneField(
     let dr = W.lift[i]!;
     let dg = dr;
     let db = dr;
-    if (W.edge[i] && run[i]! > 0.05) {
+    if (W.edge[i] && run[i]! > (o.seams ?? 0.05)) {
       if (tone[i]! > -0.05) {
         dr += o.light + 6;
         dg += o.light + 2;
@@ -870,10 +883,10 @@ export function stoneField(
 }
 
 /**
- * Rose-marble veins as MM6's rest screen (critics, round 11): pale walks one or two pixels
- * wide whose lift follows a one-dimensional noise along each, so most of a vein is a soft
- * pale line and its cores flare bright; then dark veins, most hugging a pale vein a pixel or
- * two to its lower right, the rest wandering on their own.
+ * Rose-marble veins as MM6's rest screen (critics, rounds 11 and 13): long, nearly straight
+ * pale walks two pixels wide whose lift follows a one-dimensional noise along each, so most
+ * of a vein is a soft pale line and its cores lighter; then dark veins, most hugging a pale
+ * vein a pixel or two to its lower right, the rest wandering on their own.
  */
 export function roseVeins(
   g: CanvasRenderingContext2D,
@@ -887,34 +900,52 @@ export function roseVeins(
   const d = img.data;
   const at = (x: number, y: number): number =>
     ((((Math.floor(y) % h) + h) % h) * w + (((Math.floor(x) % w) + w) % w)) * 4;
+  // The pale veins (screens critic, round 13: MM6's are long, soft and nearly straight, ours
+  // curled and crisp): 60 to 180 steps turning at most 0.04 a step, two pixels wide with a
+  // half-lit pixel each side, never more than 75 over the marble's mean.
+  const mean = [0, 1, 2].map((k) => {
+    let sum = 0;
+    for (let i = k; i < d.length; i += 4) sum += d[i]!;
+    return sum / (w * h);
+  });
   const paths: [number, number][][] = [];
   for (let v = 0; v < o.pale; v++) {
     let x = r() * w;
     let y = r() * h;
     let ang = r() * Math.PI * 2;
-    const len = Math.round(30 + r() * 60);
+    const len = Math.round(60 + r() * 120);
     const n = noise1(len, 12, seed * 7 + v);
-    const wide = r() < 0.3;
     const pts: [number, number][] = [];
+    const seen = new Set<number>();
+    const lift = (px0: number, py0: number, amount: number): void => {
+      const i = at(px0, py0);
+      if (seen.has(i)) return;
+      seen.add(i);
+      for (let k = 0; k < 3; k++)
+        d[i + k] = Math.min(
+          Math.max(d[i + k]!, mean[k]! + 75 * o.paleTint[k]!),
+          d[i + k]! + amount * o.paleTint[k]!,
+        );
+    };
     for (let t = 0; t < len; t++) {
-      ang += (r() - 0.5) * 0.35;
+      ang += (r() - 0.5) * 0.08;
       x += Math.cos(ang);
       y += Math.sin(ang);
       pts.push([x, y]);
       const a = Math.max(0, Math.min(1, 0.45 + n[t]! * 1.6));
       const core = a < 0.62 ? 0 : Math.min(1, (a - 0.62) / 0.38);
-      const lift = 12 + 10 * a + 52 * core * core;
-      for (const [px0, py0] of wide ? [[x, y] as const, [x + 1, y] as const] : [[x, y] as const]) {
-        const i = at(px0, py0);
-        d[i] = Math.min(255, d[i]! + lift * o.paleTint[0]);
-        d[i + 1] = Math.min(255, d[i + 1]! + lift * o.paleTint[1]);
-        d[i + 2] = Math.min(255, d[i + 2]! + lift * o.paleTint[2]);
-      }
+      const amount = 10 + 8 * a + 24 * core * core;
+      // Across the vein: its two pixels and the half-lit one either side.
+      const [ax, ay] = Math.abs(Math.cos(ang)) > Math.abs(Math.sin(ang)) ? [0, 1] : [1, 0];
+      lift(x, y, amount);
+      lift(x + ax, y + ay, amount);
+      lift(x - ax, y - ay, amount / 2);
+      lift(x + 2 * ax, y + 2 * ay, amount / 2);
     }
     paths.push(pts);
   }
   for (let v = 0; v < o.dark; v++) {
-    const alpha = 0.5 + r() * 0.4;
+    const alpha = 0.35 + r() * 0.25;
     const wide = r() < 0.3;
     let run: [number, number][] = [];
     if (paths.length && r() < 0.6) {
@@ -930,7 +961,7 @@ export function roseVeins(
       let ang = r() * Math.PI * 2;
       const len = 20 + r() * 20;
       for (let t = 0; t < len; t++) {
-        ang += (r() - 0.5) * 0.9;
+        ang += (r() - 0.5) * 0.25;
         x += Math.cos(ang);
         y += Math.sin(ang);
         run.push([x, y]);

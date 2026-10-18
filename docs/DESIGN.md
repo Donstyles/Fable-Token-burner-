@@ -1897,7 +1897,59 @@ icons' second pass a median 5 (the first 3). Round 13:
   gated on a slope smoothed over thirty metres, at full weight; the grass
   lifted back.
 
+### 16.24 Round 14: monoline type and MM6's capital (2026-10-18)
+
+Round 13 scored HUD 6.5, screens 6.5, talk 7.5, world 6, verdict no; the
+spell icons' third pass a median 6. Round 14:
+
+- **Type** (pixel-text.ts): Tinos is set at four times the size, cut at
+  half cover, thinned to a one-pixel skeleton (Zhang and Suen) and pooled
+  four to one, so every stroke is a pixel wide and every hairline, dot
+  and stop survives; Pirata One keeps its weight. A word's canvas is the
+  element's line box with the baseline where the browser puts it, so a
+  line's pitch is the CSS line height; descenders hang into the leading.
+  Spaces are two UI pixels and words even widths, so text stays on the
+  grid. The stone screens' italic is drawn a quarter wider and a pixel
+  apart, as MM6's is wider than Tinos; the book's type is upright, black
+  and 14 pixels; the talk names upright and tracked, the topics a size
+  up.
+- **Screens**: everything fits its frame (MM6 clips nothing): lines of
+  16 UI pixels (15 on the sheet), a skill on one line with its rank only
+  above Normal, a resting member on one line, the bag in cells of 18
+  pixels, the bodies unscrolled, paddings on the three-pixel grid. The
+  book's foot is MM6's band of page edges over the cover; the page holds
+  a few broad tones on RGB565; the rose marble calmer with long straight
+  pale veins and half-strength cracks; the slate lighter, the leather's
+  flecks fewer, the frame pillar averaged over three rows, the rest
+  clock's wisps more; a bolt icon at most the place's 84 pixels.
+- **HUD**: MM6's capital, thirty-one rows from the screen's top over an
+  eleven-row collar: a carved dark mass of curls lit on their upper left,
+  seven breaking its outline with the sky under them, an astragal, and
+  MM6's collar bands; the band one marble slab with MM6's concave
+  spandrel; the rings radial, flat inside; the emblems' gold as rods two
+  pixels wide; the clock's figures MM6's yellow on a dark well.
+- **Talk**: the wood's grain stronger over two rows, its darks broken,
+  its broad figure in five long dabs; the room behind the head at full
+  size and the right way up; the face in five light levels with deeper
+  accents, the chest fading under it.
+- **World**: the dirt's variance in noise, cracks and veins over 32 tones
+  without pebbles; the grass back to MM6's olive, its marks near their
+  base tone; both ground tiles keep their own colours (the frame's
+  palette had cut the dirt to 17); mips keep half the picked texel's
+  contrast; splat edges hard on a wandering threshold; bare patches read
+  through the height, fewer on steep ground; the clouds soft-clipped in
+  five coverage steps, their texels shrinking toward the horizon.
+- **Spell icons**: pass 3b (batch 009, 15 credits, 10 of the grant left)
+  on the critic's third style text: people and things mid-tones, magic
+  on its own pale and wide; meditation, water walk, stun, sparks and
+  spirit arrow; a speck-proof subject box.
+
 ## 13. Decision log
+
+- 2026-10-18 – Round 14 (16.24): monoline bitmap type on the line box
+  (a 4x skeleton pooled back), screens fitted to their frames, MM6's
+  capital and band, the book's foot, the ground tiles on their own
+  colours, icon pass 3b (spell-icons grant: 90 of 100 spent).
 
 - 2026-10-18 – Round 13 (16.23): spell places as the page's multiplied
   shadow with keyed icons; MM6's pennants; the shell's lengths in whole
