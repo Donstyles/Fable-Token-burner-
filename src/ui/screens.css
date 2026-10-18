@@ -101,13 +101,18 @@
   font-size: 12px;
 }
 .inv-slot .slot-name {
-  flex: 0 0 136.5px;
+  flex: 0 0 138px;
   font-size: 18px;
   color: var(--ink-pale);
 }
 .inv-slot {
-  /* Rows of 22 UI pixels, on the grid (screens critic, round 14). */
-  min-height: 33px;
+  /* Rows of 24 UI pixels with their padding, six filling the box (screens critic, rounds 14
+     and 15). */
+  min-height: 30px;
+}
+.inv-slot .inv-glyph {
+  width: 24px;
+  height: 24px;
 }
 .inv-give {
   display: flex;
@@ -151,14 +156,14 @@
   color: #ffffff;
 }
 .rest-actions .ui-btn {
-  min-height: 43.5px;
+  min-height: 45px;
 }
 .screen-rest .ui-col.narrow {
   gap: 0;
 }
 .rest-member {
   min-height: 0;
-  padding: 0 4.5px;
+  padding: 0 6px;
 }
 .rest-member .grow {
   overflow: hidden;
@@ -402,7 +407,7 @@
   display: flex;
   flex-direction: column;
   gap: 6px;
-  padding: 4.5px 0;
+  padding: 3px 0;
 }
 .rest-actions .ui-btn {
   width: 100%;

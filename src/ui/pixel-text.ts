@@ -6,7 +6,8 @@
  * `image-rendering: pixelated`. The DOM keeps a span per word so the browser still wraps lines,
  * and a MutationObserver repaints whatever text the screens change. The body face is Tinos, a
  * Times-metric serif with lining figures and a true italic, at its own regular weight: MM6's
- * font was not fat (owner), its edge came from the hard shadow; headings are Pirata One.
+ * font was not fat (owner), its edge came from the hard shadow; headings are Pirata One, and
+ * the quest log is Arimo, Tinos's sans sibling, as MM6 set its quest text in a sans.
  */
 
 /** CSS pixels per UI pixel: 932 CSS px across becomes 621 columns, MM6's 640. */
@@ -52,7 +53,11 @@ function parseColor(css: string): [number, number, number] {
 /** The face a text node is drawn in, from its parent's computed style. */
 function faceOf(el: Element): Face {
   const cs = getComputedStyle(el);
-  const family = cs.fontFamily.includes('Pirata') ? 'Pirata One' : 'Tinos';
+  const family = cs.fontFamily.includes('Pirata')
+    ? 'Pirata One'
+    : cs.fontFamily.includes('Arimo')
+      ? 'Arimo'
+      : 'Tinos';
   const cssSize = parseFloat(cs.fontSize) || 16;
   // The CSS size is in CSS pixels; the glyphs are drawn in UI pixels, never under 11.
   const size = Math.max(family === 'Pirata One' ? 18 : 12, Math.round(cssSize / PX));
@@ -165,16 +170,16 @@ function thin(b: Uint8Array, w: number, h: number): void {
 }
 
 /**
- * Which pixels of a word's canvas are ink. Tinos is set at four times the size, cut at half
- * cover, thinned to a skeleton and pooled four to one, ink where two of the skeleton's
- * pixels fall: MM6's type is monoline (screens critic, round 13: two thirds or more of its
- * runs one pixel, every hairline kept, where a cut at the UI size left two-pixel stems and
- * dropped the hairlines of o, r, n, t and g). Pirata One keeps its weight, cut at the UI
- * size.
+ * Which pixels of a word's canvas are ink. Tinos and Arimo are set at four times the size,
+ * cut at half cover, thinned to a skeleton and pooled four to one, ink where two of the
+ * skeleton's pixels fall: MM6's type is monoline (screens critic, round 13: two thirds or
+ * more of its runs one pixel, every hairline kept, where a cut at the UI size left two-pixel
+ * stems and dropped the hairlines of o, r, n, t and g). Pirata One keeps its weight, cut at
+ * the UI size.
  */
 function inkOf(word: string, f: Face, w: number, h: number): Uint8Array {
   const ink = new Uint8Array(w * h);
-  const monoline = f.family === 'Tinos';
+  const monoline = f.family !== 'Pirata One';
   const s = monoline ? 4 : 1;
   const t = document.createElement('canvas');
   t.width = w * s;
@@ -359,6 +364,7 @@ export function installPixelText(root: HTMLElement): void {
   void Promise.all([
     document.fonts.load('13px "Tinos"'),
     document.fonts.load('italic 13px "Tinos"'),
+    document.fonts.load('13px "Arimo"'),
     document.fonts.load('16px "Pirata One"'),
   ])
     .then(() => document.fonts.ready)

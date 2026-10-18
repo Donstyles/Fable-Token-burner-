@@ -118,7 +118,7 @@
   flex-direction: row;
   align-items: center;
   justify-content: center;
-  gap: 7.5px;
+  gap: 6px;
   min-height: 36px;
   padding: 1.5px 16.5px;
   /* The painted gold oval (paint.ts), one face up and one pressed, per size. */
@@ -348,11 +348,14 @@
   color: var(--ink-yellow);
 }
 .ui-h.ui-rule {
-  padding-bottom: 3px;
-  border-bottom: 1.5px solid rgba(120, 110, 95, 0.9);
+  /* The rule as a shadow: a 1.5-pixel border is drawn a device pixel thin (screens critic,
+     round 15). */
+  padding-bottom: 6px;
+  border-bottom: 0;
+  box-shadow: inset 0 -1.5px 0 rgba(120, 110, 95, 0.9);
 }
 .ui-note {
-  margin: 1.5px 0;
+  margin: 0;
   font-size: 18px;
   color: var(--ink-pale);
 }
@@ -381,12 +384,13 @@
   image-rendering: pixelated;
 }
 .ui-row {
-  /* On the bare stone with a rule under it (critics, round 9): no translucent overlay. */
+  /* On the bare stone with a rule under it (critics, round 9): no translucent overlay. Its
+     lengths on the three-pixel grid (screens critic, round 15). */
   display: flex;
   flex-shrink: 0;
   align-items: center;
-  gap: 7.5px;
-  padding: 3px 7.5px;
+  gap: 6px;
+  padding: 3px 6px;
   min-height: 36px;
   background: none;
   border: 0;
@@ -396,7 +400,7 @@
 .ui-row.plain {
   background: none;
   box-shadow: none;
-  padding: 1.5px 4.5px;
+  padding: 1.5px 6px;
   min-height: 30px;
 }
 .ui-row.selected {
@@ -413,7 +417,7 @@
 }
 .ui-row .sub {
   font-size: 18px;
-  line-height: 1.45;
+  line-height: 24px;
   color: var(--ink-pale);
 }
 .ui-row .ui-btn {
@@ -438,7 +442,7 @@
 .sheet-class {
   font-size: 18px;
   color: var(--ink-pale);
-  margin-bottom: 4.5px;
+  margin-bottom: 3px;
 }
 .sheet-stats {
   display: grid;
@@ -448,16 +452,16 @@
 }
 .sheet-bonus {
   color: var(--ink-pale);
-  min-width: 2.5em;
+  min-width: 57px;
   text-align: right;
 }
 .sheet-group {
-  margin-top: 4.5px;
+  margin-top: 6px;
   font-size: 18px;
   color: var(--ink-yellow);
 }
 .sheet-level {
-  min-width: 2em;
+  min-width: 33px;
   text-align: right;
   font-size: 16px;
 }
@@ -600,17 +604,14 @@
   color: #5a2a0a;
 }
 
-/* The quest log's lines are MM6's book type, upright, black and 14 UI pixels; its headings
-   keep the italic (screens critic, round 14). */
-.screen-quests .ui-col {
-  font-style: normal;
-  font-size: 21px;
-  line-height: 24px;
-  color: #000000;
-}
+/* The quest log's lines are MM6's sans, black, 15 UI pixels a pixel apart on lines of 16;
+   its headings keep the italic (screens critic, rounds 14 and 15). */
+.screen-quests .ui-col,
 .screen-quests .ui-note,
 .screen-quests .ui-row .sub {
-  font-size: 21px;
-  line-height: 24px;
+  font:
+    22.5px/24px 'Arimo',
+    sans-serif;
+  letter-spacing: 1.5px;
   color: #000000;
 }

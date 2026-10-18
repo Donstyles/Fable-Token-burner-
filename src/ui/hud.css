@@ -16,6 +16,19 @@
   background: var(--stone) 0 0 / var(--stone-size);
   image-rendering: pixelated;
 }
+/* The band's foot: a dark row and a mid row over its last light one, as MM6's ends (HUD
+   critic, round 15). */
+.hud::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: calc(var(--sab) + 1.5px);
+  height: 3px;
+  background: linear-gradient(rgb(49, 48, 41) 0 1.5px, rgb(74, 73, 66) 1.5px 3px);
+  z-index: 1;
+  pointer-events: none;
+}
 .hud-rail {
   /* The band's stone lip along its top edge. */
   position: absolute;
@@ -149,11 +162,11 @@
   margin-top: 6px;
 }
 .hud-gem {
-  /* A soft blob beside the oval's top, on the marble (paint.ts `gem`). */
+  /* MM6's upright lit stone beside the oval's top, five by seven (paint.ts `gem`). */
   position: absolute;
   top: -10.5px;
-  left: -9px;
-  width: 10.5px;
+  left: -7.5px;
+  width: 7.5px;
   height: 10.5px;
   background: var(--paint) center / 100% 100% no-repeat;
   image-rendering: pixelated;
@@ -277,11 +290,12 @@
   image-rendering: pixelated;
 }
 .view-capital {
-  /* MM6's capital (HUD critic, round 13): from the screen's top, thirty-one rows over an
-     eleven-row collar, overhanging the shaft six pixels each side. */
+  /* MM6's capital (HUD critic, rounds 13 and 15): from the screen's top, thirty-one rows
+     over an eleven-row collar, its crown fourteen pixels past the shaft each side over the
+     lintel, its bell six. */
   top: 0;
-  left: -9px;
-  right: -9px;
+  left: -21px;
+  right: -21px;
   height: 63px;
 }
 .view-plinth {

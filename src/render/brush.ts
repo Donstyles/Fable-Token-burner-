@@ -903,23 +903,30 @@ export function roseVeins(
   w: number,
   h: number,
   seed: number,
-  o: { pale: number; dark: number; paleTint: Rgb; darkColor: Rgb },
+  o: {
+    pale: number;
+    dark: number;
+    paleTint: Rgb;
+    darkColor: Rgb;
+    /** The dark veins' strength, least to most. */
+    darkAlpha?: [number, number];
+  },
 ): void {
   const r = die(seed);
   const img = g.getImageData(0, 0, w, h);
   const d = img.data;
   const at = (x: number, y: number): number =>
     ((((Math.floor(y) % h) + h) % h) * w + (((Math.floor(x) % w) + w) % w)) * 4;
-  // The pale veins (screens critic, rounds 13 and 14: MM6's are long, soft and few, and they
-  // follow the stone's flow rather than lying straight like straws): 150 to 350 steps, each
-  // turning toward a flow field that wanders over 140 pixels, one branch a vein; two pixels
-  // wide with a half-lit pixel each side, never more than 75 over the marble's mean.
+  // The pale veins (screens critic, rounds 13 to 15: MM6's run straight with kinks, neither
+  // straws nor the S-curves a flow field drew): 40 to 140 steps, each straight for 12 to 40
+  // then turning 0.2 to 0.6 and pulled half way back to the slab's heading, a branch now and
+  // then; two pixels wide with a half-lit pixel each side, never more than 70 over the
+  // marble's mean.
   const mean = [0, 1, 2].map((k) => {
     let sum = 0;
     for (let i = k; i < d.length; i += 4) sum += d[i]!;
     return sum / (w * h);
   });
-  const flow = valueNoise(w, h, 140, seed + 29);
   const along = r() * Math.PI;
   // An angle folded into a half turn: a vein runs both ways along the flow.
   const fold = (a: number): number =>
@@ -939,26 +946,31 @@ export function roseVeins(
       seen.add(i);
       for (let k = 0; k < 3; k++)
         d[i + k] = Math.min(
-          Math.max(d[i + k]!, mean[k]! + 75 * o.paleTint[k]!),
+          Math.max(d[i + k]!, mean[k]! + 70 * o.paleTint[k]!),
           d[i + k]! + amount * o.paleTint[k]!,
         );
     };
+    let straight = 12 + r() * 28;
     for (let t = 0; t < len; t++) {
-      const f = along + 1.2 * Math.PI * 2 * flow[at(x, y) / 4]!;
-      ang += 0.06 * fold(f - ang) + (r() - 0.5) * 0.03;
+      if (--straight <= 0) {
+        ang += (r() < 0.5 ? -1 : 1) * (0.2 + r() * 0.4);
+        ang += 0.5 * fold(along - ang);
+        straight = 12 + r() * 28;
+      }
+      ang += (r() - 0.5) * 0.012;
       x += Math.cos(ang);
       y += Math.sin(ang);
       pts.push([x, y]);
       const a = Math.max(0, Math.min(1, 0.45 + n[t]! * 1.6));
       const core = a < 0.62 ? 0 : Math.min(1, (a - 0.62) / 0.38);
-      const amount = 10 + 8 * a + 24 * core * core;
+      const amount = 8 + 6 * a + 20 * core * core;
       // Across the vein: its two pixels and the half-lit one either side.
       const [ax, ay] = Math.abs(Math.cos(ang)) > Math.abs(Math.sin(ang)) ? [0, 1] : [1, 0];
       lift(x, y, amount);
       lift(x + ax, y + ay, amount);
       lift(x - ax, y - ay, amount / 2);
       lift(x + 2 * ax, y + 2 * ay, amount / 2);
-      if (!branched && t > 20 && r() < 1 / 70) {
+      if (!branched && t > 20 && r() < 1 / 90) {
         branched = true;
         const turn = (r() < 0.5 ? -1 : 1) * (0.35 + r() * 0.35);
         walk(x, y, ang + turn, Math.round((len - t) * (0.3 + r() * 0.3)), v + 1000, true);
@@ -967,9 +979,10 @@ export function roseVeins(
     paths.push(pts);
   };
   for (let v = 0; v < o.pale; v++)
-    walk(r() * w, r() * h, r() * Math.PI * 2, Math.round(150 + r() * 200), v, false);
+    walk(r() * w, r() * h, along + (r() - 0.5) * 0.6, Math.round(40 + r() * 100), v, false);
+  const [a0, a1] = o.darkAlpha ?? [0.5, 0.85];
   for (let v = 0; v < o.dark; v++) {
-    const alpha = 0.5 + r() * 0.35;
+    const alpha = a0 + r() * (a1 - a0);
     const wide = r() < 0.3;
     let run: [number, number][] = [];
     if (paths.length && r() < 0.6) {

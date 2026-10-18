@@ -76,6 +76,23 @@ export function createHud(parent: HTMLElement, party: Party, hooks: HudHooks): H
   const clockDate = el('div', 'hud-clock-date');
   clock.append(clockTime, clockDate);
   root.appendChild(clock);
+  // The clock's figures and day on the device grid of UI pixels (HUD critic, round 15: at a
+  // fractional device offset the browser drew a glyph row four device pixels tall).
+  const snapTo = (node: HTMLElement): void => {
+    const k = devicePixelRatio || 1;
+    const unit = PX * k;
+    node.style.transform = '';
+    const o = root.getBoundingClientRect();
+    const r = node.getBoundingClientRect();
+    const s = (v: number): number => (Math.round((v * k) / unit) * unit) / k - v;
+    node.style.transform = `translate(${s(r.left - o.left)}px, ${s(r.top - o.top)}px)`;
+  };
+  const snapClock = (): void => {
+    const digits = clockTime.firstElementChild;
+    if (digits instanceof HTMLElement) snapTo(digits);
+    snapTo(clockDate);
+  };
+  addEventListener('resize', snapClock);
   // Each member in a rectangle recessed into the marble, a gutter of marble between, as
   // MM6's band (critics, round 5): no trough, no pilasters.
   const band = el('div', 'hud-band');
@@ -164,6 +181,7 @@ export function createHud(parent: HTMLElement, party: Party, hooks: HudHooks): H
     setClock(minutes) {
       // The hour in MM6's yellow well numerals, drawn whole-pixel (paint.ts `paintNumerals`).
       const time = formatTime(minutes);
+      clockDate.textContent = formatDate(minutes).split(',')[0] ?? '';
       if (clockTime.dataset['time'] !== time) {
         clockTime.dataset['time'] = time;
         const digits = paintNumerals(time);
@@ -174,10 +192,11 @@ export function createHud(parent: HTMLElement, party: Party, hooks: HudHooks): H
         digits.style.marginLeft = `${Math.floor((51 - digits.width) / 2) * PX}px`;
         clockTime.replaceChildren(digits);
         clockTime.setAttribute('aria-label', time);
+        snapClock();
       }
-      clockDate.textContent = formatDate(minutes).split(',')[0] ?? '';
     },
     dispose() {
+      removeEventListener('resize', snapClock);
       root.remove();
       for (const n of parent.querySelectorAll('.view-pillar, .view-lintel')) n.remove();
     },
