@@ -1811,9 +1811,11 @@ export function paintFrame(w: number, h: number): HTMLCanvasElement {
   const [c, g] = canvas(w, h);
   // MM6's window frame, the smith's and the tavern's alike (talk-world critic, round 15):
   // outside in, a dark line, two of pewter and a mid line on the top and sides, the foot
-  // lit, with no black or brown line and no shadow.
+  // lit, with no black or brown line and no shadow. The foot's lit lines lie against the
+  // portrait, as MM6's (round 16: the mid line had sat there, (57,65,57) under the bust where
+  // MM6's is (82-90,81-93,74-82)).
   const side = ['#292829', '#424542', '#424542', '#313631'];
-  const foot = ['#292c31', '#52514a', '#52514a', '#394139'];
+  const foot = ['#292c31', '#394139', '#52514a', '#52514a'];
   for (let y = 0; y < h; y++) {
     for (let x = 0; x < w; x++) {
       const inset = Math.min(x, y, w - 1 - x, h - 1 - y);
