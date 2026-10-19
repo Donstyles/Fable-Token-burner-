@@ -11,8 +11,10 @@ The owner scrapped the valley and convened the agentic senate to plan a full,
 playable MM6 game. Its plan is `docs/ROADMAP.md`: Act One as release 1.0,
 milestones M0 to M5, each accepted by a play script on the owner's phone.
 It replaces Phase 5b and the order of Phases 6 and 7 once the owner answers
-its fourteen decisions (section 2). Until then nothing below starts, and the
-valley is no longer built on.
+its fourteen decisions (section 2). **Answered 2026-10-19** (our own world,
+not called Enroth; hand-designed 640 m maps; the rest as recommended): the
+roadmap is the plan from here, starting with the starting region in place of
+the valley.
 
 ## How approval works
 

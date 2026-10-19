@@ -2282,6 +2282,13 @@ scary". Two faults, one on top of the other:
 
 ## 13. Decision log
 
+- 2026-10-19 – The owner's answers to the roadmap: "I just want to play some
+  Might and Magic clone. Don't call it Enroth. Hand design 640 m maps." The
+  world is ours, under our own names; every outdoor map is hand-designed on
+  the 640 m grid; every other decision in `docs/ROADMAP.md` section 2 is taken
+  as the senate recommended. The throwaway `dev-outdoor` scene is skipped: the
+  real starting region replaces the valley directly.
+
 - 2026-10-19 – The valley is scrapped (owner). The agentic senate's plan for
   a full, playable MM6 game is `docs/ROADMAP.md`, pending the owner's answers
   to its fourteen decisions.

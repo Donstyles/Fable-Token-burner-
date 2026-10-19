@@ -26,6 +26,11 @@ Final plan, 2026-10-19. It replaces Phase 5b and the old order of Phases 6–7 i
 
 ## 2. Owner decisions needed now
 
+**Answered 2026-10-19:** "I just want to play some Might and Magic clone.
+Don't call it Enroth. Hand design 640 m maps." So: 2, our own world, not
+called Enroth; 3, every outdoor map hand-designed on the 640 m grid; the
+rest as recommended below. Meshy batches still go to the owner one by one.
+
 1. **What ships first?** _Recommended:_ Act One as 1.0, then Acts Two and Three as later releases. _Otherwise_ (parity before any release): the same milestones, but nothing ships for about 18 months.
 2. **Whose world?** _Recommended:_ ours, with MM6's structure and numbers. _Otherwise_ (Enroth itself): the repository and Pages go private, because a public Enroth invites a takedown of both. The effort is about the same (world.md 5.4).
 3. **How far does the scrap go?** _Recommended:_
