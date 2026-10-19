@@ -5,6 +5,15 @@ between now and the first playable. **Approved by the owner on 2026-10-14.**
 Work starts on the owner's START, and each phase is still approved
 separately at its kickoff.
 
+## The senate's roadmap (2026-10-19)
+
+The owner scrapped the valley and convened the agentic senate to plan a full,
+playable MM6 game. Its plan is `docs/ROADMAP.md`: Act One as release 1.0,
+milestones M0 to M5, each accepted by a play script on the owner's phone.
+It replaces Phase 5b and the order of Phases 6 and 7 once the owner answers
+its fourteen decisions (section 2). Until then nothing below starts, and the
+valley is no longer built on.
+
 ## How approval works
 
 1. Before a phase starts, Claude posts a kickoff note: the exact steps from
@@ -48,7 +57,7 @@ kernel, and the kernel showcase is the first consumer of real textures.
 ## Repository layout (created in Phase 0)
 
 ```
-docs/            DESIGN.md, PLAN.md, MM6-GAPS.md (what MM6 has that we lack), prompt-cards/
+docs/            DESIGN.md, PLAN.md, ROADMAP.md (the senate's plan), MM6-GAPS.md (what MM6 has that we lack), prompt-cards/
 src/
   app/           bootstrap, PWA glue, orientation, input zones
   render/        filter pipeline, animation stepping, material presets

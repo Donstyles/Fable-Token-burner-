@@ -754,6 +754,11 @@ them.
 
 ## 15. Outdoor regions (generated terrain, 2026-10-16)
 
+**Superseded 2026-10-19:** the owner scrapped the valley ("Scrap the
+valley"); the senate's roadmap (`docs/ROADMAP.md`) proposes authored regions
+on a 640 m grid instead, the desert going too, and lists what of this section's
+code is kept and generalised. The text below records what was built.
+
 Owner's ask: vast landscapes with ravines, serpentines, woods, passes, alpine
 ridges, peaks, valleys and rivers, at near-real scale, with sprawling forests
 of low-polygon trees; towns, caves, tunnels, waterfalls and deserts to
@@ -2276,6 +2281,10 @@ scary". Two faults, one on top of the other:
   for the owner to approve.
 
 ## 13. Decision log
+
+- 2026-10-19 – The valley is scrapped (owner). The agentic senate's plan for
+  a full, playable MM6 game is `docs/ROADMAP.md`, pending the owner's answers
+  to its fourteen decisions.
 
 - 2026-10-18 – The talking head held still (16.32): the bust's camera reads
   the head bone fresh each frame; a villager in the talk panel keeps the
