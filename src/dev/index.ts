@@ -55,7 +55,6 @@ const characterUrl = (id: string): string => {
   return url;
 };
 import { Braziers, FogBySpace, Torch } from '../world/atmosphere';
-import { dust } from '../world/particles';
 import { CATALOGUE, loadPropModels, propLabel } from '../world/props';
 import { createStatusLine } from '../ui/status';
 import { Npc } from '../world/npc';
@@ -146,12 +145,12 @@ export interface DevHandle {
 
 const DEG = Math.PI / 180;
 const QUERY = new URLSearchParams(location.search);
-// The valley is the first thing a visitor sees; the dungeon is a portal away (or ?level=showcase).
-const LEVEL = QUERY.get('level') ?? 'valley';
+// Gullhaven, the starting region, is the first thing a visitor sees; the dungeon is a portal
+// away (or ?level=showcase).
+const LEVEL = QUERY.get('level') ?? 'gullhaven';
 /** What the veil calls each level while it loads. */
 const PLACE_NAMES: Record<string, string> = {
-  valley: 'The Valley',
-  desert: 'The Desert',
+  gullhaven: 'Gullhaven',
   showcase: 'The Old Halls',
 };
 /** Arriving through a portal: the portal of this level to appear at (DESIGN.md 15.3). */
@@ -184,14 +183,10 @@ export async function startDev(app: App): Promise<DevHandle> {
     // region's sidecar carries its own colours.
     const space = level.spaces[0];
     const env = level.sidecar.environment;
-    const desert = level.sidecar.region === 'desert';
     const c3 = (v: [number, number, number]): Color3 => new Color3(v[0], v[1], v[2]);
     app.materials.setEnvironment({
       ...ENVIRONMENTS['mm6-day'],
-      // The desert's sun hangs low ahead of the spawn, in the view down the road.
-      lightDirection: desert
-        ? new Vector3(-0.85, -0.45, 0.2).normalize()
-        : new Vector3(-0.45, -0.8, 0.4).normalize(),
+      lightDirection: new Vector3(-0.45, -0.8, 0.4).normalize(),
       lightColor: (env ? c3(env.lightColor) : new Color3(1.0, 0.92, 0.78)).scale(1.15),
       // Lifted by half: the houses' shadow sides went black on the phone (owner, 2026-10-17);
       // MM6 lit its world nearly flat.
@@ -210,9 +205,9 @@ export async function startDev(app: App): Promise<DevHandle> {
     app.sky.apply(app.materials.env);
     app.sky.mesh.setEnabled(true);
     dayEnvironment = { ...app.materials.env };
-    // Weather (DESIGN.md 15.7): cloud shadows drift over every region; the desert shimmers.
+    // Weather (DESIGN.md 15.7): cloud shadows drift over every region.
     app.materials.setWeather({
-      heat: desert ? 1 : 0,
+      heat: 0,
       cloudShadow: Math.min(1, app.materials.env.cloudAmount * 1.5),
     });
     camera.maxZ = 6000;
@@ -249,10 +244,6 @@ export async function startDev(app: App): Promise<DevHandle> {
     [app.sky.mesh, ...level.meshes.filter((m) => m.name === 'backdrop')],
   );
   const waterfalls = new LevelWaterfalls(scene, level.waterfalls, app.materials);
-  // Desert weather (DESIGN.md 15.5): a hot wind carries sand across the view.
-  const wind = new Vector3(5.5, 0, 2.2);
-  const sand = level.sidecar.region === 'desert' ? dust(scene, wind) : null;
-  sand?.start();
   // Wind, birds and footsteps, all synthesised (DESIGN.md 16.4).
   const soundscape = new Soundscape(scene, {
     outdoor: level.sidecar.outdoor === true,
@@ -857,11 +848,6 @@ export async function startDev(app: App): Promise<DevHandle> {
       }
     }
     level.update(camera.globalPosition);
-    if (sand) {
-      // Spawn upwind of the eye, so the grains blow through the view rather than away.
-      const e = camera.globalPosition;
-      sand.emitter = new Vector3(e.x - wind.x * 4, Math.max(e.y - 4, 0), e.z - wind.z * 4);
-    }
     if (!fly) portals.update(party.position);
     saveTimer += dt;
     if (saveTimer > 60) {

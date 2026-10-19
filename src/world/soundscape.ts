@@ -162,7 +162,7 @@ function surfaceOf(mesh: AbstractMesh, faceId: number, wading: boolean): Surface
 
 export interface SoundscapeOptions {
   outdoor: boolean;
-  /** 'valley' has birds; the desert has wind and sand only. */
+  /** Outdoors a region has birds; underground there is no wind. */
   region: string;
 }
 
@@ -212,7 +212,7 @@ export class Soundscape {
         volume: 0,
       });
       this.wind.play();
-      if (this.opts.region === 'valley') {
+      if (this.opts.region === 'region') {
         for (let i = 0; i < 3; i++) {
           this.chirps.push(
             await engine.createSoundAsync(`bird-${i}`, await renderChirp(rate, 101 + i * 13), {
@@ -239,7 +239,7 @@ export class Soundscape {
     if (!this.engine) return;
     if (this.wind) {
       const altitude = Math.max(0, Math.min(1, (party.y - 10) / 250));
-      const target = this.opts.region === 'desert' ? 0.22 + altitude * 0.1 : 0.1 + altitude * 0.3;
+      const target = 0.1 + altitude * 0.3;
       this.wind.volume += (target - this.wind.volume) * Math.min(1, dt * 0.5);
     }
     this.walked += moved;

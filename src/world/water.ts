@@ -265,8 +265,10 @@ export class LevelWater {
       mat.fresnelSeparate = true;
       mat.onBindObservable.add(() => mat.getEffect()?.setFloat('time', shaderTime(this.seconds)));
       this.applyLook(mat, s.body);
-      // Reflect and refract the architecture around the body, never other water.
+      // Reflect and refract the architecture around the body, never other water; a sea
+      // mirrors the sky alone.
       const near = this.reflectables.filter((m) => {
+        if (s.body.mirror === 'sky') return false;
         const bb = m.getBoundingInfo().boundingBox;
         const dx = Math.max(s.body.min.x - bb.maximumWorld.x, 0, bb.minimumWorld.x - s.body.max.x);
         const dz = Math.max(s.body.min.z - bb.maximumWorld.z, 0, bb.minimumWorld.z - s.body.max.z);

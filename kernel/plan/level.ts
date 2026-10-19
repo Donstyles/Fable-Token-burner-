@@ -106,6 +106,11 @@ export interface WaterBody {
   bounds: { min: Vec3; max: Vec3 };
   /** Unit flow direction on the ground plane (x, z); [0, 0] for still water. */
   flow: [number, number];
+  /**
+   * What the surface mirrors: the scene round it (the default), or only the sky and the far
+   * backdrop, for a sea the size of the map, so its passes cost almost nothing.
+   */
+  mirror?: 'scene' | 'sky';
 }
 
 export interface WaterSurface extends WaterBody {

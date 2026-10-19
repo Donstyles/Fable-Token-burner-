@@ -42,6 +42,7 @@ export interface SidecarWater {
   y: number;
   bounds: { min: V3; max: V3 };
   flow: [number, number];
+  mirror?: 'scene' | 'sky';
 }
 
 export interface SidecarWaterfall {
@@ -72,7 +73,7 @@ export interface LevelSidecar {
   /** Outdoor region: sun-lit terrain chunks with detail levels, forests, sky (DESIGN.md 15). */
   outdoor?: boolean;
   region?: string;
-  /** Role names for the terrain material's slots; the valley's when absent. */
+  /** Role names for the terrain material's slots; grass, path, scree and snow when absent. */
   terrainTextures?: { base: string; path: string; scree: string; snow: string };
   /** The region's light, fog and sky. */
   environment?: {
@@ -122,6 +123,8 @@ export interface LevelWaterBody {
   max: Vector3;
   /** Flow direction on the ground plane in scene space. */
   flow: Vector2;
+  /** Only the sky and the backdrop in its mirror (a sea). */
+  mirror: 'scene' | 'sky';
   mesh: Mesh;
 }
 
@@ -430,7 +433,7 @@ export async function loadLevel(
   };
   // Forests, rocks, bushes and buildings: Meshy models (DESIGN.md 10.3) drawn as thin
   // instances in six by six regions, each region with a near and a far copy of every model,
-  // switched by distance so the whole valley's forest costs a few draw calls.
+  // switched by distance so a whole region's forest costs a few draw calls.
   const propPlacements: { model: string; position: Vector3; yaw: number; scale: number }[] = [];
   if (sidecar.outdoor && (sidecar.trees?.length || sidecar.props?.length)) {
     const half = Math.max(
@@ -586,6 +589,7 @@ export async function loadLevel(
       min: b.min,
       max: b.max,
       flow: new Vector2(-body.flow[0], body.flow[1]),
+      mirror: body.mirror ?? 'scene',
       mesh,
     });
   }

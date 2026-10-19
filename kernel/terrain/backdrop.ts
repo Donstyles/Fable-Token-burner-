@@ -28,6 +28,11 @@ export interface BackdropSpec {
    * stay low.
    */
   openings?: { x: number; z: number; radius: number; floor: number }[];
+  /**
+   * A coast: wherever the map's edge lies under the sea the ring stays the sea bed, flat
+   * under the water out to the horizon, and the ridges rise only behind the land.
+   */
+  sea?: { level: number; floor: number };
 }
 
 /** A point on the unit square's perimeter for u in [0, 1). */
@@ -89,8 +94,13 @@ export function backdropMesh(s: BackdropSpec): ColouredMeshData {
       const climb = smoothstep(0.22, 0.75, t) * (1 - 0.85 * open);
       const ridgeLine = 0.35 + 0.65 * ridged(x, z, 900, s.seed);
       const roll = fbm(x, z, 220, s.seed + 2) * 30 * smoothstep(0, 0.2, t);
-      const h =
-        profile + roll + climb * s.peak * ridgeLine + fbm(x, z, 320, s.seed + 1) * 60 * climb;
+      let h = profile + roll + climb * s.peak * ridgeLine + fbm(x, z, 320, s.seed + 1) * 60 * climb;
+      if (s.sea) {
+        // Where the averaged edge is under water the ring is the sea bed; along the shore
+        // the land fades into it.
+        const wet = 1 - smoothstep(s.sea.level - 3, s.sea.level + 4, smooth);
+        h = h + (s.sea.floor - h) * wet;
+      }
       positions.push(x, h, z);
       normals.push(0, 0, 0);
     }

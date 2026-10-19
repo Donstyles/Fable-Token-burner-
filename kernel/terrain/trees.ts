@@ -1,12 +1,11 @@
 /**
  * Forests (DESIGN.md 15): low-polygon trees in the late-nineties manner, a textured trunk
- * and a solid textured canopy, placed on the valley's forest mask with a jittered grid.
- * Four kinds: pines and spruces above the broadleaf line, broadleaf and oak below, with
- * conifers mixed in lower down.
+ * and a solid textured canopy, scattered on a jittered grid over a region's woods
+ * (kernel/terrain/region.ts). The kinds pick among the Meshy tree models at runtime.
  */
 import { ROLE } from '../elements/roles';
 import type { MeshData } from '../core/mesh';
-import type { ValleyResult } from './valley';
+import type { Heightfield } from './heightfield';
 
 /** Kinds in sidecar order: a tree's kind travels as its index here. */
 export const TREE_KINDS = ['pine', 'broadleaf', 'spruce', 'oak', 'palm'] as const;
@@ -34,46 +33,32 @@ function hashRng(seed: number): Rng {
   };
 }
 
-export interface ForestOptions {
-  /** Grid spacing between candidate trees, metres. */
-  spacing?: number;
-  /** Fraction of candidates on forest ground that become trees. */
-  density?: number;
-  /** Above this height only pines grow. */
-  pineAbove?: number;
+export interface ScatterOptions {
+  seed: number;
+  /** Metres between candidates on a jittered grid, and the share of them kept. */
+  spacing: number;
+  density: number;
+  /** Kinds to choose among, evenly. */
+  kinds: readonly TreeKind[];
+  /** Whether a tree may stand here. */
+  accept(x: number, z: number): boolean;
 }
 
-export function placeTrees(v: ValleyResult, o: ForestOptions = {}): TreeInstance[] {
-  const spacing = o.spacing ?? 9;
-  const density = o.density ?? 0.5;
-  const pineAbove = o.pineAbove ?? 90;
-  const rng = hashRng(v.spec.seed * 7919 + 13);
-  const hf = v.height;
+/** Trees on a jittered grid wherever `accept` allows (a region's woods, kernel/terrain/region.ts). */
+export function scatterTrees(hf: Heightfield, o: ScatterOptions): TreeInstance[] {
+  const rng = hashRng(o.seed * 7919 + 13);
   const trees: TreeInstance[] = [];
   const half = hf.width / 2 - 6;
-  for (let z = -half; z <= half; z += spacing) {
-    for (let x = -half; x <= half; x += spacing) {
-      const jx = x + (rng() - 0.5) * spacing * 0.9;
-      const jz = z + (rng() - 0.5) * spacing * 0.9;
-      const i = Math.round((jx + hf.width / 2) / hf.cell);
-      const j = Math.round((jz + hf.width / 2) / hf.cell);
-      if (!v.forest[j * hf.n + i]) continue;
-      if (rng() > density) continue;
-      // The mask is per vertex; the jittered spot itself must also keep clear.
-      if (v.road.nearest(jx, jz).distance < v.roadWidth / 2 + 4) continue;
-      if (v.river.nearest(jx, jz).distance < v.riverWidth / 2 + 8) continue;
-      if (Math.hypot(jx - v.town.centre[0], jz - v.town.centre[1]) < v.town.radius + 12) continue;
-      const y = hf.sample(jx, jz);
-      const conifer = y > pineAbove || rng() < 0.3;
-      const kind: TreeKind = conifer
-        ? rng() < 0.5
-          ? 'pine'
-          : 'spruce'
-        : rng() < 0.6
-          ? 'broadleaf'
-          : 'oak';
-      // Models stand at their catalogue height; the scale is only a little variety.
-      trees.push({ kind, x: jx, y, z: jz, yaw: rng() * Math.PI * 2, scale: 0.85 + rng() * 0.3 });
+  for (let z = -half; z <= half; z += o.spacing) {
+    for (let x = -half; x <= half; x += o.spacing) {
+      const jx = x + (rng() - 0.5) * o.spacing * 0.9;
+      const jz = z + (rng() - 0.5) * o.spacing * 0.9;
+      const keep = rng() <= o.density;
+      const kind = o.kinds[Math.floor(rng() * o.kinds.length)] ?? 'broadleaf';
+      const yaw = rng() * Math.PI * 2;
+      const scale = 0.85 + rng() * 0.3;
+      if (!keep || !o.accept(jx, jz)) continue;
+      trees.push({ kind, x: jx, y: hf.sample(jx, jz), z: jz, yaw, scale });
     }
   }
   return trees;

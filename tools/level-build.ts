@@ -18,7 +18,8 @@ import { ROLE } from '../kernel/elements/roles';
 import { bakeVertexLight } from '../kernel/light/bake';
 import { buildNavMesh, checkReachability } from '../kernel/nav/navmesh';
 import { buildLevelGlb } from '../kernel/export/glb';
-import { buildTerrainLevel, type TerrainSpec } from '../kernel/terrain/build';
+import { buildRegion, type RegionScript } from '../kernel/terrain/region';
+import { writeMapSheet } from './lib/map-sheet';
 import { TREE_KINDS } from '../kernel/terrain/trees';
 import { existsSync } from 'node:fs';
 
@@ -60,12 +61,13 @@ const OUT = 'public/levels';
 const round = (v: number): number => Math.round(v * 1000) / 1000;
 const ms = (a: number, b: number): string => `${(b - a).toFixed(0)} ms`;
 
-/** Outdoor regions: levels/<id>/terrain.ts exports a TerrainSpec instead of a level script. */
-async function buildTerrain(id: string, validate: boolean): Promise<boolean> {
+/** Outdoor regions: levels/<id>/region.ts exports a hand-written RegionScript (owner, 2026-10-19). */
+async function buildRegionLevel(id: string, validate: boolean): Promise<boolean> {
   const t0 = performance.now();
-  const url = pathToFileURL(resolve('levels', id, 'terrain.ts')).href;
-  const mod = (await import(url)) as { default: TerrainSpec };
-  const level = buildTerrainLevel(mod.default);
+  const url = pathToFileURL(resolve('levels', id, 'region.ts')).href;
+  const script = ((await import(url)) as { default: RegionScript }).default;
+  const level = buildRegion(script);
+  const chunkMetres = script.chunkCells * script.cell;
   const t1 = performance.now();
   // Coarse voxels for a region kilometres wide; the climb must cover one cell's rise on the
   // steepest walkable slope (1.5 m × tan 48° ≈ 1.7 m) or every hillside breaks into islands.
@@ -86,7 +88,6 @@ async function buildTerrain(id: string, validate: boolean): Promise<boolean> {
     4,
   );
   nav.navMesh.destroy();
-  const chunkMetres = mod.default.chunkCells * mod.default.cell;
   // Trees travel as instances in the sidecar (a few bytes each) and are drawn as thin
   // instances of two prototypes; collision is the terrain chunks plus a cylinder per trunk,
   // plus the cave mouth as a collider mesh (buildings and props collide as their own models).
@@ -164,6 +165,8 @@ async function buildTerrain(id: string, validate: boolean): Promise<boolean> {
   await writeFile(resolve(OUT, `${id}.glb`), glb);
   await writeFile(resolve(OUT, `${id}.json`), JSON.stringify(sidecar));
   await writeFile(resolve(OUT, `${id}.nav.bin`), nav.bytes);
+  // The map sheet: the region from above, for the owner's review and the automap.
+  await writeMapSheet(level, resolve(OUT, `${id}.map.png`));
   console.info(
     [
       `${id}: ${sidecar.stats.triangles} terrain tris at full detail, ${level.trees.length} trees ` +
@@ -184,7 +187,7 @@ async function buildTerrain(id: string, validate: boolean): Promise<boolean> {
 }
 
 async function buildOne(id: string, validate: boolean): Promise<boolean> {
-  if (existsSync(resolve('levels', id, 'terrain.ts'))) return buildTerrain(id, validate);
+  if (existsSync(resolve('levels', id, 'region.ts'))) return buildRegionLevel(id, validate);
   const t0 = performance.now();
   const url = pathToFileURL(resolve('levels', id, 'level.ts')).href;
   const mod = (await import(url)) as LevelModule;

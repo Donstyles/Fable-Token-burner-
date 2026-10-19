@@ -10,13 +10,13 @@ import { ROLE } from '../../kernel/elements/roles';
  */
 export const options = { ambient: [0.1, 0.1, 0.13] as [number, number, number], bakeCell: 1 };
 
-/** The way out: the spawn is the door back to the valley's cave mouth (DESIGN.md 15.3). */
+/** The way out: the spawn is the door back to the cave mouth in Gullhaven's goblin hills. */
 export const portals: PortalRecord[] = [
   {
     name: 'exit',
     position: [-3, 0, -4.5],
     radius: 1.5,
-    target: { level: 'valley', entry: 'cave' },
+    target: { level: 'gullhaven', entry: 'cave' },
     arrive: { position: [-3, 0, -2], yawDeg: 0 },
   },
 ];
