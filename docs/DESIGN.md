@@ -2280,7 +2280,88 @@ scary". Two faults, one on top of the other:
   well past the shoulder. A calmer idle is a new animation request to Meshy,
   for the owner to approve.
 
+## 17. Regions by hand (owner, 2026-10-19)
+
+"Hand design 640 m maps." The generated valley and desert are gone (section 15
+records them); every outdoor map is written by hand.
+
+### 17.1 The region script
+
+A region is `levels/<id>/region.ts`, a `RegionScript` (`kernel/terrain/region.ts`)
+in metres on a 640 m square of 5 m cells, x east and z north:
+
+- **Land**: a base height and a little ripple; hills (round or stretched bumps)
+  and ridges (along a line); a coast polygon with the sea outside it, the shore
+  coming down over `shore` metres and the bed ankle-deep for six metres off the
+  beach before it falls away; flats levelled for a town or a yard.
+- **Ways**: roads as curves through control points, cut into the land and never
+  steeper than 14 degrees; dirt squares and lanes.
+- **Woods**: outlines with a spacing, a density and the tree kinds; trees keep
+  off roads, pads, squares, the cave and the water.
+- **Plots**: each building or prop at a point, facing the point its door faces,
+  on a dead-level pad, sunk by its wall base (`kernel/terrain/plots.ts`); a named
+  point on the apron before each door.
+- **The cave**: its threshold and the heading it faces; the ground is cut under
+  the tunnel and the portal at its back leads into the dungeon.
+- **People**: townsfolk facing a point; monster packs, a count round a centre.
+- **Named points**, the start and its facing, the light, fog and sky, and the
+  terrain textures (the fourth slot is the beach's sand).
+
+`npm run level:build` compiles it through the same kernel as before (chunks,
+roads, trees, backdrop, cave, navmesh, reachability of every named point) and
+writes a **map sheet**, `public/levels/<id>.map.png`: the region from above at a
+pixel a metre, shaded by slope and tinted by splat, buildings red with their door
+side marked, trees, monsters red, townsfolk yellow, doors violet, the start a
+white cross. It is the review copy of a map and the automap's picture later.
+
+- **The sea** is one sheet of water out to the horizon, a grid twenty metres fine
+  near the land and coarser beyond, because the materials reckon fog at the
+  vertices: a single quad's far corners fogged the whole sea into the sky's own
+  blue and the land seemed to end in sky. Outdoors it wears the painted water, as
+  MM6's did; it mirrors only the sky if the mirror passes are ever turned on.
+- An invisible wall stands seven metres off the beach, so the party wades the
+  shallows to the ankles and no further, and another at the map's rim.
+- Tests (`kernel/terrain/region.test.ts`): land and sea, the levelled floor and
+  the road's splat, a cottage on its pad facing the road, trees only in the wood,
+  the cave, people on the ground, the backdrop under the sea on the shore's side;
+  for Gullhaven, no two buildings overlapping or standing on a road, every door
+  facing its street, the start above the sea, every kind of person known.
+
+### 17.2 Gullhaven
+
+The starting region, our own (not Enroth): a harbour town on the north shore of
+a bay, the sea south and east to the horizon, hills closing the land to the north
+and west.
+
+- **The town**: the square with its well between the inn (north) and the trader
+  (south); cottages along the street; the stables and the smithy at its east end;
+  the temple on its knoll to the west, up a lane. The party wakes on the
+  waterfront below the square, looking up at it.
+- **The north road** climbs past Old Tobin's farm (the house, the barn, haystacks
+  and a fenced yard) to the wayside shrine at the crossroads, and on to the goblin
+  hills, where the cave leads down into the old halls (the showcase dungeon,
+  whose door leads back out here).
+- **The coast road** runs west under the western ridge toward the next region;
+  bandits hold it.
+- **The headland track** runs east to the ruin on the headland, where six
+  skeleton warriors keep watch: far too many for a new party.
+- **People**: Maren by the well (the goblins in the hills, eighty gold), Old Tobin
+  at his farm gate (three bandits off the coast road, a hundred and fifty gold).
+  Greta and Old Henrik's lines and quests were re-homed to them.
+- Goblin scouts about the cave and in the western downs.
+
+### 17.3 Not yet
+
+The town's own houses (guild, training hall, bank, town hall, a pier) wait on
+batch 012; the coast road's west end has no portal until the second region
+exists; the headland ruin has no ruin model yet.
+
 ## 13. Decision log
+
+- 2026-10-19 – Gullhaven (17): hand-written regions on the 640 m grid compiled by
+  the terrain kernel, with a map sheet each; Gullhaven replaces the valley as the
+  starting region; the valley, the desert, the river and the ravine's stream are
+  removed; Henrik and Greta became Old Tobin and Maren.
 
 - 2026-10-19 – The owner's answers to the roadmap: "I just want to play some
   Might and Magic clone. Don't call it Enroth. Hand design 640 m maps." The

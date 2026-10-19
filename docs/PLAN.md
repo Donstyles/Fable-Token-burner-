@@ -14,7 +14,9 @@ It replaces Phase 5b and the order of Phases 6 and 7 once the owner answers
 its fourteen decisions (section 2). **Answered 2026-10-19** (our own world,
 not called Enroth; hand-designed 640 m maps; the rest as recommended): the
 roadmap is the plan from here, starting with the starting region in place of
-the valley.
+the valley. **2026-10-19:** Gullhaven is in (DESIGN 17): the region builder for
+hand-written 640 m maps, the harbour town, the goblin hills' cave into the
+dungeon, the headland's dead; the valley and the desert are gone.
 
 ## How approval works
 
@@ -68,7 +70,7 @@ src/
   ui/            HTML/CSS HUD and screens
   data/          tables: classes, skills, spells, items, monsters, NPCs
 kernel/          geometry kernel (pure TypeScript, runs in Node and browser)
-levels/          level scripts: showcase (town, dungeon-01 later)
+levels/          level scripts: gullhaven (region.ts, the starting region), showcase (the dungeon)
 tools/           pipeline CLIs, manifest, validation
 assets/          committed generated assets (textures/ with manifest.json)
 pipeline/        inbox/ (owner images), batches/, style.md
