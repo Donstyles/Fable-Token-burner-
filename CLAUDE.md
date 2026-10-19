@@ -36,7 +36,7 @@ anything. Both are the source of truth; update them when a decision changes.
   portraits in `pipeline/inbox/portraits/<appearance>/` to the band's oval
   (head box in `pipeline/portraits.json`)
 - `npm run asset -- <command>` – asset pipeline: `manifest`, `validate`,
-  `card <kind> <id> "<subject>"`, `batch new <name> <id>:<height-m>[:civilian]|props|creatures|icons|show|approve|approve-images`, `run <nnn> [--dry-run] [--force]` (runs only a batch the owner approved by number; props and creatures stop after their concept pictures until `approve-images`)
+  `card <kind> <id> "<subject>"`, `batch new <name> <id>:<height-m>[:civilian]|props|creatures|icons|show|approve|approve-images`, `inbox <id> <picture>` (keys the owner's fuchsia-ground concept picture into `pipeline/inbox/<id>.png`), `run <nnn> [--dry-run] [--force]` (runs only a batch the owner approved by number; props and creatures stop after their concept pictures until `approve-images`)
 
 ## Layout
 

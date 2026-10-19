@@ -313,9 +313,9 @@ export interface PropSpec {
 
 export const PROP_CONCEPT_STYLE =
   'Seen from the side at eye height, the whole of it in the frame from the ground to the ' +
-  'top, alone, centred, plain white background, no ground, no shadow, nothing else in the ' +
-  'frame. The look of a late-1990s first-person RPG: simple solid readable shapes, painted ' +
-  'textures, flat even lighting, muted natural colours.';
+  'top, alone, centred, plain flat fuchsia (#FF00FF) background, no ground, no shadow, ' +
+  'nothing else in the frame. The look of a late-1990s first-person RPG: simple solid ' +
+  'readable shapes, painted textures, flat even lighting, muted natural colours.';
 
 /** The two Meshy steps of a prop: the concept picture, then image-to-3D from it. */
 export function propItems(spec: PropSpec): BatchItem[] {

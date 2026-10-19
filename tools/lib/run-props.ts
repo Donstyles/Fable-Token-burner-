@@ -6,11 +6,12 @@
  * all of one step before waiting means twenty props take as long as one; each outcome is
  * written to the batch file as it arrives, like the humanoid steps.
  */
-import { access, copyFile, mkdir } from 'node:fs/promises';
+import { access, mkdir } from 'node:fs/promises';
 import { join } from 'node:path';
 import type { Batch, BatchItem, BatchRun, TaskRecord } from './batch';
 import { INBOX_DIR } from './cards';
 import { imageTo3dFlags, textToImageFlags } from './flags';
+import { keyPicture } from './key';
 import { type Manifest, upsertAsset, writeManifest } from './manifest';
 import { type MeshyClient, MeshyError, TERMINAL_STATES, type TaskOutcome } from './meshy';
 import { postProcessProp, type GlbReport } from './postprocess';
@@ -205,8 +206,8 @@ export async function runProps(ctx: PropRunContext): Promise<PropRunOutcome> {
     if (!dryRun) {
       if (!png) throw new Error(`${id}: the image download has no picture`);
       await mkdir(INBOX_DIR, { recursive: true });
-      await copyFile(png, imageOf(id));
-      log(`  concept → ${imageOf(id)}`);
+      const keyed = await keyPicture(png, imageOf(id));
+      log(`  concept → ${imageOf(id)} (${keyed.matte})`);
     }
   }
   if (pictureFailed.length) {

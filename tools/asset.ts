@@ -10,6 +10,7 @@
  *   npm run asset -- batch icons <name> <specs.json> [--grant <purpose>]   plan spell icons
  *   npm run asset -- icon accept <nnn> <asset-id> [<spell-id>]   take a processed icon into assets/
  *   npm run asset -- icon reprocess <nnn> [<asset-id>...]         post-process a batch's pictures again
+ *   npm run asset -- inbox <id> <picture>           key the owner's concept picture (fuchsia ground) into the inbox
  *   npm run asset -- run <nnn> [--dry-run] [--force] run an approved batch through Meshy
  *
  * Only `run` talks to Meshy, and only for an approved batch (`--dry-run` prints the commands).
@@ -41,6 +42,7 @@ import {
   type AssetEntry,
 } from './lib/manifest';
 import { postProcessIcon } from './lib/icon';
+import { keyPicture } from './lib/key';
 import { CHARACTER_TEXTURE_SIZE, inspectGlb } from './lib/postprocess';
 import { MESHY_LICENCE, WORK_DIR, runBatch } from './lib/run';
 
@@ -393,6 +395,29 @@ async function icon(args: string[]): Promise<void> {
   console.info(`accepted ${from} as ${to}`);
 }
 
+/**
+ * `inbox <id> <picture>`: the owner's concept picture, made on a fuchsia ground (owner,
+ * 2026-10-19), keyed to transparency as `pipeline/inbox/<id>.png`, where a batch's
+ * image-to-3D step finds it and its text-to-image step is skipped.
+ */
+async function inbox(args: string[]): Promise<void> {
+  const [id, picture] = args;
+  if (!id || !picture) fail('inbox <id> <picture>');
+  if (!isValidId(id)) fail('id must be lower-case words joined by dashes');
+  if (!(await exists(picture))) fail(`${picture} missing`);
+  await mkdir(INBOX_DIR, { recursive: true });
+  const dest = `${INBOX_DIR}/${id}.png`;
+  try {
+    const r = await keyPicture(picture, dest);
+    const pct = (v: number): string => `${(v * 100).toFixed(1)}%`;
+    console.info(
+      `${dest}: ${r.width}x${r.height}, ${r.matte === 'fuchsia' ? `keyed from rgb(${r.ground!.join(', ')})` : 'its own alpha'}; subject ${pct(r.opaque)}, edge ${pct(r.edge)}`,
+    );
+  } catch (e) {
+    fail(`asset inbox: ${e instanceof Error ? e.message : String(e)}`);
+  }
+}
+
 async function run(args: string[]): Promise<void> {
   const number = Number(args[0]);
   if (!Number.isInteger(number)) fail('run <nnn> [--dry-run] [--force]');
@@ -434,6 +459,9 @@ switch (command) {
     break;
   case 'icon':
     await icon(args);
+    break;
+  case 'inbox':
+    await inbox(args);
     break;
   default: {
     const size = (await stat('pipeline/style.md')).size;

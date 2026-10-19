@@ -275,6 +275,18 @@ cheapest image model (`text-to-image create --ai-model nano-banana-2-lite`,
 multi-view for creatures), the image is reviewed, then image-to-3D. The
 trees and buildings already made stay unless they fail inspection.
 
+Concept pictures stand on a plain fuchsia (#FF00FF) ground (owner,
+2026-10-19: "We do fuchsia backgrounds"): no tree, rock or house is magenta,
+where white would key out a birch's bark or a lime wall. The owner makes
+most of them free in ChatGPT from the prompt cards in `docs/prompt-cards/`;
+`npm run asset -- inbox <id> <picture>` keys each into
+`pipeline/inbox/<id>.png` (`tools/lib/key.ts`): cover from the pixel's
+spill (red and blue above green) against the ground's, the edge's colour
+bled in from the clean subject beside it, since a generated picture's chroma
+runs a few pixels past its outline and an unmixed edge stays pink. A batch
+skips the text-to-image step of any prop whose picture is in the inbox; a
+Meshy picture is keyed the same way (its own alpha passes through).
+
 Catalogue: `npm run props:catalogue` measures every GLB in `assets/props`
 at the nominal height in `kernel/terrain/props.ts` and writes
 `assets/props/catalogue.json` (footprint, scale to metres, triangles).
@@ -2357,6 +2369,11 @@ batch 012; the coast road's west end has no portal until the second region
 exists; the headland ruin has no ruin model yet.
 
 ## 13. Decision log
+
+- 2026-10-19 – Fuchsia backgrounds for every concept picture (owner: "We do fuchsia
+  backgrounds"). The owner makes the tree pictures free in ChatGPT
+  (`docs/prompt-cards/trees.md`); `asset inbox` keys the fuchsia out with an alpha bleed on
+  the edge (10.3); the prop style and batch 012's prompts ask for it too.
 
 - 2026-10-19 – Never text-to-3D, no exceptions (owner: "They look like shit because they
   were text to 3d"; "Never ever do text to 3d. No exceptions"). The pipeline cannot make

@@ -2,10 +2,12 @@
 
 **Asset ids:** the twenty of batch 012, numbered as on the tree sheet (2026-10-19).
 **Used by:** Meshy image-to-3D (batch 012), then the game's tree sprites (DESIGN 16.14).
-**Output spec:** square (1024×1024), PNG, one tree per picture, plain white background.
+**Output spec:** square (1024×1024 or larger), PNG, one tree per picture, plain flat fuchsia
+(#FF00FF) background (owner, 2026-10-19: "We do fuchsia backgrounds").
 **Made by:** the owner, in one ChatGPT chat, free (owner, 2026-10-19). Never text-to-3D.
-**Returned to:** this chat; Claude files each as `pipeline/inbox/<id>.png`, and batch 012
-then runs only its image-to-3D steps (15 credits a tree) once the owner approves it.
+**Returned to:** this chat; Claude keys the fuchsia out and files each as
+`pipeline/inbox/<id>.png` (`npm run asset -- inbox <id> <picture>`), and batch 012 then runs
+only its image-to-3D steps (15 credits a tree) once the owner approves it.
 
 ## The setup message (send once, first)
 
@@ -15,11 +17,13 @@ then runs only its image-to-3D steps (15 credits a tree) once the owner approves
 > colours. The foliage is a few large solid clumps that hide the branches: no see-through
 > gaps, no single leaves, no thin twigs. Seen from the side at eye level, upright and centred,
 > the whole of it in the frame from the foot of the trunk to the top, with a little margin.
-> Flat even light, no shading from one side, no shadows. Plain pure white background: no
-> ground, no grass, no shadow under it, nothing else in the picture, no text. Square image.
-> Reply only with the picture.
+> Flat even light, no shading from one side, no shadows. Plain flat pure fuchsia background
+> (#FF00FF) everywhere around it: no ground, no grass, no shadow under it, nothing else in
+> the picture, no text. Square image. Reply only with the picture.
 
 ## The pictures (one message each)
+
+Received: 1 (2026-10-19).
 
 1. `tree-spruce-01`: A tall Norway spruce, narrow cone, dense dark green layered foliage from
    near the ground to a pointed top, straight brown trunk.
@@ -61,5 +65,6 @@ then runs only its image-to-3D steps (15 credits a tree) once the owner approves
 ## Checks before sending them back
 
 - One tree, whole, centred, nothing cut off at the top or the foot.
-- White background with no ground patch or shadow under it.
+- Fuchsia background, flat, with no ground patch or shadow under it; no pink or purple in
+  the tree itself (it would key out with the background).
 - Foliage reads as a few solid masses, not a cloud of loose leaves.
