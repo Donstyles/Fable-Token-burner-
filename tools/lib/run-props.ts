@@ -1,11 +1,16 @@
 /**
- * Props in a batch (trees, rocks): text-to-3D previews for every prop are submitted first,
- * then waited for, then refined, then waited for again, so twenty trees take as long as
- * one; each outcome is written to the batch file as it arrives, like the humanoid steps.
+ * Props in a batch (trees, rocks, buildings), image first (owner, 2026-10-17 and 2026-10-19:
+ * "Never ever do text to 3d. No exceptions"): a concept picture for every prop is submitted,
+ * then waited for, and saved to the inbox; the run stops there until the owner has seen them
+ * (`asset batch approve-images`); the next run turns each picture into a model. Submitting
+ * all of one step before waiting means twenty props take as long as one; each outcome is
+ * written to the batch file as it arrives, like the humanoid steps.
  */
-import { mkdir } from 'node:fs/promises';
+import { access, copyFile, mkdir } from 'node:fs/promises';
 import { join } from 'node:path';
 import type { Batch, BatchItem, BatchRun, TaskRecord } from './batch';
+import { INBOX_DIR } from './cards';
+import { imageTo3dFlags, textToImageFlags } from './flags';
 import { type Manifest, upsertAsset, writeManifest } from './manifest';
 import { type MeshyClient, MeshyError, TERMINAL_STATES, type TaskOutcome } from './meshy';
 import { postProcessProp, type GlbReport } from './postprocess';
@@ -32,67 +37,56 @@ export interface PropResult {
   credits: number | null;
 }
 
-export function textTo3dPreviewFlags(params: Record<string, unknown>): string[] {
-  const s = (k: string): string => String(params[k]);
-  return [
-    '--mode',
-    'preview',
-    '--prompt',
-    s('prompt'),
-    '--model-type',
-    s('model_type'),
-    '--ai-model',
-    s('ai_model'),
-    '--target-polycount',
-    s('target_polycount'),
-    '--pose-mode',
-    s('pose_mode'),
-    '--target-formats',
-    (params['target_formats'] as string[]).join(','),
-  ];
+export interface PropRunOutcome {
+  results: PropResult[];
+  /** Props whose concept pictures wait for the owner's look before the models are made. */
+  pendingReview: string[];
 }
 
-export function textTo3dRefineFlags(params: Record<string, unknown>, previewId: string): string[] {
-  return [
-    '--mode',
-    'refine',
-    '--preview-task-id',
-    previewId,
-    '--enable-pbr',
-    String(params['enable_pbr']),
-    '--texture-resolution',
-    String(params['texture_resolution']),
-    '--target-formats',
-    (params['target_formats'] as string[]).join(','),
-  ];
-}
+type PropStep = 'text-to-image' | 'image-to-3d';
 
 const pad = (n: number): string => String(n).padStart(3, '0');
 
-/** Which asset ids of the batch are props (they have a text-to-3d preview item). */
+async function exists(path: string): Promise<boolean> {
+  try {
+    await access(path);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/** Which asset ids of the batch are props: a model from a picture, with no rig. */
 export function propAssetIds(batch: Batch): string[] {
+  const rigged = new Set(batch.items.filter((i) => i.step === 'rig').map((i) => i.assetId));
   return [
-    ...new Set(batch.items.filter((i) => i.step === 'text-to-3d-preview').map((i) => i.assetId)),
+    ...new Set(
+      batch.items
+        .filter((i) => i.step === 'image-to-3d' && !rigged.has(i.assetId))
+        .map((i) => i.assetId),
+    ),
   ];
 }
 
-export async function runProps(ctx: PropRunContext): Promise<PropResult[]> {
+export async function runProps(ctx: PropRunContext): Promise<PropRunOutcome> {
   const { batch, run, client, dryRun, log, save } = ctx;
   const ids = propAssetIds(batch);
   const results: PropResult[] = [];
-  if (!ids.length) return results;
-  const item = (id: string, step: BatchItem['step']): BatchItem => {
+  if (!ids.length) return { results, pendingReview: [] };
+  const item = (id: string, step: PropStep): BatchItem => {
     const found = batch.items.find((i) => i.assetId === id && i.step === step);
     if (!found) throw new Error(`${id}: no ${step} item`);
     return found;
   };
+  const imageOf = (id: string): string =>
+    join(INBOX_DIR, item(id, 'image-to-3d').input ?? `${id}.png`);
   const record = (o: TaskOutcome, operationId: string): TaskRecord => ({
     taskId: o.taskId,
     status: o.status,
     consumedCredits: o.consumedCredits,
     operationId,
   });
-  const pendingOf = (step: 'text-to-3d-preview' | 'text-to-3d-refine'): string[] =>
+  const pendingOf = (step: PropStep): string[] =>
     ids.filter((id) => {
       const rec = run.tasks[id]?.[step];
       return rec !== undefined && !TERMINAL_STATES.has(rec.status) && rec.status !== 'DRY_RUN';
@@ -102,11 +96,7 @@ export async function runProps(ctx: PropRunContext): Promise<PropResult[]> {
   // Submit one step for every prop (of `only`) that has no record of it yet. Meshy queues
   // about ten tasks per account: when it refuses more, wait for the oldest pending task of
   // this step to finish and submit again, so a batch of twenty needs no hand-holding.
-  const submit = async (
-    step: 'text-to-3d-preview' | 'text-to-3d-refine',
-    flags: (id: string) => string[],
-    only: string[] = ids,
-  ): Promise<void> => {
+  const submit = async (step: PropStep, flags: (id: string) => string[], only: string[]) => {
     for (const id of only) {
       const records = (run.tasks[id] ??= {});
       if (records[step]) continue;
@@ -121,17 +111,14 @@ export async function runProps(ctx: PropRunContext): Promise<PropResult[]> {
       let outcome: TaskOutcome | null = null;
       while (outcome === null) {
         try {
-          outcome = await client.create('text-to-3d', flags(id), operationId);
+          outcome = await client.create(step, flags(id), operationId);
         } catch (e) {
           const pending = pendingOf(step);
           if (!isQueueFull(e) || !pending.length) throw e;
           const oldest = pending[0]!;
           const rec = run.tasks[oldest]![step]!;
           log(`  ${id} ${step}: queue full, waiting for ${oldest} (${rec.taskId})`);
-          run.tasks[oldest]![step] = record(
-            await client.wait('text-to-3d', rec.taskId),
-            rec.operationId,
-          );
+          run.tasks[oldest]![step] = record(await client.wait(step, rec.taskId), rec.operationId);
           operationId = await nextAttempt();
         }
       }
@@ -142,15 +129,15 @@ export async function runProps(ctx: PropRunContext): Promise<PropResult[]> {
     }
   };
   // Wait for every prop's step; a failure is reported but does not stop the others.
-  const waitAll = async (step: 'text-to-3d-preview' | 'text-to-3d-refine'): Promise<string[]> => {
+  const waitAll = async (step: PropStep, only: string[]): Promise<string[]> => {
     const failed: string[] = [];
-    for (const id of ids) {
+    for (const id of only) {
       const records = run.tasks[id]!;
       let rec = records[step]!;
       while (!TERMINAL_STATES.has(rec.status) && rec.status !== 'DRY_RUN') {
         let outcome: TaskOutcome;
         try {
-          outcome = await client.wait('text-to-3d', rec.taskId);
+          outcome = await client.wait(step, rec.taskId);
         } catch (e) {
           // The CLI reports a failed task as an error; it is a failed record here, not the
           // end of the run.
@@ -172,16 +159,15 @@ export async function runProps(ctx: PropRunContext): Promise<PropResult[]> {
     }
     return failed;
   };
-
   // Meshy's "A processing error occurred. Please retry." is retried once per step: the
   // failed record is dropped and the step submitted again under a second attempt number.
   const runStep = async (
-    step: 'text-to-3d-preview' | 'text-to-3d-refine',
+    step: PropStep,
     flags: (id: string) => string[],
     only: string[],
   ): Promise<string[]> => {
     await submit(step, flags, only);
-    let failed = (await waitAll(step)).filter((id) => only.includes(id));
+    let failed = await waitAll(step, only);
     const failures = (id: string): number => run.attempts?.[`${id}/${step}#failed`] ?? 0;
     const retry = failed.filter((id) => failures(id) < 1);
     if (retry.length) {
@@ -192,39 +178,57 @@ export async function runProps(ctx: PropRunContext): Promise<PropResult[]> {
       }
       await save();
       await submit(step, flags, retry);
-      const again = (await waitAll(step)).filter((id) => only.includes(id));
+      const again = await waitAll(step, retry);
       failed = failed.filter((id) => !retry.includes(id) || again.includes(id));
     }
     return failed;
   };
 
   log(`props: ${ids.length} (${ids.join(', ')})`);
-  const previewFailed = await runStep(
-    'text-to-3d-preview',
-    (id) => textTo3dPreviewFlags(item(id, 'text-to-3d-preview').params),
+  // The concept pictures, for every prop whose picture is not in the inbox yet.
+  const needPicture: string[] = [];
+  for (const id of ids) if (!(await exists(imageOf(id)))) needPicture.push(id);
+  const pictureFailed = needPicture.length
+    ? await runStep(
+        'text-to-image',
+        (id) => textToImageFlags(item(id, 'text-to-image').params),
+        needPicture,
+      )
+    : [];
+  for (const id of needPicture) {
+    if (pictureFailed.includes(id)) continue;
+    const dir = join(ctx.workDir, id);
+    if (!dryRun) await mkdir(dir, { recursive: true });
+    const taskId = run.tasks[id]!['text-to-image']!.taskId;
+    const files = await client.download('text-to-image', taskId, 'image', dir);
+    const png = files.find((f) => /\.(png|jpe?g|webp)$/i.test(f));
+    if (!dryRun) {
+      if (!png) throw new Error(`${id}: the image download has no picture`);
+      await mkdir(INBOX_DIR, { recursive: true });
+      await copyFile(png, imageOf(id));
+      log(`  concept → ${imageOf(id)}`);
+    }
+  }
+  if (pictureFailed.length) {
+    throw new Error(`concept pictures failed: ${pictureFailed.join(', ')} (re-run to retry)`);
+  }
+  // The owner sees every picture before a credit goes on a model.
+  if (!batch.imagesReviewed) return { results, pendingReview: ids };
+
+  const modelFailed = await runStep(
+    'image-to-3d',
+    (id) => imageTo3dFlags(item(id, 'image-to-3d').params, imageOf(id)),
     ids,
   );
-  const refineIds = ids.filter((id) => !previewFailed.includes(id));
-  const refineFailed = await runStep(
-    'text-to-3d-refine',
-    (id) =>
-      textTo3dRefineFlags(
-        item(id, 'text-to-3d-refine').params,
-        run.tasks[id]!['text-to-3d-preview']!.taskId,
-      ),
-    refineIds,
-  );
-  const failed = new Set([...previewFailed, ...refineFailed]);
-
   for (const id of ids) {
-    if (failed.has(id)) continue;
+    if (modelFailed.includes(id)) continue;
     const records = run.tasks[id]!;
-    const preview = records['text-to-3d-preview']!;
-    const refine = records['text-to-3d-refine']!;
+    const picture = records['text-to-image'];
+    const model = records['image-to-3d']!;
     const dir = join(ctx.workDir, id);
     const output = join(PROP_DIR, id, `${id}.glb`);
     if (!dryRun) await mkdir(dir, { recursive: true });
-    const files = await client.download('text-to-3d', refine.taskId, 'model', dir);
+    const files = await client.download('image-to-3d', model.taskId, 'model', dir);
     const glb = files.find((f) => f.endsWith('.glb'));
     let report: GlbReport | null = null;
     if (!dryRun) {
@@ -234,21 +238,21 @@ export async function runProps(ctx: PropRunContext): Promise<PropResult[]> {
     } else {
       log(`  post-process → ${output}`);
     }
-    const taskCredits = [preview, refine].map((t) => t.consumedCredits);
-    const credits = taskCredits.every((c): c is number => c !== null)
-      ? taskCredits.reduce((a, b) => a + b, 0)
+    const tasks = [picture, model].filter((t): t is TaskRecord => t !== undefined);
+    const credits = tasks.every((t) => t.consumedCredits !== null)
+      ? tasks.reduce((a, t) => a + (t.consumedCredits ?? 0), 0)
       : null;
     if (!dryRun) {
       upsertAsset(ctx.manifest, {
         id,
         kind: 'prop',
-        source: 'Meshy text-to-3D (smart topology, preview then refine)',
-        prompt: String(item(id, 'text-to-3d-preview').params['prompt']),
+        source: `Meshy image-to-3D (smart topology) from the concept picture ${imageOf(id)}`,
+        prompt: String(item(id, 'text-to-image').params['prompt']),
         meshy: {
-          taskIds: [preview.taskId, refine.taskId],
+          taskIds: tasks.map((t) => t.taskId),
           params: {
-            preview: item(id, 'text-to-3d-preview').params,
-            refine: item(id, 'text-to-3d-refine').params,
+            textToImage: item(id, 'text-to-image').params,
+            imageTo3d: item(id, 'image-to-3d').params,
           },
           consumedCredits: credits ?? 0,
         },
@@ -263,10 +267,10 @@ export async function runProps(ctx: PropRunContext): Promise<PropResult[]> {
     }
     results.push({ id, file: output, report, credits });
   }
-  if (failed.size) {
+  if (modelFailed.length) {
     throw new Error(
-      `props failed: ${[...failed].join(', ')} (the others are done; re-run to retry)`,
+      `prop models failed: ${modelFailed.join(', ')} (the others are done; re-run to retry)`,
     );
   }
-  return results;
+  return { results, pendingReview: [] };
 }

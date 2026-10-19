@@ -13,9 +13,11 @@ anything. Both are the source of truth; update them when a decision changes.
   `npm run asset -- run <nnn>` (`--dry-run` first). The key is a network
   secret the cloud proxy injects; it is never in the container, so never ask
   for it, look for it or paste it anywhere.
-- Never text-to-3D (owner, 2026-10-17). Every model starts as a low-poly
-  text-to-image concept (`--ai-model nano-banana-2-lite`, the cheapest), then
-  image-to-3D; the image is reviewed first.
+- Never text-to-3D, no exceptions (owner, 2026-10-17; again 2026-10-19:
+  "Never ever do text to 3d. No exceptions"). Every model, character or prop,
+  starts as a low-poly text-to-image concept (`--ai-model nano-banana-2-lite`,
+  the cheapest), then image-to-3D; the image is reviewed first. The tooling
+  refuses text-to-3D: no batch step, no Meshy client call; keep it that way.
 - Work on the designated branch; commit in logical steps.
 - Before building any system, check whether Babylon.js or an established
   library already provides it, and prefer that (owner, 2026-10-15, after a
@@ -34,7 +36,7 @@ anything. Both are the source of truth; update them when a decision changes.
   portraits in `pipeline/inbox/portraits/<appearance>/` to the band's oval
   (head box in `pipeline/portraits.json`)
 - `npm run asset -- <command>` – asset pipeline: `manifest`, `validate`,
-  `card <kind> <id> "<subject>"`, `batch new <name> <id>:<height-m>[:civilian]|show|approve`, `run <nnn> [--dry-run] [--force]` (runs only a batch the owner approved by number)
+  `card <kind> <id> "<subject>"`, `batch new <name> <id>:<height-m>[:civilian]|props|creatures|icons|show|approve|approve-images`, `run <nnn> [--dry-run] [--force]` (runs only a batch the owner approved by number; props and creatures stop after their concept pictures until `approve-images`)
 
 ## Layout
 

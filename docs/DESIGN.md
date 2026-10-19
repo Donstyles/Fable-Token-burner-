@@ -2358,6 +2358,14 @@ exists; the headland ruin has no ruin model yet.
 
 ## 13. Decision log
 
+- 2026-10-19 – Never text-to-3D, no exceptions (owner: "They look like shit because they
+  were text to 3d"; "Never ever do text to 3d. No exceptions"). The pipeline cannot make
+  one: props go image first like creatures (a concept picture, the owner's look, then
+  image-to-3D; `tools/lib/run-props.ts`), the batch tool has no text-to-3D step, the runner
+  refuses batches 003 and 004, and the Meshy client refuses any text-to-3D call (tests in
+  `tools/lib/image-first.test.ts`). The trees and bushes of batch 003 are redone as batch
+  012; the buildings and props of batch 004 are text-to-3D too and are next.
+
 - 2026-10-19 – Gullhaven (17): hand-written regions on the 640 m grid compiled by
   the terrain kernel, with a map sheet each; Gullhaven replaces the valley as the
   starting region; the valley, the desert, the river and the ravine's stream are

@@ -15,7 +15,19 @@ import { spawn } from 'node:child_process';
 import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 
-export type MeshyResource = 'image-to-3d' | 'rigging' | 'animate' | 'text-to-3d' | 'text-to-image';
+/**
+ * The Meshy resources the pipeline may touch. Text-to-3D is not among them and never will be
+ * (owner, 2026-10-17 and 2026-10-19: "Never ever do text to 3d. No exceptions"): every model
+ * starts as a concept image the owner sees.
+ */
+export type MeshyResource = 'image-to-3d' | 'rigging' | 'animate' | 'text-to-image';
+
+/** Refuse anything that would reach Meshy's text-to-3D, whatever the caller's types said. */
+export function refuseTextTo3d(args: readonly string[]): void {
+  if (args.some((a) => /text-to-3d/i.test(a))) {
+    throw new Error('refused: text-to-3D is never used (owner, no exceptions)');
+  }
+}
 export type DownloadKind = 'model' | 'rig' | 'animation' | 'texture' | 'thumbnail' | 'image';
 
 /** The CLI's `--output-schema v1` envelope: exactly one JSON object on stdout. */
@@ -93,6 +105,7 @@ export interface RunResult {
  * command line is echoed (it never contains a secret: the key lives in the environment).
  */
 export function runMeshy(args: string[], opts: { quiet?: boolean } = {}): Promise<RunResult> {
+  refuseTextTo3d(args);
   const full = [...args, '--format', 'json', '--output-schema', 'v1'];
   return new Promise((resolve, reject) => {
     const child = spawn(meshyBin(), full, {
@@ -214,6 +227,7 @@ export class MeshyClient {
     operationId: string,
   ): Promise<TaskOutcome> {
     const args = [resource, 'create', ...flags, '--async', '--operation-id', operationId];
+    refuseTextTo3d(args);
     this.log(`  meshy ${args.join(' ')}`);
     if (this.dryRun) {
       return {
@@ -233,6 +247,7 @@ export class MeshyClient {
   /** Poll an existing task until it is terminal or the timeout passes. */
   async wait(resource: MeshyResource, taskId: string): Promise<TaskOutcome> {
     const args = [resource, 'wait', taskId, '--timeout', String(this.timeoutSeconds)];
+    refuseTextTo3d(args);
     this.log(`  meshy ${args.join(' ')}`);
     if (this.dryRun) return { taskId, status: 'DRY_RUN', consumedCredits: null, faceCount: null };
     const res = await runMeshy(args);
@@ -264,6 +279,7 @@ export class MeshyClient {
       outputDir,
       '--overwrite',
     ];
+    refuseTextTo3d(args);
     this.log(`  meshy ${args.join(' ')}`);
     if (this.dryRun) return [];
     const res = await runMeshy(args);

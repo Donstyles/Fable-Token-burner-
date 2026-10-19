@@ -9,6 +9,7 @@ import { join } from 'node:path';
 import {
   HUMANOID_CLIPS,
   actionIds,
+  assertImageFirst,
   findBatch,
   imageOnlyAssetIds,
   writeBatch,
@@ -23,6 +24,7 @@ import { readBudget, recordSpend, remainingFor } from './budget';
 import { ICON_SIZE, postProcessIcon } from './icon';
 import { CARD_DIR, INBOX_DIR } from './cards';
 import { readManifest, upsertAsset, writeManifest } from './manifest';
+import { imageTo3dFlags, textToImageFlags } from './flags';
 import { MeshyClient, TERMINAL_STATES, type MeshyResource, type TaskOutcome } from './meshy';
 import { postProcessCharacter, type GlbReport } from './postprocess';
 import { propAssetIds, runProps } from './run-props';
@@ -37,8 +39,6 @@ const RESOURCE: Record<BatchStep, MeshyResource> = {
   'image-to-3d': 'image-to-3d',
   rig: 'rigging',
   animate: 'animate',
-  'text-to-3d-preview': 'text-to-3d',
-  'text-to-3d-refine': 'text-to-3d',
 };
 
 export interface RunOptions {
@@ -74,43 +74,7 @@ export async function cardPrompt(assetId: string): Promise<string | undefined> {
   return m?.[1]?.trim() || undefined;
 }
 
-export function imageTo3dFlags(params: Record<string, unknown>, imagePath: string): string[] {
-  const flag = (name: string, key: string): string[] =>
-    params[key] === undefined ? [] : [`--${name}`, String(params[key])];
-  const formats = Array.isArray(params['target_formats'])
-    ? (params['target_formats'] as string[]).join(',')
-    : 'glb';
-  const data: Record<string, unknown> = {};
-  for (const key of ['auto_size', 'origin_at'])
-    if (params[key] !== undefined) data[key] = params[key];
-  return [
-    '--image-url',
-    imagePath,
-    ...flag('model-type', 'model_type'),
-    ...flag('ai-model', 'ai_model'),
-    ...flag('target-polycount', 'target_polycount'),
-    ...flag('pose-mode', 'pose_mode'),
-    ...flag('should-texture', 'should_texture'),
-    ...flag('texture-resolution', 'texture_resolution'),
-    ...flag('enable-pbr', 'enable_pbr'),
-    '--target-formats',
-    formats,
-    ...(Object.keys(data).length ? ['--data', JSON.stringify(data)] : []),
-  ];
-}
-
-export function textToImageFlags(params: Record<string, unknown>): string[] {
-  const flag = (name: string, key: string): string[] =>
-    params[key] === undefined ? [] : [`--${name}`, String(params[key])];
-  return [
-    '--prompt',
-    String(params['prompt']),
-    ...flag('ai-model', 'ai_model'),
-    ...flag('pose-mode', 'pose_mode'),
-    ...flag('aspect-ratio', 'aspect_ratio'),
-    ...flag('remove-background', 'remove_background'),
-  ];
-}
+export { imageTo3dFlags, textToImageFlags } from './flags';
 
 export function rigFlags(params: Record<string, unknown>, inputTaskId: string): string[] {
   return [
@@ -138,6 +102,8 @@ export async function runBatch(number: number, opts: RunOptions = {}): Promise<R
   const found = await findBatch(number);
   if (!found) throw new Error(`no batch ${number}`);
   const { batch } = found;
+  // Never text-to-3D (owner, no exceptions): a batch holding such a step does not run at all.
+  assertImageFirst(batch);
   const label = `batch ${pad(batch.number)} ${batch.name}`;
   // A batch runs when the owner approved it by number, or within a standing credit grant
   // (pipeline/budget.json) that covers its estimate; the grant is spent as runs report costs.
@@ -196,8 +162,10 @@ export async function runBatch(number: number, opts: RunOptions = {}): Promise<R
   const assetIds = [...new Set(batch.items.map((i) => i.assetId))].filter(
     (id) => !props.includes(id),
   );
+  // Props and creatures whose concept pictures were made this run and await a look.
+  const pendingReview: string[] = [];
   if (props.length) {
-    const results = await runProps({
+    const outcome = await runProps({
       batch,
       run,
       runIndex,
@@ -209,11 +177,10 @@ export async function runBatch(number: number, opts: RunOptions = {}): Promise<R
       workDir: join(WORK_DIR, `batch-${pad(batch.number)}`),
       licence: MESHY_LICENCE,
     });
-    for (const r of results) summary.assets.push(r);
+    for (const r of outcome.results) summary.assets.push(r);
+    pendingReview.push(...outcome.pendingReview);
   }
 
-  // Creatures whose concept images were made this run and await a look before the 3D steps.
-  const pendingReview: string[] = [];
   const icons = imageOnlyAssetIds(batch);
   for (const assetId of assetIds) {
     const items = batch.items.filter((i) => i.assetId === assetId);

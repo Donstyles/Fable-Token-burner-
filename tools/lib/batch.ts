@@ -35,12 +35,25 @@ export const CREDITS = {
   imageTo3d: { credits: 15, basis: 'reported by Meshy for batch 001 (2026-10-15)' },
   rig: { credits: 5, basis: 'reported by Meshy for batch 001 (2026-10-15)' },
   animatePerAction: { credits: 3, basis: 'documented (DESIGN.md 10.0), confirmed by batch 001' },
-  textTo3dPreview: { credits: 5, basis: 'measured, batch 003 (2026-10-17)' },
-  textTo3dRefine: { credits: 10, basis: 'measured, batch 003 (2026-10-17)' },
 } as const;
 
-export type BatchStep =
-  'image-to-3d' | 'rig' | 'animate' | 'text-to-image' | 'text-to-3d-preview' | 'text-to-3d-refine';
+/**
+ * The steps a batch may hold. There is no text-to-3D step and never will be (owner,
+ * 2026-10-17 and 2026-10-19: "Never ever do text to 3d. No exceptions"); batches 003 and 004
+ * hold such records from before the rule, as history only, and nothing runs them.
+ */
+export type BatchStep = 'image-to-3d' | 'rig' | 'animate' | 'text-to-image';
+
+/** Refuse a batch that holds anything but the allowed steps (an old text-to-3D batch). */
+export function assertImageFirst(batch: Pick<Batch, 'number' | 'items'>): void {
+  const allowed: readonly string[] = ['image-to-3d', 'rig', 'animate', 'text-to-image'];
+  const bad = batch.items.find((i) => !allowed.includes(i.step));
+  if (bad) {
+    throw new Error(
+      `batch ${batch.number}: ${bad.assetId} has a ${bad.step} step; text-to-3D is never used (owner, no exceptions)`,
+    );
+  }
+}
 
 export interface BatchItem {
   assetId: string;
@@ -286,43 +299,57 @@ export function totalCredits(items: readonly BatchItem[]): number {
   return items.reduce((sum, i) => sum + i.estimatedCredits, 0);
 }
 
-/** A prop made from a text prompt: trees, rocks, furniture (DESIGN.md 10.1). */
+/**
+ * A prop (a tree, a rock, a building): a concept picture first, seen by the owner, then
+ * image-to-3D (owner, 2026-10-17 and 2026-10-19: never text-to-3D, no exceptions).
+ */
 export interface PropSpec {
   id: string;
+  /** What the concept picture shows; the framing and look are added here. */
   prompt: string;
   /** Target face count for smart topology (meshy-t2.5: 100 to 30,000). */
   polycount: number;
 }
 
-/** The two Meshy steps of a text-to-3D prop: a preview mesh, then its textured refinement. */
+export const PROP_CONCEPT_STYLE =
+  'Seen from the side at eye height, the whole of it in the frame from the ground to the ' +
+  'top, alone, centred, plain white background, no ground, no shadow, nothing else in the ' +
+  'frame. The look of a late-1990s first-person RPG: simple solid readable shapes, painted ' +
+  'textures, flat even lighting, muted natural colours.';
+
+/** The two Meshy steps of a prop: the concept picture, then image-to-3D from it. */
 export function propItems(spec: PropSpec): BatchItem[] {
+  const input = `${spec.id}.png`;
   return [
     {
       assetId: spec.id,
-      step: 'text-to-3d-preview',
+      step: 'text-to-image',
+      input,
       params: {
-        mode: 'preview',
-        prompt: spec.prompt,
-        model_type: 'smart-topology',
-        ai_model: 'meshy-t2.5',
-        target_polycount: spec.polycount,
-        pose_mode: 'auto',
-        target_formats: ['glb'],
+        prompt: `${spec.prompt} ${PROP_CONCEPT_STYLE}`,
+        ai_model: 'nano-banana-2-lite',
+        aspect_ratio: '1:1',
+        remove_background: true,
       },
-      estimatedCredits: CREDITS.textTo3dPreview.credits,
-      estimateBasis: CREDITS.textTo3dPreview.basis,
+      estimatedCredits: CREDITS.textToImage['nano-banana-2-lite'],
+      estimateBasis: 'documented (DESIGN.md 10.0); the cheapest image model',
     },
     {
       assetId: spec.id,
-      step: 'text-to-3d-refine',
+      step: 'image-to-3d',
+      input,
       params: {
-        mode: 'refine',
-        enable_pbr: false,
+        model_type: 'smart-topology',
+        ai_model: 'meshy-t2.5',
+        target_polycount: spec.polycount,
+        should_texture: true,
         texture_resolution: '2k',
+        enable_pbr: false,
+        origin_at: 'bottom',
         target_formats: ['glb'],
       },
-      estimatedCredits: CREDITS.textTo3dRefine.credits,
-      estimateBasis: CREDITS.textTo3dRefine.basis,
+      estimatedCredits: CREDITS.imageTo3d.credits,
+      estimateBasis: CREDITS.imageTo3d.basis,
     },
   ];
 }
@@ -333,6 +360,7 @@ export function makeBatch(
   items: BatchItem[],
   created = new Date(),
 ): Batch {
+  assertImageFirst({ number, items });
   return {
     number,
     name,
