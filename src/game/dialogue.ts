@@ -4,42 +4,42 @@
  * time, or a quest, which the topic itself carries through its stages: offered on the first
  * asking, open while the party works at it, ready when the party comes back with it done,
  * and over once the reward is paid. The prose is the game's voice; keep it short, spoken
- * and particular to this valley, never generic.
+ * and particular to Gullhaven, never generic.
  */
 import type { QuestDef } from './quests';
 
 export const QUESTS: Record<string, QuestDef> = {
-  'henriks-sheep': {
-    id: 'henriks-sheep',
-    title: "Henrik's Sheep",
+  'tobins-sheep': {
+    id: 'tobins-sheep',
+    title: "Tobin's Sheep",
     text:
-      "Bandits on the valley road took two of Old Henrik's ewes. He pays a hundred and fifty " +
+      "Bandits on the coast road took two of Old Tobin's ewes. He pays a hundred and fifty " +
       'gold to see three of them driven off.',
     objectives: [
       {
         kind: 'kill',
         monster: 'bandit',
         count: 3,
-        text: 'Drive three bandits off the valley road',
+        text: 'Drive three bandits off the coast road',
       },
-      { kind: 'talk', npc: 'villager-man', text: 'Tell Old Henrik at his farm gate' },
+      { kind: 'talk', npc: 'villager-man', text: 'Tell Old Tobin at his farm gate' },
     ],
     reward: { gold: 150, xp: 300 },
   },
-  'goblins-at-the-edge': {
-    id: 'goblins-at-the-edge',
-    title: 'Goblins at the Forest Edge',
+  'goblins-in-the-hills': {
+    id: 'goblins-in-the-hills',
+    title: 'Goblins in the Hills',
     text:
-      'Greta has seen goblin scouts where the road past the smithy meets the trees. Two of ' +
-      'them driven off is worth eighty gold to her.',
+      'Maren has seen goblin scouts on the slope below the hills where the north road ends. ' +
+      'Two of them driven off is worth eighty gold to her.',
     objectives: [
       {
         kind: 'kill',
         monster: 'goblin-scout',
         count: 2,
-        text: 'Hunt two goblin scouts past the smithy',
+        text: 'Hunt two goblin scouts below the hills',
       },
-      { kind: 'talk', npc: 'villager-woman', text: 'Tell Greta by the well' },
+      { kind: 'talk', npc: 'villager-woman', text: 'Tell Maren by the well' },
     ],
     reward: { gold: 80, xp: 150 },
   },
@@ -78,51 +78,53 @@ export const DIALOGUES: Record<string, DialogueDef> = {
     npc: 'villager-man',
     role: 'Farmer',
     greeting:
-      'Travellers, is it? Few come down the road these days, and fewer stop at a farm gate. ' +
-      'Speak up; I am not deaf yet.',
+      'Travellers, is it? Off the boat, by the salt on you. Few stop at a farm gate. Speak up; ' +
+      'I am not deaf yet.',
     topics: [
       {
         kind: 'quest',
         id: 'sheep',
-        quest: 'henriks-sheep',
+        quest: 'tobins-sheep',
         label: 'The sheep',
         offer:
-          'Bandits took two of my ewes off the road last week, bold as magistrates, and the ' +
-          'reeve does nothing. Drive them off the valley road, three of them at the least, and ' +
-          'I will pay a hundred and fifty gold. That is a season of wool, so do not think me cheap.',
+          'Bandits took two of my ewes off the coast road last week, bold as magistrates, and ' +
+          'the reeve does nothing. Drive them off the road, three of them at the least, and I ' +
+          'will pay a hundred and fifty gold. That is a season of wool, so do not think me cheap.',
         active:
-          'Three of them, mind. I will know by the quiet on the road whether you have earned it.',
+          'Three of them, mind. West along the coast road, past the woods. I will know by the ' +
+          'quiet whether you have earned it.',
         ready:
           'Three of them, you say? Then the road is mine again and the ewes can graze down to ' +
-          'the ford. Here, a hundred and fifty gold, as I said; and you eat at my table any night ' +
-          'you pass this gate.',
-        done: 'The flock is back at the ford and I sleep with both eyes shut. You are welcome here.',
-        greetReady: 'Back already? I heard the shouting from the road. Well? Tell me.',
+          'the shore. Here, a hundred and fifty gold, as I said; and you eat at my table any ' +
+          'night you pass this gate.',
+        done: 'The flock is back on the shore grass and I sleep with both eyes shut. You are welcome here.',
+        greetReady: 'Back already? I heard the shouting from the coast road. Well? Tell me.',
       },
       {
         kind: 'say',
-        id: 'pass',
-        label: 'The pass',
+        id: 'hills',
+        label: 'The hills',
         text:
-          'The pass is open from the thaw to the first snows. Beyond it the land dries to sand ' +
-          'in a day of walking. Nomads ride there; they trade at the oasis and rob everywhere else.',
+          'The north road ends below the hills, and the hills belong to the goblins now. There ' +
+          'is a cave on the slope that goes a long way down. My grandfather said there were halls ' +
+          'under there, older than the town.',
       },
       {
         kind: 'say',
         id: 'barn',
         label: 'The barn',
         text:
-          'That barn has stood forty winters. My father raised it with oak from the forest, ' +
-          'before the goblins came back to it. Forty-one winters, if they keep away.',
+          'That barn has stood forty winters. My father raised it with oak from the north woods, ' +
+          'before the goblins came back to the hills. Forty-one winters, if they keep away.',
       },
       {
         kind: 'rumours',
         id: 'rumours',
         label: 'Rumours',
         lines: [
-          'They say the old halls under the ravine were a temple once, before the hill folk ' +
-            'were driven out of them.',
-          'Greta at the well talks more than she draws water, but she hears everything.',
+          'Something walks on the headland at night. Bones, they say, in old armour. Nobody goes ' +
+            'up the track to the ruin any more.',
+          'Maren at the well talks more than she draws water, but she hears everything.',
           'The smith buys any sword you bring him and asks no questions. Mind, he pays for the ' +
             'steel, not the story.',
         ],
@@ -133,55 +135,56 @@ export const DIALOGUES: Record<string, DialogueDef> = {
     npc: 'villager-woman',
     role: 'Goodwife',
     greeting:
-      'Good day to you. The well is sweet; drink your fill. The water comes down from the ' +
-      'snows and has never once failed us.',
+      'Good day to you. The well is sweet, for all the sea is at our door; drink your fill. ' +
+      'It has never once failed us.',
     topics: [
       {
         kind: 'quest',
         id: 'goblins',
-        quest: 'goblins-at-the-edge',
+        quest: 'goblins-in-the-hills',
         label: 'The goblins',
         offer:
-          'Goblin scouts, past the smithy where the road meets the trees. Little ones with long ' +
-          'ears and longer knives. They watch the village by night, and where scouts go a band ' +
-          'follows. Two of them I have seen. Drive them off and I will give you eighty gold of my ' +
-          'own, and my thanks, which are worth more.',
+          'Goblin scouts, on the slope below the hills where the north road ends. Little ones ' +
+          'with long ears and longer knives. They watch the town by night, and where scouts go a ' +
+          'band follows. Two of them I have seen. Drive them off and I will give you eighty gold ' +
+          'of my own, and my thanks, which are worth more.',
         active:
-          'Two of them, past the smithy. Watch the forest edge at dusk; that is when they come close.',
+          'Two of them, up the north road past the shrine. Watch the slope at dusk; that is when ' +
+          'they come close.',
         ready:
-          'Two scouts driven off and the forest quiet since dawn. Here, eighty gold, every coin ' +
-          'of it earned. You will have every mother in the village praying for you.',
-        done: 'The children play at the forest edge again. I shall not forget it.',
-        greetReady: 'You came back! And the forest edge quiet since dawn. Tell me it was you.',
+          'Two scouts driven off and the hills quiet since dawn. Here, eighty gold, every coin of ' +
+          'it earned. You will have every mother in Gullhaven praying for you.',
+        done: 'The children play on the north road again. I shall not forget it.',
+        greetReady: 'You came back! And the hills quiet since dawn. Tell me it was you.',
       },
       {
         kind: 'say',
-        id: 'village',
-        label: 'The village',
+        id: 'town',
+        label: 'Gullhaven',
         text:
-          'The inn and the trader face each other across the square. The temple stands on its ' +
-          'knoll up the lane behind the cottages; the smithy is at the far end of the street ' +
-          "toward the forest, and Old Henrik's farm the other way, past the cottages.",
+          'The inn faces the trader across the square. The temple stands on its knoll at the ' +
+          'west end of the street; the smithy is at the east end, past the stables. Old Tobin ' +
+          'farms up the north road, and the coast road runs west to the city.',
       },
       {
         kind: 'say',
         id: 'temple',
         label: 'The temple',
         text:
-          'The temple keeps a candle lit for those who go up to the pass. The priest heals for a ' +
-          'price and prays for nothing; go in with gold and come out with both.',
+          'The temple keeps a candle lit for those who go to sea. The priest heals for a price ' +
+          'and prays for nothing; go in with gold and come out with both.',
       },
       {
         kind: 'rumours',
         id: 'rumours',
         label: 'Rumours',
         lines: [
-          'Old Henrik lost two ewes to the bandits and talks of nothing else. He pays, though; ' +
+          'Old Tobin lost two ewes to the bandits and talks of nothing else. He pays, though; ' +
             'the farm does well.',
-          'There is a cave at the head of the ravine, above the falls. Nobody from here goes in, ' +
-            'and nothing good has come out.',
-          'The road over the pass goes down into the desert. The nomads there trade at the ' +
-            'oasis and rob everywhere else.',
+          'There is a cave in the goblin hills. Nobody from here goes in, and nothing good has ' +
+            'come out.',
+          'The dead walk on the headland. My husband saw their lights from the boat, the night ' +
+            'before he stopped going out.',
         ],
       },
     ],

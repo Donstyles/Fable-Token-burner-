@@ -30,14 +30,14 @@ test.describe('talk', () => {
   test('a villager talks, gives a quest and the world waits', async ({ page }, info) => {
     // Software GL in CI renders at a frame a second; the villagers arrive with the monsters.
     test.setTimeout(420_000);
-    await page.goto('dev/?dev&lite&level=valley&seed=5&hour=10');
+    await page.goto('dev/?dev&lite&level=gullhaven&seed=5&hour=10');
     await page.waitForFunction(() => (window as unknown as W).ftb?.dev?.ready === true, null, {
       timeout: 120_000,
     });
     await page.waitForFunction(() => (window as unknown as W).ftb!.dev!.npcs.length >= 2, null, {
       timeout: 300_000,
     });
-    // Stand before Old Henrik, facing him.
+    // Stand before Old Tobin, facing him.
     await page.evaluate(() => {
       const d = (window as unknown as W).ftb!.dev!;
       const npc = d.npcs.find((n) => n.def.id === 'villager-man')!;
@@ -79,7 +79,7 @@ test.describe('talk', () => {
       'villager-man',
     );
     await expect(page.locator('.dlg')).toBeVisible();
-    await expect(page.locator('.dlg-name')).toHaveText('Old Henrik');
+    await expect(page.locator('.dlg-name')).toHaveText('Old Tobin');
     await expect(page.locator('.dlg-topic')).toHaveCount(4);
     expect(await page.evaluate(() => (window as unknown as W).ftb!.dev!.dialogue.text())).toMatch(
       /farm gate/,
@@ -103,7 +103,7 @@ test.describe('talk', () => {
     const quests = await page.evaluate(
       () => (window as unknown as W).ftb!.dev!.state.quests.entries,
     );
-    expect(quests).toEqual([{ id: 'henriks-sheep', state: 'active', step: 0, progress: 0 }]);
+    expect(quests).toEqual([{ id: 'tobins-sheep', state: 'active', step: 0, progress: 0 }]);
 
     await page.locator('.dlg-foot .dlg-bye').click();
     await expect(page.locator('.dlg')).toHaveCount(0);

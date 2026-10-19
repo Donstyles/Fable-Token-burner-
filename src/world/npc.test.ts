@@ -14,7 +14,7 @@ function villager(): { character: Character; played: string[] } {
   return { character, played };
 }
 
-const def = { id: 'villager-woman', name: 'Greta', character: 'villager-woman', lines: ['Hello'] };
+const def = { id: 'villager-woman', name: 'Maren', character: 'villager-woman', lines: ['Hello'] };
 
 describe('townsfolk', () => {
   it('go back to idle a few seconds after a line', () => {

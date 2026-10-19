@@ -114,21 +114,21 @@ export interface NpcDef {
 export const NPCS: Record<string, NpcDef> = {
   'villager-woman': {
     id: 'villager-woman',
-    name: 'Greta',
+    name: 'Maren',
     character: 'villager-woman',
     lines: [
       'Good day to you, travellers. The well is sweet; drink your fill.',
-      'Mind the road past the smithy. Goblins have been seen at the forest edge.',
-      'The temple keeps a candle lit for those who go up to the pass.',
+      'Mind the north road. Goblins have been seen below the hills.',
+      'The temple keeps a candle lit for those who go to sea.',
     ],
   },
   'villager-man': {
     id: 'villager-man',
-    name: 'Old Henrik',
+    name: 'Old Tobin',
     character: 'villager-man',
     lines: [
-      'Bandits took two of my sheep last week. If you are the fighting kind, I would pay.',
-      'The pass is open, but the desert beyond it is no place for the unprepared.',
+      'Bandits took two of my sheep on the coast road. If you are the fighting kind, I would pay.',
+      'The coast road runs west to the city, but the bandits hold it now.',
       'My barn has stood through forty winters. Forty-one, if the goblins keep away.',
     ],
   },

@@ -117,7 +117,7 @@ export function createDialogue(
     window_.dataset['paint'] = 'speckle';
     frame.appendChild(window_);
     const plate = el('div', 'dlg-plate');
-    // "Greta the Goodwife", as MM6 named its people, in one line under the window.
+    // "Maren the Goodwife", as MM6 named its people, in one line under the window.
     plate.append(el('h2', 'dlg-name', view.name), el('span', 'dlg-role', `the ${view.role}`));
     const side = el('div', 'dlg-side');
     const text = el('div', 'dlg-text');
