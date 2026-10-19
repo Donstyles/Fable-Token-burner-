@@ -1,0 +1,610 @@
+{
+  "number": 12,
+  "name": "trees-image-first",
+  "created": "2026-10-19",
+  "approved": false,
+  "items": [
+    {
+      "assetId": "tree-spruce-01",
+      "step": "text-to-image",
+      "input": "tree-spruce-01.png",
+      "params": {
+        "prompt": "A tall Norway spruce tree, narrow conical shape, dense dark green layered foliage from near the ground to a pointed top, straight brown trunk. The foliage in a few large solid clumps that hide the branches, no gaps, no single leaves. Seen from the side at eye height, the whole of it in the frame from the ground to the top, alone, centred, plain white background, no ground, no shadow, nothing else in the frame. The look of a late-1990s first-person RPG: simple solid readable shapes, painted textures, flat even lighting, muted natural colours.",
+        "ai_model": "nano-banana-2-lite",
+        "aspect_ratio": "1:1",
+        "remove_background": true
+      },
+      "estimatedCredits": 3,
+      "estimateBasis": "documented (DESIGN.md 10.0); the cheapest image model"
+    },
+    {
+      "assetId": "tree-spruce-01",
+      "step": "image-to-3d",
+      "input": "tree-spruce-01.png",
+      "params": {
+        "model_type": "smart-topology",
+        "ai_model": "meshy-t2.5",
+        "target_polycount": 700,
+        "should_texture": true,
+        "texture_resolution": "2k",
+        "enable_pbr": false,
+        "origin_at": "bottom",
+        "target_formats": ["glb"]
+      },
+      "estimatedCredits": 15,
+      "estimateBasis": "reported by Meshy for batch 001 (2026-10-15)"
+    },
+    {
+      "assetId": "tree-spruce-02",
+      "step": "text-to-image",
+      "input": "tree-spruce-02.png",
+      "params": {
+        "prompt": "A mature spruce, very tall and slim, dark blue-green tiers of branches drooping slightly, bare lower trunk. The foliage in a few large solid clumps that hide the branches, no gaps, no single leaves. Seen from the side at eye height, the whole of it in the frame from the ground to the top, alone, centred, plain white background, no ground, no shadow, nothing else in the frame. The look of a late-1990s first-person RPG: simple solid readable shapes, painted textures, flat even lighting, muted natural colours.",
+        "ai_model": "nano-banana-2-lite",
+        "aspect_ratio": "1:1",
+        "remove_background": true
+      },
+      "estimatedCredits": 3,
+      "estimateBasis": "documented (DESIGN.md 10.0); the cheapest image model"
+    },
+    {
+      "assetId": "tree-spruce-02",
+      "step": "image-to-3d",
+      "input": "tree-spruce-02.png",
+      "params": {
+        "model_type": "smart-topology",
+        "ai_model": "meshy-t2.5",
+        "target_polycount": 700,
+        "should_texture": true,
+        "texture_resolution": "2k",
+        "enable_pbr": false,
+        "origin_at": "bottom",
+        "target_formats": ["glb"]
+      },
+      "estimatedCredits": 15,
+      "estimateBasis": "reported by Meshy for batch 001 (2026-10-15)"
+    },
+    {
+      "assetId": "tree-spruce-03",
+      "step": "text-to-image",
+      "input": "tree-spruce-03.png",
+      "params": {
+        "prompt": "A weather-beaten spruce, tall and gaunt with dark green tiers and a bent top, grey trunk. The foliage in a few large solid clumps that hide the branches, no gaps, no single leaves. Seen from the side at eye height, the whole of it in the frame from the ground to the top, alone, centred, plain white background, no ground, no shadow, nothing else in the frame. The look of a late-1990s first-person RPG: simple solid readable shapes, painted textures, flat even lighting, muted natural colours.",
+        "ai_model": "nano-banana-2-lite",
+        "aspect_ratio": "1:1",
+        "remove_background": true
+      },
+      "estimatedCredits": 3,
+      "estimateBasis": "documented (DESIGN.md 10.0); the cheapest image model"
+    },
+    {
+      "assetId": "tree-spruce-03",
+      "step": "image-to-3d",
+      "input": "tree-spruce-03.png",
+      "params": {
+        "model_type": "smart-topology",
+        "ai_model": "meshy-t2.5",
+        "target_polycount": 600,
+        "should_texture": true,
+        "texture_resolution": "2k",
+        "enable_pbr": false,
+        "origin_at": "bottom",
+        "target_formats": ["glb"]
+      },
+      "estimatedCredits": 15,
+      "estimateBasis": "reported by Meshy for batch 001 (2026-10-15)"
+    },
+    {
+      "assetId": "tree-fir-01",
+      "step": "text-to-image",
+      "input": "tree-fir-01.png",
+      "params": {
+        "prompt": "A silver fir tree, broad conical crown of dense deep green foliage, flat top, thick grey trunk. The foliage in a few large solid clumps that hide the branches, no gaps, no single leaves. Seen from the side at eye height, the whole of it in the frame from the ground to the top, alone, centred, plain white background, no ground, no shadow, nothing else in the frame. The look of a late-1990s first-person RPG: simple solid readable shapes, painted textures, flat even lighting, muted natural colours.",
+        "ai_model": "nano-banana-2-lite",
+        "aspect_ratio": "1:1",
+        "remove_background": true
+      },
+      "estimatedCredits": 3,
+      "estimateBasis": "documented (DESIGN.md 10.0); the cheapest image model"
+    },
+    {
+      "assetId": "tree-fir-01",
+      "step": "image-to-3d",
+      "input": "tree-fir-01.png",
+      "params": {
+        "model_type": "smart-topology",
+        "ai_model": "meshy-t2.5",
+        "target_polycount": 700,
+        "should_texture": true,
+        "texture_resolution": "2k",
+        "enable_pbr": false,
+        "origin_at": "bottom",
+        "target_formats": ["glb"]
+      },
+      "estimatedCredits": 15,
+      "estimateBasis": "reported by Meshy for batch 001 (2026-10-15)"
+    },
+    {
+      "assetId": "tree-pine-01",
+      "step": "text-to-image",
+      "input": "tree-pine-01.png",
+      "params": {
+        "prompt": "A Scots pine tree, tall bare orange-brown trunk with an irregular flat-topped crown of dark green needles high up. The foliage in a few large solid clumps that hide the branches, no gaps, no single leaves. Seen from the side at eye height, the whole of it in the frame from the ground to the top, alone, centred, plain white background, no ground, no shadow, nothing else in the frame. The look of a late-1990s first-person RPG: simple solid readable shapes, painted textures, flat even lighting, muted natural colours.",
+        "ai_model": "nano-banana-2-lite",
+        "aspect_ratio": "1:1",
+        "remove_background": true
+      },
+      "estimatedCredits": 3,
+      "estimateBasis": "documented (DESIGN.md 10.0); the cheapest image model"
+    },
+    {
+      "assetId": "tree-pine-01",
+      "step": "image-to-3d",
+      "input": "tree-pine-01.png",
+      "params": {
+        "model_type": "smart-topology",
+        "ai_model": "meshy-t2.5",
+        "target_polycount": 600,
+        "should_texture": true,
+        "texture_resolution": "2k",
+        "enable_pbr": false,
+        "origin_at": "bottom",
+        "target_formats": ["glb"]
+      },
+      "estimatedCredits": 15,
+      "estimateBasis": "reported by Meshy for batch 001 (2026-10-15)"
+    },
+    {
+      "assetId": "tree-pine-02",
+      "step": "text-to-image",
+      "input": "tree-pine-02.png",
+      "params": {
+        "prompt": "A young pine tree, compact conical crown of dense green needles, short trunk. The foliage in a few large solid clumps that hide the branches, no gaps, no single leaves. Seen from the side at eye height, the whole of it in the frame from the ground to the top, alone, centred, plain white background, no ground, no shadow, nothing else in the frame. The look of a late-1990s first-person RPG: simple solid readable shapes, painted textures, flat even lighting, muted natural colours.",
+        "ai_model": "nano-banana-2-lite",
+        "aspect_ratio": "1:1",
+        "remove_background": true
+      },
+      "estimatedCredits": 3,
+      "estimateBasis": "documented (DESIGN.md 10.0); the cheapest image model"
+    },
+    {
+      "assetId": "tree-pine-02",
+      "step": "image-to-3d",
+      "input": "tree-pine-02.png",
+      "params": {
+        "model_type": "smart-topology",
+        "ai_model": "meshy-t2.5",
+        "target_polycount": 500,
+        "should_texture": true,
+        "texture_resolution": "2k",
+        "enable_pbr": false,
+        "origin_at": "bottom",
+        "target_formats": ["glb"]
+      },
+      "estimatedCredits": 15,
+      "estimateBasis": "reported by Meshy for batch 001 (2026-10-15)"
+    },
+    {
+      "assetId": "tree-larch-01",
+      "step": "text-to-image",
+      "input": "tree-larch-01.png",
+      "params": {
+        "prompt": "A European larch tree, slender conical shape, soft light green foliage in tiers, thin trunk. The foliage in a few large solid clumps that hide the branches, no gaps, no single leaves. Seen from the side at eye height, the whole of it in the frame from the ground to the top, alone, centred, plain white background, no ground, no shadow, nothing else in the frame. The look of a late-1990s first-person RPG: simple solid readable shapes, painted textures, flat even lighting, muted natural colours.",
+        "ai_model": "nano-banana-2-lite",
+        "aspect_ratio": "1:1",
+        "remove_background": true
+      },
+      "estimatedCredits": 3,
+      "estimateBasis": "documented (DESIGN.md 10.0); the cheapest image model"
+    },
+    {
+      "assetId": "tree-larch-01",
+      "step": "image-to-3d",
+      "input": "tree-larch-01.png",
+      "params": {
+        "model_type": "smart-topology",
+        "ai_model": "meshy-t2.5",
+        "target_polycount": 600,
+        "should_texture": true,
+        "texture_resolution": "2k",
+        "enable_pbr": false,
+        "origin_at": "bottom",
+        "target_formats": ["glb"]
+      },
+      "estimatedCredits": 15,
+      "estimateBasis": "reported by Meshy for batch 001 (2026-10-15)"
+    },
+    {
+      "assetId": "tree-oak-01",
+      "step": "text-to-image",
+      "input": "tree-oak-01.png",
+      "params": {
+        "prompt": "A great old oak tree, massive gnarled trunk, wide spreading rounded crown of dense dark green leaves. The foliage in a few large solid clumps that hide the branches, no gaps, no single leaves. Seen from the side at eye height, the whole of it in the frame from the ground to the top, alone, centred, plain white background, no ground, no shadow, nothing else in the frame. The look of a late-1990s first-person RPG: simple solid readable shapes, painted textures, flat even lighting, muted natural colours.",
+        "ai_model": "nano-banana-2-lite",
+        "aspect_ratio": "1:1",
+        "remove_background": true
+      },
+      "estimatedCredits": 3,
+      "estimateBasis": "documented (DESIGN.md 10.0); the cheapest image model"
+    },
+    {
+      "assetId": "tree-oak-01",
+      "step": "image-to-3d",
+      "input": "tree-oak-01.png",
+      "params": {
+        "model_type": "smart-topology",
+        "ai_model": "meshy-t2.5",
+        "target_polycount": 800,
+        "should_texture": true,
+        "texture_resolution": "2k",
+        "enable_pbr": false,
+        "origin_at": "bottom",
+        "target_formats": ["glb"]
+      },
+      "estimatedCredits": 15,
+      "estimateBasis": "reported by Meshy for batch 001 (2026-10-15)"
+    },
+    {
+      "assetId": "tree-oak-02",
+      "step": "text-to-image",
+      "input": "tree-oak-02.png",
+      "params": {
+        "prompt": "A young oak tree, straight trunk, rounded dense green crown. The foliage in a few large solid clumps that hide the branches, no gaps, no single leaves. Seen from the side at eye height, the whole of it in the frame from the ground to the top, alone, centred, plain white background, no ground, no shadow, nothing else in the frame. The look of a late-1990s first-person RPG: simple solid readable shapes, painted textures, flat even lighting, muted natural colours.",
+        "ai_model": "nano-banana-2-lite",
+        "aspect_ratio": "1:1",
+        "remove_background": true
+      },
+      "estimatedCredits": 3,
+      "estimateBasis": "documented (DESIGN.md 10.0); the cheapest image model"
+    },
+    {
+      "assetId": "tree-oak-02",
+      "step": "image-to-3d",
+      "input": "tree-oak-02.png",
+      "params": {
+        "model_type": "smart-topology",
+        "ai_model": "meshy-t2.5",
+        "target_polycount": 600,
+        "should_texture": true,
+        "texture_resolution": "2k",
+        "enable_pbr": false,
+        "origin_at": "bottom",
+        "target_formats": ["glb"]
+      },
+      "estimatedCredits": 15,
+      "estimateBasis": "reported by Meshy for batch 001 (2026-10-15)"
+    },
+    {
+      "assetId": "tree-beech-01",
+      "step": "text-to-image",
+      "input": "tree-beech-01.png",
+      "params": {
+        "prompt": "A European beech tree, smooth grey trunk, tall oval crown of dense bright green leaves. The foliage in a few large solid clumps that hide the branches, no gaps, no single leaves. Seen from the side at eye height, the whole of it in the frame from the ground to the top, alone, centred, plain white background, no ground, no shadow, nothing else in the frame. The look of a late-1990s first-person RPG: simple solid readable shapes, painted textures, flat even lighting, muted natural colours.",
+        "ai_model": "nano-banana-2-lite",
+        "aspect_ratio": "1:1",
+        "remove_background": true
+      },
+      "estimatedCredits": 3,
+      "estimateBasis": "documented (DESIGN.md 10.0); the cheapest image model"
+    },
+    {
+      "assetId": "tree-beech-01",
+      "step": "image-to-3d",
+      "input": "tree-beech-01.png",
+      "params": {
+        "model_type": "smart-topology",
+        "ai_model": "meshy-t2.5",
+        "target_polycount": 700,
+        "should_texture": true,
+        "texture_resolution": "2k",
+        "enable_pbr": false,
+        "origin_at": "bottom",
+        "target_formats": ["glb"]
+      },
+      "estimatedCredits": 15,
+      "estimateBasis": "reported by Meshy for batch 001 (2026-10-15)"
+    },
+    {
+      "assetId": "tree-birch-01",
+      "step": "text-to-image",
+      "input": "tree-birch-01.png",
+      "params": {
+        "prompt": "A silver birch tree, slender white trunk with dark marks, an oval crown of pale green leaves. The foliage in a few large solid clumps that hide the branches, no gaps, no single leaves. Seen from the side at eye height, the whole of it in the frame from the ground to the top, alone, centred, plain white background, no ground, no shadow, nothing else in the frame. The look of a late-1990s first-person RPG: simple solid readable shapes, painted textures, flat even lighting, muted natural colours.",
+        "ai_model": "nano-banana-2-lite",
+        "aspect_ratio": "1:1",
+        "remove_background": true
+      },
+      "estimatedCredits": 3,
+      "estimateBasis": "documented (DESIGN.md 10.0); the cheapest image model"
+    },
+    {
+      "assetId": "tree-birch-01",
+      "step": "image-to-3d",
+      "input": "tree-birch-01.png",
+      "params": {
+        "model_type": "smart-topology",
+        "ai_model": "meshy-t2.5",
+        "target_polycount": 600,
+        "should_texture": true,
+        "texture_resolution": "2k",
+        "enable_pbr": false,
+        "origin_at": "bottom",
+        "target_formats": ["glb"]
+      },
+      "estimatedCredits": 15,
+      "estimateBasis": "reported by Meshy for batch 001 (2026-10-15)"
+    },
+    {
+      "assetId": "tree-maple-01",
+      "step": "text-to-image",
+      "input": "tree-maple-01.png",
+      "params": {
+        "prompt": "A maple tree, broad rounded crown of dense green leaves, sturdy brown trunk. The foliage in a few large solid clumps that hide the branches, no gaps, no single leaves. Seen from the side at eye height, the whole of it in the frame from the ground to the top, alone, centred, plain white background, no ground, no shadow, nothing else in the frame. The look of a late-1990s first-person RPG: simple solid readable shapes, painted textures, flat even lighting, muted natural colours.",
+        "ai_model": "nano-banana-2-lite",
+        "aspect_ratio": "1:1",
+        "remove_background": true
+      },
+      "estimatedCredits": 3,
+      "estimateBasis": "documented (DESIGN.md 10.0); the cheapest image model"
+    },
+    {
+      "assetId": "tree-maple-01",
+      "step": "image-to-3d",
+      "input": "tree-maple-01.png",
+      "params": {
+        "model_type": "smart-topology",
+        "ai_model": "meshy-t2.5",
+        "target_polycount": 700,
+        "should_texture": true,
+        "texture_resolution": "2k",
+        "enable_pbr": false,
+        "origin_at": "bottom",
+        "target_formats": ["glb"]
+      },
+      "estimatedCredits": 15,
+      "estimateBasis": "reported by Meshy for batch 001 (2026-10-15)"
+    },
+    {
+      "assetId": "tree-linden-01",
+      "step": "text-to-image",
+      "input": "tree-linden-01.png",
+      "params": {
+        "prompt": "A linden tree, tall dense heart-shaped crown of dark green leaves, straight trunk. The foliage in a few large solid clumps that hide the branches, no gaps, no single leaves. Seen from the side at eye height, the whole of it in the frame from the ground to the top, alone, centred, plain white background, no ground, no shadow, nothing else in the frame. The look of a late-1990s first-person RPG: simple solid readable shapes, painted textures, flat even lighting, muted natural colours.",
+        "ai_model": "nano-banana-2-lite",
+        "aspect_ratio": "1:1",
+        "remove_background": true
+      },
+      "estimatedCredits": 3,
+      "estimateBasis": "documented (DESIGN.md 10.0); the cheapest image model"
+    },
+    {
+      "assetId": "tree-linden-01",
+      "step": "image-to-3d",
+      "input": "tree-linden-01.png",
+      "params": {
+        "model_type": "smart-topology",
+        "ai_model": "meshy-t2.5",
+        "target_polycount": 700,
+        "should_texture": true,
+        "texture_resolution": "2k",
+        "enable_pbr": false,
+        "origin_at": "bottom",
+        "target_formats": ["glb"]
+      },
+      "estimatedCredits": 15,
+      "estimateBasis": "reported by Meshy for batch 001 (2026-10-15)"
+    },
+    {
+      "assetId": "tree-willow-01",
+      "step": "text-to-image",
+      "input": "tree-willow-01.png",
+      "params": {
+        "prompt": "A weeping willow tree, thick trunk, a drooping dome of pale green foliage reaching low. The foliage in a few large solid clumps that hide the branches, no gaps, no single leaves. Seen from the side at eye height, the whole of it in the frame from the ground to the top, alone, centred, plain white background, no ground, no shadow, nothing else in the frame. The look of a late-1990s first-person RPG: simple solid readable shapes, painted textures, flat even lighting, muted natural colours.",
+        "ai_model": "nano-banana-2-lite",
+        "aspect_ratio": "1:1",
+        "remove_background": true
+      },
+      "estimatedCredits": 3,
+      "estimateBasis": "documented (DESIGN.md 10.0); the cheapest image model"
+    },
+    {
+      "assetId": "tree-willow-01",
+      "step": "image-to-3d",
+      "input": "tree-willow-01.png",
+      "params": {
+        "model_type": "smart-topology",
+        "ai_model": "meshy-t2.5",
+        "target_polycount": 700,
+        "should_texture": true,
+        "texture_resolution": "2k",
+        "enable_pbr": false,
+        "origin_at": "bottom",
+        "target_formats": ["glb"]
+      },
+      "estimatedCredits": 15,
+      "estimateBasis": "reported by Meshy for batch 001 (2026-10-15)"
+    },
+    {
+      "assetId": "tree-dead-01",
+      "step": "text-to-image",
+      "input": "tree-dead-01.png",
+      "params": {
+        "prompt": "A dead leafless tree, twisted grey trunk and a few thick bare crooked branches, each branch a clear solid shape. Seen from the side at eye height, the whole of it in the frame from the ground to the top, alone, centred, plain white background, no ground, no shadow, nothing else in the frame. The look of a late-1990s first-person RPG: simple solid readable shapes, painted textures, flat even lighting, muted natural colours.",
+        "ai_model": "nano-banana-2-lite",
+        "aspect_ratio": "1:1",
+        "remove_background": true
+      },
+      "estimatedCredits": 3,
+      "estimateBasis": "documented (DESIGN.md 10.0); the cheapest image model"
+    },
+    {
+      "assetId": "tree-dead-01",
+      "step": "image-to-3d",
+      "input": "tree-dead-01.png",
+      "params": {
+        "model_type": "smart-topology",
+        "ai_model": "meshy-t2.5",
+        "target_polycount": 500,
+        "should_texture": true,
+        "texture_resolution": "2k",
+        "enable_pbr": false,
+        "origin_at": "bottom",
+        "target_formats": ["glb"]
+      },
+      "estimatedCredits": 15,
+      "estimateBasis": "reported by Meshy for batch 001 (2026-10-15)"
+    },
+    {
+      "assetId": "tree-dead-02",
+      "step": "text-to-image",
+      "input": "tree-dead-02.png",
+      "params": {
+        "prompt": "A dead pine snag, tall broken grey trunk with a few short bare branch stubs, solid shapes. Seen from the side at eye height, the whole of it in the frame from the ground to the top, alone, centred, plain white background, no ground, no shadow, nothing else in the frame. The look of a late-1990s first-person RPG: simple solid readable shapes, painted textures, flat even lighting, muted natural colours.",
+        "ai_model": "nano-banana-2-lite",
+        "aspect_ratio": "1:1",
+        "remove_background": true
+      },
+      "estimatedCredits": 3,
+      "estimateBasis": "documented (DESIGN.md 10.0); the cheapest image model"
+    },
+    {
+      "assetId": "tree-dead-02",
+      "step": "image-to-3d",
+      "input": "tree-dead-02.png",
+      "params": {
+        "model_type": "smart-topology",
+        "ai_model": "meshy-t2.5",
+        "target_polycount": 400,
+        "should_texture": true,
+        "texture_resolution": "2k",
+        "enable_pbr": false,
+        "origin_at": "bottom",
+        "target_formats": ["glb"]
+      },
+      "estimatedCredits": 15,
+      "estimateBasis": "reported by Meshy for batch 001 (2026-10-15)"
+    },
+    {
+      "assetId": "tree-palm-01",
+      "step": "text-to-image",
+      "input": "tree-palm-01.png",
+      "params": {
+        "prompt": "A date palm tree, tall rough brown trunk curving slightly, a crown of long green fronds. The foliage in a few large solid clumps that hide the branches, no gaps, no single leaves. Seen from the side at eye height, the whole of it in the frame from the ground to the top, alone, centred, plain white background, no ground, no shadow, nothing else in the frame. The look of a late-1990s first-person RPG: simple solid readable shapes, painted textures, flat even lighting, muted natural colours.",
+        "ai_model": "nano-banana-2-lite",
+        "aspect_ratio": "1:1",
+        "remove_background": true
+      },
+      "estimatedCredits": 3,
+      "estimateBasis": "documented (DESIGN.md 10.0); the cheapest image model"
+    },
+    {
+      "assetId": "tree-palm-01",
+      "step": "image-to-3d",
+      "input": "tree-palm-01.png",
+      "params": {
+        "model_type": "smart-topology",
+        "ai_model": "meshy-t2.5",
+        "target_polycount": 700,
+        "should_texture": true,
+        "texture_resolution": "2k",
+        "enable_pbr": false,
+        "origin_at": "bottom",
+        "target_formats": ["glb"]
+      },
+      "estimatedCredits": 15,
+      "estimateBasis": "reported by Meshy for batch 001 (2026-10-15)"
+    },
+    {
+      "assetId": "tree-palm-02",
+      "step": "text-to-image",
+      "input": "tree-palm-02.png",
+      "params": {
+        "prompt": "A short fan palm, stout trunk with a rounded crown of stiff green fan-shaped fronds. The foliage in a few large solid clumps that hide the branches, no gaps, no single leaves. Seen from the side at eye height, the whole of it in the frame from the ground to the top, alone, centred, plain white background, no ground, no shadow, nothing else in the frame. The look of a late-1990s first-person RPG: simple solid readable shapes, painted textures, flat even lighting, muted natural colours.",
+        "ai_model": "nano-banana-2-lite",
+        "aspect_ratio": "1:1",
+        "remove_background": true
+      },
+      "estimatedCredits": 3,
+      "estimateBasis": "documented (DESIGN.md 10.0); the cheapest image model"
+    },
+    {
+      "assetId": "tree-palm-02",
+      "step": "image-to-3d",
+      "input": "tree-palm-02.png",
+      "params": {
+        "model_type": "smart-topology",
+        "ai_model": "meshy-t2.5",
+        "target_polycount": 600,
+        "should_texture": true,
+        "texture_resolution": "2k",
+        "enable_pbr": false,
+        "origin_at": "bottom",
+        "target_formats": ["glb"]
+      },
+      "estimatedCredits": 15,
+      "estimateBasis": "reported by Meshy for batch 001 (2026-10-15)"
+    },
+    {
+      "assetId": "bush-01",
+      "step": "text-to-image",
+      "input": "bush-01.png",
+      "params": {
+        "prompt": "A dense round shrub of dark green leaves, waist high, growing from the ground. The foliage in a few large solid clumps that hide the branches, no gaps, no single leaves. Seen from the side at eye height, the whole of it in the frame from the ground to the top, alone, centred, plain white background, no ground, no shadow, nothing else in the frame. The look of a late-1990s first-person RPG: simple solid readable shapes, painted textures, flat even lighting, muted natural colours.",
+        "ai_model": "nano-banana-2-lite",
+        "aspect_ratio": "1:1",
+        "remove_background": true
+      },
+      "estimatedCredits": 3,
+      "estimateBasis": "documented (DESIGN.md 10.0); the cheapest image model"
+    },
+    {
+      "assetId": "bush-01",
+      "step": "image-to-3d",
+      "input": "bush-01.png",
+      "params": {
+        "model_type": "smart-topology",
+        "ai_model": "meshy-t2.5",
+        "target_polycount": 300,
+        "should_texture": true,
+        "texture_resolution": "2k",
+        "enable_pbr": false,
+        "origin_at": "bottom",
+        "target_formats": ["glb"]
+      },
+      "estimatedCredits": 15,
+      "estimateBasis": "reported by Meshy for batch 001 (2026-10-15)"
+    },
+    {
+      "assetId": "bush-02",
+      "step": "text-to-image",
+      "input": "bush-02.png",
+      "params": {
+        "prompt": "A wild hazel bush, a loose dome of green leaves over a few thin stems. The foliage in a few large solid clumps that hide the branches, no gaps, no single leaves. Seen from the side at eye height, the whole of it in the frame from the ground to the top, alone, centred, plain white background, no ground, no shadow, nothing else in the frame. The look of a late-1990s first-person RPG: simple solid readable shapes, painted textures, flat even lighting, muted natural colours.",
+        "ai_model": "nano-banana-2-lite",
+        "aspect_ratio": "1:1",
+        "remove_background": true
+      },
+      "estimatedCredits": 3,
+      "estimateBasis": "documented (DESIGN.md 10.0); the cheapest image model"
+    },
+    {
+      "assetId": "bush-02",
+      "step": "image-to-3d",
+      "input": "bush-02.png",
+      "params": {
+        "model_type": "smart-topology",
+        "ai_model": "meshy-t2.5",
+        "target_polycount": 400,
+        "should_texture": true,
+        "texture_resolution": "2k",
+        "enable_pbr": false,
+        "origin_at": "bottom",
+        "target_formats": ["glb"]
+      },
+      "estimatedCredits": 15,
+      "estimateBasis": "reported by Meshy for batch 001 (2026-10-15)"
+    }
+  ],
+  "estimatedCredits": 360,
+  "runs": []
+}

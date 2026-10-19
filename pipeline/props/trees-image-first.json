@@ -1,0 +1,102 @@
+[
+  {
+    "id": "tree-spruce-01",
+    "polycount": 700,
+    "prompt": "A tall Norway spruce tree, narrow conical shape, dense dark green layered foliage from near the ground to a pointed top, straight brown trunk. The foliage in a few large solid clumps that hide the branches, no gaps, no single leaves."
+  },
+  {
+    "id": "tree-spruce-02",
+    "polycount": 700,
+    "prompt": "A mature spruce, very tall and slim, dark blue-green tiers of branches drooping slightly, bare lower trunk. The foliage in a few large solid clumps that hide the branches, no gaps, no single leaves."
+  },
+  {
+    "id": "tree-spruce-03",
+    "polycount": 600,
+    "prompt": "A weather-beaten spruce, tall and gaunt with dark green tiers and a bent top, grey trunk. The foliage in a few large solid clumps that hide the branches, no gaps, no single leaves."
+  },
+  {
+    "id": "tree-fir-01",
+    "polycount": 700,
+    "prompt": "A silver fir tree, broad conical crown of dense deep green foliage, flat top, thick grey trunk. The foliage in a few large solid clumps that hide the branches, no gaps, no single leaves."
+  },
+  {
+    "id": "tree-pine-01",
+    "polycount": 600,
+    "prompt": "A Scots pine tree, tall bare orange-brown trunk with an irregular flat-topped crown of dark green needles high up. The foliage in a few large solid clumps that hide the branches, no gaps, no single leaves."
+  },
+  {
+    "id": "tree-pine-02",
+    "polycount": 500,
+    "prompt": "A young pine tree, compact conical crown of dense green needles, short trunk. The foliage in a few large solid clumps that hide the branches, no gaps, no single leaves."
+  },
+  {
+    "id": "tree-larch-01",
+    "polycount": 600,
+    "prompt": "A European larch tree, slender conical shape, soft light green foliage in tiers, thin trunk. The foliage in a few large solid clumps that hide the branches, no gaps, no single leaves."
+  },
+  {
+    "id": "tree-oak-01",
+    "polycount": 800,
+    "prompt": "A great old oak tree, massive gnarled trunk, wide spreading rounded crown of dense dark green leaves. The foliage in a few large solid clumps that hide the branches, no gaps, no single leaves."
+  },
+  {
+    "id": "tree-oak-02",
+    "polycount": 600,
+    "prompt": "A young oak tree, straight trunk, rounded dense green crown. The foliage in a few large solid clumps that hide the branches, no gaps, no single leaves."
+  },
+  {
+    "id": "tree-beech-01",
+    "polycount": 700,
+    "prompt": "A European beech tree, smooth grey trunk, tall oval crown of dense bright green leaves. The foliage in a few large solid clumps that hide the branches, no gaps, no single leaves."
+  },
+  {
+    "id": "tree-birch-01",
+    "polycount": 600,
+    "prompt": "A silver birch tree, slender white trunk with dark marks, an oval crown of pale green leaves. The foliage in a few large solid clumps that hide the branches, no gaps, no single leaves."
+  },
+  {
+    "id": "tree-maple-01",
+    "polycount": 700,
+    "prompt": "A maple tree, broad rounded crown of dense green leaves, sturdy brown trunk. The foliage in a few large solid clumps that hide the branches, no gaps, no single leaves."
+  },
+  {
+    "id": "tree-linden-01",
+    "polycount": 700,
+    "prompt": "A linden tree, tall dense heart-shaped crown of dark green leaves, straight trunk. The foliage in a few large solid clumps that hide the branches, no gaps, no single leaves."
+  },
+  {
+    "id": "tree-willow-01",
+    "polycount": 700,
+    "prompt": "A weeping willow tree, thick trunk, a drooping dome of pale green foliage reaching low. The foliage in a few large solid clumps that hide the branches, no gaps, no single leaves."
+  },
+  {
+    "id": "tree-dead-01",
+    "polycount": 500,
+    "prompt": "A dead leafless tree, twisted grey trunk and a few thick bare crooked branches, each branch a clear solid shape."
+  },
+  {
+    "id": "tree-dead-02",
+    "polycount": 400,
+    "prompt": "A dead pine snag, tall broken grey trunk with a few short bare branch stubs, solid shapes."
+  },
+  {
+    "id": "tree-palm-01",
+    "polycount": 700,
+    "prompt": "A date palm tree, tall rough brown trunk curving slightly, a crown of long green fronds. The foliage in a few large solid clumps that hide the branches, no gaps, no single leaves."
+  },
+  {
+    "id": "tree-palm-02",
+    "polycount": 600,
+    "prompt": "A short fan palm, stout trunk with a rounded crown of stiff green fan-shaped fronds. The foliage in a few large solid clumps that hide the branches, no gaps, no single leaves."
+  },
+  {
+    "id": "bush-01",
+    "polycount": 300,
+    "prompt": "A dense round shrub of dark green leaves, waist high, growing from the ground. The foliage in a few large solid clumps that hide the branches, no gaps, no single leaves."
+  },
+  {
+    "id": "bush-02",
+    "polycount": 400,
+    "prompt": "A wild hazel bush, a loose dome of green leaves over a few thin stems. The foliage in a few large solid clumps that hide the branches, no gaps, no single leaves."
+  }
+]
