@@ -23,7 +23,7 @@ only its image-to-3D steps (15 credits a tree) once the owner approves it.
 
 ## The pictures (one message each)
 
-Received: 1 (2026-10-19).
+Received: 1 (2026-10-19), 2 to 9 (2026-10-21).
 
 1. `tree-spruce-01`: A tall Norway spruce, narrow cone, dense dark green layered foliage from
    near the ground to a pointed top, straight brown trunk.
