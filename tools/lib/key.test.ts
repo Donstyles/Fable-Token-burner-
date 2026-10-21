@@ -54,6 +54,18 @@ describe('fuchsia key (owner, 2026-10-19: "We do fuchsia backgrounds")', () => {
     expect(spillOf(r!, g!, b!)).toBeLessThanOrEqual(0);
   });
 
+  it('recolours a pocket of ground caught inside the subject', () => {
+    const data = picture();
+    // A pixel of ground half showing through the middle of the square, far from the open
+    // ground: still part-covered, and green, not pink.
+    const i = (20 * 40 + 20) * 4;
+    for (let c = 0; c < 3; c++) data[i + c] = Math.round((LEAF[c]! + GROUND[c]!) / 2);
+    keyFuchsia(data, 40, 40);
+    const [r, g, b, a] = at(data, 20, 20);
+    expect(a).toBeLessThan(255);
+    expect([r, g, b]).toEqual([...LEAF]);
+  });
+
   it('refuses a ground that is not fuchsia', () => {
     expect(() => keyFuchsia(picture([255, 255, 255]), 40, 40)).toThrow(/not fuchsia/);
   });

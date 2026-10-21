@@ -283,7 +283,8 @@ most of them free in ChatGPT from the prompt cards in `docs/prompt-cards/`;
 `pipeline/inbox/<id>.png` (`tools/lib/key.ts`): cover from the pixel's
 spill (red and blue above green) against the ground's, the edge's colour
 bled in from the clean subject beside it, since a generated picture's chroma
-runs a few pixels past its outline and an unmixed edge stays pink. A batch
+runs a few pixels past its outline and an unmixed edge stays pink; pockets
+of ground caught between needles, which never clear, are edge too. A batch
 skips the text-to-image step of any prop whose picture is in the inbox; a
 Meshy picture is keyed the same way (its own alpha passes through).
 

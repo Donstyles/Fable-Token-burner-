@@ -4,8 +4,8 @@
  * birch's bark or a lime wall with it. A pixel's cover comes from its spill, how far its red
  * and blue both stand above its green, measured against the ground's own spill. The edge's
  * colour is not to be trusted: a generated picture's chroma bleeds a pixel or two past its
- * outline, so unmixing the ground leaves a pink or purple rim. Every pixel near the ground
- * that is part-covered or carries spill takes its colour from the clean subject beside it
+ * outline, so unmixing the ground leaves a pink or purple rim. Every part-covered pixel, and
+ * every one near the ground that carries spill, takes its colour from the clean subject beside it
  * instead (bled outward a pixel a pass, the usual alpha bleed); one with no clean pixel near
  * is unmixed from the ground and what spill is left comes off its red and blue. So no pink
  * fringe reaches Meshy's texture. A picture that already has transparency (Meshy's background
@@ -54,8 +54,8 @@ export function groundOf(data: Buffer, width: number, height: number): [number, 
 }
 
 /**
- * How far from the cleared ground (pixels) a part-covered or spilled pixel takes the subject's
- * colour: a generated picture's chroma bleeds up to five pixels inward past a dark outline.
+ * How far from any ground showing (pixels) a spilled pixel takes the subject's colour: a
+ * generated picture's chroma bleeds up to five pixels inward past a dark outline.
  */
 export const EDGE_REACH = 6;
 
@@ -85,14 +85,15 @@ export function keyFuchsia(
     spill[p] = spillOf(data[i]!, data[i + 1]!, data[i + 2]!);
     alpha[p] = Math.max(0, Math.min(1, (hi - spill[p]!) / (hi - lo)));
   }
-  // Within EDGE_REACH of the cleared ground: grow the clear mask a pixel a pass.
-  let near: Uint8Array = Uint8Array.from(alpha, (a) => (a <= 0 ? 1 : 0));
+  // Within EDGE_REACH of any ground showing, the open ground or a pocket of it caught between
+  // needles that never clears: grow that mask a pixel a pass.
+  let near: Uint8Array = Uint8Array.from(alpha, (a) => (a < 1 ? 1 : 0));
   for (let pass = 0; pass < EDGE_REACH; pass++) near = grow(near, width, height);
   // 0: clear, 1: clean subject (a colour source), 2: an edge whose colour is replaced.
   const kind = new Uint8Array(n);
   for (let p = 0; p < n; p++) {
     if (alpha[p]! <= 0) continue;
-    kind[p] = near[p] && (alpha[p]! < 1 || spill[p]! > 0) ? 2 : 1;
+    kind[p] = alpha[p]! < 1 || (near[p] && spill[p]! > 0) ? 2 : 1;
   }
   // The alpha bleed: each pass, every edge pixel beside a coloured one takes their mean.
   const filled = Uint8Array.from(kind, (k) => (k === 1 ? 1 : 0));
