@@ -30,7 +30,10 @@ import {
 } from '@babylonjs/core/Physics/v2/physicsShape';
 import { PhysicsBody } from '@babylonjs/core/Physics/v2/physicsBody';
 import { PhysicsMotionType } from '@babylonjs/core/Physics/v2/IPhysicsEnginePlugin';
+import { VertexBuffer } from '@babylonjs/core/Buffers/buffer';
+import { diag } from '../app/diag';
 import { parseGlb, type GlbNode, type GlbPrimitive } from './glb';
+import { GroundShade, shadeGridFor, type ShadeCaster, type ShadeInstance } from './ground-shade';
 import type { Portal } from './portals';
 import type { RoleTexture, RoleTextures } from './textures';
 
@@ -165,6 +168,8 @@ export interface LoadedLevel {
   spawns: { kind: string; position: Vector3; yawDeg: number }[];
   /** The level's static lights in Babylon space; baked into the vertices, not registered. */
   lights: LevelLight[];
+  /** Outdoors: the shade painted under the trees, houses and props (DESIGN.md 17.4). */
+  groundShade: GroundShade | null;
   /** 1 shows the baked light, 0 the environment's key and ambient light instead. */
   setBakedMix(v: number): void;
   setWireframe(on: boolean): void;
@@ -232,6 +237,13 @@ export async function loadLevel(
 
   const root = new TransformNode(`level:${sidecar.name}`, scene);
   const meshes: Mesh[] = [];
+  // Soft shade under every tree, house and prop (DESIGN.md 17.4): made blank with the terrain's
+  // material, painted once the models are in, then read by every terrain chunk at every detail.
+  const groundShade =
+    sidecar.outdoor && (sidecar.trees?.length || sidecar.props?.length)
+      ? new GroundShade(scene, shadeGridFor(sidecar.bounds))
+      : null;
+  const shadeInstances: ShadeInstance[] = [];
   const byRole = new Map<number, ShaderMaterial>();
   const materialFor = (role: number, baked: boolean): ShaderMaterial => {
     let mat = byRole.get(role);
@@ -269,6 +281,9 @@ export async function loadLevel(
             scree.metresPerTile,
             snow.metresPerTile,
           ],
+          ...(groundShade
+            ? { shade: { texture: groundShade.texture, rect: groundShade.rect } }
+            : {}),
         },
       });
       byRole.set(role, mat);
@@ -473,6 +488,8 @@ export async function loadLevel(
       (
         buckets.get(key) ?? buckets.set(key, { model, rx, rz, matrices: [] }).get(key)!
       ).matrices.push(m);
+      // The shade is painted by the very matrix the instance is drawn with.
+      shadeInstances.push({ model, matrix: m.m });
     };
     for (const [kind, kx, ky, kz, yaw, scale] of sidecar.trees ?? []) {
       const cls = TREE_KINDS[kind];
@@ -525,10 +542,26 @@ export async function loadLevel(
       materials,
       [...buckets.values()].map((b) => b.model),
     );
+    const casters = new Map<string, ShadeCaster>();
     for (const [id, model] of models) {
       const kind = PROPS[id]?.kind;
       if (kind === 'building' || kind === 'prop')
         modelShapes.set(id, new PhysicsShapeMesh(model.mesh, scene));
+      const positions = model.mesh.getVerticesData(VertexBuffer.PositionKind);
+      const indices = model.mesh.getIndices();
+      if (positions && indices) {
+        casters.set(id, {
+          canopy: kind === 'tree' || kind === 'bush',
+          mesh: { positions, indices },
+        });
+      }
+    }
+    if (groundShade) {
+      groundShade.paint(casters, shadeInstances);
+      diag(
+        `ground shade: ${shadeInstances.length} casters painted in ` +
+          `${groundShade.paintMs.toFixed(0)} ms, uploaded in ${groundShade.uploadMs.toFixed(0)} ms`,
+      );
     }
     buildCollidersNear(toBabylon(sidecar.spawn.position));
     for (const [key, bucket] of buckets) {
@@ -710,6 +743,7 @@ export async function loadLevel(
       arrive: { position: toBabylon(p.arrive.position), yawDeg: p.arrive.yawDeg },
     })),
     lights,
+    groundShade,
     setBakedMix: (v) => materials.setBakedMix(v),
     setWireframe(on) {
       for (const m of byRole.values()) m.wireframe = on;

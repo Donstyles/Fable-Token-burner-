@@ -216,6 +216,14 @@ vec3 tileAt(sampler2D s, vec2 u) {
   return texture2DLodEXT(s, u, lod).rgb;
 }
 #endif
+#ifdef GROUNDSHADE
+// The ground's painted shade (DESIGN.md 17.4, src/world/ground-shade.ts): the share of the
+// sun (luminance) and of the sky (alpha) the trees, houses and props take, over the whole map;
+// shadeRect is its min x, min z and one over its size in metres.
+uniform sampler2D shadeSampler;
+uniform vec4 shadeRect;
+uniform vec3 ambientColor;
+#endif
 uniform vec3 fogColor;
 uniform vec3 tint;
 uniform vec3 emissive;
@@ -279,6 +287,21 @@ void main(void) {
   // shade swung the face's tones about 20% from frame to frame, where MM6's filmed portraits
   // held still).
   vec3 light = vLight + pl * (1.0 - paint);
+#ifdef GROUNDSHADE
+  // Under a crown or in a house's cast the ground loses up to six tenths of the key light;
+  // at a wall's foot, where little of the sky reaches, over half the ambient and four tenths of
+  // the key, so a wall in the sun is seated too. Never the lanterns or the torch. The sun's part
+  // fades as the sun sinks (its real shadows then reach far off to the east, not under the
+  // tree); the skirt holds at every hour. Taken as a share of the light here and laid on after
+  // the knee below, which would otherwise flatten the first third of it on sunlit ground; never
+  // under 0.55 of it (DESIGN.md 15.7), the floor a north wall's foot reaches in cast and skirt.
+  vec4 shade = texture2D(shadeSampler, (vWorldPos.xz - shadeRect.xy) * shadeRect.zw);
+  float sunUp = smoothstep(0.05, 0.45, -lightDirection.y);
+  vec3 key = max(vLight - ambientColor, vec3(0.0));
+  float keyShade = max(0.6 * shade.r * sunUp, 0.4 * shade.a);
+  vec3 shaded = light - key * keyShade - ambientColor * (0.55 * shade.a);
+  vec3 groundShade = max(shaded / max(light, vec3(0.001)), vec3(0.55));
+#endif
   if (cloudShadow > 0.0 && paint < 0.5) {
     // Cloud shadows: patches of shade drift over slopes, trees and houses alike.
     vec2 cp = vWorldPos.xz * 0.0035 + time * vec2(0.012, 0.005);
@@ -294,6 +317,9 @@ void main(void) {
     float over = peak - lightKnee;
     light *= (lightKnee + over / (1.0 + 2.0 * over)) / peak;
   }
+#ifdef GROUNDSHADE
+  light *= groundShade;
+#endif
   light = min(light + carried * (1.0 - paint), vec3(1.6));
   // The light in steps (DESIGN.md 16.14): sixteen flat levels, no dither (critics, round
   // 10: MM6 never dithered; a Bayer reads as a screen door over every wall; the colour
@@ -417,6 +443,11 @@ export interface VertexLitOptions {
     scree: BaseTexture;
     snow: BaseTexture;
     metresPerTile: [number, number, number, number];
+    /**
+     * The ground's painted shade over the map (src/world/ground-shade.ts): sun occlusion in
+     * luminance, sky occlusion in alpha, laid by `rect` (min x, min z, 1 / size, 1 / size).
+     */
+    shade?: { texture: BaseTexture; rect: [number, number, number, number] };
   };
 }
 
@@ -461,6 +492,7 @@ export class RetroMaterials {
         : [];
     if (opts.doubleSided) defines.push('#define TWOSIDED');
     if (opts.splat) defines.push('#define TERRAIN');
+    if (opts.splat?.shade) defines.push('#define GROUNDSHADE');
     if (opts.billboard) defines.push('#define BILLBOARD', '#define ALPHATEST');
     if (opts.detail) defines.push('#define DETAIL');
     const attributes = [
@@ -504,8 +536,16 @@ export class RetroMaterials {
         'heat',
         'cloudShadow',
         'gust',
+        'shadeRect',
       ],
-      samplers: ['diffuseSampler', 'pathSampler', 'screeSampler', 'snowSampler', 'detailSampler'],
+      samplers: [
+        'diffuseSampler',
+        'pathSampler',
+        'screeSampler',
+        'snowSampler',
+        'detailSampler',
+        'shadeSampler',
+      ],
       defines,
     });
     mat.setTexture('diffuseSampler', opts.texture);
@@ -516,6 +556,10 @@ export class RetroMaterials {
       mat.setTexture('snowSampler', opts.splat.snow);
       const m = opts.splat.metresPerTile;
       mat.setVector4('splatScale', new Vector4(1 / m[0], 1 / m[1], 1 / m[2], 1 / m[3]));
+      if (opts.splat.shade) {
+        mat.setTexture('shadeSampler', opts.splat.shade.texture);
+        mat.setVector4('shadeRect', new Vector4(...opts.splat.shade.rect));
+      }
     }
     mat.setVector2('uvScale', new Vector2(...(opts.uvScale ?? [1, 1])));
     mat.setFloat('bakedMix', this.bakedMix);

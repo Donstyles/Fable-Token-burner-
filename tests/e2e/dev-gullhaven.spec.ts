@@ -183,6 +183,45 @@ test.describe('Gullhaven', () => {
     expect(r.wallWithout).toBe(0);
   });
 
+  test('paints shade on the ground under its trees and houses, where they stand', async ({
+    page,
+  }) => {
+    // Owner, 2026-10-23: "I want shadows under trees and buildings" (DESIGN 17.4).
+    const r = await page.evaluate(() => {
+      type Shade = { at(x: number, z: number): { sun: number; sky: number } };
+      type Material = { name: string; getEffect(): { defines: string; isReady(): boolean } | null };
+      const ftb = (window as unknown as { ftb: { dev: Dev; scene: { materials: Material[] } } })
+        .ftb;
+      const shade = (ftb.dev.level as unknown as { groundShade: Shade }).groundShade;
+      const sidecar = ftb.dev.level.sidecar as unknown as {
+        trees: number[][];
+        props: number[][];
+        propModels: string[];
+      };
+      // Kernel X is mirrored in the scene: a placement [model, x, y, z, ...] stands at (-x, z).
+      const houses = sidecar.props
+        .filter((p) => sidecar.propModels[p[0]!]!.startsWith('building-'))
+        .map((p) => shade.at(-p[1]!, p[3]!));
+      const trees = sidecar.trees.map((t) => shade.at(-t[1]!, t[3]!));
+      // Out on the bay, south of the waterfront, nothing stands.
+      const sea = [-200, -150, -100, 0, 100, 200].map((x) => shade.at(x, -300));
+      const terrain = ftb.scene.materials.find((m) => m.name === 'level-terrain')!.getEffect()!;
+      return {
+        compiled: terrain.defines.includes('GROUNDSHADE') && terrain.isReady(),
+        houses: houses.filter((s) => s.sky > 0.9 && s.sun > 0.9).length,
+        houseCount: houses.length,
+        trees: trees.filter((s) => s.sun > 0.3 && s.sky > 0.1).length,
+        treeCount: trees.length,
+        sea: Math.max(...sea.map((s) => Math.max(s.sun, s.sky))),
+      };
+    });
+    expect(r.compiled).toBe(true);
+    expect(r.houseCount).toBeGreaterThanOrEqual(10);
+    expect(r.houses).toBe(r.houseCount);
+    expect(r.trees).toBeGreaterThan(r.treeCount * 0.9);
+    expect(r.sea).toBe(0);
+  });
+
   test('stands at the crossroads and on the headland after teleporting', async ({ page }) => {
     for (const name of ['crossroads', 'headland']) {
       const q = await page.evaluate((n) => {
