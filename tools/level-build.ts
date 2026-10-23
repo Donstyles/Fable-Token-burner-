@@ -12,7 +12,12 @@
 import { mkdir, readdir, writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { LevelBuilder, type LevelOutput, type PortalRecord } from '../kernel/plan/level';
+import {
+  LevelBuilder,
+  type LevelOutput,
+  type PortalRecord,
+  type SpawnRecord,
+} from '../kernel/plan/level';
 import type { MeshData } from '../kernel/core/mesh';
 import { ROLE } from '../kernel/elements/roles';
 import { bakeVertexLight } from '../kernel/light/bake';
@@ -37,6 +42,8 @@ interface LevelModule {
   options?: Partial<LevelBuildOptions>;
   /** Doors to other levels (DESIGN.md 15.3). */
   portals?: PortalRecord[];
+  /** Monsters standing in the level, as a region's packs are (src/dev/index.ts places them). */
+  spawns?: SpawnRecord[];
 }
 
 const DEFAULTS: LevelBuildOptions = { ambient: [0.1, 0.1, 0.13], bakeCell: 1, chunk: 12 };
@@ -228,6 +235,7 @@ async function buildOne(id: string, validate: boolean): Promise<boolean> {
     points: level.points,
     lights: level.lights,
     portals: mod.portals ?? [],
+    spawns: mod.spawns ?? [],
     spaces: level.spaces,
     water: level.water.map(({ mesh: _mesh, ...body }) => body),
     waterfalls: level.waterfalls.map(({ mesh: _mesh, ...fall }) => fall),

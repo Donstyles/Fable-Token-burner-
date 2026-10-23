@@ -542,7 +542,12 @@ export async function loadLevel(
         mesh.thinInstanceSetBuffer('matrix', buffer, 16, true);
         mesh.thinInstanceRefreshBoundingInfo(false);
         mesh.parent = root;
-        mesh.isPickable = false;
+        // A house takes a tap, so its door opens its service (src/game/content.ts); the
+        // forest and the stones do not, so a tap or a footstep ray never tests their
+        // thousands of instances.
+        const house = PROPS[bucket.model]?.kind === 'building' && suffix === '';
+        mesh.isPickable = house;
+        if (house) mesh.thinInstanceEnablePicking = true;
         meshes.push(mesh);
         return mesh;
       };

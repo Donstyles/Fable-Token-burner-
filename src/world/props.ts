@@ -164,6 +164,7 @@ export function propLabel(id: string): string {
     'building-stables': 'The Stables',
     'building-barn': 'The Barn',
     'building-farmhouse': 'The Farmhouse',
+    'building-cottage-03': 'The Training Hall',
     'prop-well': 'The Village Well',
     'prop-shrine': 'A Wayside Shrine',
     'prop-cart': 'A Cart',

@@ -28,6 +28,12 @@ export const VILLAGE_HOUSES: Record<string, HouseRef> = {
       repairFraction: 0.2,
     },
   },
+  // The townhouse by the waterfront trains (ours until the town has a hall of its own:
+  // experience bought nothing in the audit, 2026-10-23); MM6's first town trains to 15.
+  'building-cottage-03': {
+    kind: 'trainer',
+    house: { id: 'training', name: 'The Training Hall', maxLevel: 15, priceMultiplier: 1 },
+  },
   'building-smithy': {
     kind: 'shop',
     house: {

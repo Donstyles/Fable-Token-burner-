@@ -43,6 +43,23 @@ export const QUESTS: Record<string, QuestDef> = {
     ],
     reward: { gold: 80, xp: 150 },
   },
+  'the-old-halls': {
+    id: 'the-old-halls',
+    title: 'The Old Halls',
+    text:
+      'The dead walk in the halls under the hills and on the headland by night. Old Tobin ' +
+      'pays three hundred gold to have five of them put back in the ground.',
+    objectives: [
+      {
+        kind: 'kill',
+        monster: 'skeleton-warrior',
+        count: 5,
+        text: 'Put down five of the walking dead, in the halls or on the headland',
+      },
+      { kind: 'talk', npc: 'villager-man', text: 'Tell Old Tobin at his farm gate' },
+    ],
+    reward: { gold: 300, xp: 700 },
+  },
 };
 
 /** Where a quest stands with the one who gives it. */
@@ -110,12 +127,22 @@ export const DIALOGUES: Record<string, DialogueDef> = {
           'under there, older than the town.',
       },
       {
-        kind: 'say',
-        id: 'barn',
-        label: 'The barn',
-        text:
-          'That barn has stood forty winters. My father raised it with oak from the north woods, ' +
-          'before the goblins came back to the hills. Forty-one winters, if they keep away.',
+        kind: 'quest',
+        id: 'halls',
+        quest: 'the-old-halls',
+        label: 'The old halls',
+        offer:
+          'My grandfather went down that cave on the slope once. He came back white and would ' +
+          'not say what walked there. Now the dead come up onto the headland by night. Put five ' +
+          'of them back in the ground and I will pay three hundred gold, which is all I have.',
+        active:
+          'Five of the dead, in the halls under the hills or up on the headland. Take a torch; ' +
+          'my grandfather said the dark down there is older than the town.',
+        ready:
+          'Five, and you came back on your own feet. My grandfather would have stood you a ' +
+          'drink. Three hundred gold, as I said, and keep the torch.',
+        done: 'The headland is quiet at night now. I can hear the sea again.',
+        greetReady: 'You smell of the grave. Did you go down there? Tell me.',
       },
       {
         kind: 'rumours',

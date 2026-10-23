@@ -72,6 +72,8 @@ export interface DevPanel {
 export interface DevPanelOptions {
   /** Returns the diagnostics text for the copy-log button and the live view. */
   log?: () => string;
+  /** Apply the stored tuning but show no button (the player's view, without `?dev`). */
+  hidden?: boolean;
 }
 
 export function createDevPanel(
@@ -98,6 +100,7 @@ export function createDevPanel(
   const root = document.createElement('div');
   root.className = 'dev-panel';
   root.dataset['native'] = '';
+  if (options.hidden) root.style.display = 'none';
   const toggle = document.createElement('button');
   toggle.className = 'dev-toggle';
   toggle.type = 'button';

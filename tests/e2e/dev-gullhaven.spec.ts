@@ -90,10 +90,10 @@ test.describe('Gullhaven', () => {
     // The cave in the goblin hills leads into the dungeon.
     expect(info.cave).not.toBeNull();
     expect(info.portals).toEqual(['cave>showcase:exit']);
-    // The party wakes on the waterfront, below the square.
-    expect(
-      Math.hypot(info.waterfront!.x - info.spawn.x, info.waterfront!.z - info.spawn.z),
-    ).toBeLessThan(10);
+    // The party wakes at the foot of the square, between the waterfront and the well.
+    expect(Math.hypot(info.square!.x - info.spawn.x, info.square!.z - info.spawn.z)).toBeLessThan(
+      20,
+    );
     expect(info.outdoor).toBe(true);
     expect(info.trees).toBeGreaterThan(500);
     // Eight by eight chunks at three detail levels; exactly one level per chunk is on.
@@ -105,7 +105,7 @@ test.describe('Gullhaven', () => {
     expect(info.backdrop).toBe(0);
     expect(info.backdropTriangles).toBeGreaterThan(1000);
     expect(info.headland!.y).toBeGreaterThan(15);
-    // The party stands on the waterfront above the sea, not fallen through the terrain.
+    // The party stands on the square's slope above the sea, not fallen through the terrain.
     await page.waitForTimeout(1500);
     const p = await page.evaluate(() => (window as unknown as W).ftb!.dev!.positionOf());
     expect(p.y).toBeGreaterThan(2);

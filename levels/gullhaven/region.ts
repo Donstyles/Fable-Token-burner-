@@ -269,9 +269,10 @@ const region: RegionScript = {
     { name: 'headland', at: [228, 46] },
     { name: 'road-west', at: [-295, -172] },
   ],
-  // The party wakes on the waterfront looking up at the square: the store at the right, the
-  // well and the inn ahead.
-  start: { at: [4, -150], face: [-6, -100] },
+  // The party wakes at the foot of the square looking up at Maren by the well: the store at
+  // the right, the inn ahead (the audit, 2026-10-23: from the waterfront she stood 38 m off,
+  // eight pixels tall).
+  start: { at: [0, -134], face: [6, -112] },
   environment: {
     lightColor: [0.9, 0.84, 0.74],
     ambientColor: [0.42, 0.42, 0.46],

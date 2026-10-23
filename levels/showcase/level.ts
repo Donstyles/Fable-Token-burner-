@@ -1,4 +1,4 @@
-import type { LevelBuilder, PortalRecord } from '../../kernel/plan/level';
+import type { LevelBuilder, PortalRecord, SpawnRecord } from '../../kernel/plan/level';
 import { ROLE } from '../../kernel/elements/roles';
 
 /**
@@ -19,6 +19,21 @@ export const portals: PortalRecord[] = [
     target: { level: 'gullhaven', entry: 'cave' },
     arrive: { position: [-3, 0, -2], yawDeg: 0 },
   },
+];
+
+/**
+ * The halls' dead (the audit, 2026-10-23: the halls held only the test bed's bandit): one on
+ * the gallery, one in the flooded undercroft, one on the landing, and three at the far side
+ * of the bridge, each on a point the reachability check walks to. Old Tobin's grandfather's
+ * halls; his quest wants five of them put down.
+ */
+export const spawns: SpawnRecord[] = [
+  { kind: 'skeleton-warrior', position: [0, 4.5, 4.75], yawDeg: 180 },
+  { kind: 'skeleton-warrior', position: [0, -9, 0], yawDeg: 0 },
+  { kind: 'skeleton-warrior', position: [4.2, -4.5, -15], yawDeg: 0 },
+  { kind: 'skeleton-warrior', position: [33.5, 0, 0], yawDeg: 90 },
+  { kind: 'skeleton-warrior', position: [43, 0, 0], yawDeg: 90 },
+  { kind: 'skeleton-warrior', position: [46, 0, 0], yawDeg: 90 },
 ];
 
 export default function showcase(plan: LevelBuilder): void {

@@ -131,3 +131,37 @@ describe('character-backed members', () => {
     expect(dummy.taken).toBeGreaterThan(0);
   });
 });
+
+describe('a target out of reach', () => {
+  it('goes to the ready member who can shoot it, and the sword stays ready', () => {
+    const party = new Party(outfittedParty());
+    const shooter = party.members.findIndex((m) => m.canShoot);
+    expect(shooter).toBeGreaterThan(0);
+    const target = { armorClass: 0, takeDamage: () => {} };
+    let rolls = 0;
+    const a = party.attack(
+      target,
+      0,
+      () => (rolls++ % 2 ? 0.99 : 0.01),
+      true,
+      (m) => m.canShoot,
+    );
+    expect(a?.member).toBe(party.members[shooter]);
+    expect(a?.ranged).toBe(true);
+    expect(party.members[0]!.isReady(0)).toBe(true);
+  });
+
+  it('is nobody’s when no ready member can reach it', () => {
+    const party = new Party(outfittedParty());
+    expect(party.readyIndex(0, () => false)).toBe(-1);
+    expect(
+      party.attack(
+        { armorClass: 0, takeDamage: () => {} },
+        0,
+        () => 0.5,
+        true,
+        () => false,
+      ),
+    ).toBeNull();
+  });
+});

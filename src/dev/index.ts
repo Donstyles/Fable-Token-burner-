@@ -26,14 +26,20 @@ import { PortalWatcher, portalUrl, travel, type Portal } from '../world/portals'
 import { Monster } from '../world/monster';
 import { MONSTERS, NPCS } from '../game/monsters';
 import { Party } from '../game/party';
-import { damageDice, healCharacter, type Character as CharacterSheet } from '../game/character';
+import {
+  damageDice,
+  healCharacter,
+  maxHp,
+  restoreSp,
+  type Character as CharacterSheet,
+} from '../game/character';
 import { testCharacters } from '../game/fixtures';
 import { newGame, type GameState } from '../game/state';
 import { automapLevel, revealAt } from '../game/automap';
 import { createCreationScreen } from '../ui/creation';
 import { installScreens, type Screens } from '../ui/screens';
 import { mulberry32, rollDice } from '../game/rng';
-import { afflict, cure } from '../game/conditions';
+import { afflict, cure, cureAll } from '../game/conditions';
 import { spellDef, type SpellId } from '../game/spells';
 import { canCast, learnSpell } from '../game/spellbook';
 import { cast as castFromBook, castMessage } from '../ui/spellbook-model';
@@ -66,7 +72,7 @@ import { handleQuestEvent } from '../game/quests';
 import { shareExperience } from '../game/experience';
 import { Soundscape } from '../world/soundscape';
 import { DOOR_REACH, VILLAGE_HOUSES } from '../game/content';
-import { loadGame, saveGame } from '../app/autosave';
+import { clearSave, loadGame, saveGame } from '../app/autosave';
 import { daylightAt, environmentAt, MINUTES_PER_REAL_SECOND } from '../world/daylight';
 import { advanceClock, minuteOfDay } from '../game/time';
 import { hideVeil, showVeil, veilProgress } from '../app/veil';
@@ -158,6 +164,8 @@ const ENTRY = QUERY.get('entry');
 
 export async function startDev(app: App): Promise<DevHandle> {
   const { scene, engine, camera, canvas, uiLayer } = app;
+  // A portal and `?continue` go on from the autosave; anything else is a new game.
+  const choice = (ENTRY || QUERY.has('continue') ? 'continue' : null) as 'continue' | 'new' | null;
   // Townsfolk standing about the village (src/world/npc.ts); monsters live on the handle.
   const npcs: Npc[] = [];
   await enableHavok(scene, new Vector3(0, -DEFAULT_TUNING.gravity, 0));
@@ -277,7 +285,8 @@ export async function startDev(app: App): Promise<DevHandle> {
     : testCharacters();
   // Through a portal, or with `?continue`, the party comes back from the autosave; a fresh
   // visit starts a new game (DESIGN.md 16.6).
-  const restored = ENTRY || QUERY.has('continue') ? loadGame() : null;
+  const restored = choice === 'continue' ? loadGame() : null;
+  if (choice === 'new') clearSave();
   const game = restored
     ? ({ ok: true, state: restored } as const)
     : newGame(sheets, { seed, level: { id: LEVEL, x: 0, y: 0, z: 0, yawDeg: 0 } });
@@ -303,6 +312,14 @@ export async function startDev(app: App): Promise<DevHandle> {
   });
   let mapTimer = 0;
   let saveTimer = 0;
+  // The party's spot goes into the save with the rest, so Continue stands it where it was
+  // (the audit, 2026-10-23: a reload put the party back on the waterfront). A portal writes
+  // its own destination instead.
+  const save = (): boolean => {
+    const p = party.position;
+    state.level = { id: LEVEL, x: p.x, y: p.y, z: p.z, yawDeg: (party.yaw * 180) / Math.PI };
+    return saveGame(state);
+  };
   const roster = new Party(state.party);
   // The HUD band (DESIGN 9): a tap selects a member, a second tap opens their sheet. The
   // status line above it names what is tapped and tells the fight, as MM6's did.
@@ -327,7 +344,7 @@ export async function startDev(app: App): Promise<DevHandle> {
   const screens: Screens = installScreens(uiLayer, state, {
     now: () => simTime,
     questDefs: QUESTS,
-    onClose: () => saveGame(state),
+    onClose: () => save(),
     onRest: (kind) => {
       status.say(
         kind === 'dawn'
@@ -336,7 +353,7 @@ export async function startDev(app: App): Promise<DevHandle> {
             ? 'The party sleeps at the inn'
             : 'The party rests',
       );
-      saveGame(state);
+      save();
     },
     onCast: (cast) => performCast(cast),
   });
@@ -358,7 +375,7 @@ export async function startDev(app: App): Promise<DevHandle> {
       talking?.engage(false);
       talking = null;
       screens.toggleButtonBar(true);
-      saveGame(state);
+      save();
     },
   });
   const talkTo = (npc: Npc): void => {
@@ -408,17 +425,21 @@ export async function startDev(app: App): Promise<DevHandle> {
     } catch (e) {
       diag(`navmesh failed: ${e instanceof Error ? e.message : String(e)}`);
     }
-    // The level's spawns (regions), or the test bed's one bandit six metres ahead.
-    const placements = level.spawns.length
-      ? level.spawns.map((s, i) => ({ ...s, name: i === 0 ? 'bandit' : `${s.kind}-${i + 1}` }))
+    // The level's spawns; underground the test bed's bandit six metres ahead comes first
+    // (the combat and spell tests strike it), the halls' own dead behind it.
+    const testBed = level.sidecar.outdoor
+      ? []
       : [
           {
             kind: 'bandit',
-            name: 'bandit',
             position: level.spawn.add(ahead.scale(6)),
             yawDeg: level.spawnYawDeg + 180,
           },
         ];
+    const placements = [...testBed, ...level.spawns].map((s, i) => ({
+      ...s,
+      name: i === 0 ? 'bandit' : `${s.kind}-${i + 1}`,
+    }));
     // Everyone loads at once: one after another, each waited frames of its own, and at a
     // frame a second (software GL in CI) eight of them took longer than the tests allow.
     const loaded = await Promise.all(
@@ -465,7 +486,32 @@ export async function startDev(app: App): Promise<DevHandle> {
   canvas.addEventListener('pointerup', note('up'));
   canvas.addEventListener('pointercancel', note('cancel'));
   const entry = ENTRY ? level.portals.find((p) => p.name === ENTRY) : undefined;
-  const start = entry?.arrive ?? { position: level.spawn, yawDeg: level.spawnYawDeg };
+  // After a wipe the party wakes at the temple door, facing the square (`?wake=temple`); the
+  // flag leaves the address at once, so a reload continues from the save as usual.
+  const wakeAt = QUERY.get('wake') ? level.points.get(QUERY.get('wake')!) : undefined;
+  const square = level.points.get('square');
+  const woke = wakeAt
+    ? {
+        position: wakeAt.add(new Vector3(0, 0.5, 0)),
+        yawDeg: square
+          ? (Math.atan2(square.x - wakeAt.x, square.z - wakeAt.z) * 180) / Math.PI
+          : level.spawnYawDeg,
+      }
+    : null;
+  if (QUERY.has('wake')) {
+    const url = new URL(location.href);
+    url.searchParams.delete('wake');
+    history.replaceState(null, '', url.toString());
+  }
+  // Continue stands the party where the save left it, on this level.
+  const was = restored && !ENTRY && restored.level.id === LEVEL ? restored.level : null;
+  const resumed =
+    was && (was.x !== 0 || was.y !== 0 || was.z !== 0)
+      ? { position: new Vector3(was.x, was.y + 0.2, was.z), yawDeg: was.yawDeg }
+      : null;
+  const start = entry?.arrive ??
+    woke ??
+    resumed ?? { position: level.spawn, yawDeg: level.spawnYawDeg };
   // `?prop=<id>` stands one Meshy model in front of the party for inspection (dev only).
   const propId = QUERY.get('prop');
   if (propId) {
@@ -588,13 +634,14 @@ export async function startDev(app: App): Promise<DevHandle> {
   const MELEE_REACH = 3.5;
   const attackMonster = (monster: Monster, distance = 0): string => {
     if (!monster.alive) return `${monster.def.name} is dead`;
-    const ready = roster.readyIndex(simTime);
-    if (ready < 0) return 'Nobody is ready';
-    const next = roster.members[ready]!;
-    const ranged = next.character ? damageDice(next.character, true) !== null : false;
-    if (!ranged && distance > MELEE_REACH) return `${next.name} cannot reach ${monster.def.name}`;
-    const a = roster.attack(monster, simTime, rng);
-    if (!a) return 'Nobody is ready';
+    if (roster.readyIndex(simTime) < 0) return 'Nobody is ready';
+    // Out of a sword's reach the blow goes to a ready member with a bow, and the swords stay
+    // ready for when it closes (the audit, 2026-10-23: the tap stuck on "cannot reach").
+    const reaches = (m: (typeof roster.members)[number]): boolean =>
+      distance <= MELEE_REACH ||
+      (m.character ? damageDice(m.character, true) !== null : m.canShoot);
+    const a = roster.attack(monster, simTime, rng, true, reaches);
+    if (!a) return `${monster.def.name} is out of reach`;
     if (a.result.hit) feedback.monsterStruck(monster, party.position, !monster.alive);
     else feedback.monsterMissed();
     const line = a.result.hit
@@ -603,6 +650,20 @@ export async function startDev(app: App): Promise<DevHandle> {
     return monster.alive ? line : `${line}; ${monster.def.name} falls`;
   };
   let clipReview = false;
+  // A fallen monster is searched with a tap at arm's length, as MM6's corpses were: its
+  // purse once (the audit, 2026-10-23: no kill paid anything but experience).
+  const LOOT_REACH = 6;
+  const searched = new Set<string>();
+  const search = (monster: Monster, distance: number): string => {
+    if (searched.has(monster.name)) return `Nothing more on the ${monster.def.name}`;
+    if (distance > LOOT_REACH) return `A dead ${monster.def.name} (come closer)`;
+    searched.add(monster.name);
+    const [lo, hi] = monster.def.gold ?? [0, 0];
+    const gold = lo + Math.floor(rng() * (hi - lo + 1));
+    if (gold <= 0) return `You find nothing on the ${monster.def.name}`;
+    state.gold += gold;
+    return `You find ${gold} gold`;
+  };
 
   // Tap feedback: outline the tapped mesh briefly.
   const flashing = new Map<Mesh, number>();
@@ -639,7 +700,7 @@ export async function startDev(app: App): Promise<DevHandle> {
         monster.character.play(next);
         panel.toast(`${monster.name}: ${next}`);
       } else {
-        status.say(attackMonster(monster, d));
+        status.say(monster.alive ? attackMonster(monster, d) : search(monster, d));
       }
       return;
     }
@@ -654,6 +715,26 @@ export async function startDev(app: App): Promise<DevHandle> {
       }
       status.say(house ? `${propLabel(model)} (come to the door)` : propLabel(model));
     }
+  };
+
+  let wiped = false;
+  const wake = (): void => {
+    for (const c of state.party) {
+      cureAll(c.conditions);
+      c.hp = Math.max(c.hp, 0);
+      healCharacter(c, maxHp(c));
+      restoreSp(c);
+    }
+    state.gold = 0;
+    state.clock.minutes += 7 * 24 * 60;
+    state.level = { id: 'gullhaven', x: 0, y: 0, z: 0, yawDeg: 0 };
+    saveGame(state);
+    const url = new URL(location.href);
+    url.searchParams.set('level', 'gullhaven');
+    url.searchParams.delete('entry');
+    url.searchParams.set('continue', '');
+    url.searchParams.set('wake', 'temple');
+    travel(uiLayer, 'You wake in the temple of Gullhaven…', url.toString(), 1200);
   };
 
   // Free fly camera: the stick moves along the view direction, the party stays put.
@@ -852,7 +933,7 @@ export async function startDev(app: App): Promise<DevHandle> {
     saveTimer += dt;
     if (saveTimer > 60) {
       saveTimer = 0;
-      saveGame(state);
+      save();
     }
     mapTimer += dt;
     if (mapTimer > 0.5) {
@@ -907,6 +988,14 @@ export async function startDev(app: App): Promise<DevHandle> {
         status.say(ev.text);
         if (ev.kind === 'miss') feedback.partyMissed();
       }
+    }
+    // MM6's wipe (ROADMAP M1b): when the last member falls the party wakes a week later in
+    // Gullhaven's temple, whole again, its carried gold gone (the audit, 2026-10-23: a
+    // fallen party walked on and rested next to the bandits).
+    if (!wiped && !roster.alive) {
+      wiped = true;
+      status.say('The party has fallen', 6000);
+      window.setTimeout(wake, 3500);
     }
     if (!fly && !paused) feedback.applyCamera(camera);
     strip.update(simTime);
@@ -1448,7 +1537,8 @@ export async function startDev(app: App): Promise<DevHandle> {
         },
       },
     ],
-    { log: diagText },
+    // The tuning stays on the phone without its button: only `?dev` shows the panel.
+    { log: diagText, hidden: !QUERY.has('dev') },
   );
   diag(`dev level ready: ${LEVEL}`);
   veilProgress(1);

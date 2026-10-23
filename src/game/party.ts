@@ -216,11 +216,15 @@ export class Party {
     return this.members.some((m) => m.alive);
   }
 
-  /** The selected member if ready, else the next ready one; -1 when nobody can act. */
-  readyIndex(now: number): number {
+  /**
+   * The selected member if ready, else the next ready one; -1 when nobody can act. With `can`,
+   * only a ready member it accepts: a target out of a sword's reach goes to the bow.
+   */
+  readyIndex(now: number, can?: (member: PartyMember) => boolean): number {
     for (let i = 0; i < this.members.length; i++) {
       const index = (this.selected + i) % this.members.length;
-      if (this.members[index]!.isReady(now)) return index;
+      const member = this.members[index]!;
+      if (member.isReady(now) && (!can || can(member))) return index;
     }
     return -1;
   }
@@ -229,10 +233,16 @@ export class Party {
    * Attack a target with the ready member; the selection advances afterwards. A member with a
    * bow shoots with the bow's numbers, as the runtime lets a bow reach anything in view; pass
    * `ranged: false` for a blow (what MM6 does with a bow at arm's length is unverified). A member
-   * without a bow strikes in melee.
+   * without a bow strikes in melee. With `can`, the first ready member it accepts attacks.
    */
-  attack(target: Target, now: number, rng: Rng, ranged = true): PartyAttack | null {
-    const index = this.readyIndex(now);
+  attack(
+    target: Target,
+    now: number,
+    rng: Rng,
+    ranged = true,
+    can?: (member: PartyMember) => boolean,
+  ): PartyAttack | null {
+    const index = this.readyIndex(now, can);
     if (index < 0) return null;
     const member = this.members[index]!;
     const shot = ranged && member.canShoot;

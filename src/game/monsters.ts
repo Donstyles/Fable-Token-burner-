@@ -26,6 +26,8 @@ export interface MonsterDef {
   /** Pause between swings. */
   attackEverySec: number;
   xp: number;
+  /** Gold found on the body, least and most (ours; MM6 rolls a treasure level). */
+  gold?: [number, number];
   /** Character asset id under assets/characters/. */
   character: string;
   heightMetres: number;
@@ -46,6 +48,7 @@ export const MONSTERS: Record<string, MonsterDef> = {
     attackRange: 1.6,
     attackEverySec: 2,
     xp: 20,
+    gold: [8, 30],
     character: 'bandit',
     heightMetres: 1.78,
   },
@@ -63,6 +66,7 @@ export const MONSTERS: Record<string, MonsterDef> = {
     attackRange: 1.4,
     attackEverySec: 1.6,
     xp: 10,
+    gold: [2, 12],
     character: 'goblin-scout',
     heightMetres: 1.3,
   },
@@ -80,6 +84,7 @@ export const MONSTERS: Record<string, MonsterDef> = {
     attackRange: 1.7,
     attackEverySec: 2.4,
     xp: 35,
+    gold: [10, 40],
     character: 'skeleton-warrior',
     heightMetres: 1.75,
   },
@@ -97,6 +102,7 @@ export const MONSTERS: Record<string, MonsterDef> = {
     attackRange: 1.6,
     attackEverySec: 2,
     xp: 30,
+    gold: [10, 35],
     character: 'nomad-raider',
     heightMetres: 1.75,
   },
