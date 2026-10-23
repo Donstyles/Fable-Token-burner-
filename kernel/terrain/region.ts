@@ -18,11 +18,11 @@ import type {
 } from '../plan/level';
 import { backdropMesh } from './backdrop';
 import type { RegionEnvironment, TerrainLevel, TerrainTextures } from './build';
-import { CAVE, caveLocalOf, caveMouth, type CaveSpec } from './cave';
+import { CAVE, caveMouth, type CaveResult, type CaveSpec } from './cave';
 import { fenceAlong } from './fence';
 import { terrainChunks } from './chunks';
 import { Heightfield } from './heightfield';
-import { appendMesh, terrainMesh } from './mesh';
+import { appendMesh, terrainMesh, type ColouredMeshData } from './mesh';
 import { fbm, lerp, smoothstep } from './noise';
 import { layRoad } from './road';
 import { quad } from './solids';
@@ -324,7 +324,8 @@ export function buildRegion(s: RegionScript): TerrainLevel {
     }
   }
 
-  // The cave mouth: the ground under the tunnel cut away, the threshold levelled.
+  // The cave mouth: its floor dug in below the ground at its threshold point. The ground round
+  // it is shaped once the roads and pads are laid (kernel/terrain/cave.ts).
   let cave: CaveSpec | null = null;
   if (s.cave) {
     const h = (s.cave.facing * Math.PI) / 180;
@@ -332,30 +333,10 @@ export function buildRegion(s: RegionScript): TerrainLevel {
     const inward: P2 = [Math.sin(h), -Math.cos(h)];
     cave = {
       x: s.cave.at[0],
-      y: hf.sample(s.cave.at[0], s.cave.at[1]),
+      y: hf.sample(s.cave.at[0], s.cave.at[1]) - CAVE.sink,
       z: s.cave.at[1],
       yaw: Math.atan2(-inward[0], inward[1]),
     };
-    const reach = CAVE.length + CAVE.skirt + 20;
-    const hw = CAVE.width / 2 + 1.5;
-    for (let j = 0; j < n; j++) {
-      for (let i = 0; i < n; i++) {
-        const x = hf.x(i);
-        const z = hf.z(j);
-        if (Math.hypot(x - cave.x, z - cave.z) > reach) continue;
-        const l = caveLocalOf(cave, x, z);
-        if (
-          Math.abs(l.x) <= hw + 0.3 &&
-          l.z >= -CAVE.threshold &&
-          l.z <= CAVE.length + CAVE.cutBehind
-        ) {
-          hf.set(i, j, Math.min(hf.get(i, j), cave.y - CAVE.cutDepth));
-        } else if (l.z < -CAVE.threshold && l.z > -CAVE.threshold - 16 && Math.abs(l.x) < hw + 6) {
-          const w = 1 - smoothstep(CAVE.threshold, CAVE.threshold + 16, -l.z);
-          hf.set(i, j, lerp(hf.get(i, j), cave.y, w));
-        }
-      }
-    }
   }
 
   // Roads: smoothed and cut into the land, allowed to fall as well as climb.
@@ -382,40 +363,49 @@ export function buildRegion(s: RegionScript): TerrainLevel {
   }
 
   // Splat: path (roads, squares, lanes, aprons), scree (cliffs), sand (the shore).
-  const splat = new Float32Array(n * n * 3);
   const squares = s.squares.map(flatRect);
+  const splatAt = (x: number, z: number, h: number, slope: number): [number, number, number] => {
+    let path = 0;
+    for (const r of roads) {
+      path = Math.max(
+        path,
+        1 - smoothstep(r.width / 2, r.width / 2 + 2.5, r.ground.nearest(x, z).distance),
+      );
+    }
+    for (const q of squares) path = Math.max(path, 1 - smoothstep(0, 3, rectDistance(x, z, q)));
+    for (const lane of s.lanes) {
+      path = Math.max(
+        path,
+        1 - smoothstep(lane.halfWidth, lane.halfWidth + 2, laneDistance(x, z, lane)),
+      );
+    }
+    for (const pad of plots.pads)
+      path = Math.max(path, 0.7 * (1 - smoothstep(-1, 2.5, rectDistance(x, z, pad))));
+    const patch = smoothstep(0.1, 0.25, fbm(x + 0.7 * h, z - 0.5 * h, 70, s.seed + 17));
+    let scree = Math.max(smoothstep(38, 50, slope), patch * smoothstep(20, 30, slope));
+    let sand = s.sea ? 1 - smoothstep(s.sea.level + 1.2, s.sea.level + 2.4, h) : 0;
+    const total = path + scree + sand;
+    if (total > 1) {
+      path /= total;
+      scree /= total;
+      sand /= total;
+    }
+    return [path, scree, sand];
+  };
+
+  // The cave mouth on the land as the roads and pads left it; then the coarse ground is pressed
+  // under its fine ground and its tunnel.
+  let caveMesh: CaveResult | null = null;
+  if (cave) {
+    caveMesh = caveMouth(cave, { height: (x, z) => hf.sample(x, z), splat: splatAt });
+    caveMesh.press(hf);
+  }
+
+  const splat = new Float32Array(n * n * 3);
   for (let j = 0; j < n; j++) {
     for (let i = 0; i < n; i++) {
-      const x = hf.x(i);
-      const z = hf.z(j);
-      const h = hf.get(i, j);
-      let path = 0;
-      for (const r of roads) {
-        path = Math.max(
-          path,
-          1 - smoothstep(r.width / 2, r.width / 2 + 2.5, r.ground.nearest(x, z).distance),
-        );
-      }
-      for (const q of squares) path = Math.max(path, 1 - smoothstep(0, 3, rectDistance(x, z, q)));
-      for (const lane of s.lanes) {
-        path = Math.max(
-          path,
-          1 - smoothstep(lane.halfWidth, lane.halfWidth + 2, laneDistance(x, z, lane)),
-        );
-      }
-      for (const pad of plots.pads)
-        path = Math.max(path, 0.7 * (1 - smoothstep(-1, 2.5, rectDistance(x, z, pad))));
-      const slope = hf.slopeDeg(i, j);
-      const patch = smoothstep(0.1, 0.25, fbm(x + 0.7 * h, z - 0.5 * h, 70, s.seed + 17));
-      let scree = Math.max(smoothstep(38, 50, slope), patch * smoothstep(20, 30, slope));
-      let sand = s.sea ? 1 - smoothstep(s.sea.level + 1.2, s.sea.level + 2.4, h) : 0;
-      const total = path + scree + sand;
-      if (total > 1) {
-        path /= total;
-        scree /= total;
-        sand /= total;
-      }
       const k = (j * n + i) * 3;
+      const [path, scree, sand] = splatAt(hf.x(i), hf.z(j), hf.get(i, j), hf.slopeDeg(i, j));
       splat[k] = path;
       splat[k + 1] = scree;
       splat[k + 2] = sand;
@@ -437,6 +427,7 @@ export function buildRegion(s: RegionScript): TerrainLevel {
         for (const pad of plots.pads) if (rectDistance(x, z, pad) < 6) return false;
         for (const q of squares) if (rectDistance(x, z, q) < 4) return false;
         if (cave && Math.hypot(x - cave.x, z - cave.z) < 30) return false;
+        if (caveMesh?.covers(x, z)) return false;
         // No tree grows through a fence.
         for (const line of s.fences ?? []) if (lineDistance(x, z, line) < 3) return false;
         const i = Math.round((x + half) / s.cell);
@@ -450,8 +441,18 @@ export function buildRegion(s: RegionScript): TerrainLevel {
   const ground = (x: number, z: number): number => hf.sample(x, z);
   const at3 = (p: P2): Vec3 => [p[0], ground(p[0], p[1]), p[1]];
 
-  // Solids: the cave mouth, the wall along the shallows, the map's edge.
-  const visual: MeshData = { positions: [], normals: [], uvs: [], indices: [], materials: [] };
+  // Solids: the cave mouth, the wall along the shallows, the map's edge. The visual carries
+  // vertex colours (the GLB's COLOR_0): Babylon multiplies a role material's light by them,
+  // so they are the daylight in the cave's tunnel and full elsewhere, and the terrain
+  // material reads them as splat weights on the cave's fine ground.
+  const visual: ColouredMeshData = {
+    positions: [],
+    normals: [],
+    uvs: [],
+    indices: [],
+    materials: [],
+    colors: [],
+  };
   const solids: MeshData = { positions: [], normals: [], uvs: [], indices: [], materials: [] };
   const lights: LightPlacement[] = [...plots.lights];
   const portals: PortalRecord[] = [];
@@ -464,23 +465,20 @@ export function buildRegion(s: RegionScript): TerrainLevel {
     indices: [],
     materials: [],
   };
-  for (const line of s.fences ?? []) fenceAlong(visual, fenceCollider, line, ground);
+  const fences: MeshData = { positions: [], normals: [], uvs: [], indices: [], materials: [] };
+  for (const line of s.fences ?? []) fenceAlong(fences, fenceCollider, line, ground);
+  appendMesh(visual, fences, [1, 1, 1]);
   appendTo(solids, fenceCollider);
-  const caveMesh = cave ? caveMouth(cave) : null;
-  if (caveMesh && cave && s.cave) {
+  if (caveMesh && s.cave) {
     appendTo(visual, caveMesh.visual);
+    for (const c of caveMesh.visual.colors) visual.colors.push(c);
     appendTo(solids, caveMesh.collider);
-    lights.push({
-      position: caveMesh.light,
-      color: [1, 0.62, 0.3],
-      range: 10,
-      intensity: 2.5,
-      kind: 'glow',
-    });
+    // No light inside: the dark is the depth (owner, 2026-10-23), and the party's torch shows
+    // the walls as it goes in.
     portals.push({
       name: 'cave',
       position: caveMesh.portal,
-      radius: 1.6,
+      radius: CAVE.portalRadius,
       target: s.cave.target,
       arrive: { position: caveMesh.arrive, yawDeg: s.cave.facing },
     });
@@ -502,14 +500,18 @@ export function buildRegion(s: RegionScript): TerrainLevel {
     200,
   );
 
-  // The navmesh: terrain, footprint boxes, the cave, trunks near the roads where monsters walk.
+  // The navmesh: terrain, footprint boxes, the cave and its rocks' boxes, trunks near the roads
+  // where monsters walk.
   const navTrunks = forestMeshes(
     trees.filter((t) => roads.some((r) => r.ground.nearest(t.x, t.z).distance < 60)),
   ).collider;
   const collider = terrainMesh({ height: hf, splat });
   appendMesh(collider, navTrunks);
   appendMesh(collider, plots.collider);
-  if (caveMesh) appendMesh(collider, caveMesh.collider);
+  if (caveMesh) {
+    appendMesh(collider, caveMesh.collider);
+    appendMesh(collider, caveMesh.rockBoxes);
+  }
   appendMesh(collider, fenceCollider);
   const navCollider: MeshData = {
     positions: collider.positions,
@@ -554,7 +556,7 @@ export function buildRegion(s: RegionScript): TerrainLevel {
       ...(s.sea ? { sea: { level: s.sea.level, floor: s.sea.floor } } : {}),
     }),
     visual,
-    props: plots.props,
+    props: [...plots.props, ...(caveMesh?.props ?? [])],
     forest: forest.visual,
     trees,
     collider: navCollider,

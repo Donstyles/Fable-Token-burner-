@@ -2,7 +2,8 @@ import { describe, expect, it } from 'vitest';
 import catalogueJson from '../../assets/props/catalogue.json';
 import gullhaven from '../../levels/gullhaven/region';
 import { MONSTERS, NPCS } from '../../src/game/monsters';
-import { caveLocalOf } from './cave';
+import { ROLE } from '../elements/roles';
+import { CAVE, caveLocalOf } from './cave';
 import { rectDistance } from './plots';
 import type { PropCatalogue } from './props';
 import { buildRegion, inside, type RegionScript } from './region';
@@ -222,6 +223,55 @@ describe('Gullhaven', () => {
       const len = Math.hypot(f[0], f[1]);
       expect(-Math.sin(placed.yaw)).toBeCloseTo(f[0] / len, 5);
       expect(Math.cos(placed.yaw)).toBeCloseTo(f[1] / len, 5);
+    }
+  });
+
+  it('digs the cave into the goblin hills, facing down to the north road', () => {
+    const portal = level.portals.find((p) => p.name === 'cave')!;
+    const floor = portal.position[1];
+    const h = (gullhaven.cave!.facing * Math.PI) / 180;
+    const [cx, cz] = gullhaven.cave!.at;
+    const spec = { x: cx, y: floor, z: cz, yaw: Math.atan2(-Math.sin(h), -Math.cos(h)) };
+    // The north road ends on the slope before the mouth, not beside it.
+    const road = gullhaven.roads.find((r) => r.name === 'north-road')!.path;
+    const end = caveLocalOf(spec, road[road.length - 1]![0], road[road.length - 1]![1]);
+    expect(end.z).toBeLessThan(-8);
+    expect(Math.abs(end.x)).toBeLessThan(10);
+    // The land climbs into the hill: the tunnel runs up the slope, not along it.
+    const rise = (z: number) => {
+      const [x, , wz] = [cx + Math.sin(h) * z, 0, cz - Math.cos(h) * z];
+      return level.height.sample(x, wz);
+    };
+    expect(rise(40) - rise(-20)).toBeGreaterThan(15);
+    // The fine ground: a brow over the arch, an apron at the floor before it.
+    const v = level.visual;
+    let brow = 0;
+    let apron = 0;
+    for (let t = 0; t < v.materials.length; t++) {
+      if (v.materials[t] !== ROLE.terrain) continue;
+      const i = v.indices[t * 3]!;
+      const l = caveLocalOf(spec, v.positions[i * 3]!, v.positions[i * 3 + 2]!);
+      const y = v.positions[i * 3 + 1]! - floor;
+      if (Math.abs(l.x) < 2 && l.z > 1 && l.z < 3) {
+        expect(y).toBeGreaterThan(CAVE.height + 0.9);
+        brow++;
+      }
+      if (Math.abs(l.x) < 2 && l.z > -4 && l.z < -1) {
+        expect(Math.abs(y)).toBeLessThan(0.6);
+        apron++;
+      }
+    }
+    expect(brow).toBeGreaterThan(0);
+    expect(apron).toBeGreaterThan(0);
+    // The coarse ground under the tunnel is pressed below its floor.
+    const under = caveLocalOf(spec, cx, cz);
+    expect(under.z).toBeCloseTo(0);
+    for (const z of [2, 6, 10, 14]) expect(rise(z)).toBeLessThan(floor);
+    // Meshy's rocks stand about it; no tree grows on its ground.
+    expect(level.props.filter((p) => p.model.startsWith('rock-')).length).toBeGreaterThanOrEqual(8);
+    for (const t of level.trees) {
+      const l = caveLocalOf(spec, t.x, t.z);
+      expect(Math.abs(l.x) < 15 && l.z > -CAVE.front && l.z < CAVE.length + 12).toBe(false);
     }
   });
 
