@@ -1,0 +1,82 @@
+[
+  {
+    "id": "building-inn",
+    "polycount": 2000,
+    "prompt": "A village inn of a northern harbour town: two storeys, a half-timbered upper floor of cream plaster between dark oak beams over a cut-stone ground floor, a steep wooden-shingle roof with two small dormers and a stone chimney, a wide front door under a little porch roof, a wrought-iron sign bracket with a hanging wooden sign."
+  },
+  {
+    "id": "building-temple",
+    "polycount": 2000,
+    "prompt": "A small stone temple: thick cut-stone walls, a tall round-arched doorway in the front gable with a round window above it, a short square bell tower with an open belfry and a pointed slate roof rising at the back, a steep slate roof, buttresses along the sides."
+  },
+  {
+    "id": "building-store",
+    "polycount": 1500,
+    "prompt": "A trader's shop: one and a half storeys, half-timbered cream plaster walls with dark beams on a stone plinth, a shopfront with a wide window of small panes and a wooden awning over the door, barrels and crates under the awning, a steep wooden-shingle roof with a chimney."
+  },
+  {
+    "id": "building-smithy",
+    "polycount": 1500,
+    "prompt": "A village blacksmith's forge: a low building of rough stone with a big round-arched opening across the front showing a dark interior with a glowing hearth, a tall stone chimney, a lean-to roof on wooden posts along one side sheltering an anvil on a log and a water trough, a slate roof."
+  },
+  {
+    "id": "building-stables",
+    "polycount": 1500,
+    "prompt": "A long low timber stable: dark weathered plank walls, a shingle roof with wide eaves, three stall openings along the front with wooden half-doors, a hayloft hatch in the gable with a little hoist beam, a horse trough by the wall."
+  },
+  {
+    "id": "building-barn",
+    "polycount": 1200,
+    "prompt": "A large timber barn: dark weathered vertical planks on a stone footing, a steep wooden-shingle roof, tall double doors on the gable end with a small loft door above them, a lean-to shed along one side."
+  },
+  {
+    "id": "building-farmhouse",
+    "polycount": 1500,
+    "prompt": "A long farmhouse: one huge sweeping half-hipped roof of wooden shingles reaching down almost to the ground, the living end with small shuttered windows, a door and a wooden balcony under the gable, the barn end with a wide wagon door, a stone chimney."
+  },
+  {
+    "id": "building-cottage-01",
+    "polycount": 1000,
+    "prompt": "A small half-timbered cottage: cream plaster between dark oak beams on a stone plinth, a steep wooden-shingle roof with wide eaves, a front door with a small shuttered window either side, a stone chimney, a woodpile stacked under the eave."
+  },
+  {
+    "id": "building-cottage-02",
+    "polycount": 1000,
+    "prompt": "A small single-storey peasant cottage: whitewashed plaster walls with dark timber framing, a steep thatched roof with hipped ends, a plank door with a wooden lintel and one small window beside it, a brick chimney, a small lean-to against the back."
+  },
+  {
+    "id": "building-cottage-03",
+    "polycount": 1200,
+    "prompt": "A two-storey townhouse: a stone ground floor, a half-timbered upper floor jettied out over it on carved beams, a steep wooden-shingle roof, a front door with steps, a small wooden balcony with a rail under the upper window, window boxes with green plants."
+  },
+  {
+    "id": "prop-well",
+    "polycount": 500,
+    "prompt": "A village well: a round waist-high wall of fitted grey stones, two wooden posts holding a small pitched roof of wooden shingles, a windlass with a crank handle, a rope and a wooden bucket."
+  },
+  {
+    "id": "prop-shrine",
+    "polycount": 400,
+    "prompt": "A wayside shrine: a square stone pillar at chest height with a roofed niche at the top holding a small carved figure, a little pitched roof of wooden shingles, a stone step at the foot."
+  },
+  {
+    "id": "prop-cart",
+    "polycount": 500,
+    "prompt": "A wooden farm cart: a plank bed with low sides on two large spoked wheels, two long shafts at the front resting on the ground, weathered grey-brown wood, empty."
+  },
+  {
+    "id": "prop-market-stall",
+    "polycount": 600,
+    "prompt": "A market stall: a sturdy wooden table under a red and cream striped canvas awning on four posts, baskets of green apples and sacks of grain on the table, a crate underneath."
+  },
+  {
+    "id": "prop-haystack",
+    "polycount": 300,
+    "prompt": "A rounded haystack of dry golden hay built up around a wooden pole, taller than a man, slightly lumpy sides."
+  },
+  {
+    "id": "prop-lantern-post",
+    "polycount": 300,
+    "prompt": "A wooden lantern post: a square oak post with a bracket arm at the top holding a hanging iron lantern with glass panes, a stone footing."
+  }
+]
