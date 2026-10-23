@@ -2,7 +2,7 @@
   "number": 12,
   "name": "trees-image-first",
   "created": "2026-10-19",
-  "approved": false,
+  "approved": true,
   "items": [
     {
       "assetId": "tree-spruce-01",
@@ -606,5 +606,6 @@
     }
   ],
   "estimatedCredits": 360,
-  "runs": []
+  "runs": [],
+  "imagesReviewed": true
 }
