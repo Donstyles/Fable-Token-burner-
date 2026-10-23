@@ -37,7 +37,7 @@ import { testCharacters } from '../game/fixtures';
 import { newGame, type GameState } from '../game/state';
 import { automapLevel, revealAt } from '../game/automap';
 import { createCreationScreen } from '../ui/creation';
-import { installScreens, type Screens } from '../ui/screens';
+import { installScreens, type MapMark, type Screens } from '../ui/screens';
 import { mulberry32, rollDice } from '../game/rng';
 import { afflict, cure, cureAll } from '../game/conditions';
 import { spellDef, type SpellId } from '../game/spells';
@@ -67,7 +67,8 @@ import { Npc } from '../world/npc';
 import { Bust } from '../world/bust';
 import { createDialogue, type Dialogue } from '../ui/dialogue';
 import { DIALOGUES, QUESTS } from '../game/dialogue';
-import { questNotice } from '../ui/dialogue-model';
+import { questNotice, questStage } from '../ui/dialogue-model';
+import { createTitleScreen } from '../ui/title';
 import { handleQuestEvent } from '../game/quests';
 import { shareExperience } from '../game/experience';
 import { Soundscape } from '../world/soundscape';
@@ -164,8 +165,34 @@ const ENTRY = QUERY.get('entry');
 
 export async function startDev(app: App): Promise<DevHandle> {
   const { scene, engine, camera, canvas, uiLayer } = app;
-  // A portal and `?continue` go on from the autosave; anything else is a new game.
-  const choice = (ENTRY || QUERY.has('continue') ? 'continue' : null) as 'continue' | 'new' | null;
+  // The title (owner, 2026-10-23: "Prepare the next demo for me to play"): a plain visit opens
+  // on Continue and New Game. A portal and `?continue` go on from the autosave; the test hooks
+  // (`?dev`) start a new game at once, as before.
+  let choice: 'continue' | 'new' | null = ENTRY || QUERY.has('continue') ? 'continue' : null;
+  if (!choice && !QUERY.has('dev')) {
+    const saved = loadGame();
+    choice = await new Promise<'continue' | 'new'>((resolve) => {
+      const title = createTitleScreen(uiLayer, {
+        hasSave: saved !== null,
+        onContinue: () => {
+          title.dispose();
+          resolve('continue');
+        },
+        onNewGame: () => {
+          title.dispose();
+          resolve('new');
+        },
+      });
+    });
+    // A save made below ground continues there.
+    if (choice === 'continue' && saved && saved.level.id !== LEVEL) {
+      const url = new URL(location.href);
+      url.searchParams.set('level', saved.level.id);
+      url.searchParams.set('continue', '');
+      location.replace(url.toString());
+      return new Promise<DevHandle>(() => {});
+    }
+  }
   // Townsfolk standing about the village (src/world/npc.ts); monsters live on the handle.
   const npcs: Npc[] = [];
   await enableHavok(scene, new Vector3(0, -DEFAULT_TUNING.gravity, 0));
@@ -335,6 +362,15 @@ export async function startDev(app: App): Promise<DevHandle> {
     },
   });
   strip.setClock(state.clock.minutes);
+  // Gold and food on the band, as MM6's (the audit, 2026-10-23: 430 gold shown nowhere).
+  let purse = '';
+  const showPurse = (): void => {
+    const now = `${state.gold}:${state.food}`;
+    if (now === purse) return;
+    purse = now;
+    strip.setPurse(state.gold, state.food);
+  };
+  showPurse();
   const status = createStatusLine(uiLayer);
   const feedback = new CombatFeedback(scene, stepper, uiLayer, {}, rng);
   // Simulated seconds: the party's recovery and the screens' die run on it.
@@ -356,6 +392,36 @@ export async function startDev(app: App): Promise<DevHandle> {
       save();
     },
     onCast: (cast) => performCast(cast),
+    // The map's marks: the villagers (a quest to take or to hand in marks them out) and the
+    // ways in and out.
+    marks: (): MapMark[] => [
+      ...npcs.map((n): MapMark => {
+        const def = DIALOGUES[n.def.id];
+        const pending = (def?.topics ?? []).some((t) => {
+          if (t.kind !== 'quest') return false;
+          const q = QUESTS[t.quest];
+          const stage = q ? questStage(state.quests, q, n.def.id) : 'done';
+          return stage === 'offer' || stage === 'ready';
+        });
+        return {
+          x: n.position.x,
+          z: n.position.z,
+          kind: pending ? 'quest' : 'person',
+          label: n.def.name,
+        };
+      }),
+      ...level.portals.map((p): MapMark => ({
+        x: p.position.x,
+        z: p.position.z,
+        kind: 'portal',
+        label: PLACE_NAMES[p.target.level] ?? p.target.level,
+      })),
+    ],
+    // MM6 will not let a party sleep with monsters about it.
+    restBlocked: () =>
+      handle.monsters.some((m) => m.alive && m.distanceTo(party.position) < 30)
+        ? 'There are hostile creatures nearby!'
+        : null,
   });
   // Spells you can see (DESIGN.md 16.9); the cast itself is performed below, once the
   // view, the torch and the monsters exist.
@@ -999,6 +1065,7 @@ export async function startDev(app: App): Promise<DevHandle> {
     }
     if (!fly && !paused) feedback.applyCamera(camera);
     strip.update(simTime);
+    showPurse();
     const eye = camera.globalPosition;
     const yaw = fly ? flyYaw : party.yaw;
     underwater.set(isUnderwater(level.water, eye));
