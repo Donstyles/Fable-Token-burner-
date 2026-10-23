@@ -1488,7 +1488,9 @@ world under a filter is not a 1998 one however its tiles are painted.
 MM6 drew trees as sprites, lit its ground flat, painted its sky once on a
 strip, and skinned its models in a few hundred texels. So:
 
-- **Tree and bush sprites** (`spriteOf` in `src/world/props.ts`). Each
+- **Tree and bush sprites** (superseded 2026-10-23, below: trees and bushes
+  are real 3D models again, a full model within 180 m and the far-detail
+  copy to 450 m). Each
   Meshy tree is drawn once from the side, orthographic, into 128 pixels
   under its own light (a key from the picture's upper left over a grey
   fill, no fog, no wind, no lanterns), quantised to ten tones a channel,
@@ -1505,6 +1507,15 @@ strip, and skinned its models in a few hundred texels. So:
   yellow-greens to tan; both are gone for trees and bushes (their skins and
   sprites skip the palette), and the sprite's tint is a grey 0.76, not
   green.
+  **Superseded the same day** (owner: "If we have these expensive textured
+  3d models we should do real 3d"): the sprites are gone. Every tree and
+  bush is drawn as its model, thin-instanced per region like the rocks and
+  houses, the full model within 180 m of the eye and the far copy (`<id>.lod.glb`,
+  a third of the triangles) out to 450 m, swaying in the wind. Gullhaven's
+  1,027 trees cost about 300k triangles in its busiest views against 20k to
+  50k as sprites, with the same draw calls (about 125); the iPhone 14 Pro
+  Max carries that, and `?dev` shows the frame rate to check it there.
+  Their skins keep their own colours (no palette snap), lit as other models.
 - **Bitmap skins** (`src/render/bitmap.ts`). Every loaded albedo (houses,
   props, characters) is read back from the GPU's own mip level nearest
   the target (512 pixels for a building or a townsperson, 256 for a
@@ -2382,6 +2393,9 @@ exists; the headland ruin has no ruin model yet.
   the twenty trees and bushes made image-to-3D from the owner's own pictures, 300 credits.
   Their sprites keep the models' own colours (16.14): no repaint into six greens and no
   palette snap for trees and bushes, a grey tint.
+- 2026-10-23 – Trees and bushes are real 3D models, not sprites (owner: "If we have these
+  expensive textured 3d models we should do real 3d"): full detail within 180 m, the far
+  copy to 450 m, about 300k triangles in Gullhaven's busiest view (16.14).
 
 - 2026-10-19 – Fuchsia backgrounds for every concept picture (owner: "We do fuchsia
   backgrounds"). The owner makes the tree pictures free in ChatGPT

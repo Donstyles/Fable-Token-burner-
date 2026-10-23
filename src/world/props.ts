@@ -16,16 +16,8 @@ import { Color3 } from '@babylonjs/core/Maths/math.color';
 import catalogueJson from '../../assets/props/catalogue.json';
 import { PROPS, type PropCatalogue, type PropMeasure } from '../../kernel/terrain/props';
 import { type RetroMaterials } from '../render/materials';
-import { bitmapPixels, bitmapTexture } from '../render/bitmap';
+import { bitmapTexture } from '../render/bitmap';
 import { wallDetail } from './painted-textures';
-import { Camera } from '@babylonjs/core/Cameras/camera';
-import { TargetCamera } from '@babylonjs/core/Cameras/targetCamera';
-import { Constants } from '@babylonjs/core/Engines/constants';
-import { DynamicTexture } from '@babylonjs/core/Materials/Textures/dynamicTexture';
-import { RenderTargetTexture } from '@babylonjs/core/Materials/Textures/renderTargetTexture';
-import { Color4 } from '@babylonjs/core/Maths/math.color';
-import { Vector3, Vector4 } from '@babylonjs/core/Maths/math.vector';
-import { CreatePlane } from '@babylonjs/core/Meshes/Builders/planeBuilder';
 
 const urls = import.meta.glob('../../assets/props/*/*.glb', {
   query: '?url',
@@ -100,126 +92,6 @@ async function loadMesh(
   return { mesh, texture, doubleSided };
 }
 
-/** Sprite height in pixels: MM6's trees stood about a hundred pixels tall. */
-const SPRITE_PIXELS = 128;
-
-/**
- * A tree or a bush as a sprite (DESIGN.md 16.14): the model is drawn once from the side into a
- * small texture in its own colours, ten tones a channel, and a quad carrying it stands in for every
- * instance, turning to face the eye in the vertex shader. The sprite's square covers the
- * model's bounding box, `side` metres to a side, its foot at y = 0.
- */
-async function spriteOf(
-  scene: Scene,
-  materials: RetroMaterials,
-  id: string,
-  mesh: Mesh,
-  measure: PropMeasure,
-): Promise<{ mesh: Mesh; material: ShaderMaterial }> {
-  // The catalogue's size is already in metres (the scale is baked into the vertices).
-  const [w, h, d] = measure.size;
-  const side = Math.max(w, h, d);
-  const camera = new TargetCamera(`sprite-cam:${id}`, new Vector3(0, side / 2, -200), scene, false);
-  camera.mode = Camera.ORTHOGRAPHIC_CAMERA;
-  camera.orthoLeft = -side / 2;
-  camera.orthoRight = side / 2;
-  camera.orthoBottom = -side / 2;
-  camera.orthoTop = side / 2;
-  camera.minZ = 1;
-  camera.maxZ = 400;
-  camera.setTarget(new Vector3(0, side / 2, 0));
-  const target = new RenderTargetTexture(`sprite-rtt:${id}`, SPRITE_PIXELS, scene, {
-    generateMipMaps: false,
-    samplingMode: Constants.TEXTURE_NEAREST_SAMPLINGMODE,
-    generateDepthBuffer: true,
-  });
-  target.activeCamera = camera;
-  target.clearColor = new Color4(0, 0, 0, 0);
-  target.renderList = [mesh];
-  // A render skips a mesh whose shader is still compiling; wait for it or draw nothing.
-  const paint = mesh.material as ShaderMaterial;
-  await paint.forceCompilationAsync(mesh);
-  // Painted under its own light, as a sprite was: a key from the picture's upper left over a
-  // grey fill, no fog (the scene's fog is measured from the party's eye, not this camera),
-  // no wind, no lanterns. The scene's light and fog fall on the finished sprite when drawn.
-  paint.setFloat('fogDensity', 0);
-  paint.setFloat('wind', 0);
-  paint.setVector3('cameraPosition', camera.position);
-  paint.setVector3('lightDirection', new Vector3(0.45, -0.6, 0.65).normalize());
-  // A strong key (critics, round 8: MM6's crowns run from lum 18 to 95).
-  paint.setColor3('lightColor', new Color3(0.6, 0.6, 0.6));
-  // Low ambient (critics, round 9): crowns darker than the grass under them.
-  paint.setColor3('ambientColor', new Color3(0.15, 0.15, 0.15));
-  paint.setArray3('pointColor', new Array<number>(12).fill(0));
-  mesh.isVisible = true;
-  target.render(false, false);
-  mesh.isVisible = false;
-  const n = SPRITE_PIXELS;
-  const raw = (await target.readPixels()) as Uint8Array | null;
-  // readPixels gives the rows bottom first; the canvas wants them top first.
-  const px = raw
-    ? bitmapPixels(raw, n, n, n, n, 10, true, 1, false)
-    : new Uint8ClampedArray(n * n * 4);
-  // The quad covers only the painted pixels: a spruce in its square is two thirds air, and
-  // every transparent texel still costs a fragment on a phone (and a second on a CPU).
-  let x0 = n;
-  let x1 = -1;
-  let y0 = n;
-  let y1 = -1;
-  for (let y = 0; y < n; y++) {
-    for (let x = 0; x < n; x++) {
-      if (px[(y * n + x) * 4 + 3]! < 128) continue;
-      if (x < x0) x0 = x;
-      if (x > x1) x1 = x;
-      if (y < y0) y0 = y;
-      if (y > y1) y1 = y;
-    }
-  }
-  if (x1 < 0) {
-    x0 = 0;
-    y0 = 0;
-    x1 = n - 1;
-    y1 = n - 1;
-  }
-  const sprite = new DynamicTexture(`sprite:${id}`, { width: n, height: n }, scene, false);
-  sprite.getContext().putImageData(new ImageData(px, n, n), 0, 0);
-  sprite.hasAlpha = true;
-  sprite.update(true);
-  // Nearest, no mipmaps: a crown's edge stays a hard edge at any distance (critics, round 8).
-  sprite.updateSamplingMode(Constants.TEXTURE_NEAREST_NEAREST);
-  target.dispose();
-  camera.dispose();
-  const metres = side / n;
-  const width = (x1 - x0 + 1) * metres;
-  const height = (y1 - y0 + 1) * metres;
-  // Canvas row 0 is the top of the picture (the zenith side), so v runs the other way.
-  const quad = CreatePlane(
-    `sprite:${id}`,
-    {
-      width,
-      height,
-      frontUVs: new Vector4(x0 / n, 1 - (y1 + 1) / n, (x1 + 1) / n, 1 - y0 / n),
-    },
-    scene,
-  );
-  quad.position.x = ((x0 + x1 + 1) / 2 - n / 2) * metres;
-  quad.position.y = (n - (y1 + 1)) * metres + height / 2;
-  quad.bakeCurrentTransformIntoVertices();
-  const material = materials.create({
-    name: `sprite-${id}`,
-    texture: sprite,
-    doubleSided: true,
-    billboard: true,
-    // A shade darker, as MM6's canopies stood (critics, round 5), but grey, not green: the
-    // sprite carries its own colours now, a birch's white bark and a dead tree's grey wood.
-    tint: new Color3(0.76, 0.76, 0.76),
-  });
-  quad.material = material;
-  quad.isPickable = false;
-  quad.isVisible = false;
-  return { mesh: quad, material };
-}
-
 /** Load the models with these ids, in parallel; each once. */
 export async function loadPropModels(
   scene: Scene,
@@ -265,14 +137,6 @@ export async function loadPropModels(
         ...(building ? { detail: wallDetail(scene) } : {}),
       });
       full.mesh.material = material;
-      if (sways) {
-        // Trees and bushes stand as sprites, as MM6's did; the model drew its own picture.
-        const sprite = await spriteOf(scene, materials, id, full.mesh, measure);
-        full.mesh.dispose();
-        material.dispose();
-        models.set(id, { id, measure, mesh: sprite.mesh, far: null, material: sprite.material });
-        return;
-      }
       let far: Mesh | null = null;
       if (measure.lodTriangles) {
         far = (await loadMesh(scene, urlOf(id, true), `prop:${id}:far`, measure)).mesh;
