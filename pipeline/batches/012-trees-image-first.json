@@ -606,6 +606,217 @@
     }
   ],
   "estimatedCredits": 360,
-  "runs": [],
+  "runs": [
+    {
+      "started": "2026-10-23T12:55:31.982Z",
+      "taskIds": [
+        "01a168d4-b9c5-74dd-8a29-b410d7c7350a",
+        "01a168d4-bf88-7511-86e9-6d2b8d03980a",
+        "01a168d4-c659-7636-87f1-585cf6d49dd1",
+        "01a168d4-cbb5-7027-a6e8-5a6220569512",
+        "01a168d4-d167-77ab-9caa-4a2bc8e455e8",
+        "01a168d4-da01-7708-8b1f-464b1edcbcb4",
+        "01a168d4-e177-7314-bb57-d0ac5ef34453",
+        "01a168d4-e7c4-72a0-b18a-34d7c0285236",
+        "01a168d4-ee4e-77e3-b7a0-922ea558dd90",
+        "01a168d4-f4b0-7363-a813-ffe32dfb2da9",
+        "01a168d6-6fdc-7083-b631-0c1f87bb6f6b",
+        "01a168d6-760b-7529-a2c2-8d05ad0adee6",
+        "01a168d6-7c9e-72b2-a15e-2bcd015c44d2",
+        "01a168d6-8299-73c7-a68a-e5b07fd6a277",
+        "01a168d6-89ad-74fc-8559-6e78cf892e5f",
+        "01a168d6-8ed8-7122-9264-d747e407e4ff",
+        "01a168d6-9395-728b-aaac-ea96d8f2c77a",
+        "01a168d6-98d4-772e-acf0-cbd0c52a7911",
+        "01a168d6-9fdd-7265-a560-b6d907c11c79",
+        "01a168d6-a70c-7639-8d0b-2d99836285a8"
+      ],
+      "tasks": {
+        "tree-spruce-01": {
+          "image-to-3d": {
+            "taskId": "01a168d4-b9c5-74dd-8a29-b410d7c7350a",
+            "status": "SUCCEEDED",
+            "consumedCredits": 15,
+            "operationId": "b012-tree-spruce-01-image-to-3d-r1-a1"
+          }
+        },
+        "tree-spruce-02": {
+          "image-to-3d": {
+            "taskId": "01a168d4-bf88-7511-86e9-6d2b8d03980a",
+            "status": "SUCCEEDED",
+            "consumedCredits": 15,
+            "operationId": "b012-tree-spruce-02-image-to-3d-r1-a1"
+          }
+        },
+        "tree-spruce-03": {
+          "image-to-3d": {
+            "taskId": "01a168d4-c659-7636-87f1-585cf6d49dd1",
+            "status": "SUCCEEDED",
+            "consumedCredits": 15,
+            "operationId": "b012-tree-spruce-03-image-to-3d-r1-a1"
+          }
+        },
+        "tree-fir-01": {
+          "image-to-3d": {
+            "taskId": "01a168d4-cbb5-7027-a6e8-5a6220569512",
+            "status": "SUCCEEDED",
+            "consumedCredits": 15,
+            "operationId": "b012-tree-fir-01-image-to-3d-r1-a1"
+          }
+        },
+        "tree-pine-01": {
+          "image-to-3d": {
+            "taskId": "01a168d4-d167-77ab-9caa-4a2bc8e455e8",
+            "status": "SUCCEEDED",
+            "consumedCredits": 15,
+            "operationId": "b012-tree-pine-01-image-to-3d-r1-a1"
+          }
+        },
+        "tree-pine-02": {
+          "image-to-3d": {
+            "taskId": "01a168d4-da01-7708-8b1f-464b1edcbcb4",
+            "status": "SUCCEEDED",
+            "consumedCredits": 15,
+            "operationId": "b012-tree-pine-02-image-to-3d-r1-a1"
+          }
+        },
+        "tree-larch-01": {
+          "image-to-3d": {
+            "taskId": "01a168d4-e177-7314-bb57-d0ac5ef34453",
+            "status": "SUCCEEDED",
+            "consumedCredits": 15,
+            "operationId": "b012-tree-larch-01-image-to-3d-r1-a1"
+          }
+        },
+        "tree-oak-01": {
+          "image-to-3d": {
+            "taskId": "01a168d4-e7c4-72a0-b18a-34d7c0285236",
+            "status": "SUCCEEDED",
+            "consumedCredits": 15,
+            "operationId": "b012-tree-oak-01-image-to-3d-r1-a1"
+          }
+        },
+        "tree-oak-02": {
+          "image-to-3d": {
+            "taskId": "01a168d4-ee4e-77e3-b7a0-922ea558dd90",
+            "status": "SUCCEEDED",
+            "consumedCredits": 15,
+            "operationId": "b012-tree-oak-02-image-to-3d-r1-a1"
+          }
+        },
+        "tree-beech-01": {
+          "image-to-3d": {
+            "taskId": "01a168d4-f4b0-7363-a813-ffe32dfb2da9",
+            "status": "SUCCEEDED",
+            "consumedCredits": 15,
+            "operationId": "b012-tree-beech-01-image-to-3d-r1-a1"
+          }
+        },
+        "tree-birch-01": {
+          "image-to-3d": {
+            "taskId": "01a168d6-6fdc-7083-b631-0c1f87bb6f6b",
+            "status": "PENDING",
+            "consumedCredits": null,
+            "operationId": "b012-tree-birch-01-image-to-3d-r1-a2"
+          }
+        },
+        "tree-maple-01": {
+          "image-to-3d": {
+            "taskId": "01a168d6-760b-7529-a2c2-8d05ad0adee6",
+            "status": "PENDING",
+            "consumedCredits": null,
+            "operationId": "b012-tree-maple-01-image-to-3d-r1-a1"
+          }
+        },
+        "tree-linden-01": {
+          "image-to-3d": {
+            "taskId": "01a168d6-7c9e-72b2-a15e-2bcd015c44d2",
+            "status": "PENDING",
+            "consumedCredits": null,
+            "operationId": "b012-tree-linden-01-image-to-3d-r1-a1"
+          }
+        },
+        "tree-willow-01": {
+          "image-to-3d": {
+            "taskId": "01a168d6-8299-73c7-a68a-e5b07fd6a277",
+            "status": "PENDING",
+            "consumedCredits": null,
+            "operationId": "b012-tree-willow-01-image-to-3d-r1-a1"
+          }
+        },
+        "tree-dead-01": {
+          "image-to-3d": {
+            "taskId": "01a168d6-89ad-74fc-8559-6e78cf892e5f",
+            "status": "PENDING",
+            "consumedCredits": null,
+            "operationId": "b012-tree-dead-01-image-to-3d-r1-a1"
+          }
+        },
+        "tree-dead-02": {
+          "image-to-3d": {
+            "taskId": "01a168d6-8ed8-7122-9264-d747e407e4ff",
+            "status": "PENDING",
+            "consumedCredits": null,
+            "operationId": "b012-tree-dead-02-image-to-3d-r1-a1"
+          }
+        },
+        "tree-palm-01": {
+          "image-to-3d": {
+            "taskId": "01a168d6-9395-728b-aaac-ea96d8f2c77a",
+            "status": "PENDING",
+            "consumedCredits": null,
+            "operationId": "b012-tree-palm-01-image-to-3d-r1-a1"
+          }
+        },
+        "tree-palm-02": {
+          "image-to-3d": {
+            "taskId": "01a168d6-98d4-772e-acf0-cbd0c52a7911",
+            "status": "PENDING",
+            "consumedCredits": null,
+            "operationId": "b012-tree-palm-02-image-to-3d-r1-a1"
+          }
+        },
+        "bush-01": {
+          "image-to-3d": {
+            "taskId": "01a168d6-9fdd-7265-a560-b6d907c11c79",
+            "status": "PENDING",
+            "consumedCredits": null,
+            "operationId": "b012-bush-01-image-to-3d-r1-a1"
+          }
+        },
+        "bush-02": {
+          "image-to-3d": {
+            "taskId": "01a168d6-a70c-7639-8d0b-2d99836285a8",
+            "status": "PENDING",
+            "consumedCredits": null,
+            "operationId": "b012-bush-02-image-to-3d-r1-a1"
+          }
+        }
+      },
+      "balanceBefore": 1888,
+      "attempts": {
+        "tree-spruce-01/image-to-3d": 1,
+        "tree-spruce-02/image-to-3d": 1,
+        "tree-spruce-03/image-to-3d": 1,
+        "tree-fir-01/image-to-3d": 1,
+        "tree-pine-01/image-to-3d": 1,
+        "tree-pine-02/image-to-3d": 1,
+        "tree-larch-01/image-to-3d": 1,
+        "tree-oak-01/image-to-3d": 1,
+        "tree-oak-02/image-to-3d": 1,
+        "tree-beech-01/image-to-3d": 1,
+        "tree-birch-01/image-to-3d": 2,
+        "tree-maple-01/image-to-3d": 1,
+        "tree-linden-01/image-to-3d": 1,
+        "tree-willow-01/image-to-3d": 1,
+        "tree-dead-01/image-to-3d": 1,
+        "tree-dead-02/image-to-3d": 1,
+        "tree-palm-01/image-to-3d": 1,
+        "tree-palm-02/image-to-3d": 1,
+        "bush-01/image-to-3d": 1,
+        "bush-02/image-to-3d": 1
+      }
+    }
+  ],
   "imagesReviewed": true
 }
