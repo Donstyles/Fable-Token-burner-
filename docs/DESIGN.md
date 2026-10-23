@@ -877,20 +877,66 @@ out the way one grows (`kernel/terrain/village.ts`, `layoutVillage`):
 
 ### 15.3 The cave mouth and portals
 
-- At the ravine head (25 m from its end, facing down the gorge) a rock
-  knoll sits on the hillside with an arched hole: a stone-shored tunnel
-  6.4 m wide, 4.4 m high and 16 m long with a dirt floor, a 7 m threshold
-  slab outside, and a warm glow inside (`kernel/terrain/cave.ts`). The
-  ravine floor climbs gently enough to walk, so the gorge is the way to
-  it. The terrain under the tunnel is cut 6 m down and 6 m past the back
-  wall so the rising hill never pokes through the floor at 5 m cells; the
-  threshold in front is levelled over 16 m.
+Rebuilt 2026-10-23 after the owner's phone screenshot of the first one from
+Gullhaven's north road ("WTF is that shit?"): a box of stone on the slope, a
+slab front with a hole, sloped planes for sides, a dirt slab before it and a
+lit corridor inside. The first mouth (2026-10-16, at the valley's ravine head)
+was that knoll: a stone-shored tunnel under four sloped quads, the terrain cut
+6 m down under it, a warm glow at the back. Now (`kernel/terrain/cave.ts`):
+
+- **Set into the slope.** The mouth faces down the hill and its tunnel runs up
+  into it; in Gullhaven it faces heading 140 toward the north road's end, where
+  at 225 it had run along the contour and shown the road its side. The floor is
+  dug 3.2 m below the ground at the threshold point, so the hill stands round
+  the mouth rather than a mound on it.
+- **The ground drawn again, finer.** The terrain is a heightfield of 5 m cells
+  and holds no hole, so a sheet of the terrain's own material on a 1.2 m grid
+  covers 43 by 55 m round the mouth: it follows the land, is dug into an apron
+  that falls gently from the floor (full across the mouth, running out over
+  12 m down the slope and 11 m to the sides), and rises behind into a brow
+  5.9 m over the floor, a little lumpy and higher on one side, that runs back
+  into the hill. Its splat is the terrain's own (`splatAt` in `region.ts`), with
+  dirt on the apron and the brown scree at the foot of the face and on the
+  brow; its normals follow the coarse terrain's span where it only follows the
+  land, and at its edges it sinks under the coarse ground, so it has no seam.
+  The coarse ground is pressed under it (`press`): 0.4 m under the sheet, every
+  vertex of a cell the tunnel touches below the floor, so no 5 m triangle rises
+  into the tunnel. No tree grows on it.
+- **The face.** The sheet is cut along the face line, 16.8 m wide, and the rock
+  face fills the cut exactly: its outer edge runs through the sheet's own
+  vertices, its inner edge is the arch's rim, and four rings between bulge into
+  a lip over the arch, each vertex pushed by its own amount, flat-shaded, in the
+  rock role. A floor of earth runs from the apron in under the arch.
+- **The tunnel.** Ten rings of a 13-point arch (6.4 m wide, 4.5 m to the crown
+  at the mouth, narrowing to 5.2 m and lowering a little toward the end), every
+  vertex pushed out 0.12 to 0.5 m (the rim up to 0.75), closed at 17 m by a cap.
+  Vertex colours carry the daylight that reaches each point, full at the rim
+  and none ten metres in (`caveShade`), the ceiling a quarter darker, and a warm
+  grey-brown (1, 0.9, 0.78) sets the painted rock beside Meshy's outcrops: from
+  outside the tunnel reads as depth, inside only the party's torch shows its
+  walls, and the end is black. There is no light inside any more. The outdoor
+  visual carries COLOR_0 for this (Babylon multiplies a role material's light
+  by it; the fences' are white), and the terrain material reads the sheet's as
+  splat weights, as it reads the coarse terrain's.
+- **The rocks.** Twelve of Meshy's rocks (`rock-outcrop-01`, `rock-boulder-01`
+  and `-02`, `rock-cluster-01`, scaled 0.9 to 1.9 and turned) stand as the
+  cheeks, a brow over the arch, slabs of bedrock (the angular block sunk to
+  three fifths, its flat top having read as cut stone) and stones on the apron's
+  edges and the slope, each sunk below the lowest ground under its footprint.
+  They are props of the sidecar with the runtime's box colliders; the same boxes
+  go into the navmesh, and a test keeps every one out of the tunnel and of a
+  6.4 m lane 14 m out before the mouth.
+- **Solid as drawn.** The sheet, the face, the floor and the tunnel's walls are
+  the collider and the navmesh's, so the party walks the brow and the apron and
+  stops at the rock where it is drawn, and the goblins below come up the apron
+  and in through the arch (an end-to-end test).
 - Portals (`PortalRecord`): a trigger disc with a target level and entry
   name, and an arrival point for the party coming the other way. The
-  valley's `cave` portal lies 4.5 m before the tunnel's back wall (clear
-  of a navmesh cell's erosion) and leads to the showcase dungeon's `exit`;
-  the showcase's `exit` portal at its spawn leads back to the valley's
-  `cave`, arriving on the threshold facing out. A portal arms only once
+  region's `cave` portal lies 4.5 m before the tunnel's end (clear
+  of a navmesh cell's erosion), 2.4 m across so nobody walks past it along the
+  narrowing wall, and leads to the showcase dungeon's `exit`;
+  the showcase's `exit` portal at its spawn leads back to the region's
+  `cave`, arriving on the apron 3.5 m out, facing out. A portal arms only once
   the party has stood 1.5 m clear of it, so arriving through it does not
   bounce the party straight back.
 - The transition is a fade to black with a line of text and a fresh load
@@ -2397,8 +2443,10 @@ in metres on a 640 m square of 5 m cells, x east and z north:
 - **Plots**: each building or prop at a point, facing the point its door faces,
   on a dead-level pad, sunk by its wall base (`kernel/terrain/plots.ts`); a named
   point on the apron before each door.
-- **The cave**: its threshold and the heading it faces; the ground is cut under
-  the tunnel and the portal at its back leads into the dungeon.
+- **The cave**: its threshold and the heading it faces, down the slope; the floor is
+  dug in, the ground round the mouth drawn again finer with an apron and a brow, the
+  rock face, the dark tunnel and Meshy's rocks about it, and the portal at its back
+  leads into the dungeon (15.3).
 - **People**: townsfolk facing a point; monster packs, a count round a centre.
 - **Named points**, the start and its facing, the light, fog and sky, and the
   terrain textures (the fourth slot is the beach's sand).
@@ -2453,6 +2501,18 @@ batch 012; the coast road's west end has no portal until the second region
 exists; the headland ruin has no ruin model yet.
 
 ## 13. Decision log
+
+- 2026-10-23 – The cave mouth rebuilt (owner, of a phone screenshot from the north road:
+  "WTF is that shit?"; 15.3). It was a box of stone on the slope, side-on to the road: at
+  heading 225 its tunnel ran along the contour. It now faces down the hill to the road's end
+  (140), its floor dug 3.2 m in; the ground round it is drawn again on a 1.2 m grid in the
+  terrain's own material and splat, an apron before the mouth and a brow over it, the coarse
+  ground pressed under it; a faceted rock face fills the cut in that ground round a rough
+  arch; the tunnel's rings fall off into black by vertex colour, with no light inside; twelve
+  of Meshy's rocks stand as its cheeks and brow, none of their boxes in the tunnel or the way
+  in. The goblins below path up the apron and in (a new end-to-end test). A Meshy model of a
+  whole cave mouth was considered and not needed: image-to-3D would likely close the hole or
+  leave a see-through gap, and a rock's box collider would shut the mouth.
 
 - 2026-10-23 – The trees sway more (owner: "I want tree swaying to be more pronounced"): the
   movement now grows with height instead of stopping at eight metres, so a twenty-metre
