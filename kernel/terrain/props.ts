@@ -29,6 +29,14 @@ export interface PropSpec {
    * before it.
    */
   door?: { x: number; width: number; height: number };
+  /**
+   * Lights the model carries, in metres in its own frame as `door` (z towards the front): a
+   * lantern's glass, a forge's coals. Found on the model's paint (tools/lib/glow.ts) or read
+   * off its square-on front view, and checked as marks on its review render; every copy of the
+   * model carries them, turned with it (owner, 2026-10-23: "How will you manage lighting
+   * features on houses and lanterns etc?").
+   */
+  lights?: readonly { at: readonly [number, number, number]; kind: 'lantern' | 'forge' }[];
 }
 
 /** The turn about the upright, in glTF's frame (the game's X is glTF's -X), that brings `front` to +Z. */
@@ -77,6 +85,8 @@ export const PROPS: Record<string, PropSpec> = {
     kind: 'building',
     height: 6,
     door: { x: 0.33, width: 3.1, height: 2.3 },
+    // The coals painted under the lean-to on its left.
+    lights: [{ at: [-1.15, 1, 1.08], kind: 'forge' }],
   },
   'building-stables': {
     kind: 'building',
@@ -116,7 +126,12 @@ export const PROPS: Record<string, PropSpec> = {
   'prop-cart': { kind: 'prop', height: 1.8, front: '-x' },
   'prop-market-stall': { kind: 'prop', height: 2.6 },
   'prop-haystack': { kind: 'prop', height: 2.4 },
-  'prop-lantern-post': { kind: 'prop', height: 3.4 },
+  'prop-lantern-post': {
+    kind: 'prop',
+    height: 3.4,
+    // The lantern hanging from the arm.
+    lights: [{ at: [0.49, 2.3, 0], kind: 'lantern' }],
+  },
   'prop-fence': { kind: 'prop', height: 1.2 },
   'prop-woodpile': { kind: 'prop', height: 1.3 },
   'rock-boulder-01': { kind: 'rock', height: 1.8 },

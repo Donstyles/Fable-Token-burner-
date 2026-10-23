@@ -2552,7 +2552,37 @@ loads, not cast by a real-time shadow map:
 - **Not yet**: the kernel's fences and the cave mouth cast none; nothing shades a wall or a
   trunk; the cast does not follow the hour (that needs a height per texel and several reads).
 
+### 17.5 Lights on the models (owner, 2026-10-23)
+
+A model's lights are part of the model, like its door: `lights` in `kernel/terrain/props.ts`,
+each a point in metres in the model's own frame and a kind. Every copy carries them, turned
+with it, so a second lantern post or smithy needs nothing more.
+
+- **Where they come from.** Meshy paints lit things warm and bright, so `tools/lib/glow.ts`
+  samples every triangle in the model's colour picture and gives the middle of each warm bright
+  patch (the smithy's coals under its lean-to). Pale glass escapes it, as the inn's cream
+  plaster would not, so a lantern is read off the model's square-on front view (`tools/review`
+  with `?front`) instead. Either way the point is checked as a mark on the review render
+  (`?marks=`) before it goes in.
+- **What they make.** A lantern is a warm point light in the materials (the four nearest a
+  model light it, coming up as the day goes, 15.7) and a halo: one of Babylon's sprites, the
+  particles' soft dot tinted gold, added to what is behind it, nothing by day and strongest at
+  night (`src/world/halos.ts`). A forge is a brazier: its light 0.28 m over the coals, and
+  flames and smoke from the particle helpers.
+- **Not yet.** Chimney smoke, and windows that glow after dark: the panes are not painted
+  bright, so they need a mask of their own.
+
 ## 13. Decision log
+
+- 2026-10-23 – Lights belong to the models (owner: "How do you plan to implant lighting on
+  features and buildings (lamps, forge, fire, hearth, etc)", "How will you manage lighting
+  features on houses and lanterns etc?"; 17.5). Each model names its lights in
+  `kernel/terrain/props.ts`, found on its own paint (`tools/lib/glow.ts`: the smithy's coals)
+  or read off its square-on front (the lantern post's lantern), and checked as marks on its
+  review render; the plots turn them with every copy. The two lights the town had were guesses
+  in code, the lantern's over the middle of its post and the forge's in the arched front. A
+  lantern carries a warm halo too, Babylon's sprites brightening as the day goes; the forge
+  burns as a brazier, flames and smoke on its coals.
 
 - 2026-10-23 – Shade under trees and houses (owner: "I want shadows under trees and
   buildings", 17.4): painted once at load into one ground-shade texture over the map from the

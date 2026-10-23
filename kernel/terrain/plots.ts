@@ -102,38 +102,32 @@ export function layoutPlots(
     const c = nb();
     box(c, [cx - w / 2, 0, cz - d / 2], [cx + w / 2, h, cz + d / 2], ROLE.collider);
     transformInto(collider, c, { x, y, z, yaw });
+    const cos = Math.cos(yaw);
+    const sin = Math.sin(yaw);
     if (!p.light) {
       pads.push({ x, z, halfA: w / 2 + 2.5, halfB: d / 2 + 2.5, yaw, rise, y });
       // The house's named place stands 2.5 m before its door (the front's middle when the
       // model names no door), turned with the house as transformInto turns the model.
       const across = PROPS[p.model]?.door?.x ?? cx;
       const out = m.min[2] + d + 2.5;
-      const cos = Math.cos(yaw);
-      const sin = Math.sin(yaw);
       points.push({
         name: p.name ?? p.model.replace('building-', ''),
         position: [x + across * cos - out * sin, y, z + across * sin + out * cos],
         kind: 'poi',
       });
     }
-    if (p.model === 'prop-lantern-post') {
+    // The model's own lights (kernel/terrain/props.ts `lights`), turned with it as
+    // transformInto turns the model: a lantern's warm light, and a forge's, which burns as a
+    // brazier does (flames and smoke on its coals, 0.28 m under the light).
+    for (const l of PROPS[p.model]?.lights ?? []) {
+      const [lx, ly, lz] = l.at;
+      const forge = l.kind === 'forge';
       lights.push({
-        position: [x, y + h - 0.6, z],
-        color: [1, 0.72, 0.4],
-        range: 9,
-        intensity: 1.4,
-        kind: 'lantern',
-      });
-    }
-    if (p.model === 'building-smithy') {
-      // The forge glows in the arched opening at the front.
-      const g = d / 2;
-      lights.push({
-        position: [x + (fx / fl) * g, y + 1.4, z + (fz / fl) * g],
-        color: [1, 0.5, 0.2],
-        range: 8,
-        intensity: 1.6,
-        kind: 'glow',
+        position: [x + lx * cos - lz * sin, y + ly + (forge ? 0.28 : 0), z + lx * sin + lz * cos],
+        color: forge ? [1, 0.5, 0.2] : [1, 0.72, 0.4],
+        range: forge ? 8 : 9,
+        intensity: forge ? 1.6 : 1.4,
+        kind: forge ? 'brazier' : 'lantern',
       });
     }
   }

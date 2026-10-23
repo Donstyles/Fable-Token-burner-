@@ -62,6 +62,7 @@ const characterUrl = (id: string): string => {
   return url;
 };
 import { Braziers, FogBySpace, Torch } from '../world/atmosphere';
+import { Halos } from '../world/halos';
 import { CATALOGUE, doorPoint, loadPropModels, onDoor, propLabel } from '../world/props';
 import { createStatusLine } from '../ui/status';
 import { Npc } from '../world/npc';
@@ -293,6 +294,7 @@ export async function startDev(app: App): Promise<DevHandle> {
   let mipmapsOn = true;
   const torch = new Torch(app.materials);
   const braziers = new Braziers(scene, level.lights);
+  const halos = new Halos(scene, level.lights);
   const fog = new FogBySpace(app.materials, level.spaces);
   const underwater = new UnderwaterTint(uiLayer);
   diag(`water: ${level.water.length} bodies, ${level.waterfalls.length} falls`);
@@ -1076,8 +1078,9 @@ export async function startDev(app: App): Promise<DevHandle> {
         app.sky.apply(app.materials.env);
         app.sky.setNight(light.night);
         daylightNow = light.daylight;
-        // Lanterns and the forge come up as the day goes; the cave's glow burns always.
+        // Lanterns and the forge come up as the day goes, and the lanterns' halos with them.
         level.setLiveLights(true, 0.15 + 0.85 * (1 - light.daylight));
+        halos.setStrength(1 - light.daylight);
         strip.setClock(state.clock.minutes);
       }
     }
