@@ -48,7 +48,8 @@ The look, as a checklist for the renderer:
 - **Lighting**: per-vertex key and ambient; **warm point lights** from
   lanterns and windows pooling on nearby surfaces (per pixel, up to four per
   object); cool blue-violet dusk ambient; no real-time shadows, baked light
-  where the level is static.
+  where the level is static, and outdoors a shade painted on the ground under
+  every tree and house (17.4).
 - **Glow**: emissive windows and lanterns with soft bloom.
 - **Atmosphere**: heavy distance fog tinted like the sky, fog banks lying in
   valleys and between trees, gradient skies with cloud texture, overcast or
@@ -2500,7 +2501,64 @@ The town's own houses (guild, training hall, bank, town hall, a pier) wait on
 batch 012; the coast road's west end has no portal until the second region
 exists; the headland ruin has no ruin model yet.
 
+### 17.4 Shade under trees and houses (owner, 2026-10-23)
+
+"I want shadows under trees and buildings." The shade is **painted**, once, as the level
+loads, not cast by a real-time shadow map:
+
+- **Why not a shadow map.** Babylon's shadow generators (plain or cascaded) only reach its own
+  materials; ours is a ShaderMaterial, so the depth lookup and its filtering would be written
+  by hand into the terrain shader, and the generator re-renders its casters every frame: every
+  near tree and house again, on a phone that already draws about a thousand trees and 300k
+  triangles. Frozen to one render, a map at the shade's grain is a 2048-texel depth target with
+  a filtered lookup at every ground pixel, hard-edged and biased, and still no soft pool under
+  a crown. Babylon's other tools fit worse: a decal is a mesh each (a thousand of them), its
+  SSAO is a full-screen depth pass every frame that the posteriser would band, and it has no
+  lightmap baker. A painted texture costs one read per ground pixel and nothing else.
+- **The texture** (`src/world/ground-shade.ts`): one 2048-texel square over the 640 m map, 31 cm
+  a texel, two bytes a texel (luminance and alpha), mipmapped and read bilinear: the share of
+  the **sun** a caster takes, and the share of the **sky**. 10.7 MiB on the GPU with its mips.
+- **Casters are the models.** Each loaded model's own triangles, placed by the very matrix its
+  thin instance is drawn with, so the shade lines up with what is drawn by construction, the
+  kernel's mirror on X included (a unit test checks the placement against Babylon's own
+  transform, an end-to-end test that every house's foot and nine trees in ten stand in shade).
+- **Under a crown**: the crown seen from straight above, each layer of leaves deepening the
+  shade (two layers take three quarters of the sun), so a dense oak is dark and a bare tree
+  dapples; the sun's pool is set north by a quarter of the day's average sun for the crown's
+  height (about 1.5 m under a big oak), soft over 60 cm; a broader, lighter sky pool under it.
+- **Round a house, a prop or a rock**: its triangles laid on the ground along the day's average
+  sun (north, 0.6 m a metre from `daylight.ts`'s path; four fifths of it, so a 10 m inn casts
+  about 5 m) for the sun's shadow, and straight down for the skirt: the roof's outline with its
+  eaves, spread over two metres and lifted: dark at the walls, two thirds of that a metre past
+  the eaves, a third at two. Overlapping shade keeps the darker, never the sum, so a wood's
+  floor is no darker than its densest crown and keeps its colour.
+- **The terrain shader** takes up to six tenths of the key light in the sun's shade and, in the
+  skirt, over half the ambient and four tenths of the key; never the lanterns or the torch. It
+  is reckoned as a share of the light and laid on after the light's knee, which would otherwise
+  flatten the first third of it on sunlit ground; the ground keeps at least 0.55 of its light
+  (15.7's floor), which a dense crown's heart and a north wall's foot reach. The sun's part
+  fades as the sun sinks below about 25 degrees, since its real shadows then reach far off to
+  the east; the skirt holds at every hour, so at night only a faint pool under a crown and the
+  walls' foot remain. Every terrain chunk at every detail level shares the one material, so
+  the road, the dirt and the grass darken alike; the sea is its own water material and is
+  never shaded.
+- **Cost**, measured on the shared cloud box: painting Gullhaven's 1,050 casters takes about
+  200 ms at load in headless Chromium (180 to 490 as the box was busy; about 100 in Node once
+  warm), the crowns' stamps most of it, and the upload with its mipmaps 4 ms; a frame's
+  render with and without the shade's lookup compiled in is the same within the noise (7.3
+  and 7.1 ms in the square, 7.5 and 7.5 in the wood, software GL, `gl.finish` timed).
+- **Not yet**: the kernel's fences and the cave mouth cast none; nothing shades a wall or a
+  trunk; the cast does not follow the hour (that needs a height per texel and several reads).
+
 ## 13. Decision log
+
+- 2026-10-23 – Shade under trees and houses (owner: "I want shadows under trees and
+  buildings", 17.4): painted once at load into one ground-shade texture over the map from the
+  models' own triangles and their instance matrices, and multiplied into the terrain's light;
+  not a real-time shadow map, which would need a hand-written shadow lookup in the terrain
+  shader and re-render every near tree and house each frame on a phone drawing a thousand
+  trees. Soft pools under the crowns set a little north, a skirt seating every wall and a short
+  cast to the north; the sun's part fades as the sun goes down. No frame cost measured.
 
 - 2026-10-23 – The cave mouth rebuilt (owner, of a phone screenshot from the north road:
   "WTF is that shit?"; 15.3). It was a box of stone on the slope, side-on to the road: at
