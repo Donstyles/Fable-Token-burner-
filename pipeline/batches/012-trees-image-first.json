@@ -771,24 +771,24 @@
         "tree-palm-02": {
           "image-to-3d": {
             "taskId": "01a168d6-98d4-772e-acf0-cbd0c52a7911",
-            "status": "PENDING",
-            "consumedCredits": null,
+            "status": "SUCCEEDED",
+            "consumedCredits": 15,
             "operationId": "b012-tree-palm-02-image-to-3d-r1-a1"
           }
         },
         "bush-01": {
           "image-to-3d": {
             "taskId": "01a168d6-9fdd-7265-a560-b6d907c11c79",
-            "status": "PENDING",
-            "consumedCredits": null,
+            "status": "SUCCEEDED",
+            "consumedCredits": 15,
             "operationId": "b012-bush-01-image-to-3d-r1-a1"
           }
         },
         "bush-02": {
           "image-to-3d": {
             "taskId": "01a168d6-a70c-7639-8d0b-2d99836285a8",
-            "status": "PENDING",
-            "consumedCredits": null,
+            "status": "SUCCEEDED",
+            "consumedCredits": 15,
             "operationId": "b012-bush-02-image-to-3d-r1-a1"
           }
         }
@@ -815,7 +815,10 @@
         "tree-palm-02/image-to-3d": 1,
         "bush-01/image-to-3d": 1,
         "bush-02/image-to-3d": 1
-      }
+      },
+      "balanceAfter": 1588,
+      "consumedCredits": 300,
+      "finished": "2026-10-23T12:59:47.306Z"
     }
   ],
   "imagesReviewed": true
