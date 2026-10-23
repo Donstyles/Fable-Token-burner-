@@ -2454,6 +2454,14 @@ exists; the headland ruin has no ruin model yet.
 
 ## 13. Decision log
 
+- 2026-10-23 – A placed model takes the kernel's yaw as it is. The kernel turns a model's
+  front (+Z) to (-sin, cos) and Babylon's rotation turns it to (sin, cos); kernel space is
+  mirrored on X, so the two flips cancel, and the runtime's negating the yaw as well had
+  stood every house facing east or west backwards and mirrored the diagonal ones (the
+  farmhouse showed the north road its back wall; the temple stood some fifty degrees off its
+  path), the navmesh's footprints out of line with the walls. The instances, the model
+  colliders and the rocks' boxes in `src/world/level.ts` now carry the yaw unchanged.
+
 - 2026-10-23 – The automap pinches, drags and double-taps (owner: "Auto maps needs pinch and
   zoom controls"): two fingers zoom about the point between them and pan as they move, one
   finger pans (a finger that moves under 10 pixels is still a tap and names a mark), a double

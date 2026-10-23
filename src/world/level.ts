@@ -461,10 +461,13 @@ export async function loadLevel(
       const rx = keep ? -1 : Math.min(regions - 1, Math.floor((kx + half) / regionSize));
       const rz = keep ? -1 : Math.min(regions - 1, Math.floor((kz + half) / regionSize));
       const key = `${model}:${rx}:${rz}`;
-      // Kernel space is mirrored on X: position and yaw flip with it.
+      // Kernel space is mirrored on X, so the position flips; the yaw carries over as it is,
+      // the kernel turning +Z to (-sin, cos) where Babylon turns it to (sin, cos), so the two
+      // flips cancel. Negating it too had stood every house facing east or west backwards
+      // (2026-10-23: the farmhouse showed the road its back wall).
       const m = Matrix.Compose(
         new Vector3(scale, scale, scale),
-        Quaternion.RotationAxis(Vector3.Up(), -yaw),
+        Quaternion.RotationAxis(Vector3.Up(), yaw),
         new Vector3(-kx, ky, kz),
       );
       (
@@ -488,13 +491,13 @@ export async function loadLevel(
       if (!spec || !measure) throw new Error(`prop ${model}: not in the catalogue`);
       const keep = spec.kind === 'building';
       place(model, kx, ky, kz, yaw, scale, keep);
-      propPlacements.push({ model, position: new Vector3(-kx, ky, kz), yaw: -yaw, scale });
+      propPlacements.push({ model, position: new Vector3(-kx, ky, kz), yaw, scale });
       if (spec.kind === 'building' || spec.kind === 'prop') {
         addCollider(-kx, kz, {
           kind: 'model',
           model,
           position: new Vector3(-kx, ky, kz),
-          yaw: -yaw,
+          yaw,
           scale,
         });
       } else if (spec.kind === 'rock') {
@@ -502,8 +505,8 @@ export async function loadLevel(
         const [w, h, d] = measure.size;
         const lx = -(measure.min[0] + w / 2) * scale;
         const lz = (measure.min[2] + d / 2) * scale;
-        const c = Math.cos(-yaw);
-        const sn = Math.sin(-yaw);
+        const c = Math.cos(yaw);
+        const sn = Math.sin(yaw);
         const centre = new Vector3(
           -kx + lx * c + lz * sn,
           ky + (h * scale) / 2,
@@ -512,7 +515,7 @@ export async function loadLevel(
         addCollider(centre.x, centre.z, {
           kind: 'box',
           centre,
-          yaw: -yaw,
+          yaw,
           extents: new Vector3((w * scale) / 2, (h * scale) / 2, (d * scale) / 2),
         });
       }
