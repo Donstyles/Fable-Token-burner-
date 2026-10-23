@@ -116,15 +116,18 @@ void main(void) {
   vec4 wp = finalWorld * vec4(position, 1.0);
 #endif
   if (wind > 0.0) {
-    // Canopies sway with the gusts you hear (the soundscape's wind): nothing at the foot, the
-    // crown leaning up to 35 cm downwind as a gust rises and swaying half as much in a lull
-    // as at its peak (8 to 32 cm), each tree on its own phase from its place in the world.
-    // Only the size moves with the gust, never the rate, so no tree jerks as a gust comes.
-    float crown = clamp((position.y - 1.0) * 0.15, 0.0, 1.0) * wind;
+    // Canopies sway with the gusts you hear (the soundscape's wind): nothing at the foot, more
+    // the higher up, so a twenty-metre spruce's top leans some 1.1 m downwind at a gust's peak
+    // and swings about 60 cm either way, a ten-metre oak half that, a bush a little (owner,
+    // 2026-10-23: "I want tree swaying to be more pronounced"; it had been 35 cm and 32 cm for
+    // every tree over eight metres). A lull sways a quarter as much as a peak; each tree keeps
+    // its own phase from its place in the world, and only the size moves with the gust, never
+    // the rate, so no tree jerks as a gust comes.
+    float crown = clamp((position.y - 0.3) / 12.0, 0.0, 1.6) * wind;
     float sway = 0.5 + 1.5 * gust;
-    wp.xz += crown * (vec2(0.8, 0.6) * 0.35 * gust + sway * vec2(
-      0.12 * sin(time * 1.7 + wp.x * 0.08 + wp.z * 0.05) + 0.04 * sin(time * 3.3 + wp.z * 0.3),
-      0.05 * sin(time * 1.3 + wp.x * 0.07 + wp.z * 0.09)));
+    wp.xz += crown * (vec2(0.8, 0.6) * 0.7 * gust + sway * vec2(
+      0.15 * sin(time * 1.7 + wp.x * 0.08 + wp.z * 0.05) + 0.05 * sin(time * 3.3 + wp.z * 0.3),
+      0.07 * sin(time * 1.3 + wp.x * 0.07 + wp.z * 0.09)));
   }
 #ifdef BILLBOARD
   // A sprite is painted with its own light: lit as if it faced the sun a little.

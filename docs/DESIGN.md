@@ -2454,6 +2454,12 @@ exists; the headland ruin has no ruin model yet.
 
 ## 13. Decision log
 
+- 2026-10-23 – The trees sway more (owner: "I want tree swaying to be more pronounced"): the
+  movement now grows with height instead of stopping at eight metres, so a twenty-metre
+  spruce's top leans some 1.1 m downwind at a gust's peak and swings about 60 cm either way, a
+  ten-metre oak half that and a bush a little; a lull still sways a quarter as much as a peak
+  (`src/render/materials.ts`).
+
 - 2026-10-23 – Houses open only from their doors (owner: "I want Houses only enterable from
   door"). Each building names its door in `kernel/terrain/props.ts` (`door`: across the front,
   its width and height, read off a square-on front view, `tools/review` with `?front`). A tap
