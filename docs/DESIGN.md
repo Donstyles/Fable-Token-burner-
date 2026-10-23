@@ -2454,6 +2454,30 @@ exists; the headland ruin has no ruin model yet.
 
 ## 13. Decision log
 
+- 2026-10-23 – Every generated model is checked before it goes into the game (owner: "This
+  house has gaps you can see through the model is shit", "Always retry model generation till
+  the model has no see through gaps", "You need automatic quality checker for generated
+  models"). Cottage-01 came back from batch 013 with its back wall folded into the house and
+  the store with its back gable open; I had looked at four sides and missed the first. Two
+  parts (`tools/lib/quality.ts`, `tools/lib/review.ts`, CLAUDE.md):
+  - A geometric screen: rays at the model from sixteen sides, level and from thirty degrees
+    above, each noting the first face it meets. Meshy's triangles are wound consistently, so a
+    ray that meets the inside of a face well behind the model's convex hull has gone in where
+    a wall should be; such rays side by side are a gap in square metres. It flags both broken
+    models (4 and 10 m²) and passes fifteen sound ones, but also flags a face turned over in a
+    hollow of the hull that draws as if nothing were wrong (the inn's back gable behind its
+    verge, a patch of the barn's roof above its lean-to), so it cannot be the verdict alone.
+    Other tests were tried and dropped: open edges (roof eaves and awnings are single sheets
+    too), the winding number (Meshy's shells are too open for "inside" to mean anything), a
+    depth step at the patch's rim (it ran the wrong way between sound and broken models).
+  - The verdict, by eye: `npm run asset -- review <id>...` draws each model's sheet, its eight
+    sides as the game draws them and again with the inside of every face in magenta, under the
+    screen's findings; `run` logs the screen for every new prop and points at its sheet. A
+    model goes into the game only once its sheet has been looked at, and one with a gap is
+    generated again, each retry its own small batch under the owner's standing word.
+  - Batch 015 regenerated cottage-01 and the store from the same pictures, 30 credits (balance
+    1243); both came back sound on every side.
+
 - 2026-10-23 – Batches 013 and 014 run (owner: "Run the meshy batch", "Approve 14"): the ten
   buildings, six village props, the woodpile and four rocks from the owner's own fuchsia
   pictures, image-to-3D only, 315 credits (balance 1273). The fence picture is filed and not

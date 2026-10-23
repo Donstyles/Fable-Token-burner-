@@ -1,0 +1,102 @@
+{
+  "number": 15,
+  "name": "town-retry",
+  "created": "2026-10-23",
+  "approved": true,
+  "items": [
+    {
+      "assetId": "building-store",
+      "step": "text-to-image",
+      "input": "building-store.png",
+      "params": {
+        "prompt": "A trader's shop: one and a half storeys, half-timbered cream plaster walls with dark beams on a stone plinth, a shopfront with a wide window of small panes and a wooden awning over the door, barrels and crates under the awning, a steep wooden-shingle roof with a chimney. Seen from the side at eye height, the whole of it in the frame from the ground to the top, alone, centred, plain flat fuchsia (#FF00FF) background, no ground, no shadow, nothing else in the frame. The look of a late-1990s first-person RPG: simple solid readable shapes, painted textures, flat even lighting, muted natural colours.",
+        "ai_model": "nano-banana-2-lite",
+        "aspect_ratio": "1:1",
+        "remove_background": true
+      },
+      "estimatedCredits": 3,
+      "estimateBasis": "documented (DESIGN.md 10.0); the cheapest image model"
+    },
+    {
+      "assetId": "building-store",
+      "step": "image-to-3d",
+      "input": "building-store.png",
+      "params": {
+        "model_type": "smart-topology",
+        "ai_model": "meshy-t2.5",
+        "target_polycount": 1500,
+        "should_texture": true,
+        "texture_resolution": "2k",
+        "enable_pbr": false,
+        "origin_at": "bottom",
+        "target_formats": ["glb"]
+      },
+      "estimatedCredits": 15,
+      "estimateBasis": "reported by Meshy for batch 001 (2026-10-15)"
+    },
+    {
+      "assetId": "building-cottage-01",
+      "step": "text-to-image",
+      "input": "building-cottage-01.png",
+      "params": {
+        "prompt": "A small half-timbered cottage: cream plaster between dark oak beams on a stone plinth, a steep wooden-shingle roof with wide eaves, a front door with a small shuttered window either side, a stone chimney, a woodpile stacked under the eave. Seen from the side at eye height, the whole of it in the frame from the ground to the top, alone, centred, plain flat fuchsia (#FF00FF) background, no ground, no shadow, nothing else in the frame. The look of a late-1990s first-person RPG: simple solid readable shapes, painted textures, flat even lighting, muted natural colours.",
+        "ai_model": "nano-banana-2-lite",
+        "aspect_ratio": "1:1",
+        "remove_background": true
+      },
+      "estimatedCredits": 3,
+      "estimateBasis": "documented (DESIGN.md 10.0); the cheapest image model"
+    },
+    {
+      "assetId": "building-cottage-01",
+      "step": "image-to-3d",
+      "input": "building-cottage-01.png",
+      "params": {
+        "model_type": "smart-topology",
+        "ai_model": "meshy-t2.5",
+        "target_polycount": 1000,
+        "should_texture": true,
+        "texture_resolution": "2k",
+        "enable_pbr": false,
+        "origin_at": "bottom",
+        "target_formats": ["glb"]
+      },
+      "estimatedCredits": 15,
+      "estimateBasis": "reported by Meshy for batch 001 (2026-10-15)"
+    }
+  ],
+  "estimatedCredits": 36,
+  "runs": [
+    {
+      "started": "2026-10-23T20:27:51.454Z",
+      "taskIds": ["01a16a72-d8e2-74da-8e6d-e96745d3adb1", "01a16a72-e471-70b0-a2f8-d8f290a05e5d"],
+      "tasks": {
+        "building-store": {
+          "image-to-3d": {
+            "taskId": "01a16a72-d8e2-74da-8e6d-e96745d3adb1",
+            "status": "SUCCEEDED",
+            "consumedCredits": 15,
+            "operationId": "b015-building-store-image-to-3d-r1-a1"
+          }
+        },
+        "building-cottage-01": {
+          "image-to-3d": {
+            "taskId": "01a16a72-e471-70b0-a2f8-d8f290a05e5d",
+            "status": "SUCCEEDED",
+            "consumedCredits": 15,
+            "operationId": "b015-building-cottage-01-image-to-3d-r1-a1"
+          }
+        }
+      },
+      "balanceBefore": 1273,
+      "attempts": {
+        "building-store/image-to-3d": 1,
+        "building-cottage-01/image-to-3d": 1
+      },
+      "balanceAfter": 1243,
+      "consumedCredits": 30,
+      "finished": "2026-10-23T20:28:52.234Z"
+    }
+  ],
+  "imagesReviewed": true
+}

@@ -1,0 +1,12 @@
+[
+  {
+    "id": "building-store",
+    "polycount": 1500,
+    "prompt": "A trader's shop: one and a half storeys, half-timbered cream plaster walls with dark beams on a stone plinth, a shopfront with a wide window of small panes and a wooden awning over the door, barrels and crates under the awning, a steep wooden-shingle roof with a chimney."
+  },
+  {
+    "id": "building-cottage-01",
+    "polycount": 1000,
+    "prompt": "A small half-timbered cottage: cream plaster between dark oak beams on a stone plinth, a steep wooden-shingle roof with wide eaves, a front door with a small shuttered window either side, a stone chimney, a woodpile stacked under the eave."
+  }
+]

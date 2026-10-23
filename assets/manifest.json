@@ -88,7 +88,7 @@
       "source": "Meshy image-to-3D (smart topology) from the concept picture pipeline/inbox/building-cottage-01.png",
       "prompt": "A small half-timbered cottage: cream plaster between dark oak beams on a stone plinth, a steep wooden-shingle roof with wide eaves, a front door with a small shuttered window either side, a stone chimney, a woodpile stacked under the eave. Seen from the side at eye height, the whole of it in the frame from the ground to the top, alone, centred, plain flat fuchsia (#FF00FF) background, no ground, no shadow, nothing else in the frame. The look of a late-1990s first-person RPG: simple solid readable shapes, painted textures, flat even lighting, muted natural colours.",
       "meshy": {
-        "taskIds": ["01a169dc-a598-7673-bfde-37cc7378ab74"],
+        "taskIds": ["01a16a72-e471-70b0-a2f8-d8f290a05e5d"],
         "params": {
           "textToImage": {
             "prompt": "A small half-timbered cottage: cream plaster between dark oak beams on a stone plinth, a steep wooden-shingle roof with wide eaves, a front door with a small shuttered window either side, a stone chimney, a woodpile stacked under the eave. Seen from the side at eye height, the whole of it in the frame from the ground to the top, alone, centred, plain flat fuchsia (#FF00FF) background, no ground, no shadow, nothing else in the frame. The look of a late-1990s first-person RPG: simple solid readable shapes, painted textures, flat even lighting, muted natural colours.",
@@ -112,7 +112,7 @@
       "licence": "Meshy output (paid plan): owner holds full rights",
       "files": ["assets/props/building-cottage-01/building-cottage-01.glb"],
       "date": "2026-10-23",
-      "notes": "batch 013; 832 triangles"
+      "notes": "batch 015; 846 triangles"
     },
     {
       "id": "building-cottage-02",
@@ -312,7 +312,7 @@
       "source": "Meshy image-to-3D (smart topology) from the concept picture pipeline/inbox/building-store.png",
       "prompt": "A trader's shop: one and a half storeys, half-timbered cream plaster walls with dark beams on a stone plinth, a shopfront with a wide window of small panes and a wooden awning over the door, barrels and crates under the awning, a steep wooden-shingle roof with a chimney. Seen from the side at eye height, the whole of it in the frame from the ground to the top, alone, centred, plain flat fuchsia (#FF00FF) background, no ground, no shadow, nothing else in the frame. The look of a late-1990s first-person RPG: simple solid readable shapes, painted textures, flat even lighting, muted natural colours.",
       "meshy": {
-        "taskIds": ["01a169dc-7e1b-761b-937b-a5c580180155"],
+        "taskIds": ["01a16a72-d8e2-74da-8e6d-e96745d3adb1"],
         "params": {
           "textToImage": {
             "prompt": "A trader's shop: one and a half storeys, half-timbered cream plaster walls with dark beams on a stone plinth, a shopfront with a wide window of small panes and a wooden awning over the door, barrels and crates under the awning, a steep wooden-shingle roof with a chimney. Seen from the side at eye height, the whole of it in the frame from the ground to the top, alone, centred, plain flat fuchsia (#FF00FF) background, no ground, no shadow, nothing else in the frame. The look of a late-1990s first-person RPG: simple solid readable shapes, painted textures, flat even lighting, muted natural colours.",
@@ -336,7 +336,7 @@
       "licence": "Meshy output (paid plan): owner holds full rights",
       "files": ["assets/props/building-store/building-store.glb"],
       "date": "2026-10-23",
-      "notes": "batch 013; 1261 triangles"
+      "notes": "batch 015; 1240 triangles"
     },
     {
       "id": "building-temple",
