@@ -50,6 +50,8 @@ export interface Weather {
   heat: number;
   /** How dark the drifting cloud shadows get, 0 (none) to 1. */
   cloudShadow: number;
+  /** The wind's gust, 0 (a lull) to 1 (the peak you hear): canopies lean and sway with it. */
+  gust: number;
 }
 
 const SHADER = 'ftbVertexLit';
@@ -81,6 +83,7 @@ uniform vec4 clipPlane;
 // Weather (DESIGN.md 15.7): seconds, canopy sway on this material, hot air over the view.
 uniform float time;
 uniform float wind;
+uniform float gust;
 uniform float heat;
 // 1 lights the surface flat, as MM6's walls were: no face brighter than another.
 uniform float flatLight;
@@ -113,12 +116,15 @@ void main(void) {
   vec4 wp = finalWorld * vec4(position, 1.0);
 #endif
   if (wind > 0.0) {
-    // Canopies sway: nothing at the foot, up to a dozen centimetres at the crown, each tree
-    // on its own phase from its place in the world.
+    // Canopies sway with the gusts you hear (the soundscape's wind): nothing at the foot, the
+    // crown leaning up to 35 cm downwind as a gust rises and swaying half as much in a lull
+    // as at its peak (8 to 32 cm), each tree on its own phase from its place in the world.
+    // Only the size moves with the gust, never the rate, so no tree jerks as a gust comes.
     float crown = clamp((position.y - 1.0) * 0.15, 0.0, 1.0) * wind;
-    wp.xz += crown * vec2(
+    float sway = 0.5 + 1.5 * gust;
+    wp.xz += crown * (vec2(0.8, 0.6) * 0.35 * gust + sway * vec2(
       0.12 * sin(time * 1.7 + wp.x * 0.08 + wp.z * 0.05) + 0.04 * sin(time * 3.3 + wp.z * 0.3),
-      0.05 * sin(time * 1.3 + wp.x * 0.07 + wp.z * 0.09));
+      0.05 * sin(time * 1.3 + wp.x * 0.07 + wp.z * 0.09)));
   }
 #ifdef BILLBOARD
   // A sprite is painted with its own light: lit as if it faced the sun a little.
@@ -433,7 +439,7 @@ export class RetroMaterials {
   /** The light in five steps (DESIGN.md 16.14); off for a smooth render. */
   toon = true;
   /** Weather (DESIGN.md 15.7): 0 is still air and an even sky. */
-  readonly weather: Weather = { heat: 0, cloudShadow: 0 };
+  readonly weather: Weather = { heat: 0, cloudShadow: 0, gust: 0 };
 
   constructor(
     private readonly scene: Scene,
@@ -494,6 +500,7 @@ export class RetroMaterials {
         'flatLight',
         'heat',
         'cloudShadow',
+        'gust',
       ],
       samplers: ['diffuseSampler', 'pathSampler', 'screeSampler', 'snowSampler', 'detailSampler'],
       defines,
@@ -520,6 +527,7 @@ export class RetroMaterials {
     mat.setFloat('flatLight', opts.flatLight ? 1 : 0);
     mat.setFloat('heat', this.weather.heat);
     mat.setFloat('cloudShadow', this.weather.cloudShadow);
+    mat.setFloat('gust', this.weather.gust);
     mat.setVector4('clipPlane', Vector4.Zero());
     mat.setFloat('clipEnabled', 0);
     // Water render passes set scene.clipPlane around their draws; read it per bind so the
@@ -548,12 +556,13 @@ export class RetroMaterials {
     return mat;
   }
 
-  /** Hot air over the view (desert) and the strength of drifting cloud shadows (outdoors). */
+  /** Hot air over the view (desert), drifting cloud shadows and the wind's gust (outdoors). */
   setWeather(next: Partial<Weather>): void {
     Object.assign(this.weather, next);
     for (const m of this.materials) {
       m.setFloat('heat', this.weather.heat);
       m.setFloat('cloudShadow', this.weather.cloudShadow);
+      m.setFloat('gust', this.weather.gust);
     }
   }
 

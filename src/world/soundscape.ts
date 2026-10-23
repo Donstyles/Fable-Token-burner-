@@ -27,6 +27,25 @@ function rng(seed: number): () => number {
   };
 }
 
+/**
+ * The wind's gain over its loop: two gusts in sixteen seconds. The trees read it too
+ * (`gustAt`), so a canopy leans as the gust you hear comes.
+ */
+const WIND_GAINS = [0.45, 0.55, 1.0, 0.75, 0.5, 0.85, 1.0, 0.65, 0.5, 0.45];
+
+/**
+ * The gust `t` seconds into the wind's loop, 0 in the lulls to 1 at the peaks: the gain
+ * curve as Web Audio plays it, its points spread evenly over the loop, straight between.
+ */
+export function gustAt(t: number): number {
+  const u = (((t % WIND_SECONDS) + WIND_SECONDS) % WIND_SECONDS) / WIND_SECONDS;
+  const f = u * (WIND_GAINS.length - 1);
+  const i = Math.min(WIND_GAINS.length - 2, Math.floor(f));
+  const g = WIND_GAINS[i]! + (WIND_GAINS[i + 1]! - WIND_GAINS[i]!) * (f - i);
+  const lo = Math.min(...WIND_GAINS);
+  return (g - lo) / (Math.max(...WIND_GAINS) - lo);
+}
+
 /** Brown noise through a sweeping lowpass with gusting gain, rendered once and looped. */
 async function renderWind(rate: number): Promise<AudioBuffer> {
   const off = new OfflineAudioContext(2, rate * WIND_SECONDS, rate);
@@ -48,7 +67,7 @@ async function renderWind(rate: number): Promise<AudioBuffer> {
   const gain = off.createGain();
   // Gusts: the cut-off and the gain rise and fall together over the loop.
   const curve = new Float32Array([300, 420, 900, 620, 380, 760, 1000, 520, 340, 300]);
-  const gains = new Float32Array([0.45, 0.55, 1.0, 0.75, 0.5, 0.85, 1.0, 0.65, 0.5, 0.45]);
+  const gains = new Float32Array(WIND_GAINS);
   low.frequency.setValueCurveAtTime(curve, 0, WIND_SECONDS);
   gain.gain.setValueCurveAtTime(gains, 0, WIND_SECONDS);
   src.connect(low).connect(gain).connect(off.destination);
@@ -176,6 +195,10 @@ export class Soundscape {
   private nextBird = 4;
   private readonly roll = rng(9);
   private disposed = false;
+  /** Seconds into the wind's loop before the audio plays (a phone's audio waits for a tap). */
+  private clock = 0;
+  private lastHeard: number | undefined;
+  private gustLevel = 0;
 
   constructor(
     private readonly scene: Scene,
@@ -231,11 +254,25 @@ export class Soundscape {
     }
   }
 
+  /** The wind's gust now, 0 (a lull) to 1 (a peak); 0 underground. */
+  gust(): number {
+    return this.gustLevel;
+  }
+
   /**
    * `moved` is the party's horizontal travel this frame; `daylight` 0..1; `wading` when the
    * feet are in water. The wind rises with the party's height above the floor.
    */
   update(dt: number, party: Vector3, moved: number, daylight: number, wading: boolean): void {
+    // The gust the trees lean with: the loop's own position once it plays, so what you see
+    // keeps time with what you hear; eased, so the jump when the audio starts never shows.
+    this.clock += dt;
+    // A sound that waits on a suspended context reports a time that stands still.
+    const heard = this.wind?.currentTime;
+    const playing = heard !== undefined && heard !== this.lastHeard;
+    this.lastHeard = heard;
+    const target = this.opts.outdoor ? gustAt(playing ? heard : this.clock) : 0;
+    this.gustLevel += (target - this.gustLevel) * Math.min(1, dt * 3);
     if (!this.engine) return;
     if (this.wind) {
       const altitude = Math.max(0, Math.min(1, (party.y - 10) / 250));

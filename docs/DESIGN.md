@@ -977,6 +977,13 @@ entry sets per region; no new render pass and nothing the phone measures.
 - Wind: the leaves material sways. A vertex above a metre moves up to
   twelve centimetres in the plane, phased by its place in the world, so
   neighbouring crowns differ; trunks and everything else stand still.
+  **2026-10-23 (owner: "Tie it to wind gusts"):** the sway follows the
+  gusts you hear. The soundscape's wind loop has two gusts in sixteen
+  seconds; `gustAt` reads its gain curve at the loop's playback time (a
+  clock of its own until the phone's audio is unlocked, eased so the switch
+  never shows) and the materials' `gust` uniform carries it: in a lull the
+  crowns sway 8 cm, at a gust's peak 32 cm and lean 35 cm downwind. Only the
+  size follows the gust, never the rate, so no tree jerks.
 - Cloud shadows (`cloudShadow`, 0.6 in the valley, 0.2 in the desert):
   two octaves of value noise over world XZ, drifting with the sky's
   clouds, darken the light by up to a quarter where they pass. They fall
@@ -993,7 +1000,7 @@ entry sets per region; no new render pass and nothing the phone measures.
   direction, dimmed behind clouds.
 
 Kept deliberately small (wow-idea review, 2026-10-17): no bloom or god
-rays, canopy sway under 15 cm, shimmer under 2 px, shadows never darker
+rays, canopy sway under 15 cm (35 cm in a gust since 2026-10-23), shimmer under 2 px, shadows never darker
 than 0.55 and never hard-edged; the fog density stays as tuned so the
 far ridges show.
 

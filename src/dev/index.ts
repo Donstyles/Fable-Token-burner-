@@ -889,6 +889,7 @@ export async function startDev(app: App): Promise<DevHandle> {
       const moved = Math.hypot(p.x - lastPartyPos.x, p.z - lastPartyPos.z);
       lastPartyPos = p.clone();
       soundscape.update(dt, p, moved < 2 ? moved : 0, daylightNow, party.waterDepth > 0.25);
+      app.materials.setWeather({ gust: soundscape.gust() });
     }
     for (const m of handle.monsters) {
       m.update(dt, partyTarget, simTime);
