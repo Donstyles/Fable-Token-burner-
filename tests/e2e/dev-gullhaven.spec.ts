@@ -24,7 +24,7 @@ type Dev = {
   teleport(x: number, y: number, z: number, yaw: number): void;
   screenDoorOf(model: string): { x: number; y: number } | null;
   screens: { current(): string | null; close(): void };
-  monsters: { state: string }[];
+  monsters: { state: string; position: { x: number; y: number; z: number } }[];
   portals: {
     portals: { name: string; target: { level: string; entry: string } }[];
     isArmed(name: string): boolean;
@@ -195,6 +195,58 @@ test.describe('Gullhaven', () => {
       const p = await page.evaluate(() => (window as unknown as W).ftb!.dev!.positionOf());
       expect(Math.abs(p.y - q.y)).toBeLessThan(3);
     }
+  });
+
+  test('the goblins below the cave follow the party up the apron and into the tunnel', async ({
+    page,
+  }) => {
+    // Software GL runs the world at a twentieth of real time; the chase takes minutes.
+    test.setTimeout(420_000);
+    // Rouse the pack on the slope below the mouth.
+    await page.evaluate(() => {
+      const d = (window as unknown as W).ftb!.dev!;
+      const below = d.pointOf('goblin-hills')!;
+      d.teleport(below.x, below.y + 0.5, below.z, 0);
+    });
+    await page.waitForFunction(
+      () => (window as unknown as W).ftb!.dev!.monsters.some((m) => m.state === 'chase'),
+      null,
+      { timeout: 60_000 },
+    );
+    // Then stand four metres inside the arch, seven short of the portal, on the line from the
+    // portal out to the slope: the pack must find the way in through the mouth.
+    const inside = await page.evaluate(() => {
+      const d = (window as unknown as W).ftb!.dev!;
+      const portal = d.pointOf('cave')!;
+      const below = d.pointOf('goblin-hills')!;
+      const len = Math.hypot(below.x - portal.x, below.z - portal.z);
+      const at = {
+        x: portal.x + ((below.x - portal.x) / len) * 7,
+        y: portal.y,
+        z: portal.z + ((below.z - portal.z) / len) * 7,
+      };
+      d.teleport(at.x, at.y + 0.5, at.z, 0);
+      return at;
+    });
+    // A goblin inside the arch at floor level: closer to the portal than the mouth is (11.5 m),
+    // and not up on the brow over it.
+    await page.waitForFunction(
+      () => {
+        const d = (window as unknown as W).ftb!.dev!;
+        const portal = d.pointOf('cave')!;
+        return d.monsters.some(
+          (m) =>
+            Math.hypot(m.position.x - portal.x, m.position.z - portal.z) < 9.5 &&
+            Math.abs(m.position.y - portal.y) < 1.5,
+        );
+      },
+      null,
+      { timeout: 330_000 },
+    );
+    // The party is still where it was put, in the tunnel short of the portal.
+    const p = await page.evaluate(() => (window as unknown as W).ftb!.dev!.positionOf());
+    expect(Math.hypot(p.x - inside.x, p.z - inside.z)).toBeLessThan(2);
+    expect(page.url()).toMatch(/level=gullhaven/);
   });
 
   test('walking into the cave leads into the dungeon, and its door leads back out', async ({
