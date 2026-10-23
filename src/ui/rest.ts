@@ -18,12 +18,10 @@ export function renderRest(ctx: ScreenContext): void {
     const well = el('div', 'rest-well');
     well.dataset['paint'] = 'plaque-rest';
     well.append(el('div', 'rest-clock', v.time), el('div', 'rest-date', v.date));
-    left.append(
-      well,
-      note(v.daylight ? 'It is light.' : 'It is dark.'),
-      kv('Food', v.food, v.hungry ? 'bad' : ''),
-    );
-    if (v.hungry) left.appendChild(note('No food: resting heals nothing and weakens.', 'warn'));
+    // The clock, the food and a line a member (screens critic, round 13), so the party fits
+    // the box inside the phone's insets (owner, 2026-10-23: Tobin's line was cut, Sera's
+    // gone); the daylight and a hungry party's warning stand with the choices.
+    left.append(well, kv('Food', v.food, v.hungry ? 'bad' : ''));
     left.appendChild(heading('Party'));
     // A line a member, so the party fits the frame (screens critic, round 13); the condition
     // only when it is not Good.
@@ -53,6 +51,8 @@ export function renderRest(ctx: ScreenContext): void {
       message.classList.add('rest-message');
       message.setAttribute('role', 'status');
       right.appendChild(message);
+      right.appendChild(note(v.daylight ? 'It is light.' : 'It is dark.'));
+      if (v.hungry) right.appendChild(note('No food: resting heals nothing and weakens.', 'warn'));
       const ask = (kind: 'rest' | 'dawn'): void => {
         const outcome = tryRest(state, kind, hooks.restBlocked?.() ?? null);
         if (!outcome.ok) {

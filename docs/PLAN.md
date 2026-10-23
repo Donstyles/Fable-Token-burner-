@@ -413,7 +413,9 @@ Left: dialogue with NPCs (step 7's talk), save slots in IndexedDB (step 9),
 the HUD frame (step 10), the paper doll, drag and drop, promotions.
 
 **Risks:** touch layout of dense screens (inventory grid, spellbook); solved
-by designing at device resolution from the start.
+by designing at device resolution from the start, with the phone's safe areas:
+every screen and service is checked at 932 by 430 with the insets forced
+(`tests/e2e/screens-fit.spec.ts`, DESIGN 16.33).
 
 ---
 

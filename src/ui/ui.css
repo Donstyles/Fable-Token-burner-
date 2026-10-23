@@ -174,13 +174,19 @@
 }
 
 .ui-modal {
-  /* The panel replaces the view only; the portrait band stays, as MM6 kept its rail. */
+  /* The panel replaces the view only; the portrait band stays, as MM6 kept its rail. The
+     sides keep the safe areas; the bottom one is the band's (hud.css), so the panel runs down
+     to the band's top edge (owner's phone, 2026-10-23: a second bottom inset cut 21 pixels
+     off every screen). */
   position: absolute;
   inset: 0 0 calc(var(--sab) + 114px);
   z-index: 60;
-  padding: var(--sat) var(--sar) var(--sab) var(--sal);
+  padding: var(--sat) var(--sar) 0 var(--sal);
   background: rgba(0, 0, 0, 0.5);
   display: flex;
+  /* The screens' body type a size under the talk panel's (owner, 2026-10-23: "type is large
+     for the space"), on lines of 22 pixels. */
+  --serif-italic: italic 20px/22px 'Tinos', Georgia, serif;
 }
 .ui-panel {
   flex: 1;
@@ -207,8 +213,7 @@
   letter-spacing: 2px;
 }
 .ui-head {
-  /* No title band (critics, round 5): the title sits on the stone, the exit oval beside it,
-     both at the head's top. */
+  /* No title band (critics, round 5): the title sits on the stone. */
   display: flex;
   align-items: flex-start;
   /* Six, so the exit oval lands on a whole pixel (screens critic, round 16: 7.5 put it at
@@ -218,6 +223,18 @@
   min-height: 36px;
   border-bottom: 0;
   box-shadow: none;
+}
+/* Every screen alike (owner, 2026-10-23): the title at the head's top left with the screen's
+   own line after it, one row of 27 pixels; the foot below the body holds the message line at
+   the left and the close oval at the bottom right, as MM6's Exit, one row of 30. */
+.ui-modal .ui-head {
+  flex: none;
+  gap: 12px;
+  height: 27px;
+  min-height: 0;
+  padding: 3px 9px 0;
+  box-sizing: border-box;
+  overflow: hidden;
 }
 .ui-title {
   /* MM6's titles are the italic in yellow, a size up. */
@@ -229,11 +246,41 @@
   color: var(--ink-yellow);
   white-space: nowrap;
 }
+.ui-modal .ui-title {
+  flex: none;
+  line-height: 24px;
+}
 .ui-head-tabs {
   flex: 1;
   min-width: 0;
   overflow-x: auto;
   touch-action: pan-x;
+}
+/* Beside the title: a shop's members, the spellbook's rank and points. */
+.ui-aside {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  height: 24px;
+  font:
+    italic 18px/24px 'Tinos',
+    Georgia,
+    serif;
+  white-space: nowrap;
+}
+/* A shop's members beside the title: ovals of 30 pixels with the label a size down, the head
+   a row taller for them. */
+.ui-modal .ui-head:has(.ui-tabs) {
+  height: 33px;
+}
+.ui-aside:has(.ui-tabs) {
+  height: 30px;
+}
+.ui-aside .ui-tab {
+  min-height: 30px;
+  height: 30px;
+  font-size: 18px;
 }
 .ui-close {
   /* MM6's oval is two to one (critics, round 9). */
@@ -241,16 +288,15 @@
   min-height: 30px;
   padding: 0;
 }
-/* The sheet, the inventory and the spellbook follow the portrait tapped in the band: no
-   tab strip (16.15). */
-.screen-sheet .ui-head-tabs,
-.screen-items .ui-head-tabs,
-.screen-spells .ui-head-tabs {
-  display: none;
+.ui-modal .ui-close {
+  flex: none;
+  height: 30px;
+  min-height: 30px;
+  margin-left: auto;
 }
 .ui-body {
   /* MM6 clips nothing: every screen fits its frame, its boxes on whole pixels (screens
-     critic, round 13). */
+     critic, round 13); a list longer than its box scrolls in it (dom.ts `watchScrolls`). */
   flex: 1;
   min-height: 0;
   overflow: hidden;
@@ -258,6 +304,10 @@
   display: flex;
   gap: 6px;
   touch-action: pan-x pan-y;
+}
+.ui-modal .ui-body {
+  position: relative;
+  padding: 3px 9px;
 }
 .ui-foot {
   display: none;
@@ -272,6 +322,72 @@
 }
 .ui-foot.shown {
   display: block;
+}
+.ui-modal .ui-foot {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 6px;
+  height: 30px;
+  padding: 0 9px;
+  border: 0;
+  box-shadow: none;
+  overflow: visible;
+}
+/* The message line: MM6's status line, the band's own (hud.css `.status-text`), at the type's
+   own width so a whole sentence holds the line. */
+.ui-say {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  font:
+    italic 18px/24px 'Tinos',
+    Georgia,
+    serif;
+  color: var(--ink-yellow);
+  white-space: nowrap;
+  --pxt-stretch: 1;
+  letter-spacing: 0;
+}
+.ui-buttons {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: none;
+}
+.ui-buttons:empty {
+  display: none;
+}
+.ui-buttons .ui-btn,
+.ui-buttons .ui-tab {
+  min-height: 30px;
+  height: 30px;
+  padding: 0 12px;
+}
+/* MM6's scroll marks (dom.ts `watchScrolls`; the talk panel's, dialogue.css `.dlg-more`):
+   gold arrows at a list's top right and foot while there is more that way; the list scrolls
+   under a finger, no bar. */
+.ui-more {
+  position: absolute;
+  z-index: 2;
+  width: 11px;
+  height: 7px;
+  pointer-events: none;
+  visibility: hidden;
+  background: var(--paint) center / 100% 100% no-repeat;
+  image-rendering: pixelated;
+}
+.ui-more.shown {
+  visibility: visible;
+}
+.ui-modal .scroll {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.ui-modal .scroll::-webkit-scrollbar {
+  display: none;
 }
 
 .ui-tabs {
@@ -430,61 +546,77 @@
   min-height: 30px;
   padding: 0 10px;
 }
-.ui-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-  margin-top: 4px;
-}
 
-/* Character sheet */
-.sheet-name {
-  font:
-    italic 22px/24px 'Tinos',
-    Georgia,
-    serif;
-  color: var(--ink-yellow);
-}
-.sheet-class {
-  font-size: 18px;
-  color: var(--ink-pale);
-  margin-bottom: 3px;
-}
-.sheet-stats {
-  display: grid;
-  grid-template-columns: 1fr auto auto;
-  gap: 0 12px;
-  padding: 0;
-}
-.sheet-bonus {
-  color: var(--ink-pale);
-  min-width: 57px;
-  text-align: right;
-}
-.sheet-group {
-  margin-top: 6px;
-  font-size: 18px;
-  color: var(--ink-yellow);
-}
-.sheet-level {
-  min-width: 33px;
-  text-align: right;
-  font-size: 18px;
-}
-.sheet-cost {
-  opacity: 0.6;
-}
-/* The sheet holds ten lines of twenty-four pixels a column, its boxes without gaps
-   (screens critic, round 14: lines of fifteen UI pixels fell a device pixel off the grid). */
-.screen-sheet .ui-col,
-.screen-sheet .ui-v {
-  line-height: 24px;
+/* Character sheet: three boxes, the member's state, the statistics with the fighting
+   numbers, the skills, each line one of 22 pixels in the type's least size so every line
+   holds its box inside the phone's insets (owner, 2026-10-23: "type is large for the space",
+   the last stat line cut off, skill labels running into their values). */
+.screen-sheet .ui-panel {
+  --serif-italic: italic 18px/22px 'Tinos', Georgia, serif;
 }
 .screen-sheet .ui-col {
   gap: 0;
+  line-height: 22px;
+}
+.screen-sheet .ui-kv {
+  gap: 18px;
+}
+/* The state and the statistics as wide as their lines, the skills the rest. */
+.sheet-state {
+  flex: 0 0 auto;
+  max-width: 300px;
+}
+.sheet-stats-col {
+  flex: 0 0 auto;
+}
+.sheet-skills {
+  flex: 1;
+  padding-right: 15px;
+}
+.sheet-stats {
+  display: grid;
+  grid-template-columns: 1fr auto 42px;
+  gap: 0 12px;
+  padding: 0;
+}
+.sheet-stats > .ui-v {
+  justify-self: end;
+}
+.sheet-bonus {
+  color: var(--ink-pale);
+  text-align: right;
+}
+.sheet-fight {
+  margin-top: 6px;
+}
+.sheet-group {
+  font-size: 18px;
+  color: var(--ink-yellow);
 }
 /* A skill row is the button (critics, round 8: MM6 had no "+" ovals): a tap on the name
-   spends the points; a row that cannot be raised sits dim. */
+   spends the points; a row that cannot be raised sits dim. Its name, the price to raise it
+   and its level in three columns, the name wrapping rather than running into the price. */
+.ui-row.sheet-skill {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto 24px;
+  align-items: start;
+  column-gap: 9px;
+  min-height: 0;
+  padding: 0 0 0 6px;
+}
+.sheet-skill .grow {
+  min-width: 0;
+}
+.sheet-cost {
+  text-align: right;
+  opacity: 0.6;
+}
+.ui-row .sheet-cost {
+  line-height: 22px;
+}
+.sheet-level {
+  text-align: right;
+}
 .sheet-skill {
   appearance: none;
   width: 100%;
@@ -502,14 +634,15 @@
   filter: brightness(1.3);
 }
 
-/* Parchment: the spellbook and the quest log are open books (paint.ts `book`), the title and
-   tabs on the leather band along the cover's top, the two columns its pages; the rest screen
-   reads on a sheet in the marble frame. */
+/* Parchment: the spellbook, the quest log and the map are open books (paint.ts `book`), the
+   title at the page's top left as on the stone, the close oval standing on the page edges
+   at the book's foot, bottom right; the rest screen reads on a sheet in the marble frame. */
 .screen-spells .ui-panel,
 .screen-quests .ui-panel,
 .screen-map .ui-panel {
   /* The page (paint.ts `book`): eight pixels of marble, ten of cover above, the stack and
      the bookmarks forty-two pixels down the right, the foot thirty at the bottom. */
+  position: relative;
   padding: 18px 44px 28px 12px;
   background: var(--paint) center / 100% 100% no-repeat;
   box-shadow: none;
@@ -521,7 +654,9 @@
 .screen-spells .ui-head,
 .screen-quests .ui-head,
 .screen-map .ui-head {
-  min-height: 36px;
+  /* The cover's band above gives the page its margin: the title row sits on the page's top. */
+  height: 24px;
+  padding: 0 9px;
   border-bottom: 0;
   box-shadow: none;
 }
@@ -530,11 +665,29 @@
 .screen-map .ui-title {
   color: #5a2a0a;
 }
+/* The message line on the page, in the book's ink. */
+.screen-spells .ui-say,
+.screen-quests .ui-say,
+.screen-map .ui-say {
+  color: #5a2a0a;
+}
+/* The book's foot is its page edges (paint.ts `book`): the close oval stands on them at the
+   bottom right, short of the stack, and takes none of the page. */
+.screen-spells .ui-foot,
+.screen-quests .ui-foot,
+.screen-map .ui-foot {
+  position: absolute;
+  right: 52px;
+  bottom: 6px;
+  z-index: 2;
+  padding: 0;
+}
 .screen-spells .ui-body,
 .screen-quests .ui-body,
 .screen-map .ui-body {
   gap: 21px;
-  padding: 9px 12px;
+  /* Clear of the close oval's top at the page's foot. */
+  padding: 3px 12px 9px;
 }
 .screen-spells .ui-col,
 .screen-quests .ui-col,
@@ -594,31 +747,20 @@
   background: none;
   box-shadow: inset 0 -1px 0 rgba(90, 60, 24, 0.5);
 }
-.screen-spells .ui-foot,
-.screen-quests .ui-foot,
-.screen-rest .ui-foot {
-  border-color: rgba(90, 60, 24, 0.6);
-  box-shadow: 0 1px 0 rgba(255, 250, 235, 0.8);
-}
 .screen-quests .ui-banner,
 .screen-map .ui-banner {
   color: #fbf6ea;
 }
-.screen-spells .ui-foot,
-.screen-quests .ui-foot,
-.screen-rest .ui-foot {
-  color: #5a2a0a;
-}
 
-/* The quest log's lines are MM6's sans, black, untracked on lines of its own size; its
-   headings keep the italic (screens critic, rounds 14 to 16: at 15 a pixel apart the letter
-   gaps ran .03/.27/.60 at one, two and three pixels where MM6's run .21/.62/.17, and its
-   ascenders stood 10 to 11 rows where MM6's stand 12). */
+/* The quest log's lines are MM6's sans, black, untracked; its headings keep the italic
+   (screens critic, rounds 14 to 16: at 15 a pixel apart the letter gaps ran .03/.27/.60 at
+   one, two and three pixels where MM6's run .21/.62/.17). A size down with the other screens
+   (owner, 2026-10-23: "type is large for the space"), on lines of 22. */
 .screen-quests .ui-col,
 .screen-quests .ui-note,
 .screen-quests .ui-row .sub {
   font:
-    24px/24px 'Arimo',
+    20px/22px 'Arimo',
     sans-serif;
   letter-spacing: 0;
   color: #000000;

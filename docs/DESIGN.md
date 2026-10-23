@@ -2328,6 +2328,54 @@ scary". Two faults, one on top of the other:
   well past the shoulder. A calmer idle is a new animation request to Meshy,
   for the owner to approve.
 
+### 16.33 Every screen in one frame (owner, 2026-10-23)
+
+The owner's phone, landscape with its insets (59 pixels each side, 21 below):
+"Formatting is off everywhere". The spellbook's last column ran off the page,
+the bag's last rows and the equipment below Helmet were cut, the sheet's last
+stat line was cut and its skills ran into their prices, the Training Hall's
+rows ran off the box, and the close oval stood beside the title on some screens,
+at the top right on others and at the foot of the book. The screens had been
+laid out for the test browser's 316 rows; inside the insets a screen has 295,
+and the frame had taken the bottom inset a second time (21 rows lost).
+
+- **One frame** (`createFrame`, `src/ui/dom.ts`): the title at the head's top
+  left with the screen's own line beside it (the sheet's sex and age, the
+  spellbook's rank and points, a shop's or guild's members); the foot holds the
+  message line at the left, the screen's buttons (an item's actions) and the
+  close oval at the bottom right, where MM6 put its Exit. The books (spellbook,
+  quest log, map) are the same, the title on the page, the close standing on
+  the page edges at the foot and the message line beside the title. The panel
+  runs to the band's top; the bottom inset is the band's.
+- **Fitted, not clipped**: the head 27 rows, the foot 30, the body the rest
+  (222 rows inside the insets, 243 without). The screens' body type is a size
+  down (20 pixels on lines of 22; 18 on the sheet and the members' tables), never
+  under the type's 18. The sheet heads itself "Alric the Knight" as MM6 did and
+  sets three boxes: points, armour, recovery, level and condition; the seven
+  statistics and the fighting numbers; the skills, each a name, a price and a
+  level in columns, a long name wrapping. The bag's cell is the largest whole
+  pixel that shows all nine rows (`bagCell`, `src/ui/layout-model.ts`: 23 inside
+  the insets, 25 without, MM6's 27 when there is room); the worn slots stand in
+  two columns, the glyph and the item or the slot's name dim, with the armour and
+  attack beside the heading; the selection is named on the message line and its
+  actions stand in the foot. The spellbook's places are as wide as the page
+  allows in two rows of six (`spellPlace`: 110 inside the insets, 130 without);
+  the school's plate left the first place for the head. The rest screen keeps a
+  line a member; the daylight stands with the choices.
+- **Services in columns**: each list one table, so names, figures, prices and
+  buttons align whatever wraps (a subgrid kept its rows at one line's height once
+  the pixel text replaced the words); a member a line, the four in sight;
+  every action MM6's gold oval with its word alone (a price or a reason inside a
+  button had made it a wide slab of the rest screen's style), dim when it cannot
+  be taken and saying why on the message line when tapped.
+- **Lists that are longer than their box** (a smithy's stock, a long quest log,
+  many skills or rings) scroll under a finger with no bar, the talk panel's gold
+  marks at their corners while there is more that way (`watchScrolls`).
+- **Checked on the phone's size**: `tests/e2e/screens-fit.spec.ts` opens every
+  screen and service with the insets forced and fails on anything outside its
+  panel or cut by a box that does not scroll, on words over words, and on a title
+  or close oval out of its place.
+
 ## 17. Regions by hand (owner, 2026-10-19)
 
 "Hand design 640 m maps." The generated valley and desert are gone (section 15
@@ -2405,6 +2453,11 @@ batch 012; the coast road's west end has no portal until the second region
 exists; the headland ruin has no ruin model yet.
 
 ## 13. Decision log
+
+- 2026-10-23 – Every screen in one frame (owner: "Formatting is off everywhere", 16.33): the
+  title at the top left, the close oval at the bottom right with the message line, as MM6's
+  Exit; every screen fits its box at 932 by 430 with the phone's insets, a longer list
+  scrolling with gold marks; the services' rows in aligned columns with gold ovals only.
 
 - 2026-10-23 – Fences are the kernel's (owner: "I think you have to generate fences
   yourselves, you haven't managed with the fence model"). A region lists `fences` as lines

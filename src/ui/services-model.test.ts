@@ -159,7 +159,7 @@ describe('trainer', () => {
     expect(trainerRows(state, TRAINER)[0]).toMatchObject({ canTrain: true, reason: null });
     expect(trainMember(state, TRAINER, 0)).toEqual({
       ok: true,
-      message: 'Alric reaches level 2 for 50 gold: +5 hit points, 5 skill points to spend.',
+      message: 'Alric reaches level 2 for 50 gold: +5 HP, 5 skill points.',
     });
     expect(state.gold).toBe(150);
     expect(state.party[0]!.level).toBe(2);

@@ -4,12 +4,13 @@
 
 /* Inventory */
 .inv-grid {
-  /* Fourteen by nine cells of twenty-seven pixels: the whole bag in the frame, as MM6's
-     (screens critic, round 13: 6 of 9 rows showed). */
-  --cell: 27px;
+  /* Fourteen by nine cells: the whole bag in the frame, as MM6's (screens critic, round 13:
+     6 of 9 rows showed), each cell as large as the box lets every row show, MM6's 27 pixels
+     when there is room (inventory.ts, layout-model.ts `bagCell`; owner's phone, 2026-10-23:
+     the last rows were cut off inside the insets). */
   display: grid;
-  grid-template-columns: repeat(14, var(--cell));
-  grid-template-rows: repeat(9, var(--cell));
+  grid-template-columns: repeat(14, var(--cell, 27px));
+  grid-template-rows: repeat(9, var(--cell, 27px));
   gap: 0;
   padding: 3px;
   align-self: flex-start;
@@ -76,14 +77,16 @@
   stroke-linecap: round;
   stroke-linejoin: round;
 }
+/* A one-cell item's glyph fills its cell less a pixel and a half each side; wider pieces a
+   size up. */
 .inv-item .inv-glyph {
-  width: 24px;
-  height: 24px;
+  width: calc(var(--cell, 27px) - 3px);
+  height: calc(var(--cell, 27px) - 3px);
 }
 .inv-item.w2 .inv-glyph,
 .inv-item.w3 .inv-glyph {
-  width: 30px;
-  height: 30px;
+  width: calc(var(--cell, 27px) + 3px);
+  height: calc(var(--cell, 27px) + 3px);
 }
 .inv-item .inv-name {
   display: block;
@@ -95,29 +98,45 @@
 .inv-side {
   flex: 1;
   min-width: 0;
-  overflow-y: auto;
+  padding-right: 18px;
+}
+/* The heading with the armour and the attack the gear makes at its right. */
+.inv-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+.inv-fight {
+  font-size: 18px;
+  white-space: nowrap;
+}
+/* The worn slots, two columns of lines of 24 pixels, filled down then across (inventory.ts). */
+.inv-slots {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-auto-flow: column;
+  column-gap: 6px;
+}
+.ui-row.inv-slot {
+  min-height: 24px;
+  padding: 0 3px;
+  gap: 6px;
+  box-shadow: none;
 }
 .inv-slot .ui-v {
   font-size: 18px;
-}
-.inv-slot .slot-name {
-  flex: 0 0 138px;
-  font-size: 18px;
-  color: var(--ink-pale);
-}
-.inv-slot {
-  /* Rows of thirty pixels with their padding, six filling the box (screens critic, rounds 14
-     and 15). */
-  min-height: 30px;
+  line-height: 24px;
+  overflow: hidden;
+  white-space: nowrap;
 }
 .inv-slot .inv-glyph {
-  width: 24px;
-  height: 24px;
+  width: 21px;
+  height: 21px;
 }
-.inv-give {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
+/* An action not to be taken now: dim, its reason on the message line when tapped. */
+.ui-btn.off {
+  opacity: 0.45;
 }
 
 /* Spellbook */
@@ -156,7 +175,7 @@
   color: #ffffff;
 }
 .rest-actions .ui-btn {
-  min-height: 45px;
+  min-height: 39px;
 }
 .screen-rest .ui-col.narrow {
   gap: 0;
@@ -169,7 +188,7 @@
   overflow: hidden;
 }
 .rest-member .sub {
-  line-height: 24px;
+  line-height: 22px;
 }
 /* The date at the type's own width, so it holds one line in the well. */
 .rest-date {
@@ -177,9 +196,88 @@
   letter-spacing: 0;
 }
 
-/* Services */
+/* Services: each list one table, so names, figures, prices and the gold ovals stand in
+   columns whatever wraps; a member or a ware a line of 30 pixels at the least, the four
+   members in sight without scrolling (owner, 2026-10-23). */
 .svc-gold {
   color: var(--ink-yellow);
+}
+.svc-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+.svc-head .ui-h {
+  margin: 0;
+}
+.svc-rows {
+  display: table;
+  width: 100%;
+  border-spacing: 0;
+}
+.svc-line {
+  display: table-row;
+}
+/* Each cell on the bare stone with the row's rule under it (critics, round 9), eighteen
+   pixels from the one before. */
+.svc-line > * {
+  display: table-cell;
+  vertical-align: middle;
+  height: 30px;
+  padding: 3px 0 3px 18px;
+  white-space: nowrap;
+  box-shadow: inset 0 -1px 0 #292c29;
+}
+.svc-line > :first-child {
+  padding-left: 6px;
+}
+.svc-line > :last-child {
+  padding-right: 6px;
+}
+.svc-line.dim > * {
+  opacity: 0.55;
+}
+/* The slack goes to the names of wares and books (which wrap), to the reasons of members. */
+.svc-wares .svc-name,
+.svc-books .svc-name,
+.svc-trainer .svc-price,
+.svc-temple .svc-price {
+  width: 100%;
+  white-space: normal;
+}
+.svc-line .sub,
+.svc-price {
+  font-size: 18px;
+  line-height: 22px;
+}
+.svc-price.dim {
+  opacity: 0.6;
+}
+.svc-num {
+  text-align: right;
+}
+.svc-acts {
+  text-align: right;
+}
+.svc-acts .ui-btn + .ui-btn {
+  margin-left: 6px;
+}
+.svc-line .ui-btn.svc-act {
+  min-height: 30px;
+  height: 30px;
+  padding: 0 14px;
+}
+/* A member a line of 36 pixels in the type's least size, the four filling the box as MM6's
+   lists did. */
+.svc-trainer .svc-line > *,
+.svc-temple .svc-line > * {
+  height: 36px;
+  font-size: 18px;
+}
+.svc-trainer .svc-line .ui-v,
+.svc-temple .svc-line .ui-v {
+  font-size: 18px;
 }
 
 /* Character creation */
@@ -309,53 +407,30 @@
 }
 
 /* The spellbook's page (DESIGN.md 16.22): MM6's spread holds a place for each of the school's
-   eleven spells and the school's plate in the first, in two rows of six on the phone's wide
-   page; a known spell has its picture and name, a place not yet learnt is the bare oval. */
+   eleven spells in two rows of six on the phone's wide page; a known spell has its picture
+   and name, a place not yet learnt is the bare oval. The school, the rank and the points
+   head the page beside the title (spellbook.ts). Each place an even number of whole pixels,
+   as wide as the page allows (layout-model.ts `spellPlace`), so all six fit inside the
+   insets (owner's phone, 2026-10-23: the last column ran off the page). */
 .spell-page {
   flex: 1;
   display: grid;
-  /* 126 pixels a place and 123 a row, so every oval sits on whole pixels (screens critic,
-     rounds 12 and 13). */
-  grid-template-columns: repeat(6, 126px);
-  grid-template-rows: repeat(2, 123px);
-  gap: 6px 0;
+  grid-template-columns: repeat(6, var(--place, 108px));
+  grid-template-rows: auto auto;
+  align-content: start;
+  gap: 0;
   min-height: 0;
-}
-.spell-plate {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  color: #4a3414;
-}
-/* MM6's book type is upright and black (screens critic, round 12). */
-.spell-school {
-  font:
-    24px/27px 'Tinos',
-    Georgia,
-    serif;
-  color: #000000;
-  /* One line, as MM6's (screens critic, round 16: "Water Magic" spilled a pixel each side). */
-  white-space: nowrap;
-}
-.spell-plate .sub {
-  font:
-    21px/24px 'Tinos',
-    Georgia,
-    serif;
-  color: #000000;
-}
-.spell-slot.empty {
-  pointer-events: none;
+  min-width: 0;
 }
 /* The bookmarks (paint.ts `book:<schools>@<school>`): a clear button over each painted
    pennant, forty-eight by thirty-three pixels showing, thirty-nine apart from the twenty-
    ninth row, ten in from the book's right edge; the stack stands sixteen further in for
-   them. */
+   them, and the head, the spread and the close oval with it. */
 .screen-spells .ui-panel {
-  position: relative;
   padding-right: 60px;
+}
+.screen-spells .ui-foot {
+  right: 68px;
 }
 .spell-marks {
   position: absolute;
@@ -385,7 +460,9 @@
   align-items: center;
   justify-content: flex-start;
   gap: 0;
-  padding: 0 0 3px;
+  width: var(--place, 108px);
+  min-width: 0;
+  padding: 0;
   background: none;
   border: 0;
   border-radius: 0;
@@ -426,9 +503,11 @@
   image-rendering: pixelated;
 }
 .spell-name {
-  /* MM6's book names: upright, black, 14 UI pixels (screens critic, round 13). */
+  /* MM6's book names: upright and black, at the type's least so a name holds its place's
+     width; a long one ("Protection from Fire") takes a second line. */
+  max-width: 100%;
   font:
-    21px/24px 'Tinos',
+    18px/21px 'Tinos',
     Georgia,
     serif;
   color: #000000;
@@ -462,25 +541,16 @@
 .rest-message.refused {
   --pxt-stretch: 1;
 }
-/* The spread never scrolls: eleven places fit the page, right of the crease. */
+/* The spread never scrolls: eleven places fit the page, right of the crease and its knot
+   strip (paint.ts `paintBinding`, ending 76 pixels in), as the head does. */
+.screen-spells .ui-head {
+  padding-left: 72px;
+}
 .screen-spells .ui-body {
   overflow: hidden;
-  padding: 6px 6px 0 84px;
+  padding: 0 6px 0 72px;
 }
-/* MM6's book has no title; it closes from a tab on its foot (critics, round 12). */
-.screen-spells .ui-head {
-  position: absolute;
-  right: 72px;
-  bottom: 6px;
-  min-height: 0;
-  padding: 0;
-  z-index: 2;
-}
-.screen-spells .ui-title {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  overflow: hidden;
-  clip: rect(0 0 0 0);
-  white-space: nowrap;
+.screen-spells .ui-aside {
+  font-style: normal;
+  color: #000000;
 }

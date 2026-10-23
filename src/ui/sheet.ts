@@ -1,48 +1,38 @@
 /**
- * The character sheet screen (Phase 5 step 10): the four members as tabs; identity, hit and
- * spell points, statistics with bonuses, the derived combat numbers, the condition and the
- * learnt skills with their ranks and a raise button that spends skill points.
+ * The character sheet screen (Phase 5 step 10): the member picked in the band, named in the
+ * title with their calling; hit and spell points, armour, level and condition, statistics
+ * with bonuses and the fighting numbers, and the learnt skills with their ranks, a tap on
+ * one spending skill points to raise it.
  */
 import type { SkillId } from '../game/skills';
 import type { ScreenContext } from './context';
 import { el, kv, note } from './dom';
 import { raise, raiseMessage, type SheetView, sheetView, signed } from './sheet-model';
 
-function identityColumn(v: SheetView): HTMLElement {
-  const col = el('div', 'ui-col narrow');
-  const head = el('div', 'sheet-head');
-  head.append(
-    el('div', 'sheet-name', v.name),
-    el('div', 'sheet-class', `${v.className} · ${v.sex} · ${v.age} years`),
-  );
-  col.appendChild(head);
+/**
+ * The member's points, armour, recovery, level and condition (the name, the class, sex and
+ * age head the screen), one line each as MM6's (owner, 2026-10-23: the sheet's last rows were
+ * cut off inside the insets).
+ */
+function stateColumn(v: SheetView): HTMLElement {
+  const col = el('div', 'ui-col sheet-state');
   col.appendChild(kv('Hit points', `${v.hp} / ${v.maxHp}`));
   if (v.hasSp) col.appendChild(kv('Spell points', `${v.sp} / ${v.maxSp}`));
+  col.appendChild(kv('Armour class', v.armorClass));
+  col.appendChild(kv('Recovery', v.recovery));
   col.appendChild(kv('Level', v.level));
-  col.appendChild(kv('Experience', `${v.xp} / ${v.xpNext}`));
-  col.appendChild(
-    v.canTrain
-      ? note('Ready for training.', 'good')
-      : note(`${v.xpToNext} experience to the next level.`),
-  );
-  const condition = kv('Condition', v.condition, v.condition === 'Good' ? 'good' : 'bad');
-  col.appendChild(condition);
+  // Enough for the next level shows green, as MM6's experience did; the figure after the
+  // stroke is the next level's.
+  col.appendChild(kv('Experience', `${v.xp} / ${v.xpNext}`, v.canTrain ? 'good' : ''));
+  col.appendChild(kv('Condition', v.condition, v.condition === 'Good' ? 'good' : 'bad'));
+  if (v.canTrain) col.appendChild(note('Ready for training.', 'good'));
   if (v.afflictions.length > 1) col.appendChild(note(v.afflictions.join(', '), 'bad'));
   return col;
 }
 
-/** The fighting numbers, under the statistics as MM6's sheet set them. */
-function combatBlock(v: SheetView, col: HTMLElement): void {
-  col.appendChild(kv('Armour class', v.armorClass));
-  col.appendChild(kv('Attack', `${signed(v.attack)}  ${v.damage}`));
-  if (v.rangedAttack !== null) {
-    col.appendChild(kv('Shoot', `${signed(v.rangedAttack)}  ${v.rangedDamage ?? ''}`));
-  }
-  col.appendChild(kv('Recovery', v.recovery));
-}
-
+/** The seven statistics with their bonuses, then the fighting numbers, as MM6's sheet. */
 function statsColumn(v: SheetView): HTMLElement {
-  const col = el('div', 'ui-col narrow');
+  const col = el('div', 'ui-col sheet-stats-col');
   const table = el('div', 'sheet-stats');
   for (const row of v.stats) {
     const label = el('span', 'ui-k', row.label);
@@ -55,12 +45,18 @@ function statsColumn(v: SheetView): HTMLElement {
     table.append(label, value, bonus);
   }
   col.appendChild(table);
-  combatBlock(v, col);
+  const fight = el('div', 'sheet-fight');
+  fight.appendChild(kv('Attack', `${signed(v.attack)}  ${v.damage}`));
+  if (v.rangedAttack !== null) {
+    fight.appendChild(kv('Shoot', `${signed(v.rangedAttack)}  ${v.rangedDamage ?? ''}`));
+  }
+  col.appendChild(fight);
   return col;
 }
 
 function skillsColumn(v: SheetView, onRaise: (id: SkillId) => void): HTMLElement {
-  const col = el('div', 'ui-col');
+  // A long list scrolls in its box, the gold marks at its corners (dom.ts `watchScrolls`).
+  const col = el('div', 'ui-col scroll sheet-skills');
   col.appendChild(kv('Skill points', v.skillPoints, 'sheet-points'));
   for (const group of v.skills) {
     col.appendChild(el('div', 'sheet-group', group.label));
@@ -99,8 +95,11 @@ export function renderSheet(ctx: ScreenContext): void {
     const c = state.party[active];
     if (!c) return;
     const v = sheetView(c);
+    // MM6 headed its sheet with the member's name and calling.
+    frame.setTitle(`${v.name} the ${v.className}`);
+    frame.aside.textContent = `${v.sex} · ${v.age} years`;
     frame.body.replaceChildren(
-      identityColumn(v),
+      stateColumn(v),
       statsColumn(v),
       skillsColumn(v, (id) => {
         frame.message(raiseMessage(raise(c, id), id));

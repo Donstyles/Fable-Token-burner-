@@ -28,8 +28,60 @@ function goldLine(gold: number): HTMLElement {
   return kv('Gold', gold, 'svc-gold');
 }
 
-function priceNote(price: number, reason: string | null): string {
-  return reason ?? `${price} gold`;
+/** A list's heading with the party's gold at its right, so the rows below get the room. */
+function headLine(title: string, gold: number): HTMLElement {
+  const row = el('div', 'svc-head');
+  row.append(heading(title), goldLine(gold));
+  return row;
+}
+
+/**
+ * A row's action: always MM6's gold oval with its word alone (owner, 2026-10-23: a price or a
+ * reason in the button made it a wide slab of another style). One that cannot be taken now
+ * sits dim and, tapped, says why on the message line.
+ */
+function act(
+  ctx: ScreenContext,
+  label: string,
+  reason: string | null,
+  onTap: () => void,
+): HTMLButtonElement {
+  const b = button(label, () => {
+    if (reason !== null) ctx.frame.message(reason);
+    else onTap();
+  });
+  b.classList.add('svc-act');
+  if (reason !== null) {
+    b.classList.add('off');
+    b.title = reason;
+  }
+  return b;
+}
+
+/**
+ * The price, or the reason the row's action cannot be taken (a member's training or healing),
+ * dim, in its own column.
+ */
+function priceCell(price: number, reason: string | null): HTMLElement {
+  return el('span', `svc-price ${reason === null ? '' : 'dim'}`.trim(), reason ?? `${price} gold`);
+}
+
+/**
+ * A list's rows as one table, so names, figures, prices and the gold ovals stand in columns
+ * whatever wraps (owner, 2026-10-23: the row buttons and their notes ran out of line).
+ */
+function table(className: string): HTMLElement {
+  return el('div', `svc-rows ${className}`);
+}
+
+/** One row of the table: its cells, then the gold ovals in the last. */
+function tableRow(cells: HTMLElement[], acts: HTMLElement[], dim = false): HTMLElement {
+  const line = el('div', 'svc-line');
+  if (dim) line.classList.add('dim');
+  const end = el('span', 'svc-acts');
+  end.append(...acts);
+  line.append(...cells, end);
+  return line;
 }
 
 function renderTavern(ctx: ScreenContext, house: ServiceDefs['tavern']): void {
@@ -83,27 +135,29 @@ function renderTavern(ctx: ScreenContext, house: ServiceDefs['tavern']): void {
 function renderTemple(ctx: ScreenContext, house: ServiceDefs['temple']): void {
   const { state, frame } = ctx;
   const draw = (): void => {
+    // One line a member, the four in sight without scrolling.
     const col = el('div', 'ui-col');
-    col.appendChild(goldLine(state.gold));
-    col.appendChild(heading('Healing'));
+    col.appendChild(headLine('Healing', state.gold));
+    const rows = table('svc-temple');
     for (const row of templeRows(state, house)) {
-      const line = el('div', 'ui-row');
-      const text = el('div', 'grow');
-      text.append(el('div', '', row.name), el('div', 'sub', row.condition));
-      line.append(
-        text,
-        el('span', 'ui-v', `${row.hp}/${row.maxHp}`),
-        button(
-          'Heal',
-          () => {
-            frame.message(heal(state, house, row.index).message);
-            draw();
-          },
-          { className: 'primary', disabled: !row.canHeal, note: priceNote(row.price, row.reason) },
+      rows.appendChild(
+        tableRow(
+          [
+            el('span', 'svc-name', row.name),
+            el('span', 'sub', row.condition),
+            el('span', 'ui-v svc-num', `${row.hp} / ${row.maxHp}`),
+            priceCell(row.price, row.reason),
+          ],
+          [
+            act(ctx, 'Heal', row.reason, () => {
+              frame.message(heal(state, house, row.index).message);
+              draw();
+            }),
+          ],
         ),
       );
-      col.appendChild(line);
     }
+    col.appendChild(rows);
     frame.body.replaceChildren(col);
   };
   draw();
@@ -113,7 +167,8 @@ function renderGuild(ctx: ScreenContext, house: ServiceDefs['guild']): void {
   const { state, frame } = ctx;
   let active = state.selected;
   const draw = (): void => {
-    frame.tabs.replaceChildren(
+    // The members beside the title; the message line keeps the foot's whole width.
+    frame.aside.replaceChildren(
       memberTabs(state.party, active, (i) => {
         active = i;
         draw();
@@ -137,24 +192,24 @@ function renderGuild(ctx: ScreenContext, house: ServiceDefs['guild']): void {
     }
     const right = el('div', 'ui-col scroll');
     right.appendChild(heading(`Spellbooks for ${state.party[active]?.name ?? ''}`));
+    const rows = table('svc-books');
     for (const s of v.spells) {
-      const line = el('div', 'ui-row');
-      if (s.known) line.classList.add('dim');
-      const text = el('div', 'grow');
+      const text = el('div', 'svc-name');
       text.append(el('div', '', s.name), el('div', 'sub', `Level ${s.level}`));
-      line.append(
-        text,
-        button(
-          'Buy',
-          () => {
-            frame.message(buyBook(state, house, s.id, active).message);
-            draw();
-          },
-          { className: 'primary', disabled: !s.canBuy, note: priceNote(s.price, s.reason) },
+      rows.appendChild(
+        tableRow(
+          [text, priceCell(s.price, null)],
+          [
+            act(ctx, 'Buy', s.canBuy ? null : (s.reason ?? 'Not now.'), () => {
+              frame.message(buyBook(state, house, s.id, active).message);
+              draw();
+            }),
+          ],
+          s.known,
         ),
       );
-      right.appendChild(line);
     }
+    right.appendChild(rows);
     frame.body.replaceChildren(left, right);
   };
   draw();
@@ -163,29 +218,31 @@ function renderGuild(ctx: ScreenContext, house: ServiceDefs['guild']): void {
 function renderTrainer(ctx: ScreenContext, house: ServiceDefs['trainer']): void {
   const { state, frame } = ctx;
   const draw = (): void => {
+    // One line a member in aligned columns, the four in sight without scrolling (owner,
+    // 2026-10-23: two lines a member ran Tobin's off the box and Sera's out of sight).
     const col = el('div', 'ui-col');
-    col.append(goldLine(state.gold), heading(`Training to level ${house.maxLevel}`));
+    col.appendChild(headLine(`Training to level ${house.maxLevel}`, state.gold));
+    const rows = table('svc-trainer');
     for (const row of trainerRows(state, house)) {
-      const line = el('div', 'ui-row');
-      const text = el('div', 'grow');
       const sp = row.spGain > 0 ? `, +${row.spGain} SP` : '';
-      text.append(
-        el('div', '', `${row.name} · level ${row.level}`),
-        el('div', 'sub', `${row.xp} experience · next level: +${row.hpGain} HP${sp}`),
-      );
-      line.append(
-        text,
-        button(
-          'Train',
-          () => {
-            frame.message(trainMember(state, house, row.index).message);
-            draw();
-          },
-          { className: 'primary', disabled: !row.canTrain, note: priceNote(row.price, row.reason) },
+      rows.appendChild(
+        tableRow(
+          [
+            el('span', 'svc-name', row.name),
+            el('span', 'ui-v svc-num', `Level ${row.level}`),
+            el('span', 'sub', `next +${row.hpGain} HP${sp}`),
+            priceCell(row.price, row.reason),
+          ],
+          [
+            act(ctx, 'Train', row.reason, () => {
+              frame.message(trainMember(state, house, row.index).message);
+              draw();
+            }),
+          ],
         ),
       );
-      col.appendChild(line);
     }
+    col.appendChild(rows);
     frame.body.replaceChildren(col);
   };
   draw();
@@ -194,61 +251,63 @@ function renderTrainer(ctx: ScreenContext, house: ServiceDefs['trainer']): void 
 function renderShop(ctx: ScreenContext, house: ServiceDefs['shop']): void {
   const { state, frame } = ctx;
   let active = state.selected;
-  const act = (r: ActionOutcome): void => {
+  const done = (r: ActionOutcome): void => {
     frame.message(r.message);
     draw();
   };
   const draw = (): void => {
-    frame.tabs.replaceChildren(
+    // The members beside the title; the message line keeps the foot's whole width.
+    frame.aside.replaceChildren(
       memberTabs(state.party, active, (i) => {
         active = i;
         draw();
       }),
     );
     const v = shopView(state, house, active);
+    // Each list scrolls in its box when the stock or the pack is longer than it.
     const left = el('div', 'ui-col scroll');
-    left.append(goldLine(state.gold), heading('For sale'));
+    left.appendChild(headLine('For sale', state.gold));
     if (v.merchant > 0) left.appendChild(note(`Merchant: ${v.merchant} % better prices.`, 'good'));
+    const wares = table('svc-wares');
     for (const b of v.buy) {
-      const line = el('div', 'ui-row');
-      line.append(
-        el('span', 'grow', b.name),
-        button('Buy', () => act(buy(state, house, b.id, active)), {
-          className: 'primary',
-          disabled: !b.canBuy,
-          note: priceNote(b.price, b.reason),
-        }),
+      wares.appendChild(
+        tableRow(
+          [el('span', 'svc-name', b.name), priceCell(b.price, null)],
+          [
+            act(ctx, 'Buy', b.canBuy ? null : (b.reason ?? 'Not now.'), () =>
+              done(buy(state, house, b.id, active)),
+            ),
+          ],
+        ),
       );
-      left.appendChild(line);
     }
+    left.appendChild(wares);
     const right = el('div', 'ui-col scroll');
     right.appendChild(heading(`${state.party[active]?.name ?? ''}'s pack`));
     if (v.sell.length === 0) right.appendChild(note('Nothing to sell.'));
+    const pack = table('svc-wares');
     for (const s of v.sell) {
-      const line = el('div', 'ui-row');
-      if (s.broken) line.classList.add('dim');
-      line.appendChild(el('span', 'grow', s.name));
+      // What the smith would charge first, under the name: the buttons carry their word alone.
+      const text = el('div', 'svc-name');
+      text.appendChild(el('div', '', s.name));
+      const extra = [
+        s.identified ? '' : `identify ${s.identifyPrice} gold`,
+        s.broken ? `repair ${s.repairPrice} gold` : '',
+      ].filter(Boolean);
+      if (extra.length) text.appendChild(el('div', 'sub', extra.join(' · ')));
+      const acts: HTMLElement[] = [];
       if (!s.identified) {
-        line.appendChild(
-          button('Identify', () => act(identify(state, house, active, s.gridIndex)), {
-            note: `${s.identifyPrice} gold`,
-          }),
+        acts.push(
+          act(ctx, 'Identify', null, () => done(identify(state, house, active, s.gridIndex))),
         );
       }
       if (s.broken) {
-        line.appendChild(
-          button('Repair', () => act(repair(state, house, active, s.gridIndex)), {
-            note: `${s.repairPrice} gold`,
-          }),
-        );
+        acts.push(act(ctx, 'Repair', null, () => done(repair(state, house, active, s.gridIndex))));
       }
-      line.appendChild(
-        button('Sell', () => act(sell(state, house, active, s.gridIndex)), {
-          note: `${s.price} gold`,
-        }),
-      );
-      right.appendChild(line);
+      acts.push(act(ctx, 'Sell', null, () => done(sell(state, house, active, s.gridIndex))));
+      pack.appendChild(tableRow([text, priceCell(s.price, null)], acts, s.broken));
     }
+    right.appendChild(pack);
     frame.body.replaceChildren(left, right);
   };
   draw();

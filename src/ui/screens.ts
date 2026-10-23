@@ -18,7 +18,7 @@ import {
   type ServiceDefs,
   type ServiceKind,
 } from './context';
-import { button, createFrame, el } from './dom';
+import { button, createFrame, el, watchScrolls } from './dom';
 import { renderInventory } from './inventory';
 import { renderMap, renderQuests } from './journal';
 import { renderRest } from './rest';
@@ -104,11 +104,12 @@ export function installScreens(
   uiLayer.appendChild(shelf);
   installPressFeel(uiLayer);
 
-  let open_: { name: ScreenName | ServiceKind; root: HTMLElement } | null = null;
+  let open_: { name: ScreenName | ServiceKind; root: HTMLElement; stop: () => void } | null = null;
   let portraitClaim: ((index: number) => boolean) | null = null;
 
   function unmount(notify: boolean): void {
     if (!open_) return;
+    open_.stop();
     open_.root.remove();
     open_ = null;
     portraitClaim = null;
@@ -128,10 +129,14 @@ export function installScreens(
     const frame = createFrame(title, close);
     // The screen's own class, so the spellbook can be parchment and the sheet stone.
     frame.root.classList.add(`screen-${name}`);
-    // The spellbook and the quest log are open books, as MM6's (paint.ts `book`).
+    // The spellbook and the quest log are open books, as MM6's (paint.ts `book`). Their foot
+    // is the painted page edges, the close oval standing on them; the message line goes up
+    // beside the title, on the page.
     if (name === 'spells' || name === 'quests' || name === 'map') {
       const panel = frame.root.querySelector<HTMLElement>('.ui-panel');
       if (panel) panel.dataset['paint'] = 'book';
+      const say = frame.root.querySelector('.ui-say');
+      if (say) frame.root.querySelector('.ui-head')?.appendChild(say);
     }
     portraitClaim = null;
     render({
@@ -145,7 +150,8 @@ export function installScreens(
       },
     });
     uiLayer.appendChild(frame.root);
-    open_ = { name, root: frame.root };
+    // A list longer than its box scrolls under a finger, MM6's gold marks at its corners.
+    open_ = { name, root: frame.root, stop: watchScrolls(frame.body) };
     hooks.onOpen?.(name);
   }
 

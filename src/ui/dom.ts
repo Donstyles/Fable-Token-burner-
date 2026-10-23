@@ -5,6 +5,7 @@
  */
 import type { Character } from '../game/character';
 import { isConscious } from '../game/character';
+import { scrollMarks } from './dialogue-model';
 
 export function el<K extends keyof HTMLElementTagNameMap>(
   tag: K,
@@ -108,10 +109,18 @@ export function note(text: string, className = ''): HTMLElement {
   return el('p', `ui-note ${className}`.trim(), text);
 }
 
-/** The modal frame: a title, a slot for tabs, the close button, the body and a message line. */
+/**
+ * The modal frame, one layout for every screen (owner, 2026-10-23: "Formatting is off
+ * everywhere"): the title at the head's left with the screen's own line beside it (`aside`:
+ * the spellbook's rank and points, a shop's members); at the foot the message line at the
+ * left, the screen's buttons (`bar`: an item's actions) and the close oval at the bottom
+ * right, where MM6 put its Exit. The books carry the message in the head, their foot being
+ * the painted page edges (screens.ts).
+ */
 export interface Frame {
   root: HTMLElement;
-  tabs: HTMLElement;
+  aside: HTMLElement;
+  bar: HTMLElement;
   body: HTMLElement;
   setTitle(title: string): void;
   message(text: string): void;
@@ -123,27 +132,102 @@ export function createFrame(title: string, onClose: () => void): Frame {
   panel.dataset['paint'] = 'marble-frame';
   const head = el('div', 'ui-head');
   const titleNode = el('h1', 'ui-title', title);
-  const tabs = el('div', 'ui-head-tabs');
+  const aside = el('div', 'ui-aside');
+  const say = el('div', 'ui-say');
+  say.setAttribute('role', 'status');
+  head.append(titleNode, aside);
+  const body = el('div', 'ui-body');
+  const foot = el('div', 'ui-foot');
+  const bar = el('div', 'ui-buttons');
   // MM6 closed its screens with a glyph, not a word: a cross in dark ink on the gold oval,
   // painted on the button's face in whole pixels (paint.ts `drawCross`).
   const close = button('', onClose, { className: 'ui-close' });
   close.setAttribute('aria-label', 'Close');
   close.title = 'Close';
-  head.append(titleNode, tabs, close);
-  const body = el('div', 'ui-body');
-  const foot = el('div', 'ui-foot');
+  foot.append(say, bar, close);
   panel.append(head, body, foot);
   root.appendChild(panel);
   return {
     root,
-    tabs,
+    aside,
+    bar,
     body,
     setTitle(t) {
       titleNode.textContent = t;
     },
     message(text) {
-      foot.textContent = text;
-      foot.classList.toggle('shown', text.length > 0);
+      say.textContent = text;
+      say.classList.toggle('shown', text.length > 0);
     },
+  };
+}
+
+/**
+ * MM6's scroll marks on every list a screen scrolls (`.scroll`, the talk panel's gold arrows,
+ * dialogue.ts): one at the list's top right while there is more above, one at its foot while
+ * there is more below. They stand in the body over the list, take no taps, and follow the
+ * lists as screens redraw them, their words are painted or the frame changes size. Returns
+ * the call that stops them.
+ */
+export function watchScrolls(body: HTMLElement): () => void {
+  const marks = new Map<HTMLElement, { up: HTMLElement; down: HTMLElement }>();
+  let pending = 0;
+  const mark = (dir: 'up' | 'down'): HTMLElement => {
+    const m = el('div', `ui-more ${dir}`);
+    m.dataset['paint'] = `arrow-${dir}`;
+    m.setAttribute('aria-hidden', 'true');
+    return m;
+  };
+  const update = (): void => {
+    pending = 0;
+    const lists = new Set(body.querySelectorAll<HTMLElement>('.scroll'));
+    for (const [list, m] of marks) {
+      if (lists.has(list) && list.isConnected) continue;
+      m.up.remove();
+      m.down.remove();
+      marks.delete(list);
+    }
+    const b = body.getBoundingClientRect();
+    for (const list of lists) {
+      let m = marks.get(list);
+      if (!m) {
+        m = { up: mark('up'), down: mark('down') };
+        marks.set(list, m);
+      }
+      if (m.up.parentElement !== body) body.append(m.up, m.down);
+      const r = list.getBoundingClientRect();
+      const s = scrollMarks(list.scrollTop, list.clientHeight, list.scrollHeight);
+      const left = `${Math.round(r.right - b.left) - 15}px`;
+      m.up.style.left = left;
+      m.down.style.left = left;
+      m.up.style.top = `${Math.round(r.top - b.top) + 6}px`;
+      m.down.style.top = `${Math.round(r.bottom - b.top) - 12}px`;
+      m.up.classList.toggle('shown', s.up);
+      m.down.classList.toggle('shown', s.down);
+    }
+  };
+  const schedule = (): void => {
+    if (!pending) pending = requestAnimationFrame(update);
+  };
+  const changes = new MutationObserver((records) => {
+    // The marks' own coming and going is not a change of the lists.
+    const own = (n: Node): boolean => n instanceof HTMLElement && n.classList.contains('ui-more');
+    if (records.some((r) => ![...r.addedNodes, ...r.removedNodes].every(own))) schedule();
+  });
+  changes.observe(body, { childList: true, subtree: true });
+  const sizes = typeof ResizeObserver === 'function' ? new ResizeObserver(schedule) : null;
+  sizes?.observe(body);
+  body.addEventListener('scroll', schedule, { capture: true, passive: true });
+  schedule();
+  return () => {
+    changes.disconnect();
+    sizes?.disconnect();
+    body.removeEventListener('scroll', schedule, { capture: true });
+    if (pending) cancelAnimationFrame(pending);
+    for (const m of marks.values()) {
+      m.up.remove();
+      m.down.remove();
+    }
+    marks.clear();
   };
 }

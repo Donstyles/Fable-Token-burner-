@@ -270,11 +270,12 @@ export function trainMember(state: GameState, trainer: TrainerDef, index: number
   if (!row.canTrain) return { ok: false, message: row.reason ?? 'Cannot train.' };
   const r = train(state, trainer, index);
   if (!r.ok) return { ok: false, message: 'Cannot train.' };
-  const sp = r.result.spGain > 0 ? `, +${r.result.spGain} spell points` : '';
+  // One line on the screen's message line, the phone's insets and all.
+  const sp = r.result.spGain > 0 ? `, +${r.result.spGain} SP` : '';
   return {
     ok: true,
     message:
       `${row.name} reaches level ${r.result.level} for ${r.price} gold: ` +
-      `+${r.result.hpGain} hit points${sp}, ${r.result.skillPoints} skill points to spend.`,
+      `+${r.result.hpGain} HP${sp}, ${r.result.skillPoints} skill points.`,
   };
 }
