@@ -111,6 +111,9 @@ export default defineConfig(({ mode }) => {
     test: {
       include: ['src/**/*.test.ts', 'kernel/**/*.test.ts', 'tools/**/*.test.ts'],
       environment: 'node',
+      // quickhull3d's ES build imports its own files without extensions, which Node's resolver
+      // refuses; transformed with the tests it resolves as it does under tsx.
+      server: { deps: { inline: ['quickhull3d'] } },
     },
   };
 });

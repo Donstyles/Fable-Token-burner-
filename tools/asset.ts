@@ -45,6 +45,8 @@ import { postProcessIcon } from './lib/icon';
 import { keyPicture } from './lib/key';
 import { CHARACTER_TEXTURE_SIZE, inspectGlb } from './lib/postprocess';
 import { MESHY_LICENCE, WORK_DIR, runBatch } from './lib/run';
+import { describeGap } from './lib/quality';
+import { reviewSheets } from './lib/review';
 
 /** Where accepted spell icons live; the spellbook looks them up by spell id. */
 const SPELL_ICON_DIR = 'assets/icons/spells';
@@ -418,6 +420,25 @@ async function inbox(args: string[]): Promise<void> {
   }
 }
 
+async function review(ids: string[]): Promise<void> {
+  // `review <id>...`: each model's review sheet (tools/lib/review.ts), looked at before the
+  // model goes into the game.
+  if (!ids.length) fail('review <asset id>...');
+  try {
+    for (const s of await reviewSheets(ids)) {
+      const g = s.report.gaps[0];
+      const note = s.report.problems.length
+        ? `FAILS: ${s.report.problems.join('; ')}`
+        : s.report.suspect && g
+          ? `look hard: ${describeGap(g)}`
+          : 'no gap found';
+      console.info(`${s.id.padEnd(24)} ${s.file}  ${note}`);
+    }
+  } catch (e) {
+    fail(`asset review: ${e instanceof Error ? e.message : String(e)}`);
+  }
+}
+
 async function run(args: string[]): Promise<void> {
   const number = Number(args[0]);
   if (!Number.isInteger(number)) fail('run <nnn> [--dry-run] [--force]');
@@ -462,6 +483,9 @@ switch (command) {
     break;
   case 'inbox':
     await inbox(args);
+    break;
+  case 'review':
+    await review(args);
     break;
   default: {
     const size = (await stat('pipeline/style.md')).size;

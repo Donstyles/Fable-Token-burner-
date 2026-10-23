@@ -18,6 +18,14 @@ anything. Both are the source of truth; update them when a decision changes.
   starts as a low-poly text-to-image concept (`--ai-model nano-banana-2-lite`,
   the cheapest), then image-to-3D; the image is reviewed first. The tooling
   refuses text-to-3D: no batch step, no Meshy client call; keep it that way.
+- Every generated model is checked before it goes into the game:
+  `npm run asset -- review <id>...` draws its review sheet (its eight sides
+  as the game draws them, then the inside of every face in magenta) with the
+  gap screen's findings, and the sheet is looked at. A model with a
+  see-through gap is generated again until it has none (owner, 2026-10-23:
+  "Always retry model generation till the model has no see through gaps";
+  "You need automatic quality checker for generated models"), each retry its
+  own small batch.
 - Work on the designated branch; commit in logical steps.
 - Before building any system, check whether Babylon.js or an established
   library already provides it, and prefer that (owner, 2026-10-15, after a
@@ -36,7 +44,7 @@ anything. Both are the source of truth; update them when a decision changes.
   portraits in `pipeline/inbox/portraits/<appearance>/` to the band's oval
   (head box in `pipeline/portraits.json`)
 - `npm run asset -- <command>` – asset pipeline: `manifest`, `validate`,
-  `card <kind> <id> "<subject>"`, `batch new <name> <id>:<height-m>[:civilian]|props|creatures|icons|show|approve|approve-images`, `inbox <id> <picture>` (keys the owner's fuchsia-ground concept picture into `pipeline/inbox/<id>.png`), `run <nnn> [--dry-run] [--force]` (runs only a batch the owner approved by number; props and creatures stop after their concept pictures until `approve-images`)
+  `card <kind> <id> "<subject>"`, `batch new <name> <id>:<height-m>[:civilian]|props|creatures|icons|show|approve|approve-images`, `inbox <id> <picture>` (keys the owner's fuchsia-ground concept picture into `pipeline/inbox/<id>.png`), `review <id>...` (each model's review sheet in `pipeline/work/review/`), `run <nnn> [--dry-run] [--force]` (runs only a batch the owner approved by number; props and creatures stop after their concept pictures until `approve-images`)
 
 ## Layout
 

@@ -15,6 +15,7 @@ import { keyPicture } from './key';
 import { type Manifest, upsertAsset, writeManifest } from './manifest';
 import { type MeshyClient, MeshyError, TERMINAL_STATES, type TaskOutcome } from './meshy';
 import { postProcessProp, type GlbReport } from './postprocess';
+import { checkModel, describeGap } from './quality';
 import { PROPS, frontTurnDeg } from '../../kernel/terrain/props';
 
 export const PROP_DIR = 'assets/props';
@@ -246,6 +247,23 @@ export async function runProps(ctx: PropRunContext): Promise<PropRunOutcome> {
         frontTurnDeg(PROPS[id]?.front),
       );
       log(`  ${output}: ${report.triangles} triangles, ${(report.bytes / 1024).toFixed(0)} KiB`);
+      // The quality screen (tools/lib/quality.ts); the verdict is the review sheet's, looked at
+      // before the model goes into the game, and a model that fails is generated again
+      // (owner, 2026-10-23: "Always retry model generation till the model has no see through
+      // gaps").
+      const quality = await checkModel(output, PROPS[id]?.height ?? 1, {
+        targetTriangles: Number(item(id, 'image-to-3d').params['target_polycount']) || undefined,
+      });
+      const worst = quality.gaps[0];
+      log(
+        `  quality: ${
+          quality.problems.length
+            ? `FAILS (${quality.problems.join('; ')})`
+            : quality.suspect && worst
+              ? `suspect, a gap of ${describeGap(worst)}`
+              : 'no gap found'
+        }; review it: npm run asset -- review ${id}`,
+      );
     } else {
       log(`  post-process → ${output}`);
     }
