@@ -1,0 +1,27 @@
+[
+  {
+    "id": "prop-woodpile",
+    "polycount": 600,
+    "prompt": "A stack of split firewood logs piled neatly between two posts, pale cut ends showing at the front, dark bark at the sides."
+  },
+  {
+    "id": "rock-boulder-01",
+    "polycount": 300,
+    "prompt": "A large rounded granite boulder, grey with patches of green moss on top, three metres across."
+  },
+  {
+    "id": "rock-boulder-02",
+    "polycount": 300,
+    "prompt": "An angular grey limestone boulder with cracked faces and a flat top, moss in the cracks, two metres across."
+  },
+  {
+    "id": "rock-outcrop-01",
+    "polycount": 500,
+    "prompt": "A jagged outcrop of layered grey-brown rock in tilted slabs, five metres across, lichen on the faces."
+  },
+  {
+    "id": "rock-cluster-01",
+    "polycount": 500,
+    "prompt": "A cluster of five small grey stones of different sizes lying together, mossy, each under a metre."
+  }
+]

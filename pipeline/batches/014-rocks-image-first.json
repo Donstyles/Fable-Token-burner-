@@ -1,0 +1,160 @@
+{
+  "number": 14,
+  "name": "rocks-image-first",
+  "created": "2026-10-23",
+  "approved": false,
+  "items": [
+    {
+      "assetId": "prop-woodpile",
+      "step": "text-to-image",
+      "input": "prop-woodpile.png",
+      "params": {
+        "prompt": "A stack of split firewood logs piled neatly between two posts, pale cut ends showing at the front, dark bark at the sides. Seen from the side at eye height, the whole of it in the frame from the ground to the top, alone, centred, plain flat fuchsia (#FF00FF) background, no ground, no shadow, nothing else in the frame. The look of a late-1990s first-person RPG: simple solid readable shapes, painted textures, flat even lighting, muted natural colours.",
+        "ai_model": "nano-banana-2-lite",
+        "aspect_ratio": "1:1",
+        "remove_background": true
+      },
+      "estimatedCredits": 3,
+      "estimateBasis": "documented (DESIGN.md 10.0); the cheapest image model"
+    },
+    {
+      "assetId": "prop-woodpile",
+      "step": "image-to-3d",
+      "input": "prop-woodpile.png",
+      "params": {
+        "model_type": "smart-topology",
+        "ai_model": "meshy-t2.5",
+        "target_polycount": 600,
+        "should_texture": true,
+        "texture_resolution": "2k",
+        "enable_pbr": false,
+        "origin_at": "bottom",
+        "target_formats": ["glb"]
+      },
+      "estimatedCredits": 15,
+      "estimateBasis": "reported by Meshy for batch 001 (2026-10-15)"
+    },
+    {
+      "assetId": "rock-boulder-01",
+      "step": "text-to-image",
+      "input": "rock-boulder-01.png",
+      "params": {
+        "prompt": "A large rounded granite boulder, grey with patches of green moss on top, three metres across. Seen from the side at eye height, the whole of it in the frame from the ground to the top, alone, centred, plain flat fuchsia (#FF00FF) background, no ground, no shadow, nothing else in the frame. The look of a late-1990s first-person RPG: simple solid readable shapes, painted textures, flat even lighting, muted natural colours.",
+        "ai_model": "nano-banana-2-lite",
+        "aspect_ratio": "1:1",
+        "remove_background": true
+      },
+      "estimatedCredits": 3,
+      "estimateBasis": "documented (DESIGN.md 10.0); the cheapest image model"
+    },
+    {
+      "assetId": "rock-boulder-01",
+      "step": "image-to-3d",
+      "input": "rock-boulder-01.png",
+      "params": {
+        "model_type": "smart-topology",
+        "ai_model": "meshy-t2.5",
+        "target_polycount": 300,
+        "should_texture": true,
+        "texture_resolution": "2k",
+        "enable_pbr": false,
+        "origin_at": "bottom",
+        "target_formats": ["glb"]
+      },
+      "estimatedCredits": 15,
+      "estimateBasis": "reported by Meshy for batch 001 (2026-10-15)"
+    },
+    {
+      "assetId": "rock-boulder-02",
+      "step": "text-to-image",
+      "input": "rock-boulder-02.png",
+      "params": {
+        "prompt": "An angular grey limestone boulder with cracked faces and a flat top, moss in the cracks, two metres across. Seen from the side at eye height, the whole of it in the frame from the ground to the top, alone, centred, plain flat fuchsia (#FF00FF) background, no ground, no shadow, nothing else in the frame. The look of a late-1990s first-person RPG: simple solid readable shapes, painted textures, flat even lighting, muted natural colours.",
+        "ai_model": "nano-banana-2-lite",
+        "aspect_ratio": "1:1",
+        "remove_background": true
+      },
+      "estimatedCredits": 3,
+      "estimateBasis": "documented (DESIGN.md 10.0); the cheapest image model"
+    },
+    {
+      "assetId": "rock-boulder-02",
+      "step": "image-to-3d",
+      "input": "rock-boulder-02.png",
+      "params": {
+        "model_type": "smart-topology",
+        "ai_model": "meshy-t2.5",
+        "target_polycount": 300,
+        "should_texture": true,
+        "texture_resolution": "2k",
+        "enable_pbr": false,
+        "origin_at": "bottom",
+        "target_formats": ["glb"]
+      },
+      "estimatedCredits": 15,
+      "estimateBasis": "reported by Meshy for batch 001 (2026-10-15)"
+    },
+    {
+      "assetId": "rock-outcrop-01",
+      "step": "text-to-image",
+      "input": "rock-outcrop-01.png",
+      "params": {
+        "prompt": "A jagged outcrop of layered grey-brown rock in tilted slabs, five metres across, lichen on the faces. Seen from the side at eye height, the whole of it in the frame from the ground to the top, alone, centred, plain flat fuchsia (#FF00FF) background, no ground, no shadow, nothing else in the frame. The look of a late-1990s first-person RPG: simple solid readable shapes, painted textures, flat even lighting, muted natural colours.",
+        "ai_model": "nano-banana-2-lite",
+        "aspect_ratio": "1:1",
+        "remove_background": true
+      },
+      "estimatedCredits": 3,
+      "estimateBasis": "documented (DESIGN.md 10.0); the cheapest image model"
+    },
+    {
+      "assetId": "rock-outcrop-01",
+      "step": "image-to-3d",
+      "input": "rock-outcrop-01.png",
+      "params": {
+        "model_type": "smart-topology",
+        "ai_model": "meshy-t2.5",
+        "target_polycount": 500,
+        "should_texture": true,
+        "texture_resolution": "2k",
+        "enable_pbr": false,
+        "origin_at": "bottom",
+        "target_formats": ["glb"]
+      },
+      "estimatedCredits": 15,
+      "estimateBasis": "reported by Meshy for batch 001 (2026-10-15)"
+    },
+    {
+      "assetId": "rock-cluster-01",
+      "step": "text-to-image",
+      "input": "rock-cluster-01.png",
+      "params": {
+        "prompt": "A cluster of five small grey stones of different sizes lying together, mossy, each under a metre. Seen from the side at eye height, the whole of it in the frame from the ground to the top, alone, centred, plain flat fuchsia (#FF00FF) background, no ground, no shadow, nothing else in the frame. The look of a late-1990s first-person RPG: simple solid readable shapes, painted textures, flat even lighting, muted natural colours.",
+        "ai_model": "nano-banana-2-lite",
+        "aspect_ratio": "1:1",
+        "remove_background": true
+      },
+      "estimatedCredits": 3,
+      "estimateBasis": "documented (DESIGN.md 10.0); the cheapest image model"
+    },
+    {
+      "assetId": "rock-cluster-01",
+      "step": "image-to-3d",
+      "input": "rock-cluster-01.png",
+      "params": {
+        "model_type": "smart-topology",
+        "ai_model": "meshy-t2.5",
+        "target_polycount": 500,
+        "should_texture": true,
+        "texture_resolution": "2k",
+        "enable_pbr": false,
+        "origin_at": "bottom",
+        "target_formats": ["glb"]
+      },
+      "estimatedCredits": 15,
+      "estimateBasis": "reported by Meshy for batch 001 (2026-10-15)"
+    }
+  ],
+  "estimatedCredits": 90,
+  "runs": []
+}
