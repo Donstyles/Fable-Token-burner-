@@ -125,12 +125,18 @@ export async function postProcessProp(
   input: string,
   output: string,
   textureSize = CHARACTER_TEXTURE_SIZE,
+  format: 'png' | 'jpeg' = 'png',
 ): Promise<GlbReport> {
   const doc = await io().read(input);
   await doc.transform(
     dedup(),
     prune(),
-    textureCompress({ encoder: sharp, targetFormat: 'png', resize: [textureSize, textureSize] }),
+    textureCompress({
+      encoder: sharp,
+      targetFormat: format,
+      resize: [textureSize, textureSize],
+      ...(format === 'jpeg' ? { quality: 88 } : {}),
+    }),
   );
   await mkdir(dirname(output), { recursive: true });
   await io().write(output, doc);

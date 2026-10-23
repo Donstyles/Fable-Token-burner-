@@ -17,7 +17,6 @@ import catalogueJson from '../../assets/props/catalogue.json';
 import { PROPS, type PropCatalogue, type PropMeasure } from '../../kernel/terrain/props';
 import { type RetroMaterials } from '../render/materials';
 import { bitmapTexture } from '../render/bitmap';
-import { wallDetail } from './painted-textures';
 
 const urls = import.meta.glob('../../assets/props/*/*.glb', {
   query: '?url',
@@ -108,20 +107,20 @@ export async function loadPropModels(
       const full = await loadMesh(scene, urlOf(id, false), `prop:${id}`, measure);
       if (!full.texture) throw new Error(`prop ${id}: the model has no base colour texture`);
       const sways = spec.kind === 'tree' || spec.kind === 'bush';
-      // The skin as a 1998 bitmap (DESIGN.md 16.14): buildings at 1024 pixels, the rest smaller;
-      // a building's walls in sixteen tones with a grain of a step and a quarter, so a near
-      // wall is speckled rather than flat plates (world critic, round 12).
+      // The skin as a bitmap (DESIGN.md 16.14) in its own colours: buildings at 1024 pixels,
+      // the rest at 512, thirty-two tones a channel, no grain, no palette snap and no speckle
+      // over the walls (owner, 2026-10-23: "Building look like shit. You've overdone it with
+      // the filtering"; rounds 9 to 14 had added MM6's palette, a grain of a step and a
+      // quarter, sixteen tones and a grey speckle in world metres to 256-pixel skins).
       const building = spec.kind === 'building';
       const bitmap = await bitmapTexture(full.texture, scene, {
-        size: building ? 1024 : 256,
-        levels: building ? 16 : 10,
-        grain: building ? 1.25 : 0.5,
-        palette: !sways,
+        size: building ? 1024 : 512,
+        levels: 32,
+        grain: 0,
+        palette: false,
       });
-      // Meshy paints buildings and stones a shade dark for daylight; a little lift reads
-      // as sun on plaster rather than a cellar wall.
-      // Meshy's plaster is a bright cream; MM6's walls sat at a luminance near 120 (critics).
-      const lift = sways ? 1 : 0.5;
+      // Meshy paints buildings and stones a little bright for MM6's daylight: a fifth off.
+      const lift = sways ? 1 : 0.8;
       const material = materials.create({
         name: `prop-${id}`,
         texture: bitmap,
@@ -131,10 +130,6 @@ export async function loadPropModels(
         // Walls and roofs lit flat, as MM6's: the bitmap carries the picture, no face
         // brighter than another, no posterised bands across a curve (critics, round 5).
         ...(sways ? {} : { flatLight: true }),
-        // A grey speckle in world metres over a building (talk-world critic, round 14: at
-        // eight metres the skin's 18 cm texels stood as flat plates on the walls, 6 colours in
-        // 20 by 20 where MM6's show 46 to 79).
-        ...(building ? { detail: wallDetail(scene) } : {}),
       });
       full.mesh.material = material;
       let far: Mesh | null = null;

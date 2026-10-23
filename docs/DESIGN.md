@@ -1529,7 +1529,11 @@ strip, and skinned its models in a few hundred texels. So:
   50k as sprites, with the same draw calls (about 125); the iPhone 14 Pro
   Max carries that, and `?dev` shows the frame rate to check it there.
   Their skins keep their own colours (no palette snap), lit as other models.
-- **Bitmap skins** (`src/render/bitmap.ts`). Every loaded albedo (houses,
+- **Bitmap skins** (superseded 2026-10-23, owner: "Building look like shit. You've
+  overdone it with the filtering": the models' skins are 1024 pixels for a house and 512
+  for the rest, JPEG, from Meshy's own downloads, and the runtime keeps their colours at
+  thirty-two tones a channel with no grain, no palette snap and no speckle; the walls lit
+  flat as before, a fifth darker). Every loaded albedo (houses,
   props, characters) is read back from the GPU's own mip level nearest
   the target (512 pixels for a building or a townsperson, 256 for a
   creature, 192 for a prop; round 15: townsfolk and buildings in sixteen
@@ -2401,6 +2405,13 @@ batch 012; the coast road's west end has no portal until the second region
 exists; the headland ruin has no ruin model yet.
 
 ## 13. Decision log
+
+- 2026-10-23 – The buildings' filtering undone (owner: "Building look like shit. You've
+  overdone it with the filtering"). At 256 pixels a whole inn was painted from one small
+  skin, and the rounds-9-to-14 filters (MM6's palette, a grain, sixteen tones, a grey
+  speckle in world metres) made mud of it. The 22 town models are post-processed again
+  from Meshy's downloads (houses 1024 px, props and rocks 512, JPEG) and the 20 trees at
+  512; the skins keep their own colours at thirty-two tones; new props get the same sizes.
 
 - 2026-10-23 – The gold oval buttons lose their dark socket (owner: "What's that black
   speck on the gold buttons?"): round 10's near-black pool at each button's lower right read

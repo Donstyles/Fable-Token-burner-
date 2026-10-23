@@ -234,7 +234,9 @@ export async function runProps(ctx: PropRunContext): Promise<PropRunOutcome> {
     let report: GlbReport | null = null;
     if (!dryRun) {
       if (!glb) throw new Error(`${id}: the model download has no .glb (${files.join(', ')})`);
-      report = await postProcessProp(glb, output, 256);
+      // A house at 1024 pixels, the rest at 512, JPEG (owner, 2026-10-23: at 256 a whole
+      // inn was painted from 256 pixels and the filters made mud of it).
+      report = await postProcessProp(glb, output, id.startsWith('building-') ? 1024 : 512, 'jpeg');
       log(`  ${output}: ${report.triangles} triangles, ${(report.bytes / 1024).toFixed(0)} KiB`);
     } else {
       log(`  post-process → ${output}`);
