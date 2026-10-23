@@ -18,18 +18,6 @@ const SQUARE: P2 = [0, -120];
 const CROSSROADS: P2 = [0, 20];
 const CAVE: P2 = [112, 132];
 
-/** Fence sections along a line, three metres each, facing across it. */
-function fence(a: P2, b: P2): RegionScript['plots'] {
-  const len = Math.hypot(b[0] - a[0], b[1] - a[1]);
-  const n = Math.max(1, Math.round(len / 3));
-  return Array.from({ length: n }, (_, i) => {
-    const t = (i + 0.5) / n;
-    const at: P2 = [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t];
-    const across: P2 = [at[0] - (b[1] - a[1]) / len, at[1] + (b[0] - a[0]) / len];
-    return { model: 'prop-fence', at, face: across, light: true };
-  });
-}
-
 const region: RegionScript = {
   id: 'gullhaven',
   seed: 11,
@@ -239,12 +227,19 @@ const region: RegionScript = {
     { model: 'prop-haystack', at: [40, -50], face: [3, -50], light: true },
     { model: 'prop-haystack', at: [46, -44], face: [3, -44], light: true },
     { model: 'prop-cart', at: [16, -56], face: [16, -30], light: true },
-    ...fence([22, -60], [52, -60]),
-    ...fence([52, -60], [52, -38]),
     // The wayside shrine at the crossroads.
     { model: 'prop-shrine', at: [-8, 26], face: CROSSROADS, light: true },
   ],
   cave: { at: CAVE, facing: 225, target: { level: 'showcase', entry: 'exit' } },
+  // The farm's yard, split rails the kernel builds (owner, 2026-10-23: the fence model never
+  // looked like a fence).
+  fences: [
+    [
+      [22, -60],
+      [52, -60],
+      [52, -38],
+    ],
+  ],
   residents: [
     // Maren by the well; Old Tobin at his farm gate.
     { kind: 'villager-woman', at: [6, -112], face: [6, -135] },

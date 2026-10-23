@@ -19,6 +19,7 @@ import type {
 import { backdropMesh } from './backdrop';
 import type { RegionEnvironment, TerrainLevel, TerrainTextures } from './build';
 import { CAVE, caveLocalOf, caveMouth, type CaveSpec } from './cave';
+import { fenceAlong } from './fence';
 import { terrainChunks } from './chunks';
 import { Heightfield } from './heightfield';
 import { appendMesh, terrainMesh } from './mesh';
@@ -115,6 +116,8 @@ export interface RegionScript {
   plots: Plot[];
   /** The cave mouth into the dungeon: its threshold and the heading it faces out to. */
   cave?: { at: P2; facing: number; target: { level: string; entry: string } };
+  /** Split-rail fences the kernel builds, each a line of corners (src/kernel/terrain/fence.ts). */
+  fences?: P2[][];
   residents: Resident[];
   packs: Pack[];
   points: { name: string; at: P2 }[];
@@ -434,6 +437,8 @@ export function buildRegion(s: RegionScript): TerrainLevel {
         for (const pad of plots.pads) if (rectDistance(x, z, pad) < 6) return false;
         for (const q of squares) if (rectDistance(x, z, q) < 4) return false;
         if (cave && Math.hypot(x - cave.x, z - cave.z) < 30) return false;
+        // No tree grows through a fence.
+        for (const line of s.fences ?? []) if (lineDistance(x, z, line) < 3) return false;
         const i = Math.round((x + half) / s.cell);
         const j = Math.round((z + half) / s.cell);
         return hf.slopeDeg(i, j) < 32;
@@ -451,6 +456,16 @@ export function buildRegion(s: RegionScript): TerrainLevel {
   const lights: LightPlacement[] = [...plots.lights];
   const portals: PortalRecord[] = [];
   const points: NamedPoint[] = [...plots.points];
+  // The fences, posts and rails on the ground, their slabs solid for the party and the navmesh.
+  const fenceCollider: MeshData = {
+    positions: [],
+    normals: [],
+    uvs: [],
+    indices: [],
+    materials: [],
+  };
+  for (const line of s.fences ?? []) fenceAlong(visual, fenceCollider, line, ground);
+  appendTo(solids, fenceCollider);
   const caveMesh = cave ? caveMouth(cave) : null;
   if (caveMesh && cave && s.cave) {
     appendTo(visual, caveMesh.visual);
@@ -495,6 +510,7 @@ export function buildRegion(s: RegionScript): TerrainLevel {
   appendMesh(collider, navTrunks);
   appendMesh(collider, plots.collider);
   if (caveMesh) appendMesh(collider, caveMesh.collider);
+  appendMesh(collider, fenceCollider);
   const navCollider: MeshData = {
     positions: collider.positions,
     normals: collider.normals,
@@ -573,6 +589,20 @@ export function buildRegion(s: RegionScript): TerrainLevel {
     terrainTextures: s.textures,
     environment: s.environment,
   };
+}
+
+/** The distance from (x, z) to the nearest point of a polyline. */
+function lineDistance(x: number, z: number, line: readonly P2[]): number {
+  let best = Infinity;
+  for (let k = 0; k + 1 < line.length; k++) {
+    const [ax, az] = line[k]!;
+    const [bx, bz] = line[k + 1]!;
+    const dx = bx - ax;
+    const dz = bz - az;
+    const t = Math.max(0, Math.min(1, ((x - ax) * dx + (z - az) * dz) / (dx * dx + dz * dz || 1)));
+    best = Math.min(best, Math.hypot(x - (ax + dx * t), z - (az + dz * t)));
+  }
+  return best;
 }
 
 function appendTo(into: MeshData, mesh: MeshData): void {

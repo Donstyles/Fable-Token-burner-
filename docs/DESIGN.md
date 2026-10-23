@@ -2406,6 +2406,13 @@ exists; the headland ruin has no ruin model yet.
 
 ## 13. Decision log
 
+- 2026-10-23 – Fences are the kernel's (owner: "I think you have to generate fences
+  yourselves, you haven't managed with the fence model"). A region lists `fences` as lines
+  of corners; `kernel/terrain/fence.ts` stands a post every 2.5 m (0.3 m sunk, 1.25 m out)
+  with two split rails at 0.45 and 0.95 m that follow the ground, in the plank role, and a
+  slab collider along the line for the party and the navmesh; no tree grows within 3 m of a
+  fence. Gullhaven's farm yard is the first; the Meshy fence model is no longer placed.
+
 - 2026-10-23 – The buildings' filtering undone (owner: "Building look like shit. You've
   overdone it with the filtering"). At 256 pixels a whole inn was painted from one small
   skin, and the rounds-9-to-14 filters (MM6's palette, a grain, sixteen tones, a grey

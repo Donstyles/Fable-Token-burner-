@@ -67,7 +67,8 @@ test.describe('Gullhaven', () => {
       };
     });
     // The town: Meshy buildings and props round the square, every footprint solid.
-    expect(info.props).toBeGreaterThan(35);
+    // The fences are the kernel's now, not 17 props (owner, 2026-10-23).
+    expect(info.props).toBeGreaterThan(20);
     expect(info.propModels).toEqual(
       expect.arrayContaining(['building-inn', 'building-temple', 'prop-well']),
     );
