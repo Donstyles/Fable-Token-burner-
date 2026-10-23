@@ -1,0 +1,88 @@
+/* The title screen (src/ui/title.ts): the whole screen, over the world, the band and the
+   loading veil (style.css `.veil`, z-index 80). The band's marble fills the phone's safe areas
+   to the screen's edges, as round the view (hud.css `.view-margin`); inside them the screens'
+   slate in its marble frame (paint.ts `marble-frame`), the game's name in the heading face in
+   the veil's gold, a carved rule, and the ways in on MM6's marble slabs; the question over a
+   saved game in the stone screens' white italic with gold Yes and No ovals. Every length a
+   whole UI pixel; laid out for 932 by 430 with or without the insets. */
+.title-root {
+  position: absolute;
+  inset: 0;
+  z-index: 90;
+  display: flex;
+  padding: var(--sat) var(--sar) var(--sab) var(--sal);
+  background: var(--stone) 0 0 / var(--stone-size);
+  image-rendering: pixelated;
+  pointer-events: auto;
+  touch-action: manipulation;
+}
+.title-panel {
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 16px 24px;
+}
+.title-name {
+  margin: 0;
+  font:
+    54px/60px 'Pirata One',
+    'Tinos',
+    Georgia,
+    serif;
+  color: #e8c860;
+  text-align: center;
+  /* The heading face at its own width, untracked. */
+  --pxt-stretch: 1;
+  letter-spacing: 0;
+}
+/* The choices under a rule cut into the slate, a dark line over a light one, as MM6's carved
+   boxes. */
+.title-menu {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 9px;
+  /* Room for both choices or the question, so nothing moves when it asks. */
+  min-height: 105px;
+  padding-top: 15px;
+  box-shadow:
+    inset 0 1px 0 #101010,
+    inset 0 2px 0 #737171;
+}
+.title-menu .ui-btn.title-choice {
+  /* Wide, so each is MM6's marble slab with white lettering (paint.ts `paintSlab`), as the
+     rest screen's choices, the lettering a size up. */
+  width: 270px;
+  min-height: 45px;
+  font:
+    24px/27px 'Tinos',
+    Georgia,
+    serif;
+}
+/* The slab's face is its bevel over the rose marble it is cut from (the rest screen's stand
+   on the rose itself; these on the slate). */
+.title-menu .ui-btn.title-choice.slab {
+  background:
+    var(--btn-up) center / 100% 100% no-repeat,
+    var(--rose) -20px -140px / var(--rose-size);
+}
+.title-menu .ui-btn.title-choice.slab:active {
+  background-image: var(--btn-down), var(--rose);
+}
+.title-question {
+  margin: 0;
+  font: var(--serif-italic);
+  color: var(--ink-pale);
+  text-align: center;
+}
+.title-answers {
+  display: flex;
+  justify-content: center;
+  gap: 24px;
+  padding-top: 3px;
+}
+.title-menu .ui-btn.title-answer {
+  /* MM6's gold ovals, two to one and more. */
+  width: 96px;
+  min-height: 39px;
+}

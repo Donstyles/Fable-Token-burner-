@@ -29,6 +29,7 @@ import { installPressFeel } from './press';
 
 export type {
   CastEvent,
+  MapMark,
   RestKind,
   ScreenHooks,
   ScreenName,
@@ -36,6 +37,7 @@ export type {
   ServiceKind,
 } from './context';
 export { SCREEN_NAMES, SERVICE_KINDS } from './context';
+export { HOSTILES_NEARBY } from './rest-model';
 
 export const SCREEN_LABELS: Record<ScreenName, string> = {
   sheet: 'Sheet',

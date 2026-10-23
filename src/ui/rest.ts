@@ -1,11 +1,13 @@
 /**
  * The rest screen (Phase 5 step 10): the clock and date, daylight, the food, each member's
  * points and condition, and the choices: rest eight hours (one food), wait until dawn, or
- * cancel. The outcome is shown in plain lines before the screen closes.
+ * cancel. The outcome is shown in plain lines before the screen closes. With foes about
+ * (`ScreenHooks.restBlocked`) a choice is refused on the screen's message line over them,
+ * as MM6's "There are hostile creatures nearby!", and nothing passes.
  */
 import type { ScreenContext } from './context';
 import { button, el, heading, kv, note } from './dom';
-import { doRest, doWait, type RestSummary, restView } from './rest-model';
+import { type RestSummary, restView, tryRest } from './rest-model';
 
 export function renderRest(ctx: ScreenContext): void {
   const { state, frame, hooks, close } = ctx;
@@ -45,24 +47,34 @@ export function renderRest(ctx: ScreenContext): void {
       for (const line of summary.lines) right.appendChild(note(line));
       right.appendChild(button('Done', close, { className: 'primary' }));
     } else {
-      right.appendChild(heading('Rest'));
+      // The screen's message line heads the choices: "Rest", or why the party may not. It
+      // stays in sight however little room the phone's insets leave the column.
+      const message = heading('Rest');
+      message.classList.add('rest-message');
+      message.setAttribute('role', 'status');
+      right.appendChild(message);
+      const ask = (kind: 'rest' | 'dawn'): void => {
+        const outcome = tryRest(state, kind, hooks.restBlocked?.() ?? null);
+        if (!outcome.ok) {
+          message.textContent = outcome.message;
+          message.classList.add('refused');
+          return;
+        }
+        hooks.onRest(outcome.summary.kind);
+        draw(outcome.summary);
+      };
       const actions = el('div', 'rest-actions');
       actions.append(
-        button('Rest 8 hours', () => act(doRest(state)), {
+        button('Rest 8 hours', () => ask('rest'), {
           className: 'primary',
           note: v.hungry ? 'no food' : '1 food',
         }),
-        button('Wait until dawn', () => act(doWait(state)), { note: v.dawnIn }),
+        button('Wait until dawn', () => ask('dawn'), { note: v.dawnIn }),
         button('Cancel', close),
       );
       right.appendChild(actions);
     }
     frame.body.replaceChildren(left, right);
-  };
-
-  const act = (summary: RestSummary): void => {
-    hooks.onRest(summary.kind);
-    draw(summary);
   };
 
   draw(null);

@@ -29,7 +29,9 @@
   /* The window a tenth of the width, as MM6's (critics, round 10); the side 309 pixels
      (talk-world critic, round 14). */
   grid-template-columns: 96px 309px;
-  grid-template-rows: 96px auto;
+  /* The window, the name under it and Farewell at the column's foot; the words and the
+     topics down the side. */
+  grid-template-rows: 96px auto 1fr;
   gap: 6px 10px;
   padding: 8px;
   background: var(--mahogany) 0 0 / var(--mahogany-size);
@@ -107,25 +109,96 @@
 
 .dlg-side {
   grid-column: 2;
-  grid-row: 1 / 3;
+  grid-row: 1 / 4;
   display: flex;
   flex-direction: column;
+  /* The topics stand at the foot, level with Farewell; what the words leave lies above them. */
+  justify-content: space-between;
   min-height: 0;
   min-width: 0;
 }
+/* The words' place: as tall as the topics leave it, the line wrapping inside it and, when it is
+   longer still, scrolling in it under a finger (owner, 2026-10-23: Old Tobin's thanks ran past
+   the box and lost their end). A gold mark in the right margin says there is more above or
+   below; the line always starts at its top. */
+.dlg-said {
+  position: relative;
+  flex: 1;
+  box-sizing: border-box;
+  /* Two lines at the least, eight at the most; dialogue.ts fits it to whole lines between.
+     The margins round the words are here, outside the scroll, so the box shows whole lines
+     and nothing of the next peeks through. */
+  min-height: 52px;
+  max-height: 184px;
+  padding: 2px 0 6px;
+  display: flex;
+}
 .dlg-text {
   flex: 1;
-  min-height: 60px;
-  max-height: 190px;
+  min-width: 0;
+  min-height: 0;
+  overflow-x: hidden;
   overflow-y: auto;
-  padding: 2px 6px 6px;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  /* The right margin keeps the marks off the words. */
+  padding: 0 14px 0 6px;
   font:
     italic 18px/22px 'Tinos',
     Georgia,
     serif;
   color: var(--ink-pale);
   text-shadow: 0 1px 0 #000;
+  overflow-wrap: break-word;
   touch-action: pan-y;
+  cursor: default;
+  /* A swipe comes to rest on a line's head (dialogue.ts puts a snap point at each). */
+  position: relative;
+  scroll-snap-type: y mandatory;
+}
+/* The line exactly its lines tall: the last line's shadow pixel hangs no further, so the
+   box's end is a line's end too. */
+.dlg-words {
+  overflow: hidden;
+}
+.dlg-snaps {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 1px;
+  pointer-events: none;
+}
+.dlg-snap {
+  position: absolute;
+  left: 0;
+  width: 1px;
+  height: 0;
+  scroll-snap-align: start;
+}
+.dlg-text::-webkit-scrollbar {
+  display: none;
+}
+/* MM6's scroll marks: small gold arrows lit from the top left (paint.ts `arrow-up`, `arrow-down`),
+   shown only while there is more that way. They take no taps; the words do. */
+.dlg-more {
+  position: absolute;
+  right: 1px;
+  width: 11px;
+  height: 7px;
+  pointer-events: none;
+  visibility: hidden;
+  background: var(--paint) center / 100% 100% no-repeat;
+  image-rendering: pixelated;
+}
+.dlg-more.up {
+  top: 4px;
+}
+.dlg-more.down {
+  bottom: 5px;
+}
+.dlg-more.shown {
+  visibility: visible;
 }
 .dlg-topics {
   display: flex;
@@ -159,13 +232,16 @@
   color: var(--ink-yellow);
 }
 .dlg-foot {
+  grid-column: 1;
+  grid-row: 3;
+  align-self: end;
   display: flex;
   justify-content: center;
   padding-top: 6px;
 }
 .dlg-foot .dlg-bye {
   min-height: 30px;
-  padding: 2px 18px;
+  padding: 2px 0;
 }
 
 /* A grain over the head and its ground (paint.ts `speckle`, critics, round 9). */

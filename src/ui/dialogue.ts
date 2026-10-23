@@ -10,7 +10,7 @@ import type { NpcDef } from '../game/monsters';
 import type { QuestDef } from '../game/quests';
 import type { GameState } from '../game/state';
 import { toLocalRect } from '../app/orientation';
-import { chooseTopic, dialogueView } from './dialogue-model';
+import { chooseTopic, dialogueView, nextPage, scrollMarks, wholeLines } from './dialogue-model';
 import { el } from './dom';
 import { PX } from './pixel-text';
 
@@ -44,10 +44,23 @@ interface Open {
   wood: HTMLElement;
   frame: HTMLElement;
   window: HTMLElement;
+  side: HTMLElement;
+  /** The words' place in the side, as tall as whole lines of them that fit. */
+  said: HTMLElement;
   text: HTMLElement;
+  /** The line itself, inside the scrolling box. */
+  words: HTMLElement;
+  /** A snap point at each line's head (no text, so `text()` reads the words alone). */
+  snaps: HTMLElement;
+  /** The gold marks at the words' corners: more above, more below. */
+  up: HTMLElement;
+  down: HTMLElement;
   topics: HTMLElement;
   observer: ResizeObserver | null;
 }
+
+/** The most lines the words' box shows before it scrolls. */
+const MAX_LINES = 8;
 
 export function createDialogue(
   uiLayer: HTMLElement,
@@ -88,10 +101,58 @@ export function createDialogue(
     if (notify) hooks.onClose();
   }
 
+  /**
+   * The words' box as tall as whole lines of them that fit beside the topics, so no line is
+   * cut through at its foot; whatever is left over falls between the words and the topics.
+   */
+  const fit = (): void => {
+    if (!open_) return;
+    const { side, said, text, topics } = open_;
+    const line = parseFloat(getComputedStyle(text).lineHeight) || 22;
+    const cs = getComputedStyle(said);
+    const pad = (parseFloat(cs.paddingTop) || 0) + (parseFloat(cs.paddingBottom) || 0);
+    said.style.maxHeight = '';
+    const room = side.clientHeight - topics.offsetHeight;
+    if (room <= 0) return;
+    said.style.maxHeight = `${wholeLines(room, line, pad, MAX_LINES)}px`;
+  };
+
+  /** The gold marks at the words' corners, after the words or their scroll change. */
+  const mark = (): void => {
+    if (!open_) return;
+    const t = open_.text;
+    const m = scrollMarks(t.scrollTop, t.clientHeight, t.scrollHeight);
+    open_.up.classList.toggle('shown', m.up);
+    open_.down.classList.toggle('shown', m.down);
+    // A snap point at the head of every line, so a swipe comes to rest on whole lines.
+    const line = parseFloat(getComputedStyle(t).lineHeight) || 22;
+    const lines = Math.max(0, Math.floor(open_.words.offsetHeight / line));
+    if (open_.snaps.childElementCount !== lines) {
+      open_.snaps.replaceChildren(
+        ...Array.from({ length: lines }, (_, i) => {
+          const snap = el('div', 'dlg-snap');
+          snap.style.top = `${i * line}px`;
+          return snap;
+        }),
+      );
+    }
+  };
+
   function say(words: string): void {
     if (!open_) return;
-    open_.text.textContent = words;
+    // Each line is read from its start: the box back at the top before and after the words
+    // are painted (pixel-text.ts paints them a moment later, a pixel taller or shorter).
     open_.text.scrollTop = 0;
+    open_.words.textContent = words;
+    fit();
+    open_.text.scrollTop = 0;
+    mark();
+    const text = open_.text;
+    requestAnimationFrame(() => {
+      if (open_?.text !== text) return;
+      text.scrollTop = 0;
+      mark();
+    });
     hooks.onSpeak();
   }
 
@@ -120,7 +181,25 @@ export function createDialogue(
     // "Maren the Goodwife", as MM6 named its people, in one line under the window.
     plate.append(el('h2', 'dlg-name', view.name), el('span', 'dlg-role', `the ${view.role}`));
     const side = el('div', 'dlg-side');
+    // The words wrap in their box and scroll in it when a line is longer than the box holds
+    // (owner, 2026-10-23: Old Tobin's thanks lost their end); a gold mark at the box's corner
+    // says there is more, a swipe or a tap on the words reads on.
+    const said = el('div', 'dlg-said');
     const text = el('div', 'dlg-text');
+    const words = el('div', 'dlg-words');
+    const snaps = el('div', 'dlg-snaps');
+    text.append(words, snaps);
+    const up = el('div', 'dlg-more up');
+    up.dataset['paint'] = 'arrow-up';
+    const down = el('div', 'dlg-more down');
+    down.dataset['paint'] = 'arrow-down';
+    said.append(text, up, down);
+    text.addEventListener('scroll', () => mark(), { passive: true });
+    text.addEventListener('click', () => {
+      const line = parseFloat(getComputedStyle(text).lineHeight) || 22;
+      const to = nextPage(text.scrollTop, text.clientHeight, text.scrollHeight, line);
+      if (to !== text.scrollTop) text.scrollTop = to;
+    });
     const topics = el('div', 'dlg-topics');
     for (const t of view.topics) {
       const b = el('button', 'dlg-topic', t.label);
@@ -132,7 +211,9 @@ export function createDialogue(
       });
       topics.appendChild(b);
     }
-    // Farewell ends the list as a line of it (critics, round 8: MM6 had no gold pill).
+    // Farewell is a line, not a gold pill (critics, round 8: MM6 had no gold pill), at the
+    // foot of the column under the name, so the words beside it keep the room it took under
+    // the topics (owner, 2026-10-23: the lines were cut off).
     const foot = el('div', 'dlg-foot');
     const bye = el('button', 'dlg-bye', 'Farewell');
     bye.type = 'button';
@@ -141,16 +222,47 @@ export function createDialogue(
       unmount(true);
     });
     foot.appendChild(bye);
-    side.append(text, topics, foot);
-    wood.append(frame, plate, side);
+    side.append(said, topics);
+    wood.append(frame, plate, foot, side);
     root.appendChild(wood);
     uiLayer.appendChild(root);
-    const observer = typeof ResizeObserver === 'function' ? new ResizeObserver(measure) : null;
+    const observer =
+      typeof ResizeObserver === 'function'
+        ? new ResizeObserver((entries) => {
+            if (entries.some((e) => e.target === wood)) measure();
+            // A new line, or the same one painted, may want more lines of the box or fewer.
+            fit();
+            mark();
+          })
+        : null;
     observer?.observe(wood);
+    // The line changes size as it is painted, and the marks follow.
+    observer?.observe(words);
     window.addEventListener('resize', measure);
-    open_ = { npc, def, root, wood, frame, window: window_, text, topics, observer };
+    open_ = {
+      npc,
+      def,
+      root,
+      wood,
+      frame,
+      window: window_,
+      side,
+      said,
+      text,
+      words,
+      snaps,
+      up,
+      down,
+      topics,
+      observer,
+    };
     measure();
-    requestAnimationFrame(measure);
+    fit();
+    requestAnimationFrame(() => {
+      measure();
+      fit();
+      mark();
+    });
     say(view.greeting);
   }
 

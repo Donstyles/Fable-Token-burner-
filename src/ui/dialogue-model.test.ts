@@ -3,7 +3,15 @@ import { DIALOGUES, QUESTS } from '../game/dialogue';
 import { freshState } from '../game/fixtures';
 import { NPCS } from '../game/monsters';
 import { handleQuestEvent, questEntry } from '../game/quests';
-import { chooseTopic, dialogueView, questNotice, questStage } from './dialogue-model';
+import {
+  chooseTopic,
+  dialogueView,
+  nextPage,
+  questNotice,
+  questStage,
+  scrollMarks,
+  wholeLines,
+} from './dialogue-model';
 
 const tobin = DIALOGUES['villager-man']!;
 const maren = DIALOGUES['villager-woman']!;
@@ -127,5 +135,34 @@ describe('quest notices', () => {
         QUESTS,
       ),
     ).toBe('Quest complete: Goblins in the Hills (80 gold)');
+  });
+});
+
+describe('the words box', () => {
+  it('marks more above and below only when the line runs past the box', () => {
+    expect(scrollMarks(0, 88, 88)).toEqual({ up: false, down: false });
+    expect(scrollMarks(0, 88, 89)).toEqual({ up: false, down: false });
+    expect(scrollMarks(0, 88, 140)).toEqual({ up: false, down: true });
+    expect(scrollMarks(30, 88, 140)).toEqual({ up: true, down: true });
+    expect(scrollMarks(52, 88, 140)).toEqual({ up: true, down: false });
+  });
+
+  it('turns a box less a line on a tap, and stops at the end', () => {
+    expect(nextPage(0, 88, 200, 22)).toBe(66);
+    expect(nextPage(66, 88, 200, 22)).toBe(112);
+    expect(nextPage(112, 88, 200, 22)).toBe(112);
+    expect(nextPage(0, 88, 88, 22)).toBe(0);
+    // A box hardly a line tall still moves a line.
+    expect(nextPage(0, 30, 200, 22)).toBe(22);
+  });
+
+  it('holds whole lines only, two at the least and eight at the most', () => {
+    // The phone with its insets leaves 112 pixels beside four topics: four lines, not four
+    // and a half.
+    expect(wholeLines(112, 22, 8, 8)).toBe(96);
+    expect(wholeLines(118, 22, 8, 8)).toBe(118);
+    expect(wholeLines(139, 22, 8, 8)).toBe(118);
+    expect(wholeLines(20, 22, 8, 8)).toBe(52);
+    expect(wholeLines(1000, 22, 8, 8)).toBe(184);
   });
 });

@@ -2808,6 +2808,118 @@ function dress(b: HTMLElement): void {
   b.style.setProperty('--btn-down', buttonUrl(w, h, true, slab, glyph));
 }
 
+/**
+ * A small picture drawn pixel by pixel from rows of letters, one letter a tone, a stop a clear
+ * pixel, centred in a box of the given size on whole pixels.
+ */
+function paintBitmap(
+  w: number,
+  h: number,
+  rows: readonly string[],
+  tones: Readonly<Record<string, string>>,
+): HTMLCanvasElement {
+  const [c, g] = canvas(w, h);
+  const bw = Math.max(...rows.map((r) => r.length));
+  const ox = Math.floor((w - bw) / 2);
+  const oy = Math.floor((h - rows.length) / 2);
+  rows.forEach((row, y) => {
+    for (let x = 0; x < row.length; x++) {
+      const tone = tones[row[x]!];
+      if (tone) px(g, ox + x, oy + y, tone);
+    }
+  });
+  return c;
+}
+
+/** The gold ramp by letter, for the small gold pictures: line, dark, shadow, body, light... */
+const GOLD_TONES: Record<string, string> = {
+  k: GOLD.line,
+  d: GOLD.dark,
+  s: GOLD.shadow,
+  b: GOLD.body,
+  l: GOLD.light,
+  h: GOLD.highlight,
+  g: GOLD.glint,
+};
+
+/**
+ * MM6's purse beside the food: four coins stacked a little askew in the shell's one gold, the
+ * top one's face lit from the top left, each rim below it milled light and dark with a groove
+ * between (interface.md 8.7: "a coin stack with the gold"). Twelve by ten.
+ */
+export const COINS_ART: readonly string[] = [
+  '..kkkkkkkk..',
+  '.khhggllbsk.',
+  '.kkhllbbbkk.',
+  'kkkkkkkkkkk.',
+  'khbhbhbsbdk.',
+  'kkkkkkkkkkkk',
+  '.khbhbhbsbdk',
+  'kkkkkkkkkkkk',
+  'khbhbhbsbdk.',
+  'kkkkkkkkkkk.',
+];
+
+/**
+ * MM6's ration: a red apple lit at the top left with a stem and a leaf (interface.md 8.7: "an
+ * apple with the rations"). Ten by eleven, on the gold's outline.
+ */
+export const APPLE_ART: readonly string[] = [
+  '.....t....',
+  '....tLL...',
+  '..kk.tLLk.',
+  '.krrkrrrk.',
+  'krhhrrrrRk',
+  'krhrrrrrRk',
+  'krrrrrrrRk',
+  'krrrrrrRRk',
+  '.krrrrRRk.',
+  '..krRRRk..',
+  '...kkkk...',
+];
+
+const APPLE_TONES: Record<string, string> = {
+  k: '#2a0c06',
+  r: '#b8281c',
+  h: '#f08a6a',
+  R: '#6e140c',
+  t: '#5a3a14',
+  L: '#4e8a26',
+};
+
+/**
+ * A small gold arrow on a black outline, lit from the top left, bright enough to hold on the
+ * talk panel's dark mahogany: MM6's scroll mark. Eleven by seven.
+ */
+export const ARROW_DOWN_ART: readonly string[] = [
+  'kkkkkkkkkkk',
+  'kgghhhhllbk',
+  '.kghhhllbk.',
+  '..khhllbk..',
+  '...khlbk...',
+  '....kbk....',
+  '.....k.....',
+];
+
+export const ARROW_UP_ART: readonly string[] = [
+  '.....k.....',
+  '....kgk....',
+  '...kghlk...',
+  '..kghhlbk..',
+  '.kghhhllbk.',
+  'kghhhhllbbk',
+  'kkkkkkkkkkk',
+];
+
+/** The purse's coins (`coins`), the ration's apple (`apple`), a scroll mark (`arrow-up`...). */
+export function paintGlyph(w: number, h: number, kind: string): HTMLCanvasElement | null {
+  if (kind === 'coins') return paintBitmap(w, h, COINS_ART, GOLD_TONES);
+  if (kind === 'apple') return paintBitmap(w, h, APPLE_ART, APPLE_TONES);
+  if (kind === 'arrow-up') return paintBitmap(w, h, ARROW_UP_ART, GOLD_TONES);
+  if (kind === 'arrow-down') return paintBitmap(w, h, ARROW_DOWN_ART, GOLD_TONES);
+  return null;
+}
+
 const paintCache = new Map<string, string>();
 
 /** The painted piece named by an element's `data-paint`, at its size. */
@@ -2816,7 +2928,7 @@ function pieceUrl(kind: string, w: number, h: number): string | null {
   const hit = paintCache.get(k);
   if (hit) return hit;
   const s = surfaces ?? installPaint();
-  let c: HTMLCanvasElement | null = null;
+  let c: HTMLCanvasElement | null;
   if (kind === 'ring') c = paintRing(w, h, false);
   else if (kind === 'ring-active') c = paintRing(w, h, true);
   else if (kind === 'plate') c = paintPlate(w, h);
@@ -2866,6 +2978,7 @@ function pieceUrl(kind: string, w: number, h: number): string | null {
   } else if (kind === 'banner') c = paintBanner(w, h);
   else if (kind === 'bevel-in') c = paintBevel(w, h, 'in');
   else if (kind === 'bevel-out') c = paintBevel(w, h, 'out');
+  else c = paintGlyph(w, h, kind);
   if (!c) return null;
   const url = `url("${c.toDataURL('image/png')}")`;
   paintCache.set(k, url);

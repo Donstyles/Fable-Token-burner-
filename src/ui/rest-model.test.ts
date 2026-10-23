@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { afflict } from '../game/conditions';
 import { freshState } from '../game/fixtures';
-import { doRest, doWait, formatDuration, restView } from './rest-model';
+import { doRest, doWait, formatDuration, HOSTILES_NEARBY, restView, tryRest } from './rest-model';
 
 describe('rest view', () => {
   it('shows the clock, the food and the members', () => {
@@ -60,5 +60,43 @@ describe('resting and waiting', () => {
     expect(state.clock.minutes).toBe(24 * 60 + 5 * 60);
     expect(restView(state).time).toBe('05:00');
     expect(restView(state).date).toBe('Tuesday, 2 January 1165');
+  });
+});
+
+describe('no rest with foes about', () => {
+  /** What a refused rest must leave alone: the clock, the food and every member. */
+  const snapshot = (state: ReturnType<typeof freshState>): string =>
+    JSON.stringify({ clock: state.clock, food: state.food, gold: state.gold, party: state.party });
+
+  it("refuses a rest and a wait with the runtime's line and changes nothing", () => {
+    const state = freshState();
+    state.party[0]!.hp -= 5;
+    state.party[3]!.sp -= 4;
+    afflict(state.party[1]!.conditions, 'asleep', 0);
+    const before = snapshot(state);
+    for (const kind of ['rest', 'dawn'] as const) {
+      const r = tryRest(state, kind, HOSTILES_NEARBY);
+      expect(r).toEqual({ ok: false, message: 'There are hostile creatures nearby!' });
+      expect(snapshot(state)).toBe(before);
+    }
+    expect(state.clock.minutes).toBe(9 * 60);
+    expect(state.food).toBe(7);
+  });
+
+  it("gives MM6's own line for a blank reason", () => {
+    const state = freshState();
+    expect(tryRest(state, 'rest', '  ')).toEqual({ ok: false, message: HOSTILES_NEARBY });
+    expect(state.food).toBe(7);
+  });
+
+  it('rests and waits as before when nothing blocks', () => {
+    const state = freshState();
+    const rested = tryRest(state, 'rest', null);
+    expect(rested.ok && rested.summary.kind).toBe('rest');
+    expect(state.food).toBe(6);
+    expect(state.clock.minutes).toBe(17 * 60);
+    const waited = tryRest(state, 'dawn', undefined);
+    expect(waited.ok && waited.summary.kind).toBe('dawn');
+    expect(restView(state).time).toBe('05:00');
   });
 });

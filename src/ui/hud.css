@@ -75,6 +75,48 @@
   color: #ffffff;
   letter-spacing: 1px;
 }
+/* The gold and the food (hud.ts `setPurse`; interface.md 8.7): MM6's number well of the band's
+   marble darkened by a third (paint.ts `plaque`) under the clock, as wide, the coin stack and
+   the apple at the left (paint.ts `coins`, `apple`) and the count in the clock's yellow well
+   numerals at the right, so the figures stand in a column. Every box a whole UI pixel; the
+   portraits do not move. */
+.hud-purse {
+  position: absolute;
+  left: calc(var(--sal) + 4px);
+  top: 64px;
+  width: 76px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  /* Three pixels each side inside the well's lips: the coins and six figures, 12 and 58
+     pixels, fill its 70 exactly. */
+  padding: 6px 3px 5px 3px;
+  pointer-events: none;
+  background: var(--paint) center / 100% 100% no-repeat;
+  image-rendering: pixelated;
+}
+.hud-purse[hidden] {
+  display: none;
+}
+.hud-purse-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  height: 13px;
+}
+.hud-purse-glyph {
+  flex: none;
+  width: 12px;
+  height: 13px;
+  background: var(--paint) center / 100% 100% no-repeat;
+  image-rendering: pixelated;
+}
+.hud-purse-figures {
+  display: flex;
+  justify-content: flex-end;
+  height: 13px;
+}
 .hud-band {
   /* The four members on one marble surface with a seam round each (paint.ts `recess`); a
      gold rail runs along the ovals' top as MM6's does; sized to fit the phone's safe areas

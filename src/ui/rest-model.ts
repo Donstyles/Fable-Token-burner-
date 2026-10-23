@@ -116,3 +116,25 @@ export function doWait(state: GameState): RestSummary {
     ],
   };
 }
+
+/** MM6's refusal when foes are about (interface.md 9.7: "no rest near foes"). */
+export const HOSTILES_NEARBY = 'There are hostile creatures nearby!';
+
+/** A rest or a wait as asked: done, or refused with the line to show and nothing changed. */
+export type RestOutcome = { ok: true; summary: RestSummary } | { ok: false; message: string };
+
+/**
+ * Rest eight hours (`rest`) or wait until dawn (`dawn`), unless the runtime gives a reason the
+ * party may not (`blocked`, from `ScreenHooks.restBlocked`): then the clock, the food and every
+ * member stay as they are and the reason is the line to show (MM6's own when it is blank).
+ */
+export function tryRest(
+  state: GameState,
+  kind: 'rest' | 'dawn',
+  blocked: string | null | undefined,
+): RestOutcome {
+  if (typeof blocked === 'string') {
+    return { ok: false, message: blocked.trim() || HOSTILES_NEARBY };
+  }
+  return { ok: true, summary: kind === 'rest' ? doRest(state) : doWait(state) };
+}

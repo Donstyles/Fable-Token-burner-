@@ -259,13 +259,53 @@
 }
 
 /* Automap */
+.map-col {
+  min-height: 0;
+  /* Two pixels above and below, so the phone's page holds Gullhaven's eighty cells at two
+     pixels a cell (journal-model.ts `mapTransform`), insets and all. */
+  padding-top: 2px;
+  padding-bottom: 2px;
+}
+.map-sheet {
+  /* The page the map is inked on: the column's whole room, the canvas its size in whole
+     pixels (journal.ts), so the map fits the frame with or without the phone's insets. */
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+  overflow: hidden;
+}
 .map-canvas {
   /* Drawn in ink on the book's page. */
+  position: absolute;
+  left: 0;
+  top: 0;
   background: transparent;
   border: 0;
   box-shadow: none;
-  align-self: center;
   image-rendering: pixelated;
+  touch-action: none;
+}
+/* A tapped mark's name beside it, in the book's upright black type on the page's own tone,
+   so the walked cells under it give way to the words, as a cartographer lettered round the
+   ink (journal.ts). */
+.map-label {
+  position: absolute;
+  padding: 0 3px;
+  font:
+    21px/24px 'Tinos',
+    Georgia,
+    serif;
+  color: #000000;
+  white-space: nowrap;
+  pointer-events: none;
+  background: rgb(198, 186, 168);
+}
+.map-label.left {
+  transform: translateX(-100%);
+}
+.map-label[hidden] {
+  display: none;
 }
 
 /* The spellbook's page (DESIGN.md 16.22): MM6's spread holds a place for each of the school's
@@ -415,6 +455,12 @@
 }
 .rest-actions .ui-btn {
   width: 100%;
+}
+/* The rest screen's message line over the choices (rest.ts): "Rest" in the heading's yellow,
+   or the reason the party may not, as MM6's "There are hostile creatures nearby!", drawn at
+   the type's own width so it holds one line in the column, insets and all. */
+.rest-message.refused {
+  --pxt-stretch: 1;
 }
 /* The spread never scrolls: eleven places fit the page, right of the crease. */
 .screen-spells .ui-body {

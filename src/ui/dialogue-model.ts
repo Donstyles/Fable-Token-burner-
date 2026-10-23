@@ -166,3 +166,39 @@ export function chooseTopic(
     }
   }
 }
+
+/**
+ * Whether the talk panel's words run past their box above and below (a pixel of slack for
+ * rounding), so the gold marks at its corners show which way there is more to read.
+ */
+export function scrollMarks(
+  scrollTop: number,
+  clientHeight: number,
+  scrollHeight: number,
+): { up: boolean; down: boolean } {
+  return { up: scrollTop > 1, down: scrollTop + clientHeight < scrollHeight - 1 };
+}
+
+/**
+ * Where a tap on the words turns to: on by the box less one line, so the last line read stays
+ * in sight, a line at the least, and never past the end.
+ */
+export function nextPage(
+  scrollTop: number,
+  clientHeight: number,
+  scrollHeight: number,
+  line: number,
+): number {
+  const end = Math.max(0, scrollHeight - clientHeight);
+  return Math.min(end, scrollTop + Math.max(line, clientHeight - line));
+}
+
+/**
+ * The height of a box of words that holds whole lines only: as many lines of `line` pixels as
+ * fit in `room` with the box's padding, two at the least and `most` at the most, so the last
+ * line in view is never cut through.
+ */
+export function wholeLines(room: number, line: number, pad: number, most: number): number {
+  const fit = Math.floor((room - pad) / line);
+  return Math.max(2, Math.min(most, fit)) * line + pad;
+}

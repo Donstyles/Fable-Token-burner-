@@ -31,7 +31,21 @@ export interface Hud {
   update(now: number): void;
   /** Show the game clock (minutes since the start of the calendar). */
   setClock(minutes: number): void;
+  /**
+   * Show the party's gold and food in MM6's well under the clock (interface.md 8.7); nothing
+   * shows there until the first call. Cheap to call every frame: it repaints on a change.
+   */
+  setPurse(gold: number, food: number): void;
   dispose(): void;
+}
+
+/** The most the purse's well shows: six figures fit its 76 pixels beside the coins. */
+const PURSE_MAX = 999_999;
+
+/** A count as the well shows it: whole, never below nothing, at most six figures. */
+export function purseFigure(n: number): string {
+  const v = Number.isFinite(n) ? Math.floor(n) : 0;
+  return String(Math.max(0, Math.min(PURSE_MAX, v)));
 }
 
 export interface HudHooks {
@@ -111,6 +125,40 @@ export function createHud(parent: HTMLElement, party: Party, hooks: HudHooks): H
     snapTo(clockDate);
   };
   addEventListener('resize', snapClock);
+  // The gold and the food in MM6's number well under the clock (paint.ts `plaque`: "its food
+  // and gold sit in wells of the band's marble"), the coins and the apple beside the yellow
+  // well numerals; hidden until the runtime first says what the party carries.
+  const purse = el('div', 'hud-purse');
+  purse.dataset['paint'] = 'plaque';
+  purse.hidden = true;
+  const purseRow = (kind: 'gold' | 'food'): { row: HTMLElement; figures: HTMLElement } => {
+    const row = el('div', `hud-purse-row ${kind}`);
+    const glyph = el('div', 'hud-purse-glyph');
+    glyph.dataset['paint'] = kind === 'gold' ? 'coins' : 'apple';
+    const figures = el('div', 'hud-purse-figures');
+    row.append(glyph, figures);
+    purse.appendChild(row);
+    return { row, figures };
+  };
+  const gold = purseRow('gold');
+  const food = purseRow('food');
+  root.appendChild(purse);
+  const showFigures = (at: { row: HTMLElement; figures: HTMLElement }, n: number): void => {
+    const text = purseFigure(n);
+    if (at.figures.dataset['n'] === text) return;
+    at.figures.dataset['n'] = text;
+    const digits = paintNumerals(text);
+    digits.className = 'hud-numerals';
+    digits.style.width = `${digits.width * PX}px`;
+    digits.style.height = `${digits.height * PX}px`;
+    at.figures.replaceChildren(digits);
+    at.row.setAttribute('aria-label', `${text} ${at === gold ? 'gold' : 'food'}`);
+  };
+  const snapPurse = (): void => {
+    if (purse.hidden) return;
+    for (const n of purse.querySelectorAll<HTMLElement>('.hud-numerals')) snapTo(n);
+  };
+  addEventListener('resize', snapPurse);
   // Each member in a rectangle recessed into the marble, a gutter of marble between, as
   // MM6's band (critics, round 5): no trough, no pilasters.
   const band = el('div', 'hud-band');
@@ -218,8 +266,18 @@ export function createHud(parent: HTMLElement, party: Party, hooks: HudHooks): H
         snapClock();
       }
     },
+    setPurse(goldCount, foodCount) {
+      const before = `${gold.figures.dataset['n']}/${food.figures.dataset['n']}`;
+      showFigures(gold, goldCount);
+      showFigures(food, foodCount);
+      const changed = before !== `${gold.figures.dataset['n']}/${food.figures.dataset['n']}`;
+      if (purse.hidden) purse.hidden = false;
+      else if (!changed) return;
+      snapPurse();
+    },
     dispose() {
       removeEventListener('resize', snapClock);
+      removeEventListener('resize', snapPurse);
       root.remove();
       for (const n of parent.querySelectorAll('.view-pillar, .view-lintel, .view-margin'))
         n.remove();

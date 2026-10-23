@@ -366,12 +366,16 @@ function convertUnder(root: Node): void {
 
 /**
  * Paint every run of text under `root` as bitmap text and keep doing so as the screens change
- * it. Text stays native until the house faces have loaded.
+ * it. Text stays native until the house faces have loaded. Each root is watched once; a root
+ * inside one already watched is only converted (a title screen raised before the band, or
+ * after it, both keep their text painted).
  */
 export function installPixelText(root: HTMLElement): void {
   const start = (): void => {
     ready = true;
     convertUnder(root);
+    if (root.closest('[data-pxt-watched]')) return;
+    root.dataset['pxtWatched'] = '';
     const observer = new MutationObserver((records) => {
       for (const r of records) {
         if (r.type === 'characterData') convert(r.target as Text);
@@ -379,12 +383,19 @@ export function installPixelText(root: HTMLElement): void {
       }
     });
     observer.observe(root, { childList: true, characterData: true, subtree: true });
-    window.addEventListener('resize', () =>
-      requestAnimationFrame(() => root.querySelectorAll<HTMLElement>('.pxt').forEach(snapRun)),
-    );
+    const onResize = (): void => {
+      // A root taken out of the page for good (a disposed title) lets go of its watch.
+      if (!root.isConnected) {
+        observer.disconnect();
+        removeEventListener('resize', onResize);
+        return;
+      }
+      requestAnimationFrame(() => root.querySelectorAll<HTMLElement>('.pxt').forEach(snapRun));
+    };
+    addEventListener('resize', onResize);
   };
   if (ready) {
-    convertUnder(root);
+    start();
     return;
   }
   void Promise.all([
