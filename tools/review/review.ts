@@ -54,6 +54,24 @@ if (query.has('inside')) {
   }
 }
 const centre = min.add(max).scale(0.5);
+// `?marks=x,y,z;…&height=h`: points in metres in the model's frame (kernel/terrain/props.ts),
+// drawn as small red balls, for checking a door's or a light's place on the model.
+const marks = query.get('marks');
+const height = Number(query.get('height'));
+if (marks && height > 0) {
+  const { CreateSphere } = await import('@babylonjs/core/Meshes/Builders/sphereBuilder');
+  const red = new StandardMaterial('mark', scene);
+  red.emissiveColor = new Color3(1, 0.1, 0.1);
+  red.disableLighting = true;
+  const units = (max.y - min.y) / height;
+  for (const m of marks.split(';')) {
+    const [x, y, z] = m.split(',').map(Number) as [number, number, number];
+    const ball = CreateSphere('mark', { diameter: 0.25 * units }, scene);
+    // Babylon's loader mirrors x.
+    ball.position = new Vector3(-x * units, min.y + y * units, z * units);
+    ball.material = red;
+  }
+}
 if (query.has('front')) {
   // Straight at the front, square on: one view filling the canvas, a metre a fixed number of
   // pixels, so a door or a lamp can be read off it (the page reports the scale).
