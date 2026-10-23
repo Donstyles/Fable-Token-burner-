@@ -6,6 +6,7 @@ import './dev.css';
 // Side-effect import: enables scene.pick (tree-shaken away otherwise).
 import '@babylonjs/core/Culling/ray';
 import { Vector3 } from '@babylonjs/core/Maths/math.vector';
+import { Ray } from '@babylonjs/core/Culling/ray';
 import { Color3 } from '@babylonjs/core/Maths/math.color';
 import type { Mesh } from '@babylonjs/core/Meshes/mesh';
 import type { App } from '../app/boot';
@@ -571,9 +572,27 @@ export async function startDev(app: App): Promise<DevHandle> {
   }
   // Continue stands the party where the save left it, on this level.
   const was = restored && !ENTRY && restored.level.id === LEVEL ? restored.level : null;
+  // Outdoors on the ground under that spot, never below it: a save made mid-fall would
+  // otherwise continue under the hill.
+  const groundUnder = (x: number, z: number): number | null => {
+    const hit = scene.pickWithRay(
+      new Ray(new Vector3(x, 1000, z), Vector3.Down(), 2000),
+      // The ground only: a house's eave over the spot must not put the party on its roof.
+      (m) => m.isPickable && m.isEnabled() && !m.name.startsWith('props:'),
+    );
+    return hit?.pickedPoint?.y ?? null;
+  };
   const resumed =
     was && (was.x !== 0 || was.y !== 0 || was.z !== 0)
-      ? { position: new Vector3(was.x, was.y + 0.2, was.z), yawDeg: was.yawDeg }
+      ? {
+          position: new Vector3(
+            was.x,
+            Math.max(was.y, level.sidecar.outdoor ? (groundUnder(was.x, was.z) ?? was.y) : was.y) +
+              0.2,
+            was.z,
+          ),
+          yawDeg: was.yawDeg,
+        }
       : null;
   const start = entry?.arrive ??
     woke ??

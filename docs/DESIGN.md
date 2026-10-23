@@ -2402,6 +2402,19 @@ exists; the headland ruin has no ruin model yet.
 
 ## 13. Decision log
 
+- 2026-10-23 – The second demo (owner: "Prepare the next demo for me to play"), from a
+  play-through audit. A plain visit to `/dev/` opens on a title (Continue, New Game); the
+  autosave keeps the party's place, and Continue stands it there, on the ground; `?dev`
+  still starts a new game at once for the tests and shows the tuning button, which the
+  player's view hides. Houses open their service at the door (inn, temple, store, smithy,
+  and a training hall in the waterfront townhouse until the town has one of its own); a
+  tap out of a sword's reach goes to the bow; a corpse is searched for its gold; monsters
+  land their blows at any frame rate and a blow never breaks their swing; a wiped party
+  wakes a week later at the temple without its carried gold (MM6's rule); rest is refused
+  with a monster within 30 m; the halls hold six skeletons and Old Tobin pays 300 gold for
+  five of the dead; the band shows gold and food, the map marks the villagers, those with
+  a quest waiting, and the portals; the talk panel shows every line whole.
+
 - 2026-10-23 – Batch 012 run (owner: "Run all 20 through meshy and put them in the game"):
   the twenty trees and bushes made image-to-3D from the owner's own pictures, 300 credits.
   Their sprites keep the models' own colours (16.14): no repaint into six greens and no
