@@ -1497,7 +1497,14 @@ strip, and skinned its models in a few hundred texels. So:
   face the eye, `ALPHATEST` cuts the air away. The scene's light and fog
   then fall on the finished sprite as on anything else. The forest's
   thousands of trees cost two triangles each and the model's own picture
-  is the art; no far models (`far: null`).
+  is the art; no far models (`far: null`). **2026-10-23:** the sprite keeps
+  the model's own colours. The repaint of rounds 9 to 16 (every leaf into
+  MM6's six greens by rank, the lowest 35% of a sprite into bark browns)
+  turned the owner's dead trees and the birch's bark green and the willow's
+  and larch's feet brown, and the palette snap below took the light
+  yellow-greens to tan; both are gone for trees and bushes (their skins and
+  sprites skip the palette), and the sprite's tint is a grey 0.76, not
+  green.
 - **Bitmap skins** (`src/render/bitmap.ts`). Every loaded albedo (houses,
   props, characters) is read back from the GPU's own mip level nearest
   the target (512 pixels for a building or a townsperson, 256 for a
@@ -2370,6 +2377,11 @@ batch 012; the coast road's west end has no portal until the second region
 exists; the headland ruin has no ruin model yet.
 
 ## 13. Decision log
+
+- 2026-10-23 – Batch 012 run (owner: "Run all 20 through meshy and put them in the game"):
+  the twenty trees and bushes made image-to-3D from the owner's own pictures, 300 credits.
+  Their sprites keep the models' own colours (16.14): no repaint into six greens and no
+  palette snap for trees and bushes, a grey tint.
 
 - 2026-10-19 – Fuchsia backgrounds for every concept picture (owner: "We do fuchsia
   backgrounds"). The owner makes the tree pictures free in ChatGPT

@@ -18,6 +18,12 @@ export interface BitmapOptions {
   levels: number;
   /** The grain before the posterise, in steps of a tone (half a step unless said). */
   grain?: number;
+  /**
+   * Snap to MM6's 256 colours (default on). Off for trees and bushes: the palette was read
+   * from the reference shots and has none of the owner's light yellow-greens, so a willow's
+   * leaves snapped to tan (owner's concept pictures, 2026-10-23).
+   */
+  palette?: boolean;
 }
 
 function ready(texture: Texture): Promise<void> {
@@ -35,6 +41,7 @@ export function bitmapPixels(
   levels: number,
   flipY: boolean,
   grainSteps = 1,
+  palette = true,
 ): Uint8ClampedArray<ArrayBuffer> {
   const out = new Uint8ClampedArray(new ArrayBuffer(dw * dh * 4));
   const step = 255 / (levels - 1);
@@ -76,7 +83,7 @@ export function bitmapPixels(
       out[o + 3] = a / n >= 128 ? 255 : 0;
     }
   }
-  snapToPalette(out);
+  if (palette) snapToPalette(out);
   return out;
 }
 
@@ -93,7 +100,7 @@ export function bitmapTexture(
   scene: Scene,
   o: BitmapOptions,
 ): Promise<DynamicTexture> {
-  const key = `${source.url ?? source.name}|${o.size}|${o.levels}|${o.grain ?? 0.5}`;
+  const key = `${source.url ?? source.name}|${o.size}|${o.levels}|${o.grain ?? 0.5}|${o.palette ?? true}`;
   const hit = cache.get(key);
   if (hit) return hit;
   const made = (async (): Promise<DynamicTexture> => {
@@ -107,7 +114,17 @@ export function bitmapTexture(
     const g = dyn.getContext();
     if (raw && raw.length >= sw * sh * 4) {
       // readPixels gives the rows bottom first; the canvas wants them top first.
-      const px = bitmapPixels(raw, sw, sh, sw, sh, o.levels, true, (o.grain ?? 0.5) * 2);
+      const px = bitmapPixels(
+        raw,
+        sw,
+        sh,
+        sw,
+        sh,
+        o.levels,
+        true,
+        (o.grain ?? 0.5) * 2,
+        o.palette ?? true,
+      );
       g.putImageData(new ImageData(px, sw, sh), 0, 0);
     }
     dyn.hasAlpha = true;

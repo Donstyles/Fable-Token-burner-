@@ -17,7 +17,6 @@ import catalogueJson from '../../assets/props/catalogue.json';
 import { PROPS, type PropCatalogue, type PropMeasure } from '../../kernel/terrain/props';
 import { type RetroMaterials } from '../render/materials';
 import { bitmapPixels, bitmapTexture } from '../render/bitmap';
-import { die, expand, ramp } from '../render/brush';
 import { wallDetail } from './painted-textures';
 import { Camera } from '@babylonjs/core/Cameras/camera';
 import { TargetCamera } from '@babylonjs/core/Cameras/targetCamera';
@@ -106,7 +105,7 @@ const SPRITE_PIXELS = 128;
 
 /**
  * A tree or a bush as a sprite (DESIGN.md 16.14): the model is drawn once from the side into a
- * small texture, quantised like a 1998 bitmap, and a quad carrying it stands in for every
+ * small texture in its own colours, ten tones a channel, and a quad carrying it stands in for every
  * instance, turning to face the eye in the vertex shader. The sprite's square covers the
  * model's bounding box, `side` metres to a side, its foot at y = 0.
  */
@@ -158,7 +157,9 @@ async function spriteOf(
   const n = SPRITE_PIXELS;
   const raw = (await target.readPixels()) as Uint8Array | null;
   // readPixels gives the rows bottom first; the canvas wants them top first.
-  const px = raw ? bitmapPixels(raw, n, n, n, n, 10, true) : new Uint8ClampedArray(n * n * 4);
+  const px = raw
+    ? bitmapPixels(raw, n, n, n, n, 10, true, 1, false)
+    : new Uint8ClampedArray(n * n * 4);
   // The quad covers only the painted pixels: a spruce in its square is two thirds air, and
   // every transparent texel still costs a fragment on a phone (and a second on a CPU).
   let x0 = n;
@@ -179,96 +180,6 @@ async function spriteOf(
     y0 = 0;
     x1 = n - 1;
     y1 = n - 1;
-  }
-  // Leaves in MM6's six greens and bark in its browns (critics, round 9): each opaque pixel
-  // keeps its luminance and takes the ramp's tone.
-  // Crowns lit from above (talk-world critic, round 14: each leaf drew its green at random,
-  // whatever the light had rendered, so the crowns were salted and their tops no brighter than
-  // their feet, where MM6's are lit 8 to 16 above; the dark pixels went bark brown, red over
-  // green on 14 to 34% of a crown, MM6's 1 to 10%): bark only in the sprite's lowest 35%,
-  // where the light rendered brown.
-  // Each leaf by its rank in the sprite's own light (talk-world critic, round 15: this key and
-  // fill leave 68 to 98% of a sprite at or under 0.12 once posterised, so the fixed cut there
-  // blacked 40 to 67% of each crown, MM6's 5 to 32%, and darkened tops over green feet):
-  // the opaque pixels ranked by the light they rendered before the posterise, ties at random;
-  // the darkest 12% black; the rest a green seven tenths by rank and three by height, give or
-  // take four fifths of a step; bark toned by its light over the sprite's 95th percentile.
-  // Each leaf by light, height and side together (talk-world critic, round 16: by light alone
-  // the darkest 12% sat on each crown's rims and top, the black's centroid at 0.32 to 0.55 of
-  // its height where MM6's is 0.55 to 0.63, the shaded lower right, and the tops a median 1.4
-  // over the feet, MM6's 7 to 16): a score four tenths the light's rank, four the height and
-  // two the left side, ranked among the leaves, ties at random; the lowest 15% of that rank
-  // black, the rest a green by it, give or take four fifths of a step.
-  const leaf: [number, number, number][] = [
-    [8, 24, 16],
-    [16, 40, 16],
-    [33, 60, 33],
-    [33, 73, 33],
-    [49, 89, 41],
-    [57, 121, 57],
-  ];
-  const bark = expand(ramp('#1c1208', '#2c1c0e', '#3e2a16', '#4e3620', '#5a4028'), 16);
-  const rr = die(n * 7 + 1);
-  // Rows at or below this are the sprite's lowest 35%, where its trunk stands.
-  const trunk = y1 + 1 - 0.35 * (y1 - y0 + 1);
-  // Each opaque pixel as the light rendered it, read from `raw` (rows bottom first), and its
-  // rank among the sprite's, 0 the darkest and 1 the lightest.
-  const lum = new Float64Array(n * n);
-  const brown = new Uint8Array(n * n);
-  const tie = new Float64Array(n * n);
-  const lit: number[] = [];
-  for (let i = 0; i < n * n; i++) {
-    if (!raw || px[i * 4 + 3]! < 128) continue;
-    const o = ((n - 1 - Math.floor(i / n)) * n + (i % n)) * 4;
-    lum[i] = (0.299 * raw[o]! + 0.587 * raw[o + 1]! + 0.114 * raw[o + 2]!) / 255;
-    brown[i] = raw[o + 1]! < raw[o]! * 0.95 ? 1 : 0;
-    tie[i] = rr();
-    lit.push(i);
-  }
-  lit.sort((a, b) => lum[a]! - lum[b]! || tie[a]! - tie[b]!);
-  const rank = new Float64Array(n * n);
-  for (let k = 0; k < lit.length; k++) rank[lit[k]!] = k / Math.max(1, lit.length - 1);
-  // The light's 95th percentile, read between the two nearest ranks.
-  const at = 0.95 * Math.max(0, lit.length - 1);
-  const lo = lum[lit[Math.floor(at)] ?? 0]!;
-  const hi = lum[lit[Math.ceil(at)] ?? 0]!;
-  const p95 = Math.max(1e-3, lo + (hi - lo) * (at - Math.floor(at)));
-  // Every opaque pixel but the bark's, by its score, and its rank among them.
-  const score = new Float64Array(n * n);
-  const leaves: number[] = [];
-  for (const i of lit) {
-    const x = i % n;
-    const y = Math.floor(i / n);
-    if (y >= trunk && brown[i]) continue;
-    score[i] =
-      0.4 * rank[i]! + 0.4 * (1 - (y - y0) / (y1 - y0 + 1)) + 0.2 * (1 - (x - x0) / (x1 - x0 + 1));
-    leaves.push(i);
-  }
-  leaves.sort((a, b) => score[a]! - score[b]! || tie[a]! - tie[b]!);
-  const srank = new Float64Array(n * n);
-  for (let k = 0; k < leaves.length; k++) srank[leaves[k]!] = k / Math.max(1, leaves.length - 1);
-  for (let i = 0; i < n * n; i++) {
-    const o = i * 4;
-    if (px[o + 3]! < 128) continue;
-    const y = Math.floor(i / n);
-    if (y >= trunk && brown[i]) {
-      const tone = Math.round(Math.min(1, lum[i]! / p95) * 15);
-      const t = bark[Math.max(0, Math.min(15, tone))]!.warm;
-      px[o] = Math.round(t[0]);
-      px[o + 1] = Math.round(t[1]);
-      px[o + 2] = Math.round(t[2]);
-    } else if (srank[i]! < 0.15) {
-      px[o] = 0;
-      px[o + 1] = 0;
-      px[o + 2] = 0;
-    } else {
-      const step = (6 * (srank[i]! - 0.15)) / 0.85;
-      const k = Math.max(0, Math.min(5, Math.round(step - 0.5 + (rr() - 0.5) * 1.6)));
-      const t = leaf[k]!;
-      px[o] = t[0];
-      px[o + 1] = t[1];
-      px[o + 2] = t[2];
-    }
   }
   const sprite = new DynamicTexture(`sprite:${id}`, { width: n, height: n }, scene, false);
   sprite.getContext().putImageData(new ImageData(px, n, n), 0, 0);
@@ -299,8 +210,9 @@ async function spriteOf(
     texture: sprite,
     doubleSided: true,
     billboard: true,
-    // MM6's canopies were a dark, dense green (critics, round 5: ~41,68,40).
-    tint: new Color3(0.72, 0.8, 0.66),
+    // A shade darker, as MM6's canopies stood (critics, round 5), but grey, not green: the
+    // sprite carries its own colours now, a birch's white bark and a dead tree's grey wood.
+    tint: new Color3(0.76, 0.76, 0.76),
   });
   quad.material = material;
   quad.isPickable = false;
@@ -332,6 +244,7 @@ export async function loadPropModels(
         size: building ? 1024 : 256,
         levels: building ? 16 : 10,
         grain: building ? 1.25 : 0.5,
+        palette: !sways,
       });
       // Meshy paints buildings and stones a shade dark for daylight; a little lift reads
       // as sun on plaster rather than a cellar wall.
