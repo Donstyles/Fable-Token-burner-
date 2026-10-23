@@ -910,10 +910,8 @@ export function paintButton(w: number, h: number, pressed: boolean): HTMLCanvasE
       const dl = lift - sink;
       let col: Rgb = [base[0] * (1 + dl / 156), base[1] * (1 + dl / 156), base[2] * (1 + dl / 156)];
       if (dl > 30) col = mix(col, [247, 243, 214], Math.min(1, (dl - 30) / 60));
-      // The socket (critics, round 10): a near-black pool at the lower right with a soft edge.
-      const sd = Math.hypot((x + 0.5 - w * 0.78) / w, (y + 0.5 - h * 0.78) / h);
-      const socket = 1 - Math.max(0, Math.min(1, (sd - 0.16) / 0.06));
-      col = mix(col, [col[0] * 0.1, col[1] * 0.1, col[2] * 0.1], pressed ? 0 : socket);
+      // No socket: round 10's near-black pool at the lower right read as a black speck on
+      // every gold button, over the word on Yes and No (owner, 2026-10-23).
       px(g, x, y, `rgb(${Math.round(col[0])},${Math.round(col[1])},${Math.round(col[2])})`);
     }
   }

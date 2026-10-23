@@ -1889,7 +1889,7 @@ Round 11:
   irregular page stack with a cut corner and a wandering foot, tab
   icons in three or four colours, the page to the left edge; the frame
   as pillars of desaturated rose marble with gold bands straight into
-  the stone; the gold ovals with a 247 peak and a dark socket, no rim
+  the stone; the gold ovals with a 247 peak (the dark socket taken out 2026-10-23: the owner saw a black speck on every button), no rim
   rings; the clock's well with fading wisps and a red-brown lip under a
   highlight; the leather's shadow below and right of its rust line,
   more flecks.
@@ -2401,6 +2401,10 @@ batch 012; the coast road's west end has no portal until the second region
 exists; the headland ruin has no ruin model yet.
 
 ## 13. Decision log
+
+- 2026-10-23 – The gold oval buttons lose their dark socket (owner: "What's that black
+  speck on the gold buttons?"): round 10's near-black pool at each button's lower right read
+  as a smudge, over the word on Yes and No. The rest button's moon stays.
 
 - 2026-10-23 – The second demo (owner: "Prepare the next demo for me to play"), from a
   play-through audit. A plain visit to `/dev/` opens on a title (Continue, New Game); the
