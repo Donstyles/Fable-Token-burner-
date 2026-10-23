@@ -2,7 +2,7 @@
   "number": 14,
   "name": "rocks-image-first",
   "created": "2026-10-23",
-  "approved": false,
+  "approved": true,
   "items": [
     {
       "assetId": "prop-woodpile",
@@ -156,5 +156,70 @@
     }
   ],
   "estimatedCredits": 90,
-  "runs": []
+  "runs": [
+    {
+      "started": "2026-10-23T17:48:21.476Z",
+      "taskIds": [
+        "01a169e0-d719-7651-884a-d2955154c846",
+        "01a169e0-e076-77f4-b9b7-525290194688",
+        "01a169e0-e8ea-72d5-9352-029806b0cd10",
+        "01a169e0-f15f-71d3-a0dd-a814a6c9df52",
+        "01a169e0-f8e2-71fb-bb15-b12bc8d1f177"
+      ],
+      "tasks": {
+        "prop-woodpile": {
+          "image-to-3d": {
+            "taskId": "01a169e0-d719-7651-884a-d2955154c846",
+            "status": "SUCCEEDED",
+            "consumedCredits": 15,
+            "operationId": "b014-prop-woodpile-image-to-3d-r1-a1"
+          }
+        },
+        "rock-boulder-01": {
+          "image-to-3d": {
+            "taskId": "01a169e0-e076-77f4-b9b7-525290194688",
+            "status": "SUCCEEDED",
+            "consumedCredits": 15,
+            "operationId": "b014-rock-boulder-01-image-to-3d-r1-a1"
+          }
+        },
+        "rock-boulder-02": {
+          "image-to-3d": {
+            "taskId": "01a169e0-e8ea-72d5-9352-029806b0cd10",
+            "status": "SUCCEEDED",
+            "consumedCredits": 15,
+            "operationId": "b014-rock-boulder-02-image-to-3d-r1-a1"
+          }
+        },
+        "rock-outcrop-01": {
+          "image-to-3d": {
+            "taskId": "01a169e0-f15f-71d3-a0dd-a814a6c9df52",
+            "status": "SUCCEEDED",
+            "consumedCredits": 15,
+            "operationId": "b014-rock-outcrop-01-image-to-3d-r1-a1"
+          }
+        },
+        "rock-cluster-01": {
+          "image-to-3d": {
+            "taskId": "01a169e0-f8e2-71fb-bb15-b12bc8d1f177",
+            "status": "SUCCEEDED",
+            "consumedCredits": 15,
+            "operationId": "b014-rock-cluster-01-image-to-3d-r1-a1"
+          }
+        }
+      },
+      "balanceBefore": 1348,
+      "attempts": {
+        "prop-woodpile/image-to-3d": 1,
+        "rock-boulder-01/image-to-3d": 1,
+        "rock-boulder-02/image-to-3d": 1,
+        "rock-outcrop-01/image-to-3d": 1,
+        "rock-cluster-01/image-to-3d": 1
+      },
+      "balanceAfter": 1273,
+      "consumedCredits": 75,
+      "finished": "2026-10-23T17:49:38.065Z"
+    }
+  ],
+  "imagesReviewed": true
 }

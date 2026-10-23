@@ -15,6 +15,7 @@ import { keyPicture } from './key';
 import { type Manifest, upsertAsset, writeManifest } from './manifest';
 import { type MeshyClient, MeshyError, TERMINAL_STATES, type TaskOutcome } from './meshy';
 import { postProcessProp, type GlbReport } from './postprocess';
+import { PROPS, frontTurnDeg } from '../../kernel/terrain/props';
 
 export const PROP_DIR = 'assets/props';
 
@@ -236,7 +237,14 @@ export async function runProps(ctx: PropRunContext): Promise<PropRunOutcome> {
       if (!glb) throw new Error(`${id}: the model download has no .glb (${files.join(', ')})`);
       // A house at 1024 pixels, the rest at 512, JPEG (owner, 2026-10-23: at 256 a whole
       // inn was painted from 256 pixels and the filters made mud of it).
-      report = await postProcessProp(glb, output, id.startsWith('building-') ? 1024 : 512, 'jpeg');
+      // A door Meshy delivered on a gable turns round to the front (kernel/terrain/props.ts).
+      report = await postProcessProp(
+        glb,
+        output,
+        id.startsWith('building-') ? 1024 : 512,
+        'jpeg',
+        frontTurnDeg(PROPS[id]?.front),
+      );
       log(`  ${output}: ${report.triangles} triangles, ${(report.bytes / 1024).toFixed(0)} KiB`);
     } else {
       log(`  post-process → ${output}`);

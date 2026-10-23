@@ -2,7 +2,7 @@
   "number": 13,
   "name": "town-image-first",
   "created": "2026-10-23",
-  "approved": false,
+  "approved": true,
   "items": [
     {
       "assetId": "building-inn",
@@ -486,5 +486,180 @@
     }
   ],
   "estimatedCredits": 288,
-  "runs": []
+  "runs": [
+    {
+      "started": "2026-10-23T17:43:33.839Z",
+      "taskIds": [
+        "01a169dc-6c27-71aa-a390-6369f89bc588",
+        "01a169dc-756f-7751-80e6-314879ec586a",
+        "01a169dc-7e1b-761b-937b-a5c580180155",
+        "01a169dc-873c-76cb-a00e-501fc714b903",
+        "01a169dc-8fe4-72e7-b94b-4ae58ef884b6",
+        "01a169dc-9781-744c-940c-c899e3d4dfde",
+        "01a169dc-9ea6-703c-a731-afcb6400714b",
+        "01a169dc-a598-7673-bfde-37cc7378ab74",
+        "01a169dc-adc1-7501-a2dc-2174287cea7f",
+        "01a169dc-b4ca-74a1-9976-7a8cbf64cdd4",
+        "01a169dd-1b0f-7744-ac3f-3bb546d466b0",
+        "01a169dd-234e-70fd-aeac-3eca72c75c80",
+        "01a169dd-2af0-75b9-b5ca-611454c8ef7f",
+        "01a169dd-31cc-77bf-89a7-f2e3ff33737d",
+        "01a169dd-399f-722c-99a6-79c78cc209a3",
+        "01a169dd-415d-7026-8b06-772a8696fccd"
+      ],
+      "tasks": {
+        "building-inn": {
+          "image-to-3d": {
+            "taskId": "01a169dc-6c27-71aa-a390-6369f89bc588",
+            "status": "SUCCEEDED",
+            "consumedCredits": 15,
+            "operationId": "b013-building-inn-image-to-3d-r1-a1"
+          }
+        },
+        "building-temple": {
+          "image-to-3d": {
+            "taskId": "01a169dc-756f-7751-80e6-314879ec586a",
+            "status": "SUCCEEDED",
+            "consumedCredits": 15,
+            "operationId": "b013-building-temple-image-to-3d-r1-a1"
+          }
+        },
+        "building-store": {
+          "image-to-3d": {
+            "taskId": "01a169dc-7e1b-761b-937b-a5c580180155",
+            "status": "SUCCEEDED",
+            "consumedCredits": 15,
+            "operationId": "b013-building-store-image-to-3d-r1-a1"
+          }
+        },
+        "building-smithy": {
+          "image-to-3d": {
+            "taskId": "01a169dc-873c-76cb-a00e-501fc714b903",
+            "status": "SUCCEEDED",
+            "consumedCredits": 15,
+            "operationId": "b013-building-smithy-image-to-3d-r1-a1"
+          }
+        },
+        "building-stables": {
+          "image-to-3d": {
+            "taskId": "01a169dc-8fe4-72e7-b94b-4ae58ef884b6",
+            "status": "SUCCEEDED",
+            "consumedCredits": 15,
+            "operationId": "b013-building-stables-image-to-3d-r1-a1"
+          }
+        },
+        "building-barn": {
+          "image-to-3d": {
+            "taskId": "01a169dc-9781-744c-940c-c899e3d4dfde",
+            "status": "SUCCEEDED",
+            "consumedCredits": 15,
+            "operationId": "b013-building-barn-image-to-3d-r1-a1"
+          }
+        },
+        "building-farmhouse": {
+          "image-to-3d": {
+            "taskId": "01a169dc-9ea6-703c-a731-afcb6400714b",
+            "status": "SUCCEEDED",
+            "consumedCredits": 15,
+            "operationId": "b013-building-farmhouse-image-to-3d-r1-a1"
+          }
+        },
+        "building-cottage-01": {
+          "image-to-3d": {
+            "taskId": "01a169dc-a598-7673-bfde-37cc7378ab74",
+            "status": "SUCCEEDED",
+            "consumedCredits": 15,
+            "operationId": "b013-building-cottage-01-image-to-3d-r1-a1"
+          }
+        },
+        "building-cottage-02": {
+          "image-to-3d": {
+            "taskId": "01a169dc-adc1-7501-a2dc-2174287cea7f",
+            "status": "SUCCEEDED",
+            "consumedCredits": 15,
+            "operationId": "b013-building-cottage-02-image-to-3d-r1-a1"
+          }
+        },
+        "building-cottage-03": {
+          "image-to-3d": {
+            "taskId": "01a169dc-b4ca-74a1-9976-7a8cbf64cdd4",
+            "status": "SUCCEEDED",
+            "consumedCredits": 15,
+            "operationId": "b013-building-cottage-03-image-to-3d-r1-a1"
+          }
+        },
+        "prop-well": {
+          "image-to-3d": {
+            "taskId": "01a169dd-1b0f-7744-ac3f-3bb546d466b0",
+            "status": "SUCCEEDED",
+            "consumedCredits": 15,
+            "operationId": "b013-prop-well-image-to-3d-r1-a2"
+          }
+        },
+        "prop-shrine": {
+          "image-to-3d": {
+            "taskId": "01a169dd-234e-70fd-aeac-3eca72c75c80",
+            "status": "SUCCEEDED",
+            "consumedCredits": 15,
+            "operationId": "b013-prop-shrine-image-to-3d-r1-a1"
+          }
+        },
+        "prop-cart": {
+          "image-to-3d": {
+            "taskId": "01a169dd-2af0-75b9-b5ca-611454c8ef7f",
+            "status": "SUCCEEDED",
+            "consumedCredits": 15,
+            "operationId": "b013-prop-cart-image-to-3d-r1-a1"
+          }
+        },
+        "prop-market-stall": {
+          "image-to-3d": {
+            "taskId": "01a169dd-31cc-77bf-89a7-f2e3ff33737d",
+            "status": "SUCCEEDED",
+            "consumedCredits": 15,
+            "operationId": "b013-prop-market-stall-image-to-3d-r1-a1"
+          }
+        },
+        "prop-haystack": {
+          "image-to-3d": {
+            "taskId": "01a169dd-399f-722c-99a6-79c78cc209a3",
+            "status": "SUCCEEDED",
+            "consumedCredits": 15,
+            "operationId": "b013-prop-haystack-image-to-3d-r1-a1"
+          }
+        },
+        "prop-lantern-post": {
+          "image-to-3d": {
+            "taskId": "01a169dd-415d-7026-8b06-772a8696fccd",
+            "status": "SUCCEEDED",
+            "consumedCredits": 15,
+            "operationId": "b013-prop-lantern-post-image-to-3d-r1-a1"
+          }
+        }
+      },
+      "balanceBefore": 1588,
+      "attempts": {
+        "building-inn/image-to-3d": 1,
+        "building-temple/image-to-3d": 1,
+        "building-store/image-to-3d": 1,
+        "building-smithy/image-to-3d": 1,
+        "building-stables/image-to-3d": 1,
+        "building-barn/image-to-3d": 1,
+        "building-farmhouse/image-to-3d": 1,
+        "building-cottage-01/image-to-3d": 1,
+        "building-cottage-02/image-to-3d": 1,
+        "building-cottage-03/image-to-3d": 1,
+        "prop-well/image-to-3d": 2,
+        "prop-shrine/image-to-3d": 1,
+        "prop-cart/image-to-3d": 1,
+        "prop-market-stall/image-to-3d": 1,
+        "prop-haystack/image-to-3d": 1,
+        "prop-lantern-post/image-to-3d": 1
+      },
+      "balanceAfter": 1348,
+      "consumedCredits": 240,
+      "finished": "2026-10-23T17:45:40.526Z"
+    }
+  ],
+  "imagesReviewed": true
 }

@@ -15,6 +15,17 @@ export interface PropSpec {
   trunk?: number;
   /** Trees: the forest classes this model stands in for (kernel/terrain/trees.ts). */
   classes?: readonly ('pine' | 'broadleaf' | 'spruce' | 'oak' | 'palm')[];
+  /**
+   * The side Meshy delivered the front (the door, a cart's shafts) on, in the game's frame,
+   * when it is not +Z: image-to-3D keeps the picture's framing, and from a three-quarter
+   * picture the door can come out on a gable. Post-processing turns it round to +Z.
+   */
+  front?: '+x' | '-x' | '-z';
+}
+
+/** The turn about the upright, in glTF's frame (the game's X is glTF's -X), that brings `front` to +Z. */
+export function frontTurnDeg(front: PropSpec['front']): number {
+  return front === '+x' ? 90 : front === '-x' ? -90 : front === '-z' ? 180 : 0;
 }
 
 export const PROPS: Record<string, PropSpec> = {
@@ -39,18 +50,18 @@ export const PROPS: Record<string, PropSpec> = {
   'bush-01': { kind: 'bush', height: 1.4 },
   'bush-02': { kind: 'bush', height: 1.8 },
   'building-inn': { kind: 'building', height: 10.5 },
-  'building-temple': { kind: 'building', height: 13 },
+  'building-temple': { kind: 'building', height: 13, front: '+x' },
   'building-store': { kind: 'building', height: 8 },
   'building-smithy': { kind: 'building', height: 6 },
   'building-stables': { kind: 'building', height: 5.5 },
-  'building-barn': { kind: 'building', height: 9 },
+  'building-barn': { kind: 'building', height: 9, front: '+x' },
   'building-cottage-01': { kind: 'building', height: 6.5 },
-  'building-cottage-02': { kind: 'building', height: 5.5 },
-  'building-cottage-03': { kind: 'building', height: 8.5 },
+  'building-cottage-02': { kind: 'building', height: 5.5, front: '-z' },
+  'building-cottage-03': { kind: 'building', height: 8.5, front: '-x' },
   'building-farmhouse': { kind: 'building', height: 9.5 },
   'prop-well': { kind: 'prop', height: 3.2 },
   'prop-shrine': { kind: 'prop', height: 2.8 },
-  'prop-cart': { kind: 'prop', height: 1.8 },
+  'prop-cart': { kind: 'prop', height: 1.8, front: '-x' },
   'prop-market-stall': { kind: 'prop', height: 2.6 },
   'prop-haystack': { kind: 'prop', height: 2.4 },
   'prop-lantern-post': { kind: 'prop', height: 3.4 },

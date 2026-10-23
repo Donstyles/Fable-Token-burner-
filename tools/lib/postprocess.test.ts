@@ -4,7 +4,8 @@ import { join } from 'node:path';
 import { Document, NodeIO } from '@gltf-transform/core';
 import sharp from 'sharp';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { CHARACTER_TEXTURE_SIZE, inspectGlb, postProcessCharacter } from './postprocess';
+import { CHARACTER_TEXTURE_SIZE, inspectGlb, postProcessCharacter, turnModel } from './postprocess';
+import { frontTurnDeg } from '../../kernel/terrain/props';
 
 /** A textured triangle with two clips and an oversized texture, the shape Meshy returns. */
 async function fixture(path: string): Promise<void> {
@@ -94,4 +95,25 @@ describe('character post-process', () => {
       postProcessCharacter(join(dir, 'in.glb'), join(dir, 'out', 'bad.glb'), ['idle']),
     ).rejects.toThrow(/1 clip\(s\)|2 clip\(s\)/);
   });
+});
+
+describe('turnModel', () => {
+  // The game's frame is glTF's with X mirrored (Babylon's loader), so a door delivered on the
+  // game's +X stands at glTF's -X; each turn must bring that side round to +Z, the front.
+  const doorAt: Record<'+x' | '-x' | '-z', [number, number, number]> = {
+    '+x': [-1, 0, 0],
+    '-x': [1, 0, 0],
+    '-z': [0, 0, -1],
+  };
+  for (const front of ['+x', '-x', '-z'] as const) {
+    it(`turns a door on the game's ${front} to the front`, () => {
+      const doc = new Document();
+      const body = doc.createNode('body').setTranslation(doorAt[front]);
+      const scene = doc.createScene('scene').addChild(body);
+      turnModel(doc, frontTurnDeg(front));
+      expect(scene.listChildren().map((n) => n.getName())).toEqual(['turn']);
+      const m = body.getWorldMatrix();
+      expect([m[12], m[13], m[14]].map((v) => Math.round(v * 1e6) / 1e6 + 0)).toEqual([0, 0, 1]);
+    });
+  }
 });

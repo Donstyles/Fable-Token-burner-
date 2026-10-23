@@ -2454,6 +2454,18 @@ exists; the headland ruin has no ruin model yet.
 
 ## 13. Decision log
 
+- 2026-10-23 – Batches 013 and 014 run (owner: "Run the meshy batch", "Approve 14"): the ten
+  buildings, six village props, the woodpile and four rocks from the owner's own fuchsia
+  pictures, image-to-3D only, 315 credits (balance 1273). The fence picture is filed and not
+  modelled: the kernel builds fences. The woodpile at 600 triangles and the stone cluster at
+  500, so five stones and the split logs keep their shapes. Image-to-3D keeps the picture's
+  framing, and from a three-quarter picture the door can come out on a gable: `front` in
+  `kernel/terrain/props.ts` names the side Meshy delivered it on and post-processing turns
+  the model round (`turnModel`; the temple, the barn and cottage-03 by a quarter, cottage-02
+  by a half, the cart with its shafts to the front). The models keep the pictures'
+  proportions at the catalogue's heights: the inn is now 9.9 by 8 m (was 19.6 by 12.2), the
+  farmhouse a long house of 11 by 21.6 m; every plot still clears the others.
+
 - 2026-10-23 – A placed model takes the kernel's yaw as it is. The kernel turns a model's
   front (+Z) to (-sin, cos) and Babylon's rotation turns it to (sin, cos); kernel space is
   mirrored on X, so the two flips cancel, and the runtime's negating the yaw as well had

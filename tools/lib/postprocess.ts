@@ -126,8 +126,10 @@ export async function postProcessProp(
   output: string,
   textureSize = CHARACTER_TEXTURE_SIZE,
   format: 'png' | 'jpeg' = 'png',
+  turnDeg = 0,
 ): Promise<GlbReport> {
   const doc = await io().read(input);
+  if (turnDeg) turnModel(doc, turnDeg);
   await doc.transform(
     dedup(),
     prune(),
@@ -141,6 +143,23 @@ export async function postProcessProp(
   await mkdir(dirname(output), { recursive: true });
   await io().write(output, doc);
   return inspectGlb(output);
+}
+
+/**
+ * Turn a model about its upright by `deg`, counter-clockwise seen from above in glTF's frame:
+ * a parent node over each scene's roots, so any hierarchy turns as one and every reader that
+ * walks the nodes (the catalogue, Babylon's loader) sees the turned model.
+ */
+export function turnModel(doc: Document, deg: number): void {
+  const half = (deg * Math.PI) / 360;
+  for (const scene of doc.getRoot().listScenes()) {
+    const turn = doc.createNode('turn').setRotation([0, Math.sin(half), 0, Math.cos(half)]);
+    for (const child of scene.listChildren()) {
+      scene.removeChild(child);
+      turn.addChild(child);
+    }
+    scene.addChild(turn);
+  }
 }
 
 /**
