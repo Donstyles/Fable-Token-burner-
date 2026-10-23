@@ -2454,6 +2454,15 @@ exists; the headland ruin has no ruin model yet.
 
 ## 13. Decision log
 
+- 2026-10-23 – The automap pinches, drags and double-taps (owner: "Auto maps needs pinch and
+  zoom controls"): two fingers zoom about the point between them and pan as they move, one
+  finger pans (a finger that moves under 10 pixels is still a tap and names a mark), a double
+  tap steps in at the finger; gold + and − ovals and a find-the-party oval down the page's
+  right edge. The zoom runs from the whole level on the page to eight times that, cells,
+  marks and the arrow on whole pixels; the map opens on the party at about a pixel a metre
+  and keeps each level's view for the session, back on the party if it has walked off it
+  (`src/ui/map-view.ts`). Pointer Events only; nothing reaches the world under the page.
+
 - 2026-10-23 – Every screen in one frame (owner: "Formatting is off everywhere", 16.33): the
   title at the top left, the close oval at the bottom right with the message line, as MM6's
   Exit; every screen fits its box at 932 by 430 with the phone's insets, a longer list

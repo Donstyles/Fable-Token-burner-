@@ -1,0 +1,33 @@
+/* The automap's page and its tools (journal.ts): the drawing fills the page, and down its
+   right edge stand three small gold ovals (paint.ts `paintButton`, the kit's own), + and −
+   to zoom and the party's arrowhead to find it, as MM6's automap had its zoom buttons. The
+   rules are the map's own, under its screen's class. */
+.screen-map .map-page {
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+  display: flex;
+  gap: 6px;
+}
+.screen-map .map-tools {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  /* From the page's top, so each oval stands on a whole pixel whatever the page's height
+     (centred, an odd height put them on halves). */
+  justify-content: flex-start;
+  gap: 6px;
+  padding-top: 6px;
+}
+/* Forty-eight by thirty-six: a fingertip's oval (the kit's tap targets are 36 px or more). */
+.screen-map .ui-btn.map-tool {
+  width: 48px;
+  height: 36px;
+  min-height: 36px;
+  padding: 0;
+}
+.screen-map .map-tool-glyph {
+  display: block;
+  image-rendering: pixelated;
+  pointer-events: none;
+}
