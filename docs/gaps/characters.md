@@ -755,7 +755,7 @@ MM6 (inferred from the MM7 engine, [OE] `Actor.cpp`; no MM6 source):
   second: a blow for half its hit points or more gives the full shove, a scratch almost none.
 - A stun adds recovery to the monster and gives the full shove (6.2).
 
-Project: the hit clip interrupts (`src/world/monster.ts`); the shove is a fixed 0.45 m, 0.7 m on a
+Project: a struck monster flinches only between its own swings and its recovery runs on through the flinch (`src/world/monster.ts`, 2026-10-23, as the MM7 engine's stun passes over an attacking monster; MM6 unverified); the shove is a fixed 0.45 m, 0.7 m on a
 kill (DESIGN 14.4); stun exists only as a spell (`stun`, `monster.ts` line 112). **Present but
 deviates.** Fix: scale the shove by the damage share, 1 h. **N4.**
 

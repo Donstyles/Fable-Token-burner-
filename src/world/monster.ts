@@ -1,8 +1,16 @@
 /**
  * A monster in the world (DESIGN.md 14.3): a character from the Meshy pipeline, a crowd agent
  * on the navmesh and a small state machine. Idle until the party comes within aggro range,
- * then closes in (walking near, running from afar), swings when in reach, flinches when hit,
- * falls when its hit points run out and stays down.
+ * then closes in (walking near, running from afar), swings when in reach, flinches when hit
+ * between its own swings, falls when its hit points run out and stays down.
+ *
+ * Every timer here runs on the `dt` the update receives, the world's step, and never on the
+ * clips' clock. The animation stepper advances the clips on the real frame time
+ * (src/render/animation-step.ts) while src/dev/index.ts caps the world's step at 50 ms, so on
+ * a slow device a clip plays out before the game time it stands for. Swings that ended with
+ * their clips came quicker below 20 fps and lost their blows altogether once a frame took
+ * more than about 125 ms (play-through audit, 2026-10-23). The clips still play; they are for
+ * show.
  */
 import type { Vector3 } from '@babylonjs/core/Maths/math.vector';
 import { resolveMonsterAttack } from '../game/combat';
@@ -30,16 +38,34 @@ export interface MonsterEvent {
 }
 
 const RUN_BEYOND = 5;
+/** Swings and the hit reaction play at 1.5 times their authored pace (DESIGN.md 14.3). */
+const SWING_SPEED = 1.5;
+const HIT_SPEED = 1.5;
+/** The blow lands this far into the swing (DESIGN.md 14.3). */
+const BLOW_AT = 0.4;
+/** Seconds a monster that has just come into reach gathers itself before it swings. */
+const WIND_UP = 0.3;
 
 export class Monster {
   hp: number;
   state: MonsterState = 'idle';
   readonly events: MonsterEvent[] = [];
   private agent: NavAgent | null = null;
+  /** The attack clip of the last swing, 1 or 2; they alternate. */
   private swing = 0;
-  private swingHitAt = -1;
-  private swingDone = true;
-  private nextSwingIn = 0;
+  /** Seconds of game time into the swing in progress, or -1 between swings. */
+  private swingTime = -1;
+  /** The swing's length in game seconds: its clip's at the swing's pace. */
+  private swingLength = 0;
+  private blowLanded = false;
+  /**
+   * Seconds of game time before the monster may swing again: the pause after each swing,
+   * `attackEverySec`. It runs down whatever the monster is doing, flinching and reeling
+   * included, as a monster's recovery does in the MM7 engine (docs/gaps/monsters.md 2.5).
+   */
+  private recovery = 0;
+  /** Seconds of game time left of the hit reaction. */
+  private reeling = 0;
   private moving: 'walk' | 'run' | null = null;
   private push: { dir: Vector3; remaining: number } | null = null;
   private stunnedUntil = -1;
@@ -83,7 +109,14 @@ export class Monster {
     return Math.hypot(point.x - p.x, point.z - p.z);
   }
 
-  /** Damage from the party; a living monster flinches, a spent one falls. */
+  /**
+   * Damage from the party; a spent monster falls. A living one flinches only between its own
+   * swings: a blow does not break a swing, and a flinch already playing (or a stun) is not
+   * restarted, as the MM7 engine's stun passes over a monster that is attacking or already
+   * reeling (OE `Actor::AI_Stun`; MM6 unverified). Its recovery runs on through the flinch, so
+   * a party striking in turn cannot hold it off; when every blow restarted the swing, the
+   * play-through audit (2026-10-23) took no damage over five kills.
+   */
   takeDamage(amount: number): 'hit' | 'dead' {
     if (!this.alive) return 'dead';
     this.hp = Math.max(0, this.hp - amount);
@@ -95,11 +128,12 @@ export class Monster {
       this.events.push({ monster: this, kind: 'death', text: `${this.def.name} falls` });
       return 'dead';
     }
+    if (this.swingTime >= 0 || this.state === 'hit') return 'hit';
     this.state = 'hit';
-    this.swingDone = true;
     this.moving = null;
     this.agent?.stop();
-    this.character.play('hit', { loop: false, speed: 1.5 });
+    this.character.play('hit', { loop: false, speed: HIT_SPEED });
+    this.reeling = this.character.clipDuration / HIT_SPEED;
     return 'hit';
   }
 
@@ -113,7 +147,8 @@ export class Monster {
     if (!this.alive) return;
     this.stunnedUntil = Math.max(this.stunnedUntil, now + seconds);
     this.state = 'hit';
-    this.swingDone = true;
+    // Unlike a blow, a stun breaks a swing: its blow never lands.
+    this.swingTime = -1;
     this.moving = null;
     this.agent?.stop();
     this.character.play('hit', { loop: false, speed: 1 });
@@ -139,6 +174,10 @@ export class Monster {
   update(dt: number, party: PartyTarget, now: number): void {
     this.applyPush(dt);
     if (this.state === 'dead') return;
+    // The part of this step after the recovery ran out: a swing that starts now has already
+    // run that long, so the rate of blows does not depend on the length of the step.
+    const spare = Math.max(0, dt - this.recovery);
+    this.recovery = Math.max(0, this.recovery - dt);
     if (this.stunnedUntil > 0) {
       if (now < this.stunnedUntil) return;
       this.stunnedUntil = -1;
@@ -151,17 +190,21 @@ export class Monster {
         if (d <= this.def.aggroRange) this.state = 'chase';
         break;
       case 'hit':
-        if (this.character.finished) {
-          this.state = 'chase';
-          this.character.play('idle');
-        }
+        this.reeling -= dt;
+        if (this.reeling > 0) break;
+        // Over the flinch: in reach it stands to swing as soon as its recovery allows, with no
+        // fresh wind-up; out of reach it closes in again.
+        this.state = d <= this.def.attackRange ? 'attack' : 'chase';
+        this.character.play('idle');
         break;
       case 'chase':
         if (d <= this.def.attackRange) {
           this.agent?.stop();
           this.moving = null;
           this.state = 'attack';
-          this.nextSwingIn = 0.3;
+          // One still recovering from its last swing waits that out: in recovery a monster
+          // stands or closes in (docs/gaps/monsters.md 2.4).
+          this.recovery = Math.max(this.recovery, WIND_UP);
           this.character.play('idle');
           break;
         }
@@ -169,7 +212,7 @@ export class Monster {
         break;
       case 'attack':
         this.face(party.position);
-        this.attack(dt, party, now, d);
+        this.attack(dt, spare, party, d);
         break;
     }
     if (this.agent && this.state !== 'attack' && !this.push) {
@@ -205,47 +248,52 @@ export class Monster {
     this.character.yaw = Math.atan2(target.x - p.x, target.z - p.z);
   }
 
-  private attack(dt: number, party: PartyTarget, now: number, d: number): void {
-    if (this.swingDone) {
+  /** `spare`: the seconds of this step after the recovery ran out (see `update`). */
+  private attack(dt: number, spare: number, party: PartyTarget, d: number): void {
+    if (this.swingTime < 0) {
       if (d > this.def.attackRange * 1.4) {
         this.state = 'chase';
         return;
       }
-      this.nextSwingIn -= dt;
-      if (this.nextSwingIn > 0) return;
+      if (this.recovery > 0) return;
       this.swing = (this.swing % 2) + 1;
-      this.character.play(`attack_${this.swing}`, { loop: false, speed: 1.5 });
-      // The blow lands partway through the swing, at the clip's own pace.
-      this.swingHitAt = now + (this.character.clipDuration / 1.5) * 0.4;
-      this.swingDone = false;
-      return;
+      this.character.play(`attack_${this.swing}`, { loop: false, speed: SWING_SPEED });
+      this.swingLength = this.character.clipDuration / SWING_SPEED;
+      this.swingTime = spare;
+      this.blowLanded = false;
+    } else {
+      this.swingTime += dt;
     }
-    if (this.swingHitAt >= 0 && now >= this.swingHitAt) {
-      this.swingHitAt = -1;
-      const target = party.pickTarget(this.rng);
-      if (target) {
-        // MM6's monster blow: the chance by the monster's level against the armour class.
-        const r = resolveMonsterAttack(this.def, target.armorClass, this.rng);
-        if (r.hit) {
-          target.hit(r.damage, this.position);
-          this.events.push({
-            monster: this,
-            kind: 'hit',
-            text: `${this.def.name} hits ${target.name} for ${r.damage}`,
-          });
-        } else {
-          this.events.push({
-            monster: this,
-            kind: 'miss',
-            text: `${this.def.name} misses ${target.name}`,
-          });
-        }
-      }
+    if (!this.blowLanded && this.swingTime >= this.swingLength * BLOW_AT) {
+      this.blowLanded = true;
+      this.strike(party);
     }
-    if (this.character.finished) {
-      this.swingDone = true;
-      this.nextSwingIn = this.def.attackEverySec;
+    if (this.swingTime >= this.swingLength) {
+      // The pause runs from the swing's end; what this step ran past it already counts.
+      this.recovery = this.def.attackEverySec - (this.swingTime - this.swingLength);
+      this.swingTime = -1;
       this.character.play('idle');
+    }
+  }
+
+  private strike(party: PartyTarget): void {
+    const target = party.pickTarget(this.rng);
+    if (!target) return;
+    // MM6's monster blow: the chance by the monster's level against the armour class.
+    const r = resolveMonsterAttack(this.def, target.armorClass, this.rng);
+    if (r.hit) {
+      target.hit(r.damage, this.position);
+      this.events.push({
+        monster: this,
+        kind: 'hit',
+        text: `${this.def.name} hits ${target.name} for ${r.damage}`,
+      });
+    } else {
+      this.events.push({
+        monster: this,
+        kind: 'miss',
+        text: `${this.def.name} misses ${target.name}`,
+      });
     }
   }
 

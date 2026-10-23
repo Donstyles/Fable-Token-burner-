@@ -14,7 +14,12 @@ describe('dialogue view', () => {
     expect(v.name).toBe('Old Tobin');
     expect(v.role).toBe('Farmer');
     expect(v.greeting).toMatch(/farm gate/);
-    expect(v.topics.map((t) => t.label)).toEqual(['The sheep', 'The hills', 'The barn', 'Rumours']);
+    expect(v.topics.map((t) => t.label)).toEqual([
+      'The sheep',
+      'The hills',
+      'The old halls',
+      'Rumours',
+    ]);
   });
 
   it('greets with the news when the party comes back with the quest done', () => {

@@ -689,13 +689,19 @@ Detour navmesh (the binary the compile step writes, imported as is; the
 WASM module loads once), with a state machine: idle until the party is
 within aggro range; chase (running from afar, walking near); attack when in
 reach (swings alternate between the two attack clips at 1.5× speed, the blow
-lands 40 % into the swing, then a pause); hit (the hit clip interrupts
-whatever it did); dead (the death clip holds, the agent leaves the crowd,
-the body stays). Test data: the bandit, level 2, 25 hp, AC 8, attack 3,
-1d6+1. Regions carry `spawns` in their sidecar (kind, position, facing):
-the valley places eight bandits on the road above the village, along the
-gorge banks, at the cave and by the river; the desert four along its
-road. The showcase keeps the test bed's one bandit six metres ahead.
+lands 40 % into the swing, then a pause); hit (a flinch, but only between
+the monster's own swings: a blow never breaks a swing, and the pause after a
+swing runs on through the flinch, so a party striking in turn cannot hold a
+monster off; 2026-10-23, after a play-through took no damage over five
+kills); dead (the death clip holds, the agent leaves the crowd, the body
+stays). Every one of these timers runs on the world's step, never on the
+clips' clock, so a slow phone lands the same blows as a fast one. Test data:
+the bandit, level 2, 25 hp, AC 8, attack 3, 1d6+1. Regions carry `spawns`
+in their sidecar (kind, position, facing), and a planned level may export
+its own: Gullhaven's packs stand about its hills and roads; the halls keep
+the test bed's one bandit six metres ahead and six skeletons beyond it. A
+fallen monster is searched with a tap within 6 m for the gold on it
+(`gold` in `src/game/monsters.ts`), once.
 
 ### 14.4 Hit feedback (2026-10-16)
 
