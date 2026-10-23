@@ -715,56 +715,56 @@
         "tree-birch-01": {
           "image-to-3d": {
             "taskId": "01a168d6-6fdc-7083-b631-0c1f87bb6f6b",
-            "status": "PENDING",
-            "consumedCredits": null,
+            "status": "SUCCEEDED",
+            "consumedCredits": 15,
             "operationId": "b012-tree-birch-01-image-to-3d-r1-a2"
           }
         },
         "tree-maple-01": {
           "image-to-3d": {
             "taskId": "01a168d6-760b-7529-a2c2-8d05ad0adee6",
-            "status": "PENDING",
-            "consumedCredits": null,
+            "status": "SUCCEEDED",
+            "consumedCredits": 15,
             "operationId": "b012-tree-maple-01-image-to-3d-r1-a1"
           }
         },
         "tree-linden-01": {
           "image-to-3d": {
             "taskId": "01a168d6-7c9e-72b2-a15e-2bcd015c44d2",
-            "status": "PENDING",
-            "consumedCredits": null,
+            "status": "SUCCEEDED",
+            "consumedCredits": 15,
             "operationId": "b012-tree-linden-01-image-to-3d-r1-a1"
           }
         },
         "tree-willow-01": {
           "image-to-3d": {
             "taskId": "01a168d6-8299-73c7-a68a-e5b07fd6a277",
-            "status": "PENDING",
-            "consumedCredits": null,
+            "status": "SUCCEEDED",
+            "consumedCredits": 15,
             "operationId": "b012-tree-willow-01-image-to-3d-r1-a1"
           }
         },
         "tree-dead-01": {
           "image-to-3d": {
             "taskId": "01a168d6-89ad-74fc-8559-6e78cf892e5f",
-            "status": "PENDING",
-            "consumedCredits": null,
+            "status": "SUCCEEDED",
+            "consumedCredits": 15,
             "operationId": "b012-tree-dead-01-image-to-3d-r1-a1"
           }
         },
         "tree-dead-02": {
           "image-to-3d": {
             "taskId": "01a168d6-8ed8-7122-9264-d747e407e4ff",
-            "status": "PENDING",
-            "consumedCredits": null,
+            "status": "SUCCEEDED",
+            "consumedCredits": 15,
             "operationId": "b012-tree-dead-02-image-to-3d-r1-a1"
           }
         },
         "tree-palm-01": {
           "image-to-3d": {
             "taskId": "01a168d6-9395-728b-aaac-ea96d8f2c77a",
-            "status": "PENDING",
-            "consumedCredits": null,
+            "status": "SUCCEEDED",
+            "consumedCredits": 15,
             "operationId": "b012-tree-palm-01-image-to-3d-r1-a1"
           }
         },
