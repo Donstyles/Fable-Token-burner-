@@ -2454,6 +2454,14 @@ exists; the headland ruin has no ruin model yet.
 
 ## 13. Decision log
 
+- 2026-10-23 – Houses open only from their doors (owner: "I want Houses only enterable from
+  door"). Each building names its door in `kernel/terrain/props.ts` (`door`: across the front,
+  its width and height, read off a square-on front view, `tools/review` with `?front`). A tap
+  on a house is taken into that copy's own frame and opens the house only when it lands on the
+  door, within 40 cm round it and on the front, from no further than the door reach; anywhere
+  else the status line names the house. The place named after a house now stands 2.5 m before
+  its door rather than before the front's middle (`kernel/terrain/plots.ts`).
+
 - 2026-10-23 – Every generated model is checked before it goes into the game (owner: "This
   house has gaps you can see through the model is shit", "Always retry model generation till
   the model has no see through gaps", "You need automatic quality checker for generated

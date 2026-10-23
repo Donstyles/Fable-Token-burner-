@@ -21,6 +21,14 @@ export interface PropSpec {
    * picture the door can come out on a gable. Post-processing turns it round to +Z.
    */
   front?: '+x' | '-x' | '-z';
+  /**
+   * Buildings: the door on the front, in metres in the model's own frame (x across the front,
+   * positive to the right as you face it; y up from the foot), read off a square-on front view
+   * (`tools/review` with `?front`). A tap enters a house only on its door (owner, 2026-10-23:
+   * "I want Houses only enterable from door"), and the place named after the house stands
+   * before it.
+   */
+  door?: { x: number; width: number; height: number };
 }
 
 /** The turn about the upright, in glTF's frame (the game's X is glTF's -X), that brings `front` to +Z. */
@@ -49,16 +57,60 @@ export const PROPS: Record<string, PropSpec> = {
   'tree-palm-02': { kind: 'tree', height: 7, trunk: 0.22, classes: ['palm'] },
   'bush-01': { kind: 'bush', height: 1.4 },
   'bush-02': { kind: 'bush', height: 1.8 },
-  'building-inn': { kind: 'building', height: 10.5 },
-  'building-temple': { kind: 'building', height: 13, front: '+x' },
-  'building-store': { kind: 'building', height: 8 },
-  'building-smithy': { kind: 'building', height: 6 },
-  'building-stables': { kind: 'building', height: 5.5 },
-  'building-barn': { kind: 'building', height: 9, front: '+x' },
-  'building-cottage-01': { kind: 'building', height: 6.5 },
-  'building-cottage-02': { kind: 'building', height: 5.5, front: '-z' },
-  'building-cottage-03': { kind: 'building', height: 8.5, front: '-x' },
-  'building-farmhouse': { kind: 'building', height: 9.5 },
+  'building-inn': {
+    kind: 'building',
+    height: 10.5,
+    door: { x: -0.2, width: 1.3, height: 2.3 },
+  },
+  'building-temple': {
+    kind: 'building',
+    height: 13,
+    front: '+x',
+    door: { x: 0, width: 1.6, height: 3 },
+  },
+  'building-store': {
+    kind: 'building',
+    height: 8,
+    door: { x: 0.38, width: 0.9, height: 2.1 },
+  },
+  'building-smithy': {
+    kind: 'building',
+    height: 6,
+    door: { x: 0.33, width: 3.1, height: 2.3 },
+  },
+  'building-stables': {
+    kind: 'building',
+    height: 5.5,
+    door: { x: -0.2, width: 1.7, height: 2 },
+  },
+  'building-barn': {
+    kind: 'building',
+    height: 9,
+    front: '+x',
+    door: { x: -0.7, width: 3.8, height: 3.3 },
+  },
+  'building-cottage-01': {
+    kind: 'building',
+    height: 6.5,
+    door: { x: 0.15, width: 1.2, height: 2.1 },
+  },
+  'building-cottage-02': {
+    kind: 'building',
+    height: 5.5,
+    front: '-z',
+    door: { x: -1, width: 1.05, height: 2 },
+  },
+  'building-cottage-03': {
+    kind: 'building',
+    height: 8.5,
+    front: '-x',
+    door: { x: -0.14, width: 0.7, height: 1.8 },
+  },
+  'building-farmhouse': {
+    kind: 'building',
+    height: 9.5,
+    door: { x: -0.1, width: 1.3, height: 2.1 },
+  },
   'prop-well': { kind: 'prop', height: 3.2 },
   'prop-shrine': { kind: 'prop', height: 2.8 },
   'prop-cart': { kind: 'prop', height: 1.8, front: '-x' },

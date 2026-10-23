@@ -62,7 +62,7 @@ const characterUrl = (id: string): string => {
   return url;
 };
 import { Braziers, FogBySpace, Torch } from '../world/atmosphere';
-import { CATALOGUE, loadPropModels, propLabel } from '../world/props';
+import { CATALOGUE, doorPoint, loadPropModels, onDoor, propLabel } from '../world/props';
 import { createStatusLine } from '../ui/status';
 import { Npc } from '../world/npc';
 import { Bust } from '../world/bust';
@@ -105,6 +105,8 @@ export interface DevHandle {
   lastTap: string | null;
   /** CSS-pixel screen position of a mesh centre, for tests. */
   screenPointOf(name: string): { x: number; y: number } | null;
+  /** Where a building's door is on screen (its first copy's), or null. */
+  screenDoorOf(model: string): { x: number; y: number } | null;
   positionOf(): { x: number; y: number; z: number };
   yawDeg(): number;
   pitchDeg(): number;
@@ -641,6 +643,20 @@ export async function startDev(app: App): Promise<DevHandle> {
       const monster = handle.monsters.find((m) => m.name === name);
       return monster ? attackMonster(monster, 0) : null;
     },
+    screenDoorOf(model) {
+      const mesh = scene.meshes.find((m) => m.name.startsWith(`props:${model}`)) as
+        Mesh | undefined;
+      const local = doorPoint(model);
+      const matrices = mesh?.thinInstanceGetWorldMatrices();
+      if (!mesh || !local || !matrices?.length) return null;
+      const world = matrices[0]!.multiply(mesh.getWorldMatrix());
+      const at = Vector3.TransformCoordinates(new Vector3(local.x, local.y, local.z), world);
+      const ndc = Vector3.TransformCoordinates(at, scene.getTransformMatrix());
+      return {
+        x: ((ndc.x + 1) / 2) * canvas.clientWidth,
+        y: ((1 - ndc.y) / 2) * canvas.clientHeight,
+      };
+    },
     screenPointOf(name) {
       const mesh = scene.getMeshByName(name);
       if (!mesh) return null;
@@ -789,16 +805,33 @@ export async function startDev(app: App): Promise<DevHandle> {
       }
       return;
     }
-    // A tapped house opens its service when the party stands at its door; any other model
-    // is named; the ground and the walls stay quiet, as in MM6.
+    // A house opens its service only when its door is tapped from near enough (owner,
+    // 2026-10-23: "I want Houses only enterable from door"); a tap anywhere else on it, or on
+    // any other model, names it; the ground stays quiet, as in MM6. The tapped point is taken
+    // into the copy's own frame to be tested against the door.
     if (mesh.name.startsWith('props:')) {
       const model = mesh.name.split(':')[1] ?? '';
       const house = VILLAGE_HOUSES[model];
-      if (house && d <= DOOR_REACH) {
+      const point = pick?.pickedPoint;
+      const copy = pick?.thinInstanceIndex ?? -1;
+      const matrices = copy >= 0 ? mesh.thinInstanceGetWorldMatrices() : [];
+      const door =
+        house !== undefined &&
+        point !== null &&
+        point !== undefined &&
+        matrices[copy] !== undefined &&
+        onDoor(
+          model,
+          Vector3.TransformCoordinates(
+            point,
+            matrices[copy]!.multiply(mesh.getWorldMatrix()).invert(),
+          ),
+        );
+      if (house && door && d <= DOOR_REACH) {
         screens.openService(house.kind, house.house);
         return;
       }
-      status.say(house ? `${propLabel(model)} (come to the door)` : propLabel(model));
+      status.say(house && door ? `${propLabel(model)} (come closer)` : propLabel(model));
     }
   };
 

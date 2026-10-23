@@ -22,6 +22,8 @@ type Dev = {
   positionOf(): { x: number; y: number; z: number };
   pointOf(name: string): { x: number; y: number; z: number } | null;
   teleport(x: number, y: number, z: number, yaw: number): void;
+  screenDoorOf(model: string): { x: number; y: number } | null;
+  screens: { current(): string | null; close(): void };
   monsters: { state: string }[];
   portals: {
     portals: { name: string; target: { level: string; entry: string } }[];
@@ -243,5 +245,48 @@ test.describe('Gullhaven', () => {
     expect(d).toBeGreaterThan(10);
     expect(d).toBeLessThan(20);
     expect(Math.abs(back.p.y - back.cave.y)).toBeLessThan(2);
+  });
+  test('a house opens only from its door', async ({ page }) => {
+    // Three metres back from the place before the inn's door, facing the house.
+    await page.evaluate(() => {
+      const d = (window as unknown as W).ftb!.dev!;
+      const p = d.pointOf('inn')!;
+      const scene = (
+        window as unknown as {
+          ftb: {
+            scene: {
+              meshes: { name: string; thinInstanceGetWorldMatrices(): { m: number[] }[] }[];
+            };
+          };
+        }
+      ).ftb.scene;
+      const inn = scene.meshes.find((m) => m.name.startsWith('props:building-inn'))!;
+      const at = inn.thinInstanceGetWorldMatrices()[0]!.m;
+      const dx = at[12]! - p.x;
+      const dz = at[14]! - p.z;
+      const l = Math.hypot(dx, dz);
+      d.teleport(
+        p.x - (dx / l) * 3,
+        p.y + 0.3,
+        p.z - (dz / l) * 3,
+        (Math.atan2(dx, dz) * 180) / Math.PI,
+      );
+    });
+    await page.waitForTimeout(1500);
+    const door = await page.evaluate(() =>
+      (window as unknown as W).ftb!.dev!.screenDoorOf('building-inn'),
+    );
+    expect(door).not.toBeNull();
+    // The wall beside the door names the house and opens nothing.
+    await page.mouse.click(door!.x + 230, door!.y - 60);
+    await page.waitForTimeout(300);
+    expect(
+      await page.evaluate(() => (window as unknown as W).ftb!.dev!.screens.current()),
+    ).toBeNull();
+    // The door opens the inn.
+    await page.mouse.click(door!.x, door!.y);
+    await expect
+      .poll(() => page.evaluate(() => (window as unknown as W).ftb!.dev!.screens.current()))
+      .toBe('tavern');
   });
 });

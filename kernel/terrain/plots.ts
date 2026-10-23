@@ -104,10 +104,15 @@ export function layoutPlots(
     transformInto(collider, c, { x, y, z, yaw });
     if (!p.light) {
       pads.push({ x, z, halfA: w / 2 + 2.5, halfB: d / 2 + 2.5, yaw, rise, y });
-      const out = d / 2 + 2.5;
+      // The house's named place stands 2.5 m before its door (the front's middle when the
+      // model names no door), turned with the house as transformInto turns the model.
+      const across = PROPS[p.model]?.door?.x ?? cx;
+      const out = m.min[2] + d + 2.5;
+      const cos = Math.cos(yaw);
+      const sin = Math.sin(yaw);
       points.push({
         name: p.name ?? p.model.replace('building-', ''),
-        position: [x + (fx / fl) * out, y, z + (fz / fl) * out],
+        position: [x + across * cos - out * sin, y, z + across * sin + out * cos],
         kind: 'poi',
       });
     }

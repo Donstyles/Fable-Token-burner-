@@ -143,6 +143,35 @@ export async function loadPropModels(
   return models;
 }
 
+/** How far round its door a tap still counts as on it, metres. */
+export const DOOR_MARGIN = 0.4;
+
+/**
+ * Whether a point in a building's own frame (Babylon's: metres, the foot at y = 0) is on its
+ * door (kernel/terrain/props.ts `door`): across the front within the door's width, no higher
+ * than its top, and on the front of the house rather than through to the back wall. Babylon's
+ * loader mirrors x, so the model's right as you face it is -x here.
+ */
+export function onDoor(id: string, local: { x: number; y: number; z: number }): boolean {
+  const door = PROPS[id]?.door;
+  const measure = CATALOGUE[id];
+  if (!door || !measure) return false;
+  const front = measure.min[2] + measure.size[2];
+  return (
+    Math.abs(-local.x - door.x) <= door.width / 2 + DOOR_MARGIN &&
+    local.y <= door.height + DOOR_MARGIN &&
+    local.z >= front - 2.5
+  );
+}
+
+/** A building's door in its own frame (Babylon's), a metre up, or null if it names none. */
+export function doorPoint(id: string): { x: number; y: number; z: number } | null {
+  const door = PROPS[id]?.door;
+  const measure = CATALOGUE[id];
+  if (!door || !measure) return null;
+  return { x: -door.x, y: 1, z: measure.min[2] + measure.size[2] };
+}
+
 /** Deterministic pick among models for a placement, so a rebuild keeps the same forest. */
 export function pickModel(ids: readonly string[], x: number, z: number): string {
   const h = Math.abs(Math.sin(x * 12.9898 + z * 78.233) * 43758.5453);
