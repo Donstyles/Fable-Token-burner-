@@ -110,9 +110,9 @@ describe('ground shade', () => {
     // In the scene it stands at x = -20; nothing at the unmirrored x = +20.
     expect(shadeAt(data, GRID, -20, 10).sky).toBeGreaterThan(0.9);
     expect(shadeAt(data, GRID, 20, 10).sky).toBe(0);
-    // Turned a quarter it runs north and south, so 6 m east and west of its middle is open.
-    expect(shadeAt(data, GRID, -20 + 6, 10).sky).toBeLessThan(0.2);
-    expect(shadeAt(data, GRID, -20 - 6, 10).sky).toBeLessThan(0.2);
+    // Turned a quarter it runs north and south, so 8 m east and west of its middle is open.
+    expect(shadeAt(data, GRID, -20 + 8, 10).sky).toBeLessThan(0.2);
+    expect(shadeAt(data, GRID, -20 - 8, 10).sky).toBeLessThan(0.2);
     expect(shadeAt(data, GRID, -20, 10 + 6).sky).toBeGreaterThan(0.5);
   });
 
@@ -127,7 +127,7 @@ describe('ground shade', () => {
       NORTH,
     );
     const at = (x: number, z: number) => shadeAt(data, GRID, x, z);
-    // The skirt: dark at every wall's foot, fading over a couple of metres, gone by six.
+    // The skirt: dark at every wall's foot, fading over three metres or so, gone by nine.
     for (const [x, z] of [
       [0, -3.2],
       [0, 3.2],
@@ -138,7 +138,7 @@ describe('ground shade', () => {
       expect(at(x * 1.5, z * 1.5).sky).toBeLessThan(at(x, z).sky);
     }
     expect(at(0, -4.5).sky).toBeGreaterThan(0.3);
-    expect(at(0, -10).sky).toBeLessThan(0.02);
+    expect(at(0, -12).sky).toBeLessThan(0.02);
     // The roof's shadow reaches about 6 x 0.6 x 0.8 = 2.9 m north of the north wall; none south.
     expect(at(0, 3 + 1.5).sun).toBeGreaterThan(0.8);
     expect(at(0, 3 + 4.5).sun).toBeLessThan(0.1);

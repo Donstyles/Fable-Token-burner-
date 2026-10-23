@@ -288,19 +288,21 @@ void main(void) {
   // held still).
   vec3 light = vLight + pl * (1.0 - paint);
 #ifdef GROUNDSHADE
-  // Under a crown or in a house's cast the ground loses up to six tenths of the key light;
-  // at a wall's foot, where little of the sky reaches, over half the ambient and four tenths of
-  // the key, so a wall in the sun is seated too. Never the lanterns or the torch. The sun's part
-  // fades as the sun sinks (its real shadows then reach far off to the east, not under the
-  // tree); the skirt holds at every hour. Taken as a share of the light here and laid on after
-  // the knee below, which would otherwise flatten the first third of it on sunlit ground; never
-  // under 0.55 of it (DESIGN.md 15.7), the floor a north wall's foot reaches in cast and skirt.
+  // Under a crown or in a house's cast the ground loses up to three quarters of the key light;
+  // at a wall's foot, where little of the sky reaches, two thirds of the ambient and over half
+  // the key, so a wall in the sun is seated too (owner, 2026-10-23, of the first pass: shadows
+  // under trees and buildings, and round a house in the sun it hardly showed). Never the
+  // lanterns or the torch. The sun's part fades as the sun sinks (its real shadows then reach
+  // far off to the east, not under the tree); the skirt holds at every hour. Taken as a share
+  // of the light here and laid on after the knee below, which would otherwise flatten the first
+  // third of it on sunlit ground; never under 0.45 of it, the floor a north wall's foot reaches
+  // in cast and skirt.
   vec4 shade = texture2D(shadeSampler, (vWorldPos.xz - shadeRect.xy) * shadeRect.zw);
   float sunUp = smoothstep(0.05, 0.45, -lightDirection.y);
   vec3 key = max(vLight - ambientColor, vec3(0.0));
-  float keyShade = max(0.6 * shade.r * sunUp, 0.4 * shade.a);
-  vec3 shaded = light - key * keyShade - ambientColor * (0.55 * shade.a);
-  vec3 groundShade = max(shaded / max(light, vec3(0.001)), vec3(0.55));
+  float keyShade = max(0.75 * shade.r * sunUp, 0.55 * shade.a);
+  vec3 shaded = light - key * keyShade - ambientColor * (0.65 * shade.a);
+  vec3 groundShade = max(shaded / max(light, vec3(0.001)), vec3(0.45));
 #endif
   if (cloudShadow > 0.0 && paint < 0.5) {
     // Cloud shadows: patches of shade drift over slopes, trees and houses alike.

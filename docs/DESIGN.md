@@ -2529,14 +2529,16 @@ loads, not cast by a real-time shadow map:
 - **Round a house, a prop or a rock**: its triangles laid on the ground along the day's average
   sun (north, 0.6 m a metre from `daylight.ts`'s path; four fifths of it, so a 10 m inn casts
   about 5 m) for the sun's shadow, and straight down for the skirt: the roof's outline with its
-  eaves, spread over two metres and lifted: dark at the walls, two thirds of that a metre past
-  the eaves, a third at two. Overlapping shade keeps the darker, never the sum, so a wood's
+  eaves, spread over three metres and lifted so it holds dark a good way past the eaves and is
+  gone by about nine (a first pass of two metres hid under the eaves and did not read from the
+  street). Overlapping shade keeps the darker, never the sum, so a wood's
   floor is no darker than its densest crown and keeps its colour.
-- **The terrain shader** takes up to six tenths of the key light in the sun's shade and, in the
-  skirt, over half the ambient and four tenths of the key; never the lanterns or the torch. It
+- **The terrain shader** takes up to three quarters of the key light in the sun's shade and, in
+  the skirt, two thirds of the ambient and over half the key; never the lanterns or the torch. It
   is reckoned as a share of the light and laid on after the light's knee, which would otherwise
-  flatten the first third of it on sunlit ground; the ground keeps at least 0.55 of its light
-  (15.7's floor), which a dense crown's heart and a north wall's foot reach. The sun's part
+  flatten the first third of it on sunlit ground; the ground keeps at least 0.45 of its light,
+  which a dense crown's heart and a north wall's foot reach (the first pass held 15.7's 0.55 and
+  its shade hardly showed round a house in the sun). The sun's part
   fades as the sun sinks below about 25 degrees, since its real shadows then reach far off to
   the east; the skirt holds at every hour, so at night only a faint pool under a crown and the
   walls' foot remain. Every terrain chunk at every detail level shares the one material, so

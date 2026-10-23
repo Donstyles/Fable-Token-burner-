@@ -63,15 +63,16 @@ const LEAF_DEPTH = 0.7;
 const CROWN_SKY = 0.6;
 /**
  * Softness, as a Gaussian's spread in metres: a crown's sun pool and its broader sky pool; a
- * house's cast; and its skirt, spread from the eaves' line over a couple of metres and lifted
- * so it stays full out to that line, darkest at the walls under the eaves: two thirds of the
- * full skirt a metre out, a third at two, a twentieth at four.
+ * house's cast; and its skirt, spread from the eaves' line over three metres and lifted so it
+ * stays full a good way past that line, darkest at the walls: a skirt only a metre or two wide
+ * hid under the eaves and did not read from the street (owner, 2026-10-23: "I want shadows
+ * under trees and buildings").
  */
 const CROWN_SOFT = 0.6;
 const CROWN_SKY_SOFT = 1.1;
 const CAST_SOFT = 0.75;
-const SKIRT_SOFT = 2;
-const SKIRT_LIFT = 2.4;
+const SKIRT_SOFT = 3.2;
+const SKIRT_LIFT = 3.2;
 /** Metres a texel of a crown's own mask. */
 const MASK_RES = 0.25;
 
