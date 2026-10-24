@@ -600,7 +600,9 @@ camps and ruin a minute apart, woods between; and the regions the right
 way round (DESIGN 17.1), east on the screen's right and the sun rising there.
 Then trees that stop the party at their drawn trunks (DESIGN 17.7), and the
 test dungeon scrapped (owner): the showcase level and its portal are gone,
-the cave's tunnel ends in rock, and its tests run in Gullhaven.
+the cave's tunnel ends in rock, and its tests run in Gullhaven. Planned
+next, awaiting the owner's sign-off: interiors, a room behind every door
+(Phase 6a, DESIGN 17.8).
 
 **Status, night of 2026-10-16 (owner asleep, best judgement):** steps 1 to 6
 are in: the valley (village, road, pass, gorge with eight cascades, cave
@@ -615,6 +617,45 @@ a desert town, Meshy spends (none of the 900 credits used: generated
 houses, trees and the cave looked acceptable, and a second creature
 unattended risked another broken rig).
 
+## Phase 6a – Interiors (added 2026-10-24)
+
+**Goal:** a room behind every door, as MM6's houses: the keeper at work in their own room,
+drawn live in the view's box (DESIGN 17.8).
+
+**Steps** (each Meshy step a numbered batch, run only on the owner's approval of that number)
+
+1. The owner signs off DESIGN 17.8's four decisions: drawn live, the keeper as a model, one
+   room per kind, the way in and out.
+2. The runtime first, with a kernel-built shell and no Meshy model:
+   - the second scene, with its own camera, grade and filter, framed in the view's box;
+   - the fade, the threshold move and the way back to the door;
+   - the world paused and its clock stopped;
+   - the room loaded within 25 m of its door, and the last two kept.
+
+   A dev room, `dev-interior` (dev only, never in production, deleted when the smithy lands),
+   measures the phone's frame time. End-to-end tests: a door opens its room, the room is drawn,
+   the board shows, and leaving puts the party at the door.
+
+3. The smithy, end to end:
+   1. Its establishing picture (3 credits) and prop list, approved.
+   2. The prop concepts (about 30 credits), looked at and approved.
+   3. Image-to-3D (about 150 credits), with review sheets, the gap screen and retries.
+   4. The keeper (about 41 credits), and the hammer clip checked on a review sheet.
+   5. The room script compiled, then judged on the phone.
+4. The inn, store, temple and training hall the same way, shared props first.
+5. Life: greet, talk and agree; the look-at; patrons; night dressing; the room's sounds.
+6. Homes: a cottage kitchen and a fisher's hut, shared, each with its resident.
+7. Later: the goods on show for Buy, once items have pictures.
+
+**Credits:** about 1,000 for Gullhaven's five rooms before retries, 1,400 with them; the homes
+about 200 more (DESIGN 17.8).
+
+**Acceptance:** on the owner's phone, every house with a service opens its room within half a
+second after the first visit (a second on the first), the keeper greets the party, the frame
+rate holds, and leaving puts the party back at the door.
+
+---
+
 ## Phase 6 – Slice content
 
 **Goal:** the first town, one dungeon and one quest, fully assetised.
@@ -628,7 +669,7 @@ unattended risked another broken rig).
    buildings, textures, portraits, items, SFX, music. Split into numbered
    batches.
 3. Town level script: terrain, walls, streets, building shells from the
-   kernel, interiors as separate scenes, placed props, NPC spawns.
+   kernel, interiors as separate scenes (Phase 6a), placed props, NPC spawns.
 4. Dungeon level script: authored to the plan, validated by the compile
    step.
 5. Prompt cards and Meshy batches, run on approval; assets validated and

@@ -2759,6 +2759,107 @@ radius, centred a metre out, so the party walked deep into it before a thin post
 - **Checked** by an end-to-end test that casts rays at a big oak from ten metres round: the
   party's collider and the drawn trunk meet within a metre on every side the ray hits.
 
+### 17.8 A room behind every door (plan, owner, 2026-10-24; awaiting sign-off)
+
+"Make a plan how we implement the cool animated interior views of shops or houses." MM6 cut
+from the street to a looping film of the room (references mm6-smith-menu, mm6-tavern-talk): a
+fixed camera on the keeper at work behind the counter, the forge burning, and the keeper's
+face with the choices on the board at the right. Here the view's box keeps the street until
+this lands (16.34). The plan is PLAN.md Phase 6a.
+
+**Four decisions for the owner:**
+
+1. **Drawn live, not filmed.** Each room is a small Babylon scene drawn in the view's box, not
+   a pre-rendered loop. The keeper can look up at the party, greet it and answer a choice; the
+   hour shows through the window; it uses the same models, light and filter as the street;
+   there are no video files to ship (megabytes each, and WebM plays poorly on iOS). A room
+   costs less to draw than the street (at most 40k triangles and three lights), and the street
+   stops drawing while the party is inside. Babylon provides every part:
+   - a second `Scene` on the one engine, with its own camera, grade and filter passes;
+   - `AssetContainer` to load a room and keep it;
+   - `AnimationGroup` clips, whose `AnimationEvent`s time the hammer's ring;
+   - `ParticleSystem` for fire, smoke, sparks and dust;
+   - the audio engine for the room's sound.
+2. **The keeper is a model** standing in the room, as the townsfolk are. This overturns
+   "service NPCs behind a counter are portraits, no model at all" (`kernel/characters/clips.ts`).
+   The face on the board is the talk panel's living bust (`src/world/bust.ts`), not a painting.
+3. **One room per kind of house**, re-dressed per town, as MM6 mostly reused its films.
+   Gullhaven's inn, temple, store, smithy and training hall come first. Then two homes, a
+   cottage kitchen and a fisher's hut, shared by every house without a service, each with its
+   resident standing in it.
+4. **Going in and out.** A tap on the door fades the street in a quarter of a second. The room
+   opens on its threshold and the camera eases 1.5 m in to the framing in a second and a
+   quarter, while the keeper looks up, sets down the work and greets (a wave, a nod, the
+   priest's bow); the board slides in over the panel. Leaving plays the same backwards and puts
+   the party in the street at the door. Once in, the camera holds still, as MM6's did, and
+   everything else moves.
+
+**How a room is made** (the usual rules hold):
+
+- **The shell comes from the kernel**: walls, beams, floor, counter, hearth surround and window
+  openings, from the level planner, in the CC0 role textures (timber, plaster, flagstone,
+  brick), with light baked per vertex (warm bounce off the hearth, dark corners). It is final
+  art like the kernel's doors and walls, and costs no credits.
+- **The look is approved first**: before any 3D credit, one text-to-image establishing picture
+  of each room (3 credits) is its art target, approved by the owner with the room's prop list.
+  It is reference only and never shipped.
+- **The furnishing comes from Meshy, image first**: each prop is a nano-banana-2-lite concept on
+  fuchsia, looked at, then image-to-3D, then the review sheet and the gap screen, retried until
+  it has no see-through gap. Props shared between rooms (barrels, crates, stools, shelves,
+  candles, tankards) are made once.
+- **Keepers** are Meshy T2/T2.5 at about 4,000 triangles, image first, rigged. Their clips come
+  from Meshy's library (`pipeline/animation-catalog.md`):
+  - idle, and talk (313);
+  - a greeting: 28 Big Wave Hello, 290 Wave One Hand, or 41 Formal Bow for the priest;
+  - 25 Agree Gesture when a deal is struck;
+  - a work loop per trade: the storekeeper 284 Collect Object or 318 Scheming Hand Rub, the
+    innkeeper 34 Checkout Gesture behind the bar;
+  - patrons at the inn: 342 Stand and Drink, 33 Chair Sit Idle, 268 Sit and Doze Off.
+
+  The catalogue has no smith at an anvil. The candidate is 128 Heavy Hammer Swing, trimmed to
+  its downstroke and looped, checked on a review sheet before the smithy is built round it. If
+  it reads as a fight, the smith works the bellows instead and the hammering is heard from the
+  back.
+
+- **A room script per kind** (`levels/interiors/<kind>.ts`) holds:
+  - the shell, and each prop's place;
+  - the keeper's mark and facing;
+  - the camera's framing and threshold;
+  - the lights: hearth, candles, window;
+  - the effect points: fire, smoke up the hood, sparks, steam, dust in the window's beam;
+  - the sound points.
+
+  `level:build` compiles it like a level, to `public/levels/interiors/<kind>.glb` and a sidecar.
+
+- **Review**: `asset review` draws each room's sheet from the game's camera at three hours
+  (morning, dusk, night), beside its establishing picture.
+
+**The room alive** (`src/world/interior.ts`):
+
+- **The keeper** works their loop, turns their head to the party (a look-at on the head bone)
+  when spoken to, talks while a choice is answered, and nods agreement on a sale.
+- **Things move**: fire and candles (sprites), smoke, sparks on the hammer's strike, steam from
+  the quench, dust in the window's light; a lantern or hanging pot sways slowly.
+- **The hour shows**: the window's pane and beam take the sky's colour. After dark the candles
+  burn and the room changes to its night dressing (the inn fills, two patrons at the tables).
+- **Sound**: the hearth, the hammer on its clip's event frame, the inn's murmur, the temple's
+  bell at the hour, all through Babylon's audio from CC0 recordings fetched like the textures.
+- **The phone's budget**: at most 40k triangles, 25 draw calls, three point lights and
+  1024-pixel textures, and a GLB under 1.5 MB per room. A room loads while the party is within
+  25 m of its door, and the last two rooms are kept loaded, so the door opens without a wait.
+  It is measured on the phone before the second room is built.
+
+**Cost**: a prop is 18 credits (3 for its picture, 15 for image-to-3D), and a keeper about 41
+(3, 15, rigging 5, six clips at 3). Retries have run at about half as much again. The smithy is
+about 200 credits, 300 with retries. All five of Gullhaven's rooms are about 1,000 credits
+before retries and 1,400 with them (about 35 props once shared ones are counted once, five
+keepers, three patrons); the two homes add about 200. Every step is its own numbered batch,
+run only once the owner approves it.
+
+**Not yet**: the goods on show. MM6's Buy shows the stock on a shelf or a rack; here the stock
+stays a list until items have pictures. The bank, the guilds, the town hall and the stables
+wait for their houses.
+
 ## 13. Decision log
 
 - 2026-10-24 – The test dungeon scrapped (owner: "Scrap the test room dungeon completely").
