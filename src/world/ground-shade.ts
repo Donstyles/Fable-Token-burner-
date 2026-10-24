@@ -188,14 +188,29 @@ function fillTriangle(
   const j0 = Math.max(0, Math.ceil(Math.min(ay, by, cy) - 0.5));
   const j1 = Math.min(h - 1, Math.floor(Math.max(ay, by, cy) - 0.5));
   const s = area > 0 ? 1 : -1;
+  // Row by row, the span where all three edge functions are at least zero: each is linear in
+  // the texel's x, so its bound is one division. (Testing every texel of the box cost most of
+  // the paint: a tall wall's cast is a long thin triangle across a wide box.)
+  const edges = [
+    [ax, ay, bx, by],
+    [bx, by, cx, cy],
+    [cx, cy, ax, ay],
+  ] as const;
   for (let j = j0; j <= j1; j++) {
     const py = j + 0.5;
-    for (let i = i0; i <= i1; i++) {
-      const px = i + 0.5;
-      const e0 = ((bx - ax) * (py - ay) - (by - ay) * (px - ax)) * s;
-      const e1 = ((cx - bx) * (py - by) - (cy - by) * (px - bx)) * s;
-      const e2 = ((ax - cx) * (py - cy) - (ay - cy) * (px - cx)) * s;
-      if (e0 < 0 || e1 < 0 || e2 < 0) continue;
+    let lo = -Infinity;
+    let hi = Infinity;
+    for (const [x0, y0, x1, y1] of edges) {
+      // e = ((x1 - x0)(py - y0) - (y1 - y0)(px - x0)) s = A px + B
+      const A = -(y1 - y0) * s;
+      const B = ((x1 - x0) * (py - y0) + (y1 - y0) * x0) * s;
+      if (A > 0) lo = Math.max(lo, -B / A);
+      else if (A < 0) hi = Math.min(hi, -B / A);
+      else if (B < 0) hi = -Infinity;
+    }
+    const a = Math.max(i0, Math.ceil(lo - 0.5));
+    const b = Math.min(i1, Math.floor(hi - 0.5));
+    for (let i = a; i <= b; i++) {
       const k = j * w + i;
       tile[k] = add ? tile[k]! + value : Math.max(tile[k]!, value);
     }
@@ -207,12 +222,15 @@ function boxBlur(tile: Float32Array, w: number, h: number, r: number, passes = 3
   if (r <= 0) return;
   const line = new Float32Array(Math.max(w, h));
   const norm = 1 / (2 * r + 1);
-  const run = (n: number, at: (i: number) => number, set: (i: number, v: number) => void) => {
-    for (let i = 0; i < n; i++) line[i] = at(i);
+  // One row or column, `n` texels from `start` every `stride`: copied out, then the running
+  // sum of the window written back (a closure a texel had made this most of the paint).
+  const run = (start: number, stride: number, n: number): void => {
+    for (let i = 0, k = start; i < n; i++, k += stride) line[i] = tile[k]!;
     let sum = 0;
-    for (let i = 0; i <= Math.min(r, n - 1); i++) sum += line[i]!;
-    for (let i = 0; i < n; i++) {
-      set(i, sum * norm);
+    const first = Math.min(r, n - 1);
+    for (let i = 0; i <= first; i++) sum += line[i]!;
+    for (let i = 0, k = start; i < n; i++, k += stride) {
+      tile[k] = sum * norm;
       const add = i + r + 1;
       const drop = i - r;
       if (add < n) sum += line[add]!;
@@ -220,21 +238,8 @@ function boxBlur(tile: Float32Array, w: number, h: number, r: number, passes = 3
     }
   };
   for (let p = 0; p < passes; p++) {
-    for (let j = 0; j < h; j++) {
-      const row = j * w;
-      run(
-        w,
-        (i) => tile[row + i]!,
-        (i, v) => (tile[row + i] = v),
-      );
-    }
-    for (let i = 0; i < w; i++) {
-      run(
-        h,
-        (j) => tile[j * w + i]!,
-        (j, v) => (tile[j * w + i] = v),
-      );
-    }
+    for (let j = 0; j < h; j++) run(j * w, 1, w);
+    for (let i = 0; i < w; i++) run(i, w, h);
   }
 }
 
@@ -348,13 +353,9 @@ export function paintGroundShade(
   const n = grid.texels;
   const cell = grid.size / n;
   const out = new Uint8Array(n * n * CHANNELS);
-  const put = (i: number, j: number, channel: number, v: number): void => {
-    if (i < 0 || j < 0 || i >= n || j >= n || v <= 0) return;
-    const k = (j * n + i) * CHANNELS + channel;
-    const b = Math.min(255, Math.round(v * 255));
-    if (b > out[k]!) out[k] = b;
-  };
+
   const masks = new Map<string, CanopyMask>();
+  const solids = new Map<string, SolidTile | null>();
   for (const inst of instances) {
     const caster = casters.get(inst.model);
     if (!caster) continue;
@@ -364,13 +365,11 @@ export function paintGroundShade(
       if (!mask) masks.set(inst.model, (mask = canopyMask(caster.mesh)));
       stampCanopy(mask, m, grid, cell, steps, out);
     } else {
-      castSolid(caster.mesh, m, grid, cell, steps, put);
+      castSolid(caster.mesh, m, grid, cell, steps, out, solids, inst.model);
     }
   }
   return out;
 }
-
-type Put = (i: number, j: number, channel: number, v: number) => void;
 
 /** A crown's masks laid on the ground under one instance, turned and scaled with it. */
 function stampCanopy(
@@ -391,39 +390,11 @@ function stampCanopy(
   if (Math.abs(det) < 1e-12) return;
   const heightScale = Math.hypot(m[4]!, m[5]!, m[6]!);
   const lift = mask.crown * heightScale * CROWN_CAST;
-  // Each sun's pool is the sky's moved along the ground by its cast.
-  const offs = steps.map((st) => ({ x: st.x * lift, z: st.z * lift }));
   const tx = m[12]!;
   const tz = m[14]!;
-  // The ground the two pools cover: the mask's corners placed, and placed again with the cast.
-  let minX = Infinity;
-  let maxX = -Infinity;
-  let minZ = Infinity;
-  let maxZ = -Infinity;
-  const x1 = mask.x0 + mask.w * MASK_RES;
-  const z1 = mask.z0 + mask.h * MASK_RES;
-  for (const [lx, lz] of [
-    [mask.x0, mask.z0],
-    [x1, mask.z0],
-    [mask.x0, z1],
-    [x1, z1],
-  ] as const) {
-    const wx = lx * a + lz * b + tx;
-    const wz = lx * c + lz * d + tz;
-    for (const o of [{ x: 0, z: 0 }, ...offs]) {
-      minX = Math.min(minX, wx + o.x);
-      maxX = Math.max(maxX, wx + o.x);
-      minZ = Math.min(minZ, wz + o.z);
-      maxZ = Math.max(maxZ, wz + o.z);
-    }
-  }
   const n = grid.texels;
-  const i0 = Math.max(0, Math.floor((minX - grid.minX) / cell));
-  const i1 = Math.min(n - 1, Math.ceil((maxX - grid.minX) / cell));
-  const j0 = Math.max(0, Math.floor((minZ - grid.minZ) / cell));
-  const j1 = Math.min(n - 1, Math.ceil((maxZ - grid.minZ) / cell));
   // Mask texel coordinates are linear in the grid's: (u, v) at texel (i0, j), stepping
-  // (du, dv) along a row, mask texel (i, j) covering [i, i + 1) by [j, j + 1); the sun's read
+  // (du, dv) along a row, mask texel (i, j) covering [i, i + 1) by [j, j + 1); a sun's read
   // sits (su, sv) behind the sky's. The nearest mask texel: the masks are blurred smooth and
   // finer than the grid, and the GPU filters the painted texture, so a bilinear read here buys
   // nothing visible for three times the time.
@@ -434,35 +405,72 @@ function stampCanopy(
   const v0 = -mask.z0 / MASK_RES;
   const du = toU(cell, 0);
   const dv = toV(cell, 0);
-  const shifts = offs.map((o) => ({ u: toU(o.x, o.z), v: toV(o.x, o.z) }));
+  const x1 = mask.x0 + mask.w * MASK_RES;
+  const z1 = mask.z0 + mask.h * MASK_RES;
   const { w, h, sun, sky } = mask;
-  for (let j = j0; j <= j1; j++) {
-    const dz = grid.minZ + (j + 0.5) * cell - tz;
-    const dx = grid.minX + (i0 + 0.5) * cell - tx;
-    let u = u0 + toU(dx, dz);
-    let v = v0 + toV(dx, dz);
-    let o = (j * n + i0) * CHANNELS;
-    for (let i = i0; i <= i1; i++, u += du, v += dv, o += CHANNELS) {
-      if (u >= 0 && v >= 0 && u < w && v < h) {
-        const s = sky[(v | 0) * w + (u | 0)]!;
-        if (s > out[o + SKY]!) out[o + SKY] = s;
-      }
-      for (let c = 0; c < shifts.length; c++) {
-        const us = u - shifts[c]!.u;
-        const vs = v - shifts[c]!.v;
-        if (us >= 0 && vs >= 0 && us < w && vs < h) {
-          const s = sun[(vs | 0) * w + (us | 0)]!;
-          if (s > out[o + c]!) out[o + c] = s;
+  // Each pool over its own ground: the sky's under the crown, each sun's moved along its cast.
+  // (One box round all four had the morning's and the evening's pools at its opposite ends,
+  // and every texel of it read four times.)
+  const pool = (ox: number, oz: number, values: Uint8Array, channel: number): void => {
+    let minX = Infinity;
+    let maxX = -Infinity;
+    let minZ = Infinity;
+    let maxZ = -Infinity;
+    for (const [lx, lz] of [
+      [mask.x0, mask.z0],
+      [x1, mask.z0],
+      [mask.x0, z1],
+      [x1, z1],
+    ] as const) {
+      const wx = lx * a + lz * b + tx + ox;
+      const wz = lx * c + lz * d + tz + oz;
+      minX = Math.min(minX, wx);
+      maxX = Math.max(maxX, wx);
+      minZ = Math.min(minZ, wz);
+      maxZ = Math.max(maxZ, wz);
+    }
+    const i0 = Math.max(0, Math.floor((minX - grid.minX) / cell));
+    const i1 = Math.min(n - 1, Math.ceil((maxX - grid.minX) / cell));
+    const j0 = Math.max(0, Math.floor((minZ - grid.minZ) / cell));
+    const j1 = Math.min(n - 1, Math.ceil((maxZ - grid.minZ) / cell));
+    const su = toU(ox, oz);
+    const sv = toV(ox, oz);
+    for (let j = j0; j <= j1; j++) {
+      const dz = grid.minZ + (j + 0.5) * cell - tz;
+      const dx = grid.minX + (i0 + 0.5) * cell - tx;
+      let u = u0 + toU(dx, dz) - su;
+      let v = v0 + toV(dx, dz) - sv;
+      let o = (j * n + i0) * CHANNELS + channel;
+      for (let i = i0; i <= i1; i++, u += du, v += dv, o += CHANNELS) {
+        if (u >= 0 && v >= 0 && u < w && v < h) {
+          const s = values[(v | 0) * w + (u | 0)]!;
+          if (s > out[o]!) out[o] = s;
         }
       }
     }
-  }
+  };
+  pool(0, 0, sky, SKY);
+  steps.forEach((st, ch) => pool(st.x * lift, st.z * lift, sun, ch));
+}
+
+/** A solid's shade, painted once for every copy that stands the same way round. */
+interface SolidTile {
+  /** Its first texel from the copy's own, snapped to the grid. */
+  di: number;
+  dj: number;
+  w: number;
+  h: number;
+  suns: Float32Array[];
+  sky: Float32Array;
 }
 
 /**
  * A house, a prop or a rock: its triangles placed by its matrix and laid on the ground at its
  * foot, cast along each sun for that sun's shadow and straight down for the skirt, whose blur
- * spreads past the eaves and seats the walls.
+ * spreads past the eaves and seats the walls. The copy's place is snapped to the grid's texels
+ * (no more than 16 cm off), so every copy of a model turned the same way, a street of row
+ * houses, shares one painting (`cache`, by model and turn); painting each afresh had taken
+ * most of the load's shade time.
  */
 function castSolid(
   mesh: ShadeMesh,
@@ -470,11 +478,55 @@ function castSolid(
   grid: ShadeGrid,
   cell: number,
   steps: readonly Step[],
-  put: Put,
+  out: Uint8Array,
+  cache: Map<string, SolidTile | null>,
+  model: string,
 ): void {
+  const ix = Math.round((m[12]! - grid.minX) / cell);
+  const jz = Math.round((m[14]! - grid.minZ) / cell);
+  const turn = [0, 1, 2, 4, 5, 6, 8, 9, 10].map((k) => m[k]!.toFixed(4)).join(',');
+  const key = `${model}|${turn}`;
+  let tile = cache.get(key);
+  if (tile === undefined) {
+    const snapped = Array.from(m);
+    snapped[12] = grid.minX + ix * cell;
+    snapped[14] = grid.minZ + jz * cell;
+    tile = paintSolid(mesh, snapped, grid, cell, steps, ix, jz);
+    cache.set(key, tile);
+  }
+  if (!tile) return;
+  // Laid on the texture, keeping the darker shade where two meet.
+  const { di, dj, w, h, suns, sky } = tile;
+  const n = grid.texels;
+  const keep = (k: number, v: number): void => {
+    if (v <= 0) return;
+    const b = v >= 1 ? 255 : Math.round(v * 255);
+    if (b > out[k]!) out[k] = b;
+  };
+  for (let j = Math.max(0, -(jz + dj)); j < h && jz + dj + j < n; j++) {
+    const row = (jz + dj + j) * n;
+    for (let i = Math.max(0, -(ix + di)); i < w && ix + di + i < n; i++) {
+      const t = j * w + i;
+      const o = (row + ix + di + i) * CHANNELS;
+      for (let c = 0; c < suns.length; c++) keep(o + c, suns[c]![t]!);
+      keep(o + SKY, sky[t]! * SKIRT_LIFT);
+    }
+  }
+}
+
+/** One solid's shade on the grid round the copy at texel (ix, jz), blurred. */
+function paintSolid(
+  mesh: ShadeMesh,
+  m: ArrayLike<number>,
+  grid: ShadeGrid,
+  cell: number,
+  steps: readonly Step[],
+  ix: number,
+  jz: number,
+): SolidTile | null {
   const p = mesh.positions;
   const count = p.length / 3;
-  if (!count) return;
+  if (!count) return null;
   const footY = m[13]!;
   const flat = new Float64Array(count * 2);
   const casts = steps.map(() => new Float64Array(count * 2));
@@ -553,12 +605,7 @@ function castSolid(
   }
   for (const sun of suns) boxBlur(sun, w, h, blurRadius(CAST_SOFT, cell));
   boxBlur(sky, w, h, blurRadius(SKIRT_SOFT, cell));
-  for (let j = 0; j < h; j++) {
-    for (let i = 0; i < w; i++) {
-      suns.forEach((sun, c) => put(i0 + i, j0 + j, c, sun[j * w + i]!));
-      put(i0 + i, j0 + j, SKY, Math.min(1, sky[j * w + i]! * SKIRT_LIFT));
-    }
-  }
+  return { di: i0 - ix, dj: j0 - jz, w, h, suns, sky };
 }
 
 /**

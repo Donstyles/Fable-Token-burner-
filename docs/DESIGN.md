@@ -2638,7 +2638,12 @@ loads, not cast by a real-time shadow map:
 - **Cost**, measured on the shared cloud box: painting Gullhaven's 1,050 casters took about
   200 ms at load in headless Chromium with one sun (180 to 490 as the box was busy; about 100
   in Node once warm), the crowns' stamps most of it, and the upload with its mipmaps 4 ms; with
-  three suns 686 ms and 11 ms (2026-10-24, one run); a frame's
+  three suns 686 ms and 11 ms (2026-10-24, one run). The packed town's 1,982 casters first took
+  1.2 to 1.4 s, nine tenths of it the 149 houses, props and rocks: their four tiles' blurs, a
+  call a texel. Now each solid's place is snapped to the texture's texels (16 cm at most) and
+  its painting kept for every copy of the model turned the same way, a street of row houses
+  painted once; the blur runs in a tight loop and the tiles are written straight in: 0.80 to
+  0.93 s (three runs). A frame's
   render with and without the shade's lookup compiled in is the same within the noise (7.3
   and 7.1 ms in the square, 7.5 and 7.5 in the wood, software GL, `gl.finish` timed).
 - **Not yet**: the kernel's fences and the cave mouth cast none; nothing shades a wall or a
