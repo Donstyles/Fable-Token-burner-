@@ -189,6 +189,21 @@ describe('a script drawn as a map', () => {
     expect(Math.cos(h)).toBeCloseTo(0, 6);
     expect(k.start.at[0]).toBe(-SMALL.start.at[0]);
   });
+
+  it('turns the trees set by hand and the clearings over too, and grows them on the ground', () => {
+    const k = fromMap({
+      ...SMALL,
+      trees: [{ kind: 'oak', at: [50, 40], scale: 1.2 }],
+      clearings: [{ at: [-60, 40], radius: 10 }],
+    });
+    expect(k.trees![0]!.at).toEqual([-50, 40]);
+    expect(k.clearings![0]!.at).toEqual([60, 40]);
+    const level = buildRegion(k);
+    const oak = level.trees.find((t) => t.x === -50 && t.z === 40);
+    expect(oak?.kind).toBe('oak');
+    expect(oak!.scale).toBe(1.2);
+    expect(oak!.y).toBeCloseTo(level.height.sample(-50, 40), 5);
+  });
 });
 
 describe('Gullhaven', () => {
@@ -304,6 +319,40 @@ describe('Gullhaven', () => {
     expect(inside(g.sea!.coast, x, z)).toBe(true);
     // Heading north-ish, toward the square.
     expect(Math.abs(level.spawn.yawDeg)).toBeLessThan(30);
+  });
+
+  it('builds up the high street house to house, and trains in one house of them', () => {
+    // The street's rows: houses whose fronts face it from no more than 12 m off.
+    const street = buildings.filter(
+      (b) => Math.abs(b.z - -118) < 12 && Math.abs(b.x) > 15 && Math.abs(b.x) < 80,
+    );
+    expect(street.length).toBeGreaterThanOrEqual(26);
+    // Four rows: either side of the street, either side of the square.
+    for (const [side, half] of [
+      [1, 1],
+      [1, -1],
+      [-1, 1],
+      [-1, -1],
+    ]) {
+      const row = street
+        .filter((b) => Math.sign(b.z - -118) === side && Math.sign(b.x) === half)
+        .sort((a, b) => a.x - b.x);
+      expect(row.length).toBeGreaterThanOrEqual(6);
+      for (let i = 1; i < row.length; i++) {
+        const [a, b] = [row[i - 1]!, row[i]!];
+        const gap =
+          Math.abs(b.x - a.x) - (CATALOGUE[a.model]!.size[0] + CATALOGUE[b.model]!.size[0]) / 2;
+        // Never more than a yard's width between two houses (the smithy's yard is the widest).
+        expect(gap, `${a.model} to ${b.model}`).toBeLessThan(7.5);
+      }
+    }
+    expect(level.props.filter((p) => p.name === 'training')).toHaveLength(1);
+    for (const house of ['inn', 'temple', 'store', 'smithy']) {
+      expect(
+        level.props.filter((p) => p.name === house),
+        house,
+      ).toHaveLength(1);
+    }
   });
 
   it('peoples it with townsfolk and monsters the game knows', () => {

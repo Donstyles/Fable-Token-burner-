@@ -594,8 +594,10 @@ waterfalls and deserts, walkable end to end.
 from every chimney found on the houses' roofs, lit windows from dusk on
 the five houses whose panes pass the window screen and the night review,
 and shadows cast for the morning's, noon's and the evening's sun, blended
-by the hour. Next: a new, packed starting area (owner: "Village is
-extremely spaced out ... I want the maps to feel packed and hand crafted").
+by the hour. Then Gullhaven rebuilt packed (DESIGN 17.2): the square and a
+high street built up house to house, the farm, crossroads, cave, stones,
+camps and ruin a minute apart, woods between; and the regions the right
+way round (DESIGN 17.1), east on the screen's right and the sun rising there.
 
 **Status, night of 2026-10-16 (owner asleep, best judgement):** steps 1 to 6
 are in: the valley (village, road, pass, gorge with eight cascades, cave

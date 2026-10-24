@@ -376,10 +376,13 @@ test.describe('Gullhaven', () => {
     expect(
       await page.evaluate(() => (window as unknown as W).ftb!.dev!.screens.current()),
     ).toBeNull();
-    // The door opens the inn.
+    // The door opens the inn (the packed town's frames are slow on the shared box with two
+    // workers: the board had come up just after five seconds).
     await page.mouse.click(door!.x, door!.y);
     await expect
-      .poll(() => page.evaluate(() => (window as unknown as W).ftb!.dev!.screens.current()))
+      .poll(() => page.evaluate(() => (window as unknown as W).ftb!.dev!.screens.current()), {
+        timeout: 15_000,
+      })
       .toBe('tavern');
   });
 });

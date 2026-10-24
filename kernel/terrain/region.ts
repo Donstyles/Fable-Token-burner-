@@ -119,6 +119,10 @@ export interface RegionScript {
   squares: { at: P2; halfA: number; halfB: number; heading: number }[];
   lanes: Lane[];
   forests: Forest[];
+  /** Trees set one by one: an orchard's rows, the square's limes, the crossroads' oak. */
+  trees?: { kind: TreeKind; at: P2; scale?: number }[];
+  /** Glades the woods keep out of: a camp's, a ring of stones', the crossroads'. */
+  clearings?: { at: P2; radius: number }[];
   plots: Plot[];
   /** The cave mouth into the dungeon: its threshold and the heading it faces out to. */
   cave?: { at: P2; facing: number; target: { level: string; entry: string } };
@@ -154,6 +158,10 @@ export function fromMap(s: RegionScript): RegionScript {
     squares: s.squares.map((q) => ({ ...q, at: kernelPoint(q.at) })),
     lanes: s.lanes.map((l) => ({ ...l, from: kernelPoint(l.from), to: kernelPoint(l.to) })),
     forests: s.forests.map((f) => ({ ...f, area: pts(f.area) })),
+    ...(s.trees ? { trees: s.trees.map((t) => ({ ...t, at: kernelPoint(t.at) })) } : {}),
+    ...(s.clearings
+      ? { clearings: s.clearings.map((c) => ({ ...c, at: kernelPoint(c.at) })) }
+      : {}),
     plots: s.plots.map((p) => ({ ...p, at: kernelPoint(p.at), face: kernelPoint(p.face) })),
     ...(s.cave ? { cave: { ...s.cave, at: kernelPoint(s.cave.at) } } : {}),
     ...(s.fences ? { fences: s.fences.map(pts) } : {}),
@@ -460,6 +468,9 @@ export function buildRegion(s: RegionScript): TerrainLevel {
       accept: (x, z) => {
         if (!inside(f.area, x, z)) return false;
         if (hf.sample(x, z) < seaLevel + 2) return false;
+        for (const c of s.clearings ?? []) {
+          if (Math.hypot(x - c.at[0], z - c.at[1]) < c.radius) return false;
+        }
         for (const r of roads) if (r.ground.nearest(x, z).distance < r.width / 2 + 4) return false;
         for (const pad of plots.pads) if (rectDistance(x, z, pad) < 6) return false;
         for (const q of squares) if (rectDistance(x, z, q) < 4) return false;
@@ -473,6 +484,18 @@ export function buildRegion(s: RegionScript): TerrainLevel {
       },
     }),
   );
+  // The trees set by hand, each turned by its place so a row does not stand in step.
+  for (const t of s.trees ?? []) {
+    const [x, z] = t.at;
+    trees.push({
+      kind: t.kind,
+      x,
+      y: hf.sample(x, z),
+      z,
+      yaw: (((x * 12.9898 + z * 78.233) % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2),
+      scale: t.scale ?? 1,
+    });
+  }
   const forest = forestMeshes(trees);
 
   const ground = (x: number, z: number): number => hf.sample(x, z);

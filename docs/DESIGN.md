@@ -2520,7 +2520,8 @@ map sheet is drawn the way the minimap is.
 - **Ways**: roads as curves through control points, cut into the land and never
   steeper than 14 degrees; dirt squares and lanes.
 - **Woods**: outlines with a spacing, a density and the tree kinds; trees keep
-  off roads, pads, squares, the cave and the water.
+  off roads, pads, squares, the cave, the water and the **clearings** (a camp's glade, a ring
+  of stones'). **Trees set by hand** stand one by one: an orchard's rows, the crossroads' oak.
 - **Plots**: each building or prop at a point, facing the point its door faces,
   on a dead-level pad, sunk by its wall base (`kernel/terrain/plots.ts`); a named
   point on the apron before each door. A building carries its name (its model's without
@@ -2555,34 +2556,53 @@ white cross. It is the review copy of a map and the automap's picture later.
   for Gullhaven, no two buildings overlapping or standing on a road, every door
   facing its street, the start above the sea, every kind of person known.
 
-### 17.2 Gullhaven
+### 17.2 Gullhaven, packed (owner, 2026-10-24)
 
-The starting region, our own (not Enroth): a harbour town on the north shore of
-a bay, the sea south and east to the horizon, hills closing the land to the north
-and west.
+The starting region, our own (not Enroth): a harbour town on the north shore of a bay, the
+sea south and east to the horizon, ridges closing the land to the north and west. Rebuilt close
+(owner: "Village is extremely spaced out. Wide empty spaces in map. I want the maps to feel
+packed and hand crafted"): the first town had thirteen buildings along 220 m of street and
+open meadow to the hills, a lone tree every fourteen metres.
 
-- **The town**: the square with its well between the inn (north) and the trader
-  (south); cottages along the street; the stables and the smithy at its east end;
-  the temple on its knoll to the west, up a lane. The party wakes on the
-  waterfront below the square, looking up at it.
-- **The north road** climbs past Old Tobin's farm (the house, the barn, haystacks
-  and a fenced yard) to the wayside shrine at the crossroads, and on to the goblin
-  hills, where the cave leads down into the old halls (the showcase dungeon,
-  whose door leads back out here).
-- **The coast road** runs west under the western ridge toward the next region;
-  bandits hold it.
-- **The headland track** runs east to the ruin on the headland, where six
-  skeleton warriors keep watch: far too many for a new party.
-- **People**: Maren by the well (the goblins in the hills, eighty gold), Old Tobin
-  at his farm gate (three bandits off the coast road, a hundred and fifty gold).
-  Greta and Old Henrik's lines and quests were re-homed to them.
-- Goblin scouts about the cave and in the western downs.
+- **The town** (150 by 60 m): a square 26 by 18 m with the well, three stalls, a cart and
+  lanterns, the inn on its north side with the training hall at its shoulder, the trader
+  across. The high street runs east and west from it, built up house to house on both sides,
+  two to three metres apart, 28 houses in four rows (cottages 1, 2 and 3 in turn, a script
+  helper laying each by its own width), the stables at the west gate, the smithy and its yard
+  at the east. Behind the rows, yards and gardens: wood against the back walls, hay by the
+  stables, carts, hedges of bushes, a tree or two, the stables' paddock. The temple stands on
+  its knoll over the west end, up a lane, a shrine at the lane's top. Below, the quay: stalls
+  for the catch, carts, three lanterns along the water, two fishers' huts on the beach. The
+  party wakes on the lane up from the quay, the square ahead and Maren by the well.
+- **The farm**, 50 m up the north road between hedges: Old Tobin's farmhouse west of the road,
+  the barn east, his orchard of twenty trees in rows behind the house, two fenced fields with
+  haystacks, carts and wood in the yard.
+- **The crossroads**, 100 m on: the shrine and a lantern under an old oak, stones by the road.
+  North-east through the wood to the goblin hills, their camp (a stolen cart, hay, rocks) at the
+  cave's mouth 130 m from the crossroads. West, a track past the woodcutter's glade (his
+  cottage, stacks, a cart, stumps) to a ring of nine stones round an outcrop on the downs. East,
+  the track through the oaks to the ruin on the headland, tumbled outcrops in a ring where a
+  watchtower stood, and its six skeletons. The coast road runs west past the bandits' camp, its
+  carts drawn up by a lookout's rock.
+- **Between them, woods**: the west wood from the coast road to the hills, the oaks east of the
+  farm, scrub and pines over the goblin hills, a fringe of trees between the town's gardens and
+  the farm, and woods on the ridges that close it all in; 1,794 trees in all, every glade cut
+  for a camp, the stones and the crossroads. Rocks along the shore and the woods' edges. No
+  site stands more than a minute's walk from the next.
+- **People**: Maren by the well (the goblins in the hills, eighty gold), Old Tobin at his farm
+  gate (three bandits off the coast road, a hundred and fifty gold). Goblin scouts at the cave,
+  on the slope toward the road and at the stones; bandits at their camp and further west.
+- Tests (`kernel/terrain/region.test.ts`): no two buildings overlapping or on a road, every
+  door facing its street, the high street's four rows of at least six houses never more than a
+  yard's width apart, one each of the inn, temple, trader, smithy and training hall, the cave
+  facing its road, the start within twenty metres of the square.
 
 ### 17.3 Not yet
 
-The town's own houses (guild, training hall, bank, town hall, a pier) wait on
-batch 012; the coast road's west end has no portal until the second region
-exists; the headland ruin has no ruin model yet.
+Every house in the rows is one of three cottages; more house models (a guild, a bank, a town
+hall, a pier, a boat, barrels and crates for the quay) wait on a Meshy batch the owner approves.
+The coast road's west end has no portal until the second region exists, and the headland's
+ruin is outcrops until it has a model of its own.
 
 ### 17.4 Shade under trees and houses (owner, 2026-10-23)
 
@@ -2716,6 +2736,17 @@ lights, both belong to the models and are found on the models themselves.
   night, all night.
 
 ## 13. Decision log
+
+- 2026-10-24 – Gullhaven packed close, and the world the right way round (owner: "Then you
+  make a new concept for the starting area. Village is extremely spaced out. Wide empty spaces
+  in map. I want the maps to feel packed and hand crafted"; 17.1, 17.2). The town is a square
+  and a high street built up house to house, 28 houses in four rows with yards, gardens and a
+  quay, where it had been thirteen buildings along 220 m; the farm, the crossroads, the cave,
+  the stones, the camps and the ruin each stand a minute from the next, woods fill the ground
+  between and ridges close it in, where open meadow had run to the hills. Region scripts are
+  drawn as maps and turned into the kernel's right-handed frame at build: every region had
+  stood mirrored, its west on the screen's east and its sun rising in the west. Houses go by
+  their plot's name, so one townhouse trains and its twins do not.
 
 - 2026-10-24 – Chimney smoke, lit windows and shadows that follow the sun (owner: "Then
   Chimney smoke, window lights and shadows for time of day"; 17.4, 17.6). The ground shade

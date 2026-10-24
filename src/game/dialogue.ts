@@ -199,13 +199,14 @@ export const DIALOGUES: Record<string, DialogueDef> = {
         id: 'town',
         label: 'Gullhaven',
         text:
-          'The inn faces the trader across the square. The temple stands on its knoll at the ' +
-          'west end of the street; the smithy is at the east end, past the stables. Old Tobin ' +
-          'farms up the north road, and the coast road runs west to the city.',
+          'The inn faces the trader across the square, and the training hall stands at the ' +
+          'inn’s shoulder. The temple is up on its knoll over the west end of the street, by ' +
+          'the stables; the smithy is at the east end. Old Tobin farms up the north road, and ' +
+          'the coast road runs west to the city.',
         note:
-          'Gullhaven: the inn faces the trader across the square, the temple stands on its knoll ' +
-          'at the west end of the street, the smithy at the east end past the stables. Tobin’s ' +
-          'farm is up the north road; the coast road runs west to the city.',
+          'Gullhaven: the inn faces the trader across the square, the training hall beside the ' +
+          'inn, the temple on its knoll over the west end by the stables, the smithy at the east ' +
+          'end. Tobin’s farm is up the north road; the coast road runs west to the city.',
       },
       {
         kind: 'say',
