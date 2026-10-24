@@ -26,8 +26,8 @@ const SCREENS = [
 
 test.describe('screens', () => {
   test('the panel opens every screen and an open screen pauses the world', async ({ page }) => {
-    // Twelve screens on software GL at a frame a second.
-    test.setTimeout(300_000);
+    // Twelve screens over Gullhaven on software GL, each step waiting out a frame of seconds.
+    test.setTimeout(600_000);
     await page.goto('dev/?dev&lite&level=gullhaven&seed=3');
     await page.waitForFunction(() => (window as unknown as W).ftb?.dev?.ready === true, null, {
       timeout: 120_000,

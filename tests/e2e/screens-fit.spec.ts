@@ -195,7 +195,9 @@ function fitReport(): Fit {
 test('every screen fits the view’s box inside the safe areas, its title at the head, its close at the foot', async ({
   page,
 }) => {
-  test.setTimeout(240_000);
+  // Nineteen screens and houses over Gullhaven on software GL, each step waiting out a frame
+  // of seconds.
+  test.setTimeout(600_000);
   await page.goto('dev/?dev&lite&level=gullhaven&seed=11');
   await page.waitForFunction(() => (window as unknown as W).ftb?.dev?.ready === true, null, {
     timeout: 150_000,
