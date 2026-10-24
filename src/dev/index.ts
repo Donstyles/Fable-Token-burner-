@@ -61,7 +61,7 @@ const characterUrl = (id: string): string => {
   if (!url) throw new Error(`no character model for ${id}`);
   return url;
 };
-import { Braziers, FogBySpace, Torch } from '../world/atmosphere';
+import { Braziers, ChimneySmoke, FogBySpace, Torch } from '../world/atmosphere';
 import { Halos } from '../world/halos';
 import { CATALOGUE, doorPoint, loadPropModels, onDoor, propLabel } from '../world/props';
 import { createStatusLine } from '../ui/status';
@@ -296,6 +296,8 @@ export async function startDev(app: App): Promise<DevHandle> {
   let mipmapsOn = true;
   const torch = new Torch(app.materials);
   const braziers = new Braziers(scene, level.lights);
+  // The hearths' smoke over the town's roofs (DESIGN.md 17.6).
+  const chimneys = new ChimneySmoke(scene, level.smoke);
   const halos = new Halos(scene, level.lights);
   const fog = new FogBySpace(app.materials, level.spaces);
   const underwater = new UnderwaterTint(uiLayer);
@@ -1173,6 +1175,7 @@ export async function startDev(app: App): Promise<DevHandle> {
       lastPartyPos = p.clone();
       soundscape.update(dt, p, moved < 2 ? moved : 0, daylightNow, party.waterDepth > 0.25);
       app.materials.setWeather({ gust: soundscape.gust() });
+      chimneys.update(soundscape.gust(), daylightNow);
     }
     for (const m of handle.monsters) {
       m.update(dt, partyTarget, simTime);

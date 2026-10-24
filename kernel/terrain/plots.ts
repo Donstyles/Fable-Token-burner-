@@ -70,6 +70,8 @@ export interface PlotLayout {
   lights: LightPlacement[];
   /** A point on the apron before each building's door, named after it. */
   points: NamedPoint[];
+  /** The tops of the chimneys, where the hearths' smoke rises (DESIGN.md 17.6). */
+  smoke: [number, number, number][];
 }
 
 /** Place a region's plots on the ground: each building on a pad, sunk by its wall base. */
@@ -82,6 +84,7 @@ export function layoutPlots(
   const collider = nb();
   const lights: LightPlacement[] = [];
   const points: NamedPoint[] = [];
+  const smoke: [number, number, number][] = [];
   for (const p of plots) {
     const m = CATALOGUE[p.model];
     if (!PROPS[p.model] || !m) throw new Error(`plots: ${p.model} is not in the prop catalogue`);
@@ -130,8 +133,12 @@ export function layoutPlots(
         kind: forge ? 'brazier' : 'lantern',
       });
     }
+    // Its chimneys' tops, turned with it the same way; the model stands sunk by its base.
+    for (const [cx0, cy0, cz0] of PROPS[p.model]?.chimneys ?? []) {
+      smoke.push([x + cx0 * cos - cz0 * sin, y - base + cy0, z + cx0 * sin + cz0 * cos]);
+    }
   }
-  return { props, pads, collider, lights, points };
+  return { props, pads, collider, lights, points, smoke };
 }
 
 /** Signed distance helpers for the terrain pass: inside a rotated rectangle. */

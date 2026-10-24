@@ -37,6 +37,12 @@ export interface PropSpec {
    * features on houses and lanterns etc?").
    */
   lights?: readonly { at: readonly [number, number, number]; kind: 'lantern' | 'forge' }[];
+  /**
+   * The tops of the chimneys the model carries, in metres in its own frame as `door`, where
+   * its hearths' smoke rises (DESIGN.md 17.6): found on its geometry (tools/lib/chimney.ts)
+   * and checked as marks on its review render; a spire or a ridge vent is not one.
+   */
+  chimneys?: readonly (readonly [number, number, number])[];
 }
 
 /** The turn about the upright, in glTF's frame (the game's X is glTF's -X), that brings `front` to +Z. */
@@ -69,6 +75,8 @@ export const PROPS: Record<string, PropSpec> = {
     kind: 'building',
     height: 10.5,
     door: { x: -0.2, width: 1.3, height: 2.3 },
+    // The stack at the left gable, its two pots as one.
+    chimneys: [[-4.13, 10.5, -0.78]],
   },
   'building-temple': {
     kind: 'building',
@@ -80,6 +88,7 @@ export const PROPS: Record<string, PropSpec> = {
     kind: 'building',
     height: 8,
     door: { x: 0.38, width: 0.9, height: 2.1 },
+    chimneys: [[-3.02, 8, 0]],
   },
   'building-smithy': {
     kind: 'building',
@@ -87,6 +96,7 @@ export const PROPS: Record<string, PropSpec> = {
     door: { x: 0.33, width: 3.1, height: 2.3 },
     // The coals painted under the lean-to on its left.
     lights: [{ at: [-1.15, 1, 1.08], kind: 'forge' }],
+    chimneys: [[-0.36, 6, -2.53]],
   },
   'building-stables': {
     kind: 'building',
@@ -103,23 +113,33 @@ export const PROPS: Record<string, PropSpec> = {
     kind: 'building',
     height: 6.5,
     door: { x: 0.15, width: 1.2, height: 2.1 },
+    // The stone stack at the gable, its two pots as one.
+    chimneys: [[3.27, 6.5, 0.03]],
   },
   'building-cottage-02': {
     kind: 'building',
     height: 5.5,
     front: '-z',
     door: { x: -1, width: 1.05, height: 2 },
+    chimneys: [[1.58, 5.5, 0.87]],
   },
   'building-cottage-03': {
     kind: 'building',
     height: 8.5,
     front: '-x',
     door: { x: -0.14, width: 0.7, height: 1.8 },
+    // A stack at either gable.
+    chimneys: [
+      [-0.24, 8.49, -3.24],
+      [0.01, 8.42, 2.32],
+    ],
   },
   'building-farmhouse': {
     kind: 'building',
     height: 9.5,
     door: { x: -0.1, width: 1.3, height: 2.1 },
+    // The stack over the house end, its two pots as one.
+    chimneys: [[0.38, 9.5, 6.03]],
   },
   'prop-well': { kind: 'prop', height: 3.2 },
   'prop-shrine': { kind: 'prop', height: 2.8 },

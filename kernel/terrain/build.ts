@@ -67,6 +67,8 @@ export interface TerrainLevel {
   water: WaterSurface[];
   waterfalls: Waterfall[];
   points: NamedPoint[];
+  /** The tops of the chimneys, where the hearths' smoke rises (DESIGN.md 17.6). */
+  smoke?: [number, number, number][];
   /** Points the reachability check may fail on (summits, fords). */
   unreachableOk: string[];
   spaces: SpaceRecord[];

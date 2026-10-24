@@ -140,6 +140,7 @@ async function buildRegionLevel(id: string, validate: boolean): Promise<boolean>
     spawn: level.spawn,
     points: level.points,
     lights: level.lights,
+    smoke: (level.smoke ?? []).map((p) => p.map(round)),
     portals: level.portals,
     spawns: level.spawns,
     spaces: level.spaces,

@@ -162,3 +162,36 @@ export function smoke(scene: Scene, at: Vector3): ParticleSystem {
   ps.updateSpeed = 0.016;
   return ps;
 }
+
+/**
+ * A hearth's smoke from a chimney's top (DESIGN.md 17.6): grey puffs rising, swelling as they
+ * go and thinning to nothing, leaning downwind with the trees (the canopies' sway, 0.8 by 0.6
+ * in the scene's x and z). Already rising when the level loads.
+ */
+export function chimneySmoke(scene: Scene, at: Vector3): ParticleSystem {
+  const ps = new ParticleSystem('chimney-smoke', 36, scene);
+  ps.particleTexture = softSprite(scene);
+  ps.emitter = at.clone();
+  ps.minEmitBox = new Vector3(-0.12, 0, -0.12);
+  ps.maxEmitBox = new Vector3(0.12, 0.15, 0.12);
+  ps.direction1 = new Vector3(-0.12, 1, -0.12);
+  ps.direction2 = new Vector3(0.12, 1.3, 0.12);
+  ps.minEmitPower = 0.55;
+  ps.maxEmitPower = 0.95;
+  ps.minLifeTime = 4.5;
+  ps.maxLifeTime = 7;
+  ps.minSize = 0.7;
+  ps.maxSize = 1.1;
+  ps.addSizeGradient(0, 0.6);
+  ps.addSizeGradient(1, 3.2);
+  ps.color1 = new Color4(0.62, 0.6, 0.57, 0.34);
+  ps.color2 = new Color4(0.52, 0.51, 0.49, 0.26);
+  ps.colorDead = new Color4(0.5, 0.5, 0.5, 0);
+  ps.gravity = new Vector3(0.24, 0.02, 0.18);
+  ps.emitRate = 5;
+  ps.blendMode = ParticleSystem.BLENDMODE_STANDARD;
+  ps.updateSpeed = 0.016;
+  ps.preWarmCycles = 120;
+  ps.preWarmStepOffset = 5;
+  return ps;
+}

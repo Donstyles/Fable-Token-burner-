@@ -574,6 +574,7 @@ export function buildRegion(s: RegionScript): TerrainLevel {
       : [],
     waterfalls: [],
     points,
+    smoke: plots.smoke,
     unreachableOk: [],
     spaces: [
       {

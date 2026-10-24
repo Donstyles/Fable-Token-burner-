@@ -3,13 +3,13 @@
  * that follows the camera, fire and smoke on braziers, and fog that eases toward the
  * preset of whichever space the party is in.
  */
-import { Color3 } from '@babylonjs/core/Maths/math.color';
+import { Color3, type Color4 } from '@babylonjs/core/Maths/math.color';
 import { Vector3 } from '@babylonjs/core/Maths/math.vector';
 import type { ParticleSystem } from '@babylonjs/core/Particles/particleSystem';
 import type { Scene } from '@babylonjs/core/scene';
 import type { PointLightDesc, RetroMaterials } from '../render/materials';
 import type { LevelLight, LevelSpace } from './level';
-import { fire, smoke } from './particles';
+import { chimneySmoke, fire, smoke } from './particles';
 
 /** A warm light carried just ahead of the eyes, with a candle-like flicker. */
 export class Torch {
@@ -95,6 +95,47 @@ export class Braziers {
       if (on && !s.isStarted()) s.start();
       if (!on && s.isStarted()) s.stop();
     }
+  }
+
+  dispose(): void {
+    for (const s of this.systems) s.dispose();
+    this.systems.length = 0;
+  }
+}
+
+/**
+ * The hearths' smoke from every chimney the level lists (DESIGN.md 17.6), leaning downwind as
+ * the gusts come, and darkening with the day: particles take no light of their own, so their
+ * grey is scaled by the daylight, or they would stand pale against the night sky.
+ */
+export class ChimneySmoke {
+  private readonly systems: ParticleSystem[] = [];
+  private readonly base: { c1: Color4; c2: Color4 }[] = [];
+  private shown = 1;
+
+  constructor(scene: Scene, tops: readonly Vector3[]) {
+    for (const top of tops) {
+      const ps = chimneySmoke(scene, top);
+      this.base.push({ c1: ps.color1.clone(), c2: ps.color2.clone() });
+      this.systems.push(ps);
+      ps.start();
+    }
+  }
+
+  /** The wind's gust (0 to 1) and the daylight (0 night to 1 noon). */
+  update(gust: number, daylight: number): void {
+    const push = 0.25 + 1.1 * Math.max(0, Math.min(1, gust));
+    const light = 0.22 + 0.78 * Math.max(0, Math.min(1, daylight));
+    const relit = Math.abs(light - this.shown) > 0.01;
+    this.systems.forEach((ps, i) => {
+      ps.gravity.set(0.8 * push * 0.3, 0.02, 0.6 * push * 0.3);
+      if (!relit) return;
+      const b = this.base[i]!;
+      ps.color1.set(b.c1.r * light, b.c1.g * light, b.c1.b * light, b.c1.a);
+      ps.color2.set(b.c2.r * light, b.c2.g * light, b.c2.b * light, b.c2.a);
+      ps.colorDead.set(0.5 * light, 0.5 * light, 0.5 * light, 0);
+    });
+    if (relit) this.shown = light;
   }
 
   dispose(): void {

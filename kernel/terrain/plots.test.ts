@@ -45,3 +45,30 @@ describe('a plot carries its model’s lights', () => {
     ).toEqual([]);
   });
 });
+
+describe('a plot carries its model’s chimneys', () => {
+  it('puts the smoke at each chimney top, turned with the house', () => {
+    const top = PROPS['building-cottage-02']!.chimneys![0]!;
+    const north = layoutPlots(
+      [{ model: 'building-cottage-02', at: [10, 20], face: [10, 30] }],
+      flat,
+    );
+    expect(north.smoke).toHaveLength(1);
+    const [x, y, z] = north.smoke[0]!;
+    expect(x).toBeCloseTo(10 + top[0], 6);
+    expect(y).toBeCloseTo(2 + top[1], 6);
+    expect(z).toBeCloseTo(20 + top[2], 6);
+    const east = layoutPlots(
+      [{ model: 'building-cottage-02', at: [10, 20], face: [30, 20] }],
+      flat,
+    );
+    expect(east.smoke[0]![0]).toBeCloseTo(10 + top[2], 6);
+    expect(east.smoke[0]![2]).toBeCloseTo(20 - top[0], 6);
+  });
+
+  it('gives a temple, a barn and a well no smoke', () => {
+    for (const model of ['building-temple', 'building-barn', 'prop-well']) {
+      expect(layoutPlots([{ model, at: [0, 0], face: [0, 10] }], flat).smoke).toEqual([]);
+    }
+  });
+});

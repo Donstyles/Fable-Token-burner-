@@ -108,6 +108,8 @@ export interface LevelSidecar {
     intensity: number;
     kind?: 'lantern' | 'brazier' | 'glow';
   }[];
+  /** Outdoors: the tops of the chimneys in kernel space, where smoke rises (DESIGN.md 17.6). */
+  smoke?: V3[];
   spaces: SidecarSpace[];
   water: SidecarWater[];
   waterfalls: SidecarWaterfall[];
@@ -168,6 +170,8 @@ export interface LoadedLevel {
   spawns: { kind: string; position: Vector3; yawDeg: number }[];
   /** The level's static lights in Babylon space; baked into the vertices, not registered. */
   lights: LevelLight[];
+  /** The tops of the chimneys in scene space, where the hearths' smoke rises (17.6). */
+  smoke: Vector3[];
   /** Outdoors: the shade painted under the trees, houses and props (DESIGN.md 17.4). */
   groundShade: GroundShade | null;
   /** 1 shows the baked light, 0 the environment's key and ambient light instead. */
@@ -743,6 +747,7 @@ export async function loadLevel(
       arrive: { position: toBabylon(p.arrive.position), yawDeg: p.arrive.yawDeg },
     })),
     lights,
+    smoke: (sidecar.smoke ?? []).map((p) => toBabylon(p)),
     groundShade,
     setBakedMix: (v) => materials.setBakedMix(v),
     setWireframe(on) {
