@@ -590,6 +590,13 @@ waterfalls and deserts, walkable end to end.
 18. Remaining, in order: lasting buffs and Jump; weather states (rain, a
     sandstorm); music; the smith's hammer and the temple bell.
 
+**Status 2026-10-24:** the town keeps the hour (DESIGN 17.4, 17.6): smoke
+from every chimney found on the houses' roofs, lit windows from dusk on
+the five houses whose panes pass the window screen and the night review,
+and shadows cast for the morning's, noon's and the evening's sun, blended
+by the hour. Next: a new, packed starting area (owner: "Village is
+extremely spaced out ... I want the maps to feel packed and hand crafted").
+
 **Status, night of 2026-10-16 (owner asleep, best judgement):** steps 1 to 6
 are in: the valley (village, road, pass, gorge with eight cascades, cave
 mouth), the showcase dungeon reached through the cave and left through

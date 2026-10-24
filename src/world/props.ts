@@ -2,23 +2,30 @@
  * Meshy props at runtime (DESIGN.md 10.3): trees, bushes, rocks, buildings and small props
  * from assets/props. Each model is loaded once, scaled to the catalogue's metres with its foot
  * at y = 0, given the world's retro material, and handed to the level to draw as thin
- * instances; trees and bushes also carry a far-detail copy that shares the material.
+ * instances; trees and bushes also carry a far-detail copy that shares the material. A house
+ * with a window mask beside its model (tools/lib/windows.ts) has its panes lit at night.
  */
 // Side-effect import: registers the .glb loader.
 import '@babylonjs/loaders/glTF/2.0';
 import { LoadAssetContainerAsync } from '@babylonjs/core/Loading/sceneLoader';
 import { Mesh } from '@babylonjs/core/Meshes/mesh';
 import type { PBRMaterial } from '@babylonjs/core/Materials/PBR/pbrMaterial';
-import type { Texture } from '@babylonjs/core/Materials/Textures/texture';
+import { Texture } from '@babylonjs/core/Materials/Textures/texture';
 import type { ShaderMaterial } from '@babylonjs/core/Materials/shaderMaterial';
 import type { Scene } from '@babylonjs/core/scene';
 import { Color3 } from '@babylonjs/core/Maths/math.color';
 import catalogueJson from '../../assets/props/catalogue.json';
 import { PROPS, type PropCatalogue, type PropMeasure } from '../../kernel/terrain/props';
-import { type RetroMaterials } from '../render/materials';
+import { applyRetroSampling, type RetroMaterials } from '../render/materials';
 import { bitmapTexture } from '../render/bitmap';
 
 const urls = import.meta.glob('../../assets/props/*/*.glb', {
+  query: '?url',
+  import: 'default',
+  eager: true,
+}) as Record<string, string>;
+/** The houses' window masks, `<id>.windows.png` beside the model. */
+const windowUrls = import.meta.glob('../../assets/props/*/*.windows.png', {
   query: '?url',
   import: 'default',
   eager: true,
@@ -119,6 +126,13 @@ export async function loadPropModels(
         grain: 0,
         palette: false,
       });
+      // The window mask lies on the model's own skin, as glTF lays a picture: top row first.
+      const windowUrl = windowUrls[`../../assets/props/${id}/${id}.windows.png`];
+      let windows: Texture | null = null;
+      if (windowUrl) {
+        windows = new Texture(windowUrl, scene, false, false);
+        applyRetroSampling(windows, true);
+      }
       // Meshy paints buildings and stones a little bright for MM6's daylight: a fifth off.
       const lift = sways ? 1 : 0.8;
       const material = materials.create({
@@ -130,6 +144,7 @@ export async function loadPropModels(
         // Walls and roofs lit flat, as MM6's: the bitmap carries the picture, no face
         // brighter than another, no posterised bands across a curve (critics, round 5).
         ...(sways ? {} : { flatLight: true }),
+        ...(windows ? { windows } : {}),
       });
       full.mesh.material = material;
       let far: Mesh | null = null;

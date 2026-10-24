@@ -54,6 +54,9 @@ export interface Weather {
   gust: number;
 }
 
+/** The lamplight behind a house's windows at full night (DESIGN.md 17.6): a candle's gold. */
+const WINDOW_GLOW = new Color3(1, 0.68, 0.32);
+
 const SHADER = 'ftbVertexLit';
 
 ShaderStore.ShadersStore[`${SHADER}VertexShader`] = /* glsl */ `
@@ -225,6 +228,12 @@ uniform sampler2D shadeSampler;
 uniform vec4 shadeRect;
 uniform vec3 sunBlend;
 uniform vec3 ambientColor;
+#endif
+#ifdef WINDOWS
+// The house's lit windows (DESIGN.md 17.6, tools/lib/windows.ts): a grey mask of its panes on
+// its own skin, and the lamplight behind them, which comes up as the day goes.
+uniform sampler2D windowSampler;
+uniform vec3 windowGlow;
 #endif
 uniform vec3 fogColor;
 uniform vec3 tint;
@@ -405,7 +414,12 @@ void main(void) {
     vec3 hv = normalize(normalize(cameraPosition - vWorldPos) - lightDirection);
     sp = floor(pow(max(dot(n, hv), 0.0), 24.0) * 3.0 + 0.5) / 3.0;
   }
-  vec3 c = mix(albedo * tint * light + emissive + paint * 0.9 * sp * vec3(1.0, 0.78, 0.55), vec3(1.0), flash);
+  vec3 lit = emissive;
+#ifdef WINDOWS
+  // The pane's own paint shows through the lamplight, so leading and grain stay.
+  lit += windowGlow * texture2D(windowSampler, vUV).r * (0.6 + dot(albedo, vec3(0.333)));
+#endif
+  vec3 c = mix(albedo * tint * light + lit + paint * 0.9 * sp * vec3(1.0, 0.78, 0.55), vec3(1.0), flash);
   gl_FragColor = vec4(mix(fogColor, c, vFog), 1.0);
 }
 `;
@@ -426,6 +440,11 @@ export interface VertexLitOptions {
   wind?: boolean;
   /** Lit flat, as MM6's walls: no directional shading, the bitmap carries the picture. */
   flatLight?: boolean;
+  /**
+   * A grey mask of the model's window panes on its skin (tools/lib/windows.ts), lit warm at
+   * night by `setWindowGlow`.
+   */
+  windows?: BaseTexture;
   /** A sprite: the quad turns to face the camera and discards its clear pixels. */
   billboard?: boolean;
   /**
@@ -481,6 +500,9 @@ export class RetroMaterials {
   /** The ground shade's three suns by the hour (src/world/ground-shade.ts `sunBlend`). */
   private sunBlend: [number, number, number] = [0, 1, 0];
   private readonly shaded = new Set<ShaderMaterial>();
+  /** How far the houses' windows are lit, 0 by day to 1 at night. */
+  private windowGlow = 0;
+  private readonly windowed = new Set<ShaderMaterial>();
 
   constructor(
     private readonly scene: Scene,
@@ -502,6 +524,7 @@ export class RetroMaterials {
     if (opts.splat?.shade) defines.push('#define GROUNDSHADE');
     if (opts.billboard) defines.push('#define BILLBOARD', '#define ALPHATEST');
     if (opts.detail) defines.push('#define DETAIL');
+    if (opts.windows) defines.push('#define WINDOWS');
     const attributes = [
       'position',
       'normal',
@@ -545,6 +568,7 @@ export class RetroMaterials {
         'gust',
         'shadeRect',
         'sunBlend',
+        'windowGlow',
       ],
       samplers: [
         'diffuseSampler',
@@ -553,11 +577,17 @@ export class RetroMaterials {
         'snowSampler',
         'detailSampler',
         'shadeSampler',
+        'windowSampler',
       ],
       defines,
     });
     mat.setTexture('diffuseSampler', opts.texture);
     if (opts.detail) mat.setTexture('detailSampler', opts.detail);
+    if (opts.windows) {
+      mat.setTexture('windowSampler', opts.windows);
+      mat.setColor3('windowGlow', WINDOW_GLOW.scale(this.windowGlow));
+      this.windowed.add(mat);
+    }
     if (opts.splat) {
       mat.setTexture('pathSampler', opts.splat.path);
       mat.setTexture('screeSampler', opts.splat.scree);
@@ -608,6 +638,7 @@ export class RetroMaterials {
     mat.onDisposeObservable.add(() => {
       this.materials.delete(mat);
       this.shaded.delete(mat);
+      this.windowed.delete(mat);
     });
     mat.backFaceCulling = !opts.doubleSided;
     if (opts.ambient) this.ambientOverride.set(mat, opts.ambient);
@@ -633,6 +664,13 @@ export class RetroMaterials {
   setSunBlend(blend: readonly [number, number, number]): void {
     this.sunBlend = [blend[0], blend[1], blend[2]];
     for (const m of this.shaded) m.setVector3('sunBlend', new Vector3(...this.sunBlend));
+  }
+
+  /** Light the houses' windows: 0 dark by day, 1 lamplit at full night. */
+  setWindowGlow(night: number): void {
+    this.windowGlow = Math.min(1, Math.max(0, night));
+    const glow = WINDOW_GLOW.scale(this.windowGlow);
+    for (const m of this.windowed) m.setColor3('windowGlow', glow);
   }
 
   /** Paint a material white: 0 normal, 1 fully white (hit flash). */

@@ -4,7 +4,9 @@
  * (both faces, no culling). `?inside` draws the inside of every face in flat magenta, so a
  * place where the player would see into the model shows up. `?id=<asset id>` names the model
  * in assets/props; `?front` draws the front alone, square on and to scale, for reading off where
- * a door or a lamp is. The page sets `window.done` once the views are drawn.
+ * a door or a lamp is; `?night&mask=<url>` draws it at night with the panes the window mask
+ * marks lit as the game lights them (tools/lib/windows.ts). The page sets `window.done` once the
+ * views are drawn.
  */
 import '@babylonjs/loaders/glTF/2.0';
 import { Engine } from '@babylonjs/core/Engines/engine';
@@ -24,7 +26,8 @@ const canvas = document.getElementById('view') as HTMLCanvasElement;
 const engine = new Engine(canvas, true, { preserveDrawingBuffer: true });
 const scene = new Scene(engine);
 scene.clearColor = new Color4(0.16, 0.18, 0.21, 1);
-new HemisphericLight('sky', new Vector3(0, 1, 0), scene).intensity = 1.4;
+const sky = new HemisphericLight('sky', new Vector3(0, 1, 0), scene);
+sky.intensity = 1.4;
 
 const folder = query.get('dir') ?? 'props';
 const container = await LoadAssetContainerAsync(`/assets/${folder}/${id}/${id}.glb`, scene);
@@ -51,6 +54,24 @@ if (query.has('inside')) {
     twin.makeGeometryUnique();
     twin.flipFaces(false);
     twin.material = inside;
+  }
+}
+if (query.has('night')) {
+  // A moonlit night, and the lamplight in the panes: the game's gold (src/render/materials.ts
+  // WINDOW_GLOW) on the mask, over the pane's own paint.
+  scene.clearColor = new Color4(0.04, 0.05, 0.09, 1);
+  sky.intensity = 0.22;
+  sky.diffuse = new Color3(0.55, 0.62, 0.9);
+  const mask = query.get('mask');
+  if (mask) {
+    const { Texture } = await import('@babylonjs/core/Materials/Textures/texture');
+    const glow = new Texture(mask, scene, true, false, Texture.NEAREST_SAMPLINGMODE);
+    for (const m of parts) {
+      const mat = m.material as { emissiveTexture?: unknown; emissiveColor?: Color3 } | null;
+      if (!mat) continue;
+      mat.emissiveTexture = glow;
+      mat.emissiveColor = new Color3(1, 0.68, 0.32);
+    }
   }
 }
 const centre = min.add(max).scale(0.5);

@@ -1164,6 +1164,8 @@ export async function startDev(app: App): Promise<DevHandle> {
         // Lanterns and the forge come up as the day goes, and the lanterns' halos with them.
         level.setLiveLights(true, 0.15 + 0.85 * (1 - light.daylight));
         halos.setStrength(1 - light.daylight);
+        // And the houses' windows as the lamps inside are lit (DESIGN.md 17.6).
+        app.materials.setWindowGlow(1 - light.daylight);
         strip.setClock(state.clock.minutes);
       }
     }

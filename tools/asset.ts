@@ -12,6 +12,8 @@
  *   npm run asset -- icon reprocess <nnn> [<asset-id>...]         post-process a batch's pictures again
  *   npm run asset -- inbox <id> <picture>           key the owner's concept picture (fuchsia ground) into the inbox
  *   npm run asset -- run <nnn> [--dry-run] [--force] run an approved batch through Meshy
+ *   npm run asset -- review <id>...                 each model's review sheet in pipeline/work/review/
+ *   npm run asset -- windows <id>... [--accept]     find a house's window panes; --accept takes the mask
  *
  * Only `run` talks to Meshy, and only for an approved batch (`--dry-run` prints the commands).
  */
@@ -47,6 +49,8 @@ import { CHARACTER_TEXTURE_SIZE, inspectGlb } from './lib/postprocess';
 import { MESHY_LICENCE, WORK_DIR, runBatch } from './lib/run';
 import { describeGap } from './lib/quality';
 import { reviewSheets } from './lib/review';
+import { findWindows, writeWindowMask } from './lib/windows';
+import { PROPS } from '../kernel/terrain/props';
 
 /** Where accepted spell icons live; the spellbook looks them up by spell id. */
 const SPELL_ICON_DIR = 'assets/icons/spells';
@@ -439,6 +443,44 @@ async function review(ids: string[]): Promise<void> {
   }
 }
 
+/** Where the window masks wait to be looked at (tools/lib/windows.ts). */
+const WINDOWS_DIR = `${WORK_DIR}/windows`;
+
+async function windows(args: string[]): Promise<void> {
+  // `windows <id>... [--accept]`: each house's window panes found on its skin, the mask written
+  // to pipeline/work/windows/ and drawn lit on the review sheet's night row; once the sheet has
+  // been looked at, `--accept` takes the masks beside the models, where the game lights them.
+  const accept = args.includes('--accept');
+  const ids = args.filter((a) => a !== '--accept');
+  if (!ids.length) fail('windows <asset id>... [--accept]');
+  try {
+    await mkdir(WINDOWS_DIR, { recursive: true });
+    const masks: Record<string, string> = {};
+    for (const id of ids) {
+      const draft = `${WINDOWS_DIR}/${id}.windows.png`;
+      if (accept) {
+        await copyFile(draft, `assets/props/${id}/${id}.windows.png`);
+        console.info(`${id.padEnd(24)} assets/props/${id}/${id}.windows.png`);
+        continue;
+      }
+      const spec = PROPS[id];
+      if (!spec) fail(`${id}: not in the props table`);
+      const mask = await findWindows(`assets/props/${id}/${id}.glb`, spec.height);
+      if (!mask) fail(`${id}: the model has no base colour texture`);
+      await writeWindowMask(mask, draft);
+      masks[id] = draft;
+      const glazed = mask.boxes.filter((b) => b.kind === 'glass').length;
+      console.info(
+        `${id.padEnd(24)} ${glazed} glazed and ${mask.boxes.length - glazed} dark panes  ${draft}`,
+      );
+    }
+    if (accept) return;
+    for (const s of await reviewSheets(ids, masks)) console.info(`${s.id.padEnd(24)} ${s.file}`);
+  } catch (e) {
+    fail(`asset windows: ${e instanceof Error ? e.message : String(e)}`);
+  }
+}
+
 async function run(args: string[]): Promise<void> {
   const number = Number(args[0]);
   if (!Number.isInteger(number)) fail('run <nnn> [--dry-run] [--force]');
@@ -486,6 +528,9 @@ switch (command) {
     break;
   case 'review':
     await review(args);
+    break;
+  case 'windows':
+    await windows(args);
     break;
   default: {
     const size = (await stat('pipeline/style.md')).size;

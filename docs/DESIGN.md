@@ -2651,10 +2651,65 @@ with it, so a second lantern post or smithy needs nothing more.
   particles' soft dot tinted gold, added to what is behind it, nothing by day and strongest at
   night (`src/world/halos.ts`). A forge is a brazier: its light 0.28 m over the coals, and
   flames and smoke from the particle helpers.
-- **Not yet.** Chimney smoke, and windows that glow after dark: the panes are not painted
-  bright, so they need a mask of their own.
+- **Since then**: chimney smoke and windows that glow after dark (17.6).
+
+### 17.6 Chimney smoke and lit windows (owner, 2026-10-24)
+
+"Chimney smoke, window lights and shadows for time of day" (the shadows are 17.4). Like the
+lights, both belong to the models and are found on the models themselves.
+
+- **Chimneys.** `tools/lib/chimney.ts` draws a model's roof from above as a height map, ten
+  centimetres a cell. A chimney is a short column clear of its roof. Its top stands highest
+  within a metre and at least forty centimetres over the ring of roof a metre and a half out;
+  a ridge, as high along itself, never counts. Its top must be under three square metres. The
+  points went into `kernel/terrain/props.ts` as each house's `chimneys` once marked review
+  renders showed them right. The temple's candidate was its spire's cross, and the barn's and
+  stables' were ridge vents, so those three carry none. The plots turn each point with its
+  copy, the region lists them as the level's `smoke`, and level:build writes them to the
+  sidecar.
+- **Smoke** (`chimneySmoke` in `src/world/particles.ts`, `ChimneySmoke` in
+  `src/world/atmosphere.ts`): Babylon's own particles, the particles' soft dot. Each chimney
+  has 36 grey puffs swelling from 0.6 to 3.2 times their size as they rise for five to seven
+  seconds, already rising when the level loads. They lean downwind the way the canopies sway,
+  further in a gust, from the wind sound's gust. Particles take no light, so their grey is
+  scaled by the daylight: pale by day, dim at night, never a white column against a dark sky.
+- **Windows.** Meshy paints panes dark, not bright, so they are found by
+  `tools/lib/windows.ts` on the model's own skin, and checked against the model:
+  - **Glass** is cooler than the timber and plaster round it: bluer than red by twelve tones
+    more than the mean within ten pixels. Grey stone, as cool all over, never counts. A pane's
+    bars are bridged by a pixel, so a window's panes count as one. The panes must carry a blue
+    cast on average, which drops grey stone that only reads cool against brown timber. Only
+    the panes are lit; the leading stays dark.
+  - **Dark panes** sit in a pale wall: under 72 in tone, the wall round them over 105.
+  - **On the model**, a pane must lie on upright faces, at no less than a quarter of the
+    skin's usual pixels a square metre. A patch smeared over a soffit, which once lit a whole
+    gable's underside, is dropped. In metres, a dark pane must be a window's size, at least
+    35 cm each way, which drops a timber post in the plaster; glass may be a hand across.
+  - A solid pane's soft-painted outline is tidied by a pixel; a leaded grid is left as it is.
+- **Checked by eye first.** `npm run asset -- windows <id>...` writes each mask to
+  pipeline/work/windows/ and draws the review sheet with a third row: the eight sides at night
+  with the panes lit. `--accept` puts the looked-at mask beside the model as
+  `<id>.windows.png`, a grey picture of about 4 KB. Five houses have one: the inn, the store,
+  the farmhouse and cottages 1 and 3. Cottage 2's panes are not found, and the smithy, temple,
+  barn and stables show none worth lighting.
+- **Lit at night.** The world shader's `WINDOWS` path reads the mask on the model's skin and
+  adds a candle's gold over the pane's own paint, so leading and curtains still show. It is
+  added after the light, so a wall in the dark keeps its lit window, and it fades with the fog.
+  It comes up as the day goes, as the lanterns do (`setWindowGlow`, from 1 − daylight): faint
+  at sunset, full at night.
+- **Not yet**: the lit panes cast no light on the ground outside; every lit house is lit every
+  night, all night.
 
 ## 13. Decision log
+
+- 2026-10-24 – Chimney smoke, lit windows and shadows that follow the sun (owner: "Then
+  Chimney smoke, window lights and shadows for time of day"; 17.4, 17.6). The ground shade
+  holds three suns' casts, morning, noon and evening, which the terrain shader blends by the
+  hour; it was one cast along the day's average sun. Chimneys are found on each house's roof
+  from its own geometry and smoke with Babylon's particles, leaning with the wind's gusts.
+  Window panes are found on each house's own skin, checked on its faces and sizes and by eye
+  on a night review row, and glow gold from dusk. Loading the shade costs about three times
+  what it did.
 
 - 2026-10-24 – MM6's layout, screen for screen (owner: "I want all menus and UI to be the
   exact same layout as the original"; 16.34). The book shelf at the band's end and the clock
