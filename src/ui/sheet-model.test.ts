@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { afflict } from '../game/conditions';
 import { freshState } from '../game/fixtures';
 import {
+  damageRange,
   raise,
   raiseMessage,
   sheetView,
@@ -92,5 +93,12 @@ describe('skills on the sheet', () => {
     expect(knight.skillPoints).toBe(3);
     expect(raiseMessage(r, 'sword')).toBe('Sword is now level 2 (3 points left).');
     expect(raiseMessage(raise(knight, 'plate'), 'plate')).toBe('Plate is not learnt.');
+  });
+});
+
+describe('damage as MM6 gave it', () => {
+  it('runs from the least roll to the most, the bonus on both', () => {
+    expect(damageRange({ count: 3, sides: 3, bonus: 7 })).toBe('10 - 16');
+    expect(damageRange({ count: 1, sides: 6 })).toBe('1 - 6');
   });
 });

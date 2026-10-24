@@ -1,17 +1,29 @@
-/* The HUD band (src/ui/hud.ts): MM6's marble foot. Four cells recessed into the marble, each a
-   gold oval frame round the member, their name in a dark slot under it, a green hit point tube
-   and a blue spell point tube in recessed slots beside it, a condition gem in its socket above
-   them; the clock in a slot at the left, the book shelf in its alcove at the right. Every
-   piece is painted by paint.ts at its size (`data-paint`), lit from the top left. Sized for
-   932 × 430 CSS px in landscape with the safe areas; one CSS px to the UI pixel, the view's.
-   The band stands at MM6's share of the screen, its ovals MM6's (owner, 2026-10-18). */
+/* MM6's frame (src/ui/hud.ts, panel.ts; DESIGN.md 16.34), as its 640 by 480 laid it out: the
+   view at the top left between two marble pillars under a lintel; under it the band, MM6's
+   message bar along its top and the four members below; at the right, past a third pillar
+   that stands between them, the panel the screen's height: the minimap in its arch, the two
+   windows, the clock, the books, the purse and the four ovals. Every piece is painted by
+   paint.ts at its size (`data-paint`), lit from the top left. Sized for 932 × 430 CSS px in
+   landscape with the safe areas (59 pixels each side, 21 below on the phone); one CSS px to the
+   UI pixel, the view's. The band stands at MM6's share of the screen, its ovals MM6's (owner,
+   2026-10-18). */
+:root {
+  /* The frame's measures: a pillar, the panel between its pillars, the band, the lintel. */
+  --pillar: 15px;
+  --panel: 128px;
+  --band: 114px;
+  --lintel: 7px;
+  /* The view's box, from the screen's edges: the screens open in it (ui.css .ui-modal). */
+  --view-left: calc(var(--sal) + var(--pillar));
+  --view-right: calc(var(--sar) + 2 * var(--pillar) + var(--panel));
+  --view-bottom: calc(var(--sab) + var(--band));
+}
 .hud {
   position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  height: calc(var(--sab) + 114px);
-  padding: 0 var(--sar) var(--sab) var(--sal);
+  left: var(--view-left);
+  right: var(--view-right);
+  bottom: var(--sab);
+  height: var(--band);
   pointer-events: none;
   z-index: 25;
   background: var(--stone) 0 0 / var(--stone-size);
@@ -24,131 +36,38 @@
   position: absolute;
   left: 0;
   right: 0;
-  bottom: calc(var(--sab) + 1px);
+  bottom: 1px;
   height: 2px;
   background: linear-gradient(rgb(49, 48, 41) 0 1px, rgb(74, 73, 66) 1px 2px);
   z-index: 1;
   pointer-events: none;
 }
-.hud-rail {
-  /* The band's stone lip along its top edge. */
+/* MM6's message bar (reference mm6-hud-town: thirteen rows of darkened marble along the band's
+   top, the width of the view): status.ts writes in it. */
+.hud-say {
   position: absolute;
-  left: 0;
-  right: 0;
-  top: 0;
-  /* MM6's edge (critics, round 8): a two-row lip, a groove, a trough of five rows. */
-  height: 12px;
-  background: var(--paint) 0 0 / auto 100% repeat-x;
-  image-rendering: pixelated;
-}
-.hud-clock {
-  /* A recessed plaque with a dark border (paint.ts `slot`), the hour in bold gold with a dark
-     outline (critics, round 5). */
-  position: absolute;
-  /* On the UI pixel grid (critics, round 10): every box a whole number of UI pixels. */
-  left: calc(var(--sal) + 4px);
-  top: 15px;
-  width: 76px;
-  padding: 6px 0 4px;
-  text-align: center;
-  pointer-events: none;
+  left: 3px;
+  right: 3px;
+  top: 3px;
+  height: 18px;
   background: var(--paint) center / 100% 100% no-repeat;
   image-rendering: pixelated;
-}
-.hud-clock-time {
-  /* The hour in MM6's yellow well numerals (paint.ts `paintNumerals`), set from the left by a
-     whole-pixel margin (hud.ts), so a centring never lands on half a pixel. */
-  display: flex;
-  justify-content: flex-start;
-  height: 15px;
-  padding-top: 1px;
 }
 .hud-numerals {
   display: block;
   image-rendering: pixelated;
 }
-.hud-clock-date {
-  font:
-    italic 18px/20px 'Tinos',
-    Georgia,
-    serif;
-  color: #ffffff;
-  letter-spacing: 1px;
-}
-/* The gold and the food (hud.ts `setPurse`; interface.md 8.7): MM6's number well of the band's
-   marble darkened by a third (paint.ts `plaque`) under the clock, as wide, the coin stack and
-   the apple at the left (paint.ts `coins`, `apple`) and the count in the clock's yellow well
-   numerals at the right, so the figures stand in a column. Every box a whole UI pixel; the
-   portraits do not move. */
-.hud-purse {
-  position: absolute;
-  left: calc(var(--sal) + 4px);
-  top: 64px;
-  width: 76px;
-  box-sizing: border-box;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  /* Three pixels each side inside the well's lips: the coins and six figures, 12 and 58
-     pixels, fill its 70 exactly. */
-  padding: 6px 3px 5px 3px;
-  pointer-events: none;
-  background: var(--paint) center / 100% 100% no-repeat;
-  image-rendering: pixelated;
-}
-.hud-purse[hidden] {
-  display: none;
-}
-.hud-purse-row {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  height: 13px;
-}
-.hud-purse-glyph {
-  flex: none;
-  width: 12px;
-  height: 13px;
-  background: var(--paint) center / 100% 100% no-repeat;
-  image-rendering: pixelated;
-}
-.hud-purse-figures {
-  display: flex;
-  justify-content: flex-end;
-  height: 13px;
-}
 .hud-band {
-  /* The four members on one marble surface with a seam round each (paint.ts `recess`); a
-     gold rail runs along the ovals' top as MM6's does; sized to fit the phone's safe areas
-     with the clock at the left and the shelf at the right. */
-  position: relative;
-  display: flex;
-  justify-content: flex-start;
-  align-items: stretch;
-  gap: 4px;
-  height: 102px;
-  margin: 12px 0 0 88px;
-  /* The cells start a whole number of UI pixels in (critics, round 10: one grid), close to
-     the clock, so all four clear the shelf inside the phone's safe areas (59 pixels each
-     side in landscape; owner's phone, 2026-10-18: the fourth's tubes were under the books). */
-  padding: 0 0 0 10px;
-}
-.hud-band::before {
-  /* MM6's cell top run across the gaps and over the clock: one light, one dark, one gold row
-     (HUD critic, rounds 12 and 14). */
-  content: '';
+  /* The four members on one marble surface, each in a recessed cell (paint.ts `recess`), the
+     cells tiling the band as MM6's four tile its 462 pixels, under the message bar. */
   position: absolute;
-  left: -88px;
+  left: 0;
   right: 0;
-  top: 0;
-  height: 3px;
-  background: linear-gradient(
-    to bottom,
-    rgb(181, 178, 173) 0 1px,
-    rgb(99, 93, 90) 1px 2px,
-    rgb(156, 134, 74) 2px 3px
-  );
-  pointer-events: none;
+  top: 23px;
+  bottom: 0;
+  display: flex;
+  align-items: stretch;
+  gap: 0;
 }
 .hud-cell {
   position: relative;
@@ -156,10 +75,10 @@
   display: flex;
   align-items: flex-start;
   gap: 4px;
-  /* The oval, the gap and the tubes, 102 pixels, with two to spare: 110 apart, MM6's 113. */
-  width: 106px;
-  flex: 0 0 106px;
-  padding: 8px 6px 0;
+  /* A quarter of the band each, the oval at its left and the tubes beside it, as MM6's. */
+  flex: 1 1 0;
+  min-width: 0;
+  padding: 0 6px 0 8px;
   background: var(--paint) center / 100% 100% no-repeat;
   image-rendering: pixelated;
   border: 0;
@@ -212,13 +131,13 @@
   flex-direction: column;
   align-items: center;
   gap: 0;
-  margin-top: 6px;
+  margin-top: 12px;
 }
 .hud-gem {
   /* MM6's upright lit stone beside the oval's top, eight by eleven (paint.ts `gem`). */
   position: absolute;
-  top: -11px;
-  left: -8px;
+  top: -12px;
+  left: 3px;
   width: 8px;
   height: 11px;
   background: var(--paint) center / 100% 100% no-repeat;
@@ -241,7 +160,7 @@
      (owner, 2026-10-18), at the band's share: six by seventy-eight, the track between the
      caps' five rows, the slot's light lip over a few rows of marble before the foot. */
   width: 6px;
-  height: 78px;
+  height: 74px;
   background: var(--paint) center / 100% 100% no-repeat;
   image-rendering: pixelated;
 }
@@ -273,29 +192,19 @@
   transition: height 180ms ease-out;
 }
 
-/* The status line (src/ui/status.ts): a narrow stone bar on the band's top edge. */
+/* The status line (src/ui/status.ts): its words in MM6's message bar (`.hud-say`), white with a
+   hard shadow, centred, a sentence at a time. */
 .status-line {
   position: absolute;
-  left: calc(var(--sal) + 60px);
-  right: calc(var(--sar) + 300px);
-  bottom: calc(var(--sab) + 117px);
-  height: 30px;
+  left: calc(var(--view-left) + 6px);
+  right: calc(var(--view-right) + 6px);
+  bottom: calc(var(--view-bottom) - 21px);
+  height: 18px;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 0 12px;
   pointer-events: none;
   z-index: 26;
-  background:
-    linear-gradient(rgba(40, 32, 24, 0.35), rgba(20, 16, 12, 0.5)),
-    var(--stone) 0 0 / var(--stone-size);
-  image-rendering: pixelated;
-  border: 0;
-  box-shadow:
-    inset 0 1px 0 rgba(255, 250, 240, 0.5),
-    inset 1px 0 0 rgba(255, 250, 240, 0.4),
-    inset 0 -1px 0 rgba(0, 0, 0, 0.6),
-    inset -1px 0 0 rgba(0, 0, 0, 0.5);
   opacity: 0;
   transition: opacity 200ms ease-out;
 }
@@ -304,45 +213,51 @@
 }
 .status-text {
   font:
-    italic 18px/1 'Tinos',
+    italic 16px/18px 'Tinos',
     Georgia,
     serif;
-  color: #f0d060;
+  color: #ffffff;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-/* The view framed by two marble pillars and a lintel, as MM6 framed its window: each pillar a
-   cylinder of marble sixteen pixels wide with a capital and a plinth ringed in gold. */
+/* The frame's pillars: marble cylinders fifteen pixels wide with a capital and a plinth ringed
+   in gold, standing the screen's height from the top to the bottom inset, at each side and
+   between the view and the panel, as MM6's three. */
 .view-pillar {
   position: absolute;
   top: 0;
-  bottom: calc(var(--sab) + 114px);
+  bottom: var(--sab);
   /* MM6's shaft (reference mm6-outdoor-field: fifteen of 640 columns): fifteen pixels, lit
      at the left to shade at the right. */
-  width: 15px;
+  width: var(--pillar);
   pointer-events: none;
-  z-index: 24;
+  z-index: 27;
   background: var(--paint) 0 0 / 100% auto repeat-y;
   image-rendering: pixelated;
 }
 .view-pillar.left {
   left: var(--sal);
 }
-/* The band's marble carried up outside each pillar over the phone's safe area to the screen's
-   edge (owner, 2026-10-18: the view showed past the pillars). Each runs the band's width,
-   clipped to its strip, its tile ending at the band's top, so the veins run on into the
-   band's as one slab. */
+.view-pillar.mid {
+  right: calc(var(--sar) + var(--pillar) + var(--panel));
+}
+.view-pillar.right {
+  right: var(--sar);
+  /* Lit from the same side as the left one, mirrored (critics, round 10). */
+  transform: scaleX(-1);
+}
+/* The band's marble carried outside the side pillars over the phone's safe areas to the
+   screen's edges, and under everything over the bottom inset (owner, 2026-10-18: the view
+   showed past the pillars). Each covers the whole screen clipped to its strip, so the veins
+   run on from one to the next. */
 .view-margin {
   position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: calc(var(--sab) + 114px);
+  inset: 0;
   pointer-events: none;
   z-index: 24;
-  background: var(--stone) 0 100% / var(--stone-size);
+  background: var(--stone) 0 0 / var(--stone-size);
   image-rendering: pixelated;
 }
 .view-margin.left {
@@ -351,10 +266,8 @@
 .view-margin.right {
   clip-path: inset(0 0 0 calc(100% - var(--sar)));
 }
-.view-pillar.right {
-  right: var(--sar);
-  /* Lit from the same side as the left one, mirrored (critics, round 10). */
-  transform: scaleX(-1);
+.view-margin.foot {
+  clip-path: inset(calc(100% - var(--sab)) 0 0 0);
 }
 .view-capital,
 .view-plinth {
@@ -382,11 +295,245 @@
 .view-lintel {
   position: absolute;
   top: 0;
-  left: var(--sal);
-  right: var(--sar);
-  height: 7px;
+  left: var(--view-left);
+  right: var(--view-right);
+  height: var(--lintel);
   pointer-events: none;
   z-index: 23;
   background: var(--paint) 0 0 / auto 100% repeat-x;
   image-rendering: pixelated;
+}
+
+/* The panel (src/ui/panel.ts), MM6's right-hand column top to bottom: each piece at its own
+   place in whole pixels, the marble behind all but the arch's crown, where the sky shows past
+   the arch as in MM6. */
+.panel {
+  position: absolute;
+  top: 0;
+  right: calc(var(--sar) + var(--pillar));
+  width: var(--panel);
+  bottom: var(--sab);
+  z-index: 25;
+  pointer-events: none;
+}
+.panel::before,
+.panel::after {
+  /* The marble below the arch's crown: down to the purse, and the purse and the ovals'. */
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 43px;
+  height: 257px;
+  background: var(--stone) -40px 0 / var(--stone-size);
+  image-rendering: pixelated;
+  z-index: 0;
+}
+.panel::after {
+  top: 300px;
+  height: auto;
+  bottom: 0;
+  background-position: -40px -257px;
+}
+/* Covered by a screen or a house's board, what it covers is put away, so a window cut in the
+   board shows the view's canvas through it. */
+.panel.covered::before,
+.panel.covered > .panel-map,
+.panel.covered > .panel-glass,
+.panel.covered > .panel-clock,
+.panel.covered > .panel-books {
+  visibility: hidden;
+}
+.panel > * {
+  position: absolute;
+  z-index: 1;
+  pointer-events: auto;
+}
+.panel-map {
+  left: 0;
+  top: 0;
+  width: 128px;
+  height: 120px;
+  pointer-events: none;
+}
+.panel-minimap,
+.panel-arch {
+  position: absolute;
+  inset: 0;
+  width: 128px;
+  height: 120px;
+  image-rendering: pixelated;
+}
+.panel-arch {
+  background: var(--paint) center / 100% 100% no-repeat;
+}
+/* The heading on the compass plate, MM6's black capitals. */
+.panel-wind {
+  position: absolute;
+  left: 41px;
+  top: 3px;
+  width: 46px;
+  height: 14px;
+  text-align: center;
+  font:
+    bold 12px/14px 'Tinos',
+    Georgia,
+    serif;
+  color: #101010;
+}
+.panel-zoom {
+  position: absolute;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 0;
+  background: none;
+  pointer-events: auto;
+}
+.panel-zoom:active {
+  background: rgba(0, 0, 0, 0.15);
+}
+.panel-glass {
+  left: 4px;
+  top: 124px;
+  width: 120px;
+  height: 64px;
+  display: flex;
+  justify-content: space-between;
+  pointer-events: none;
+}
+.panel-pane {
+  width: 58px;
+  height: 64px;
+  background: var(--paint) center / 100% 100% no-repeat;
+  image-rendering: pixelated;
+}
+/* The clock in a darkened well of the marble: the hour in MM6's yellow numerals, the day in
+   the white italic beside it. */
+.panel-clock {
+  left: 4px;
+  top: 192px;
+  width: 120px;
+  height: 22px;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 6px 0 7px;
+  pointer-events: none;
+  background: var(--paint) center / 100% 100% no-repeat;
+  image-rendering: pixelated;
+}
+.panel-clock-time {
+  display: flex;
+  height: 12px;
+}
+.panel-clock-day {
+  font:
+    italic 15px/18px 'Tinos',
+    Georgia,
+    serif;
+  color: #ffffff;
+}
+/* The books on MM6's shelf: four spines in a dark alcove a pixel apart. */
+.panel-books {
+  left: 2px;
+  top: 218px;
+  width: 124px;
+  height: 80px;
+  box-sizing: border-box;
+  display: flex;
+  gap: 1px;
+  padding: 6px 4px 5px;
+  background: var(--paint) center / 100% 100% no-repeat;
+  image-rendering: pixelated;
+}
+.panel-book {
+  flex: 1 1 0;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: var(--paint) center / 100% 100% no-repeat;
+  image-rendering: pixelated;
+}
+.panel-book:active {
+  transform: translateY(2px);
+  filter: brightness(0.8);
+}
+/* The food beside its apple and the gold beside its coins, MM6's row under the books. */
+.panel-purse {
+  left: 0;
+  top: 302px;
+  width: 128px;
+  height: 24px;
+  pointer-events: none;
+}
+.panel-purse > * {
+  position: absolute;
+  background: var(--paint) center / 100% 100% no-repeat;
+  image-rendering: pixelated;
+}
+.panel-apple {
+  left: 2px;
+  top: 4px;
+  width: 16px;
+  height: 17px;
+}
+.panel-well {
+  top: 3px;
+  height: 18px;
+  box-sizing: border-box;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  padding: 0 4px;
+}
+.panel-well.food {
+  left: 20px;
+  width: 32px;
+}
+.panel-well.gold {
+  left: 55px;
+  width: 54px;
+}
+.panel-coins {
+  left: 110px;
+  top: 5px;
+  width: 16px;
+  height: 14px;
+}
+/* The four gold ovals: cast, rest, quick reference, options. */
+.panel-ovals {
+  left: 2px;
+  top: 330px;
+  width: 124px;
+  height: 64px;
+  display: flex;
+  justify-content: space-between;
+}
+.panel-oval {
+  width: 29px;
+  height: 64px;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: var(--paint) center / 100% 100% no-repeat;
+  image-rendering: pixelated;
+}
+.panel-oval:active {
+  transform: translateY(1px);
+  filter: brightness(1.15);
+}
+/* What a screen draws over the panel (a member's figure, a house's board), down to the purse. */
+.panel-cover {
+  left: 0;
+  top: 0;
+  width: 128px;
+  height: 300px;
+  z-index: 3;
+  display: none;
+}
+.panel.covered .panel-cover {
+  display: block;
 }

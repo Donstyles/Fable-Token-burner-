@@ -1,11 +1,16 @@
 import { expect, test } from '@playwright/test';
 
 /**
- * The band inside the phone's safe areas (owner's phone, 2026-10-18: with the notch's inset
- * the fourth member's tubes sat under the book shelf). Desktop browsers report no insets, so
- * the iPhone 14 Pro Max's landscape ones, 59 pixels each side and 21 below, are forced.
+ * MM6's frame inside the phone's safe areas (DESIGN.md 16.34; owner's phone, 2026-10-18: with the
+ * notch's inset the fourth member's tubes sat under the book shelf). Desktop browsers report no
+ * insets, so the iPhone 14 Pro Max's landscape ones, 59 pixels each side and 21 below, are
+ * forced. The band lies between the side pillar and the middle one, each member's cell in it;
+ * the panel between the middle pillar and the right one, every piece of it inside, the ovals
+ * above the bottom inset.
  */
-test('every member cell clears the shelf and the clock inside the safe areas', async ({ page }) => {
+test('the band and the panel stand between their pillars inside the safe areas', async ({
+  page,
+}) => {
   test.setTimeout(120_000);
   await page.goto('dev/?dev&lite&level=showcase&seed=11');
   await page.waitForFunction(
@@ -21,24 +26,45 @@ test('every member cell clears the shelf and the clock inside the safe areas', a
   await page.waitForTimeout(500);
   const box = await page.evaluate(() => {
     const r = (el: Element | null): DOMRect => el!.getBoundingClientRect();
-    const cells = Array.from(document.querySelectorAll('.hud-cell'), (c) => r(c));
-    const tubes = Array.from(document.querySelectorAll('.hud-tubes'), (c) => r(c));
+    const all = (s: string): DOMRect[] => Array.from(document.querySelectorAll(s), (e) => r(e));
     return {
-      cells: cells.map((c) => ({ left: c.left, right: c.right })),
-      tubesRight: Math.max(...tubes.map((t) => t.right)),
-      shelfLeft: r(document.querySelector('.ui-shelf')).left,
-      clockRight: r(document.querySelector('.hud-clock')).right,
+      cells: all('.hud-cell').map((c) => ({ left: c.left, right: c.right })),
+      tubesRight: Math.max(...all('.hud-tubes').map((t) => t.right)),
+      band: r(document.querySelector('.hud')),
+      left: r(document.querySelector('.view-pillar.left')),
+      mid: r(document.querySelector('.view-pillar.mid')),
+      right: r(document.querySelector('.view-pillar.right')),
+      panel: r(document.querySelector('.panel')),
+      pieces: all(
+        '.panel-map, .panel-glass, .panel-clock, .panel-books, .panel-purse, .panel-ovals',
+      ),
+      ovals: all('.panel-oval'),
     };
   });
+  expect(box.left.left).toBe(59);
+  expect(box.right.right).toBe(932 - 59);
   expect(box.cells).toHaveLength(4);
-  expect(box.cells[0]!.left).toBeGreaterThanOrEqual(box.clockRight);
-  expect(box.cells.at(-1)!.right).toBeLessThanOrEqual(box.shelfLeft);
-  expect(box.tubesRight).toBeLessThanOrEqual(box.shelfLeft);
+  expect(box.band.left).toBeGreaterThanOrEqual(box.left.right);
+  expect(box.band.right).toBeLessThanOrEqual(box.mid.left);
+  expect(box.band.bottom).toBeLessThanOrEqual(430 - 21);
+  for (const c of box.cells) {
+    expect(c.left).toBeGreaterThanOrEqual(box.band.left);
+    expect(c.right).toBeLessThanOrEqual(box.band.right);
+  }
+  expect(box.tubesRight).toBeLessThanOrEqual(box.band.right);
+  expect(box.panel.left).toBeGreaterThanOrEqual(box.mid.right);
+  expect(box.panel.right).toBeLessThanOrEqual(box.right.left);
+  for (const p of box.pieces) {
+    expect(p.left).toBeGreaterThanOrEqual(box.panel.left - 0.5);
+    expect(p.right).toBeLessThanOrEqual(box.panel.right + 0.5);
+    expect(p.bottom).toBeLessThanOrEqual(430 - 21);
+  }
+  expect(box.ovals).toHaveLength(4);
 });
 
 /**
  * The view inside the frame (owner's phone, 2026-10-18: the world showed outside the pillars,
- * over the safe areas): from each screen edge to its pillar, top to band, the marble covers
+ * over the safe areas): from each screen edge to its pillar, top to bottom, the marble covers
  * it, so hiding the view changes nothing there.
  */
 test('the marble covers the safe areas outside the pillars', async ({ page }) => {
@@ -59,7 +85,7 @@ test('the marble covers the safe areas outside the pillars', async ({ page }) =>
     return {
       left: r('.view-pillar.left').left,
       right: r('.view-pillar.right').right,
-      bandTop: r('.hud').top,
+      bandTop: innerHeight,
       width: innerWidth,
     };
   });

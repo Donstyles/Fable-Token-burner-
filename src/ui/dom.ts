@@ -126,15 +126,19 @@ export interface Frame {
   message(text: string): void;
 }
 
-export function createFrame(title: string, onClose: () => void): Frame {
+export function createFrame(
+  title: string,
+  onClose: () => void,
+  say?: (text: string) => void,
+): Frame {
   const root = el('div', 'ui-modal');
   const panel = el('div', 'ui-panel');
   panel.dataset['paint'] = 'marble-frame';
   const head = el('div', 'ui-head');
   const titleNode = el('h1', 'ui-title', title);
   const aside = el('div', 'ui-aside');
-  const say = el('div', 'ui-say');
-  say.setAttribute('role', 'status');
+  const line = el('div', 'ui-say');
+  line.setAttribute('role', 'status');
   head.append(titleNode, aside);
   const body = el('div', 'ui-body');
   const foot = el('div', 'ui-foot');
@@ -144,7 +148,7 @@ export function createFrame(title: string, onClose: () => void): Frame {
   const close = button('', onClose, { className: 'ui-close' });
   close.setAttribute('aria-label', 'Close');
   close.title = 'Close';
-  foot.append(say, bar, close);
+  foot.append(line, bar, close);
   panel.append(head, body, foot);
   root.appendChild(panel);
   return {
@@ -156,8 +160,13 @@ export function createFrame(title: string, onClose: () => void): Frame {
       titleNode.textContent = t;
     },
     message(text) {
-      say.textContent = text;
-      say.classList.toggle('shown', text.length > 0);
+      // MM6's message bar on the band when the runtime has one (DESIGN.md 16.34).
+      if (say) {
+        if (text) say(text);
+        return;
+      }
+      line.textContent = text;
+      line.classList.toggle('shown', text.length > 0);
     },
   };
 }

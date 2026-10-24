@@ -55,11 +55,16 @@ test.describe('talk', () => {
       { timeout: 30_000 },
     );
     if (info.project.name.startsWith('iphone')) {
-      // The tap path: he stands at the centre of the view. Software GL in CI draws a frame a
-      // second, so the tap is tried a few times until the pick lands.
+      // The tap path: he stands at the centre of the view, which MM6's frame puts at the top
+      // left between the pillars and over the band (DESIGN.md 16.34). Software GL in CI draws a
+      // frame a second, so the tap is tried a few times until the pick lands.
+      const centre = await page.evaluate(() => {
+        const band = document.querySelector('.hud')!.getBoundingClientRect();
+        return { x: band.left + band.width / 2, y: band.top / 2 };
+      });
       let opened = false;
       for (let i = 0; i < 6 && !opened; i++) {
-        await page.mouse.click(466, 215);
+        await page.mouse.click(centre.x, centre.y);
         opened = await page
           .waitForFunction(() => (window as unknown as W).ftb!.dev!.dialogue.isOpen(), null, {
             timeout: 5_000,
@@ -113,7 +118,9 @@ test.describe('talk', () => {
     expect(
       await page.evaluate(() => (window as unknown as W).ftb!.dev!.bust.showing === null),
     ).toBe(true);
-    await expect(page.locator('.ui-shelf')).toBeVisible();
+    // The board leaves the panel: its books show again.
+    await expect(page.locator('.panel-books')).toBeVisible();
+    await expect(page.locator('.dlg-wood')).toHaveCount(0);
 
     // The quest log shows it.
     await page.evaluate(() => (window as unknown as W).ftb!.dev!.screens.open('quests'));

@@ -1,10 +1,12 @@
 /**
- * The spellbook screen (Phase 5 step 10), as MM6's open book (DESIGN.md 16.22, 16.33): the
- * member's schools as bookmarks down the right edge, the open school named in the title with
- * the member's rank and points beside it, and its page with a place for each of its eleven
- * spells, the known ones with picture and name, dim when they cannot be cast, a tap giving
- * the reason. A member spell waits for a portrait tap. A cast pays the points and hands the
- * effects to the runtime through `hooks.onCast`.
+ * The spellbook screen (Phase 5 step 10), as MM6's open book (DESIGN.md 16.22, 16.34;
+ * reference mm6-spellbook): the member's schools as bookmarks down the right edge, and the open
+ * school's page, three places across and four down: the first holds the school, where MM6 hung
+ * its picture (the name, the member's rank and their points, until the owner's school pictures
+ * come), the other eleven a place for each of its spells by level, the known ones with picture
+ * and name, dim when they cannot be cast, a tap giving the reason. A member spell waits for a
+ * portrait tap. A cast pays the points and hands the effects to the runtime through
+ * `hooks.onCast`.
  */
 import { type Character, maxSp } from '../game/character';
 import type { MagicSchool } from '../game/skills';
@@ -36,9 +38,9 @@ function iconOf(id: string): string | null {
   return ICONS[`../../assets/icons/spells/${id}.png`] ?? null;
 }
 
-/** MM6's book keeps a place for each of a school's eleven spells, by level, six to a row. */
+/** MM6's book keeps a place for each of a school's eleven spells, by level, three to a row. */
 const PLACES = 11;
-const PER_ROW = 6;
+const PER_ROW = 3;
 
 /**
  * The school's name, the member's rank in it and their spell points, in the head beside the
@@ -149,6 +151,13 @@ export function renderSpellbook(ctx: ScreenContext): void {
 
   const page = (c: Character, tab: SchoolTab | null): HTMLElement => {
     const grid = el('div', 'spell-page');
+    // The first place is the school's, as MM6's picture: its name, the rank and the points.
+    const head = el('div', 'spell-school');
+    head.append(
+      el('div', 'spell-school-name', tab ? `${tab.label} Magic` : 'Spellbook'),
+      el('div', 'spell-school-line', schoolLine(c, tab)),
+    );
+    grid.appendChild(head);
     const rows = tab ? spellRows(c, tab.school) : [];
     for (let level = 1; level <= PLACES; level++) {
       const row = rows.find((r) => r.level === level);
@@ -179,11 +188,10 @@ export function renderSpellbook(ctx: ScreenContext): void {
     const tab = tabs.find((t) => t.school === school) ?? null;
     // The title at the page's top left, as every screen's: the open school, or the book.
     frame.setTitle(tab ? `${tab.label} Magic` : 'Spellbook');
-    frame.aside.textContent = schoolLine(c, tab);
     frame.body.replaceChildren(page(c, tab));
   };
 
-  // Six places across whatever page the phone leaves (layout-model.ts `spellPlace`).
+  // Three places across whatever page the phone leaves (layout-model.ts `spellPlace`).
   const fit = (): void => {
     const cs = getComputedStyle(frame.body);
     const width = frame.body.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);

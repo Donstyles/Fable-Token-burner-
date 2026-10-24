@@ -24,7 +24,7 @@ import { bakeVertexLight } from '../kernel/light/bake';
 import { buildNavMesh, checkReachability } from '../kernel/nav/navmesh';
 import { buildLevelGlb } from '../kernel/export/glb';
 import { buildRegion, type RegionScript } from '../kernel/terrain/region';
-import { writeMapSheet } from './lib/map-sheet';
+import { writeMapSheet, writeMiniMap } from './lib/map-sheet';
 import { TREE_KINDS } from '../kernel/terrain/trees';
 import { existsSync } from 'node:fs';
 
@@ -174,6 +174,8 @@ async function buildRegionLevel(id: string, validate: boolean): Promise<boolean>
   await writeFile(resolve(OUT, `${id}.nav.bin`), nav.bytes);
   // The map sheet: the region from above, for the owner's review and the automap.
   await writeMapSheet(level, resolve(OUT, `${id}.map.png`));
+  // The minimap's picture (src/ui/panel.ts).
+  await writeMiniMap(level, resolve(OUT, `${id}.mini.png`));
   console.info(
     [
       `${id}: ${sidecar.stats.triangles} terrain tris at full detail, ${level.trees.length} trees ` +

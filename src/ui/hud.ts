@@ -1,17 +1,20 @@
 /**
- * The HUD (DESIGN.md 9): MM6's marble band along the foot of the view. Four gold oval frames
- * hold the party, each with the member's portrait (the owner's, cut by tools/portrait.ts,
- * DESIGN.md 12.2) or, until theirs comes, their class sigil painted in gold pixels (paint.ts
- * `sigil-<class>`), a green hit point tube and a blue spell point tube standing beside the
- * frame, and a condition gem above them. A tap on a frame selects that member; a second tap
- * opens their sheet.
+ * The HUD (DESIGN.md 9, 16.34): MM6's frame round the view, as its 640 by 480 laid it out. Three
+ * marble pillars stand the screen's height, one at each side and one between the view and the
+ * right-hand panel (panel.ts: the minimap, the books, the purse and the four ovals); a lintel
+ * runs over the view; under the view the band holds MM6's message bar (status.ts) and the party.
+ * Four gold oval frames hold the party, each with the member's portrait (the owner's, cut by
+ * tools/portrait.ts, DESIGN.md 12.2) or, until theirs comes, their class sigil painted in gold
+ * pixels (paint.ts `sigil-<class>`), a green hit point tube and a blue spell point tube standing
+ * beside the frame, and a condition gem above them. A tap on a frame selects that member; a
+ * second tap opens their sheet.
  */
 import type { Party } from '../game/party';
 import { maxSp } from '../game/character';
 import { worstCondition, type ConditionId } from '../game/conditions';
-import { formatDate, formatTime } from '../game/time';
 import { el } from './dom';
-import { installPaint, installPaintedButtons, paintNumerals } from './paint';
+import { installPaint, installPaintedButtons } from './paint';
+import { createPanel, type Panel, type PanelHooks } from './panel';
 import { installPixelText, PX } from './pixel-text';
 import './hud.css';
 
@@ -23,12 +26,14 @@ const PORTRAITS = import.meta.glob('../../assets/portraits/*/*.png', {
 }) as Record<string, string>;
 
 /** An appearance's portrait in an expression, if it has been cut. */
-function portraitOf(appearance: string, expression = 'neutral'): string | null {
+export function portraitOf(appearance: string, expression = 'neutral'): string | null {
   return PORTRAITS[`../../assets/portraits/${appearance}/${expression}.png`] ?? null;
 }
 
 export interface Hud {
   update(now: number): void;
+  /** The right-hand panel (panel.ts). */
+  panel: Panel;
   /** Show the game clock (minutes since the start of the calendar). */
   setClock(minutes: number): void;
   /**
@@ -39,7 +44,7 @@ export interface Hud {
   dispose(): void;
 }
 
-/** The most the purse's well shows: six figures fit its 76 pixels beside the coins. */
+/** The most the purse's well shows: six figures fit the gold's well beside the coins. */
 const PURSE_MAX = 999_999;
 
 /** A count as the well shows it: whole, never below nothing, at most six figures. */
@@ -48,7 +53,7 @@ export function purseFigure(n: number): string {
   return String(Math.max(0, Math.min(PURSE_MAX, v)));
 }
 
-export interface HudHooks {
+export interface HudHooks extends PanelHooks {
   /** A tap on an already selected member. */
   onOpenSheet(index: number): void;
   /** A tap that selects a member: the open screen, if any, turns to them (DESIGN.md 16.15). */
@@ -79,13 +84,14 @@ export function createHud(parent: HTMLElement, party: Party, hooks: HudHooks): H
   installPaint();
   installPaintedButtons(parent);
   installPixelText(parent);
-  // The window's frame: two marble pillars with capitals and plinths, and a lintel; outside
-  // each pillar the band's marble fills the phone's safe area to the screen's edge, so the
-  // view never shows past the frame (owner, 2026-10-18).
-  for (const side of ['left', 'right'] as const) {
+  // The frame: outside each side pillar the band's marble fills the phone's safe area to the
+  // screen's edge, so the view never shows past the frame (owner, 2026-10-18), and a strip of
+  // it runs under everything over the bottom inset; three pillars with capitals and plinths
+  // stand the screen's height, as MM6's (hud.css); a lintel runs over the view.
+  for (const side of ['left', 'right', 'foot'] as const) {
     parent.appendChild(el('div', `view-margin ${side}`));
   }
-  for (const side of ['left', 'right'] as const) {
+  for (const side of ['left', 'mid', 'right'] as const) {
     const pillar = el('div', `view-pillar ${side}`);
     pillar.dataset['paint'] = 'pillar';
     const capital = el('div', 'view-capital');
@@ -98,67 +104,12 @@ export function createHud(parent: HTMLElement, party: Party, hooks: HudHooks): H
   const lintel = el('div', 'view-lintel');
   lintel.dataset['paint'] = 'lintel';
   parent.appendChild(lintel);
+  const panel = createPanel(parent, hooks);
   const root = el('div', 'hud');
-  const rail = el('div', 'hud-rail');
-  rail.dataset['paint'] = 'rail';
-  root.appendChild(rail);
-  const clock = el('div', 'hud-clock');
-  clock.dataset['paint'] = 'plaque';
-  const clockTime = el('div', 'hud-clock-time');
-  const clockDate = el('div', 'hud-clock-date');
-  clock.append(clockTime, clockDate);
-  root.appendChild(clock);
-  // The clock's figures and day on the device grid of UI pixels (HUD critic, round 15: at a
-  // fractional device offset the browser drew a glyph row four device pixels tall).
-  const snapTo = (node: HTMLElement): void => {
-    const k = devicePixelRatio || 1;
-    const unit = PX * k;
-    node.style.transform = '';
-    const o = root.getBoundingClientRect();
-    const r = node.getBoundingClientRect();
-    const s = (v: number): number => (Math.round((v * k) / unit) * unit) / k - v;
-    node.style.transform = `translate(${s(r.left - o.left)}px, ${s(r.top - o.top)}px)`;
-  };
-  const snapClock = (): void => {
-    const digits = clockTime.firstElementChild;
-    if (digits instanceof HTMLElement) snapTo(digits);
-    snapTo(clockDate);
-  };
-  addEventListener('resize', snapClock);
-  // The gold and the food in MM6's number well under the clock (paint.ts `plaque`: "its food
-  // and gold sit in wells of the band's marble"), the coins and the apple beside the yellow
-  // well numerals; hidden until the runtime first says what the party carries.
-  const purse = el('div', 'hud-purse');
-  purse.dataset['paint'] = 'plaque';
-  purse.hidden = true;
-  const purseRow = (kind: 'gold' | 'food'): { row: HTMLElement; figures: HTMLElement } => {
-    const row = el('div', `hud-purse-row ${kind}`);
-    const glyph = el('div', 'hud-purse-glyph');
-    glyph.dataset['paint'] = kind === 'gold' ? 'coins' : 'apple';
-    const figures = el('div', 'hud-purse-figures');
-    row.append(glyph, figures);
-    purse.appendChild(row);
-    return { row, figures };
-  };
-  const gold = purseRow('gold');
-  const food = purseRow('food');
-  root.appendChild(purse);
-  const showFigures = (at: { row: HTMLElement; figures: HTMLElement }, n: number): void => {
-    const text = purseFigure(n);
-    if (at.figures.dataset['n'] === text) return;
-    at.figures.dataset['n'] = text;
-    const digits = paintNumerals(text);
-    digits.className = 'hud-numerals';
-    digits.style.width = `${digits.width * PX}px`;
-    digits.style.height = `${digits.height * PX}px`;
-    at.figures.replaceChildren(digits);
-    at.row.setAttribute('aria-label', `${text} ${at === gold ? 'gold' : 'food'}`);
-  };
-  const snapPurse = (): void => {
-    if (purse.hidden) return;
-    for (const n of purse.querySelectorAll<HTMLElement>('.hud-numerals')) snapTo(n);
-  };
-  addEventListener('resize', snapPurse);
+  // MM6's message bar along the band's top (status.ts writes in it).
+  const bar = el('div', 'hud-say');
+  bar.dataset['paint'] = 'plaque';
+  root.appendChild(bar);
   // Each member in a rectangle recessed into the marble, a gutter of marble between, as
   // MM6's band (critics, round 5): no trough, no pilasters.
   const band = el('div', 'hud-band');
@@ -249,35 +200,15 @@ export function createHud(parent: HTMLElement, party: Party, hooks: HudHooks): H
         x.cell.setAttribute('aria-label', m.name);
       });
     },
+    panel,
     setClock(minutes) {
-      // The hour in MM6's yellow well numerals, drawn whole-pixel (paint.ts `paintNumerals`).
-      const time = formatTime(minutes);
-      clockDate.textContent = formatDate(minutes).split(',')[0] ?? '';
-      if (clockTime.dataset['time'] !== time) {
-        clockTime.dataset['time'] = time;
-        const digits = paintNumerals(time);
-        digits.className = 'hud-numerals';
-        digits.style.width = `${digits.width * PX}px`;
-        digits.style.height = `${digits.height * PX}px`;
-        // Centred in the clock's 76 UI pixels on a whole pixel (HUD critic, round 14).
-        digits.style.marginLeft = `${Math.floor((76 - digits.width) / 2) * PX}px`;
-        clockTime.replaceChildren(digits);
-        clockTime.setAttribute('aria-label', time);
-        snapClock();
-      }
+      panel.setClock(minutes);
     },
     setPurse(goldCount, foodCount) {
-      const before = `${gold.figures.dataset['n']}/${food.figures.dataset['n']}`;
-      showFigures(gold, goldCount);
-      showFigures(food, foodCount);
-      const changed = before !== `${gold.figures.dataset['n']}/${food.figures.dataset['n']}`;
-      if (purse.hidden) purse.hidden = false;
-      else if (!changed) return;
-      snapPurse();
+      panel.setPurse(goldCount, foodCount);
     },
     dispose() {
-      removeEventListener('resize', snapClock);
-      removeEventListener('resize', snapPurse);
+      panel.dispose();
       root.remove();
       for (const n of parent.querySelectorAll('.view-pillar, .view-lintel, .view-margin'))
         n.remove();

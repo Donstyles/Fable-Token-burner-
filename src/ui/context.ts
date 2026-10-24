@@ -9,8 +9,30 @@ import type { SpellEffect, SpellId } from '../game/spells';
 import type { GameState } from '../game/state';
 import type { Frame } from './dom';
 
-export const SCREEN_NAMES = ['sheet', 'items', 'spells', 'rest', 'quests', 'map'] as const;
+/**
+ * Every screen, as MM6 grouped them (DESIGN.md 16.34): a member's four pages (statistics,
+ * skills, inventory, awards) opened from their portrait; the spellbook and the rest from the
+ * panel's ovals with the quick reference and the options; the four books on the panel's shelf.
+ */
+export const SCREEN_NAMES = [
+  'sheet',
+  'skills',
+  'items',
+  'awards',
+  'spells',
+  'rest',
+  'reference',
+  'options',
+  'quests',
+  'notes',
+  'map',
+  'calendar',
+] as const;
 export type ScreenName = (typeof SCREEN_NAMES)[number];
+
+/** A member's four pages (character.ts), the ovals along their foot switching between them. */
+export const MEMBER_PAGES = ['sheet', 'skills', 'items', 'awards'] as const;
+export type MemberPage = (typeof MEMBER_PAGES)[number];
 
 export const SERVICE_KINDS = ['tavern', 'temple', 'guild', 'trainer', 'shop'] as const;
 export type ServiceKind = (typeof SERVICE_KINDS)[number];
@@ -24,8 +46,8 @@ export interface ServiceDefs {
   shop: ShopDef;
 }
 
-/** What passed: a camp rest, a wait until dawn, or a tavern room. */
-export type RestKind = 'rest' | 'dawn' | 'room';
+/** What passed: a camp rest, a wait until dawn, a shorter wait, or a tavern room. */
+export type RestKind = 'rest' | 'dawn' | 'wait' | 'room';
 
 /** A spell cast from the spellbook or a scroll: the effects for the runtime to perform. */
 export interface CastEvent {
@@ -74,10 +96,38 @@ export interface ScreenHooks {
    */
   marks?: () => MapMark[];
   /**
+   * The level's picture from above for the map book (the minimap's, panel.ts), with the
+   * metres it spans; the book shows the walked land in it, as MM6's. Null below ground.
+   */
+  mapPicture?: () => { picture: HTMLImageElement; size: number } | null;
+  /**
    * Why the party may not rest or wait now ("There are hostile creatures nearby!"), or null
    * when it may; asked at each tap on the rest screen. A refusal changes nothing.
    */
   restBlocked?: () => string | null;
+  /**
+   * MM6's message bar on the band (status.ts): what a screen says goes there, as MM6's did;
+   * without it a screen keeps its own line.
+   */
+  say?: (text: string) => void;
+  /**
+   * The panel's cover (panel.ts): a screen that MM6 drew over the right-hand panel (a member's
+   * figure, a house's board) draws there; it is emptied when the screen closes.
+   */
+  cover?: HTMLElement;
+  /** The options' game menu (options.ts): each is offered only when given. */
+  menu?: MenuHooks;
+}
+
+/** What the options' menu does beyond closing (MM6's Resume, New, Save, Load, Quit). */
+export interface MenuHooks {
+  newGame?: () => void;
+  /** Save now; false when it could not be written. */
+  save?: () => boolean;
+  /** Go back to the last save. */
+  load?: () => void;
+  /** Leave the game for its title. */
+  quit?: () => void;
 }
 
 export interface ScreenContext {
@@ -86,6 +136,10 @@ export interface ScreenContext {
   frame: Frame;
   rng: Rng;
   close(): void;
+  /** Open another screen in this one's place (a member's pages turn this way). */
+  open(name: ScreenName): void;
+  /** The panel's cover, when the runtime gave one (`ScreenHooks.cover`). */
+  cover: HTMLElement | null;
   /**
    * Claim the next tap on a portrait in the band (DESIGN.md 16.16): the handler returns true
    * when it used the tap, false to let it select the member as usual; null gives it up.

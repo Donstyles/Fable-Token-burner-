@@ -16,7 +16,7 @@ import {
 import { classDef } from '../game/classes';
 import { afflictions, CONDITION_DEFS, worstCondition } from '../game/conditions';
 import { canLevelUp, xpForLevel } from '../game/experience';
-import { diceText } from '../game/rng';
+import { type Dice, diceText } from '../game/rng';
 import {
   raiseCost,
   raiseSkill,
@@ -105,6 +105,9 @@ export interface SheetView {
   damage: string;
   rangedAttack: number | null;
   rangedDamage: string | null;
+  /** The damage as MM6's sheet gave it, least to most ("5 - 11"). */
+  damageRange: string;
+  rangedRange: string | null;
   recovery: string;
   skillPoints: number;
   stats: StatRow[];
@@ -113,6 +116,12 @@ export interface SheetView {
 
 export function signed(n: number): string {
   return n > 0 ? `+${n}` : `${n}`;
+}
+
+/** A roll's least and most, as MM6's sheet gave damage: "5 - 11". */
+export function damageRange(d: Dice): string {
+  const bonus = d.bonus ?? 0;
+  return `${d.count + bonus} - ${d.count * d.sides + bonus}`;
 }
 
 export function formatSeconds(s: number): string {
@@ -189,6 +198,8 @@ export function sheetView(c: Character): SheetView {
     damage: diceText(damageDice(c) ?? { count: 1, sides: 3 }),
     rangedAttack: ranged ? attackBonus(c, true) : null,
     rangedDamage: ranged ? diceText(ranged) : null,
+    damageRange: damageRange(damageDice(c) ?? { count: 1, sides: 3 }),
+    rangedRange: ranged ? damageRange(ranged) : null,
     recovery: formatSeconds(recoverySec(c)),
     skillPoints: c.skillPoints,
     stats: statRows(c),

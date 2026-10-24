@@ -86,6 +86,7 @@ import { RENDER_PRESETS, type RenderPreset } from '../render/resolution';
 import { ENVIRONMENTS, ENVIRONMENT_PRESETS, type EnvironmentPreset } from '../render/environment';
 import { UPSCALE_MODES, type UpscaleMode } from '../app/settings';
 import { createDevPanel, type Field } from './panel';
+import { installLensShift, type ViewBox } from '../app/view-box';
 import { diag, diagText } from '../app/diag';
 import {
   AUDIO_SESSION_TYPES,
@@ -357,13 +358,26 @@ export async function startDev(app: App): Promise<DevHandle> {
   // status line above it names what is tapped and tells the fight, as MM6's did.
   const strip = createHud(uiLayer, roster, {
     onOpenSheet: () => screens.open('sheet'),
+    // MM6's four books and four ovals in the panel (DESIGN.md 16.34).
+    onBook: (book) => screens.open(book),
+    onOval: (oval) => {
+      if (oval === 'cast') screens.open('spells');
+      else screens.open(oval);
+    },
     onSelect: (i) => {
       // A screen waiting on a target (a spell) takes the tap; otherwise the sheet, the
       // inventory and the spellbook follow the portrait tapped (DESIGN.md 16.15).
       if (screens.pickMember(i)) return;
       state.selected = i;
       const cur = screens.current();
-      if (cur === 'sheet' || cur === 'items' || cur === 'spells') screens.open(cur);
+      if (
+        cur === 'sheet' ||
+        cur === 'skills' ||
+        cur === 'items' ||
+        cur === 'awards' ||
+        cur === 'spells'
+      )
+        screens.open(cur);
     },
   });
   strip.setClock(state.clock.minutes);
@@ -382,21 +396,44 @@ export async function startDev(app: App): Promise<DevHandle> {
   let simTime = 0;
   // The book shelf (DESIGN 14.5): sheet, items, spells, rest, quests, map. An open screen
   // pauses the world, as MM6's books did. Spell effects beyond healing are reported for now.
+  let mapPicture: { picture: HTMLImageElement; size: number } | null = null;
   const screens: Screens = installScreens(uiLayer, state, {
     now: () => simTime,
     questDefs: QUESTS,
+    // What a screen says goes to MM6's message bar on the band; what MM6 drew over the panel
+    // (a member's figure, a house's board) into the panel's cover (DESIGN.md 16.34).
+    say: (text) => status.say(text, 5000),
+    cover: strip.panel.cover,
+    // The options' game menu: a new game starts over, a load goes back to the last save, quit
+    // goes to the title.
+    menu: {
+      save: () => save(),
+      load: () => {
+        const url = new URL(location.href);
+        url.searchParams.set('continue', '');
+        location.replace(url.toString());
+      },
+      newGame: () => {
+        clearSave();
+        location.replace(location.pathname);
+      },
+      quit: () => location.replace(location.pathname),
+    },
     onClose: () => save(),
     onRest: (kind) => {
       status.say(
         kind === 'dawn'
           ? 'The party waits until dawn'
-          : kind === 'room'
-            ? 'The party sleeps at the inn'
-            : 'The party rests',
+          : kind === 'wait'
+            ? 'The party waits'
+            : kind === 'room'
+              ? 'The party sleeps at the inn'
+              : 'The party rests',
       );
       save();
     },
     onCast: (cast) => performCast(cast),
+    mapPicture: () => mapPicture,
     // The map's marks: the villagers (a quest to take or to hand in marks them out) and the
     // ways in and out.
     marks: (): MapMark[] => [
@@ -438,6 +475,8 @@ export async function startDev(app: App): Promise<DevHandle> {
   const bust = new Bust(scene, canvas, app.materials);
   let talking: Npc | null = null;
   const dialogue: Dialogue = createDialogue(uiLayer, state, QUESTS, {
+    // The board over the panel, as MM6's (DESIGN.md 16.34).
+    cover: strip.panel.cover,
     onSpeak: () => talking?.say(),
     onWindow: (rect) => bust.place(rect),
     notice: (line) => status.say(line, 6000),
@@ -617,6 +656,44 @@ export async function startDev(app: App): Promise<DevHandle> {
     diag(`prop ${propId}: ${measure.size.map((v) => v.toFixed(1)).join(' × ')} m`);
   }
   const party = new PartyController(scene, camera, start.position, DEFAULT_TUNING, start.yawDeg);
+  // MM6's frame leaves the view at the top left (DESIGN.md 16.34): the camera's centre of
+  // projection and the touch zones' split move to the view's middle.
+  const viewBox = (): ViewBox | null => {
+    const band = uiLayer.querySelector<HTMLElement>('.hud');
+    if (!band || !band.offsetWidth) return null;
+    return {
+      left: band.offsetLeft,
+      top: 0,
+      right: band.offsetLeft + band.offsetWidth,
+      bottom: band.offsetTop,
+    };
+  };
+  const lens = installLensShift(camera, viewBox, () => ({
+    width: canvas.clientWidth,
+    height: canvas.clientHeight,
+  }));
+  const splitZones = (): void => {
+    const b = viewBox();
+    if (b) zones.configure({ splitX: (b.left + b.right) / 2 });
+  };
+  const reframe = (): void => {
+    lens.refresh();
+    splitZones();
+  };
+  addEventListener('resize', () => requestAnimationFrame(reframe));
+  requestAnimationFrame(reframe);
+  // The minimap (panel.ts) and the map book: the region's picture from above, or below ground
+  // the cells walked.
+  {
+    const size = level.sidecar.bounds.max[0] - level.sidecar.bounds.min[0];
+    let picture: HTMLImageElement | null = null;
+    if (level.sidecar.outdoor) {
+      picture = new Image();
+      picture.src = `${import.meta.env.BASE_URL}levels/${LEVEL}.mini.png`;
+      mapPicture = { picture, size };
+    }
+    strip.panel.setSource({ picture, size, automap: mapLevel });
+  }
   if (ENTRY) diag(`arrived through ${entry ? ENTRY : `unknown portal ${ENTRY}, at the spawn`}`);
   const portals = new PortalWatcher(level.portals, (p: Portal) => {
     diag(`portal ${p.name} → ${p.target.level}`);
@@ -1050,6 +1127,7 @@ export async function startDev(app: App): Promise<DevHandle> {
     }
     level.update(camera.globalPosition);
     if (!fly) portals.update(party.position);
+    strip.panel.setParty(party.position.x, party.position.z, (party.yaw * 180) / Math.PI);
     saveTimer += dt;
     if (saveTimer > 60) {
       saveTimer = 0;

@@ -2423,6 +2423,79 @@ and the frame had taken the bottom inset a second time (21 rows lost).
   panel or cut by a box that does not scroll, on words over words, and on a title
   or close oval out of its place.
 
+### 16.34 MM6's layout, screen for screen (owner, 2026-10-24)
+
+"You have the reference images. I want all menus and UI to be the exact same layout as the
+original." Every screen was laid against its MM6 shot (the private reference's `screenshots/`)
+and rebuilt to MM6's arrangement; the phone's 2:1 screen keeps MM6's places, each piece at
+MM6's share of the height, the view taking the extra width.
+
+- **The frame** (`src/ui/hud.ts`, `hud.css`): MM6's three marble pillars stand the screen's
+  height, one at each side and one between the view and the panel; the lintel runs over the
+  view; under the view the band holds MM6's message bar along its top (the status line writes
+  in it, and every screen's messages go there) and the four members, their cells tiling the
+  band as MM6's do. The view is the box between the side pillar and the middle one, under the
+  lintel and over the band: 641 by 288 pixels inside the phone's insets.
+- **The panel** (`src/ui/panel.ts`, painted by `paint-panel.ts`), top to bottom as MM6's: the
+  minimap through a cusped arch, the heading on a plate at its apex and a − and a + cut into
+  its shoulders (the sky shows past the arch's crown); two stained-glass windows; the clock in
+  a darkened well (MM6 had none on its panel; the hour must show somewhere, and MM6's bar there
+  stood empty); the four books, quests, notes, map and calendar; the food by its apple and the
+  gold by its coins; the four gold ovals, cast, rest, quick reference and options. The minimap
+  draws the region's picture from above (`levels/<id>.mini.png`, written by `level:build`, a
+  pixel a metre, north up), or below ground the cells walked, the party's white arrowhead at
+  its middle.
+- **The view's lens**: the canvas still covers the screen (the sky behind the arch, the talking
+  head composed into the panel), so the camera's centre of projection moves to the view box's
+  middle (`src/app/view-box.ts`, off-centre terms only: field of view, depth and picking
+  unchanged) and the touch zones split at the view's middle.
+- **A member's pages** (`src/ui/character.ts`, `inventory.ts`; references mm6-stats,
+  mm6-skills, mm6-inventory), opened by a second tap on a portrait: the statistics in six carved
+  boxes in two columns under the name and the skill points (statistics, points, condition; age
+  and level, the fighting figures, the five resistances, all nought until items and spells give
+  them, MM6-GAPS.md 8); the skills in two boxes, weapons over magic and armour over the rest;
+  the inventory's grid filling the view, the item in hand and its actions beside it; the
+  awards, the quests seen through. Along the foot MM6's five gold ovals: head, hand, sword and
+  shield, medal, door. Over the panel stands the member, face, name and worn slots, where MM6
+  drew the figure; the figure itself waits on the paper doll (12.4).
+- **The spellbook** (reference mm6-spellbook): three places across and four down, the first
+  the school's (name, rank and points where MM6 hung the school's picture, until pictures
+  come), the bookmarks down the right edge.
+- **The books** (`src/ui/books.ts`, `journal.ts`; reference mm6-quests): the title on a
+  knotwork banner. Current Quests lists what is in hand (what is done goes to the awards);
+  Auto Notes lists what people told the party (a topic's `note`, made once, "Note added" on the
+  bar); the Calendar lays the month out in four weeks, today ringed and the moon's quarters on
+  their days; the Map shows the walked land in the region's picture, north up as the minimap
+  (it had been drawn south up, a mirror).
+- **Rest** (reference mm6-rest): the mountains across the top (painted, `paintPanorama`), Rest
+  & Heal 8 Hours with the food beside it, the box of waits without healing (until dawn, an hour,
+  five minutes; the last two are new), the hourglass with the hour, day, month and year, and
+  Exit Rest. A choice applies at once and the screen stays, as MM6's.
+- **Houses** (`src/ui/services.ts`; references mm6-smith-menu, mm6-tavern-talk): the house's
+  wooden board over the panel, its name at the head, its choices down it, the door oval at the
+  foot; the view keeps the street, where MM6 showed the room, until a choice opens a list
+  there (the stock, the member's pack to sell, identify or repair, the guild's books). The
+  member is the one picked in the band; a tap on a portrait turns the house to them.
+- **Talk** (`src/ui/dialogue.ts`): the same board, the calling at its head, the living face in
+  its window, the name in MM6's blue, the topics, the door oval; the words in a box along the
+  view's foot, five lines at most before they scroll.
+- **Quick reference and options** (`reference.ts`, `options.ts`; reference mm6-main-menu): the
+  party in four columns, a line a figure; the game's name on a stone plaque over six slabs in
+  two columns, Resume, Controls, New, Load, Save and Quit.
+- **The type at MM6's size**: 15 pixels on lines of 16 on the screens (the floor for bitmap
+  type goes to ten pixels; at three device pixels to one it reads on the phone), so MM6's boxes
+  hold MM6's lines (owner, 2026-10-23: "type is large for the space").
+- **Not as MM6, and why**: no interior pictures, house keepers' portraits, school pictures or
+  paper doll exist yet, and no placeholders stand in for them; the panel's two windows are
+  ornament, as no party spells are kept yet to show there.
+- **Checked on the phone's size**: `tests/e2e/screens-fit.spec.ts` opens every screen and
+  house with the insets forced and fails on anything outside the view's box or the panel's
+  cover; `hud-fit.spec.ts` holds the band and the panel between their pillars.
+- **Found on the way**: the world is drawn as the mirror image of the region script (the
+  kernel's x is the scene's -x, 15.2), so a villager's "the temple at the west end" stands east
+  on the minimap and the compass. The maps follow what is drawn; the new region (owner,
+  2026-10-24) is the place to set the two right.
+
 ## 17. Regions by hand (owner, 2026-10-19)
 
 "Hand design 640 m maps." The generated valley and desert are gone (section 15
@@ -2573,6 +2646,15 @@ with it, so a second lantern post or smithy needs nothing more.
   bright, so they need a mask of their own.
 
 ## 13. Decision log
+
+- 2026-10-24 – MM6's layout, screen for screen (owner: "I want all menus and UI to be the
+  exact same layout as the original"; 16.34). The book shelf at the band's end and the clock
+  in the band gave way to MM6's right-hand panel the screen's height (minimap, windows, clock,
+  four books, purse, four ovals); screens open in the view's box between the pillars, a member's
+  four pages with MM6's five ovals, the books on banners, rest, houses and talk as MM6's
+  screens, their boards over the panel. The camera's centre moves to the view's middle with
+  the frame. New on the way: auto notes, the calendar, the quick reference, the game menu,
+  waits of an hour and five minutes, a minimap, the walked land on the map, north up.
 
 - 2026-10-23 – Lights belong to the models (owner: "How do you plan to implant lighting on
   features and buildings (lamps, forge, fire, hearth, etc)", "How will you manage lighting

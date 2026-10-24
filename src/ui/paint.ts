@@ -37,6 +37,16 @@ import {
 } from '../render/brush';
 import { arc, fill, polyline, quad, type Pt } from '../render/pen';
 import { PX } from './pixel-text';
+import {
+  type ButtonGlyph,
+  buttonGlyph,
+  ovalGlyph,
+  type OvalGlyph,
+  paintArch,
+  paintGlass,
+  paintHourglass,
+  paintPanorama,
+} from './paint-panel';
 
 /** The one gold of the shell, darkest to lightest. */
 export const GOLD = {
@@ -614,20 +624,30 @@ export const EMBLEM_ART: Record<string, Art> = {
       [1, 27],
     ]),
   ],
-  quests: (s) => [
-    ...pen(s, arc(6, 6, 4, 4, 0, Math.PI * 2, 32)),
+  // MM6's four books (reference mm6-hud-town): the quests' sword, the notes' quill, the map's
+  // globe, and the calendar's sceptre, an orb ringed and crossed over a shaft with a knop.
+  quests: (s) => EMBLEM_ART['sheet']!(s),
+  notes: (s) => EMBLEM_ART['spells']!(s),
+  calendar: (s) => [
+    ...pen(s, arc(9, 2.5, 1.6, 1.6, 0, Math.PI * 2, 12)),
+    ...pen(s, arc(9, 9, 4.6, 4.6, 0, Math.PI * 2, 32)),
     ...pen(s, [
-      [8.8, 8.8],
-      [14.5, 26],
+      [4.4, 9],
+      [13.6, 9],
     ]),
     ...pen(s, [
-      [12.7, 22.3],
-      [15.5, 21.3],
+      [9, 4.4],
+      [9, 13.6],
     ]),
     ...pen(s, [
-      [13.7, 25.2],
-      [16.5, 24.2],
+      [9, 13.6],
+      [7, 24],
     ]),
+    ...pen(s, [
+      [5, 19],
+      [10, 20],
+    ]),
+    ...pen(s, arc(6.6, 25.8, 1.8, 1.8, 0, Math.PI * 2, 12)),
   ],
   map: (s) => [
     ...pen(s, arc(8.5, 14, 8, 8, 0, Math.PI * 2, 48)),
@@ -1147,7 +1167,9 @@ export function paintSpine(w: number, h: number, emblem: string | null = null): 
   // The emblem's 18 by 28 grid half again as large (the pitch went from one and a half CSS
   // pixels to one, the spine kept its size), centred between the bands.
   const art = emblem ? EMBLEM_ART[emblem] : undefined;
-  const s = 1.5;
+  // MM6's spines in the right panel are narrower than our old shelf's: the grid drawn as
+  // large as the spine leaves three pixels of leather each side, at most half again.
+  const s = Math.min(1.5, (w - 6) / 18);
   const top = bandTop + 6 + Math.max(0, Math.floor((bandBottom - bandTop - 6 - 28 * s) / 2));
   if (art)
     drawGold(g, w, h, art(s), Math.floor((w - 18 * s) / 2), top, w * 17 + h, emblem === 'map');
@@ -1769,7 +1791,12 @@ export function paintAlcove(w: number, h: number, marble: HTMLCanvasElement): HT
  * foot, with a mottle and a die; a (247,247,214) specular near the top; the moon near
  * black, a third of the width in radius, a warm edge at its lower right. RGB565.
  */
-export function paintCartouche(w: number, h: number, pressed: boolean): HTMLCanvasElement {
+export function paintCartouche(
+  w: number,
+  h: number,
+  pressed: boolean,
+  glyph: OvalGlyph = 'moon',
+): HTMLCanvasElement {
   const [c, g] = canvas(w, h);
   const k = 1.5;
   const ow = Math.min(w, 33);
@@ -1856,21 +1883,14 @@ export function paintCartouche(w: number, h: number, pressed: boolean): HTMLCanv
       );
     }
   }
-  const mr = ow * 0.33;
-  const mx = ox + ow * 0.5;
-  const my = oy + oh * 0.56;
-  const moon = new Uint8Array(w * h);
+  // The glyph in dark ink cut into the brass, its lower right edge catching the light
+  // (paint-panel.ts `ovalGlyph`: MM6's star, tent, scroll and disk, and our moon).
+  const mark = ovalGlyph(glyph, w, h, ox, oy, ow, oh);
   for (let y = 0; y < h; y++) {
     for (let x = 0; x < w; x++) {
-      const inA = Math.hypot(x + 0.5 - mx, y + 0.5 - my) < mr;
-      const inB = Math.hypot(x + 0.5 - (mx + mr * 0.45), y + 0.5 - (my - mr * 0.3)) < mr * 0.85;
-      if (inA && !inB) moon[y * w + x] = 1;
-    }
-  }
-  for (let y = 1; y < h; y++) {
-    for (let x = 1; x < w; x++) {
-      if (moon[y * w + x]) px(g, x, y, '#080800');
-      else if (moon[(y - 1) * w + x - 1]) px(g, x, y, '#634d29');
+      const m = mark[y * w + x];
+      if (m === 1) px(g, x, y, '#080800');
+      else if (x > 0 && y > 0 && mark[(y - 1) * w + x - 1] === 1) px(g, x, y, '#634d29');
     }
   }
   quantise565(g, w, h);
@@ -2626,7 +2646,21 @@ export function paintPilaster(w: number, h: number, marble: HTMLCanvasElement): 
 /** The clock's stone tablet: marble with a bevel, lit above and left, in shade below and right. */
 export function paintTablet(w: number, h: number, marble: HTMLCanvasElement): HTMLCanvasElement {
   const [c, g] = canvas(w, h);
-  g.drawImage(marble, 30, 100, w, h, 0, 0, w, h);
+  // The marble tiled to the tablet's size, from a corner a little in.
+  for (let y = 0; y < h; y += marble.height - 100) {
+    for (let x = 0; x < w; x += marble.width - 30)
+      g.drawImage(
+        marble,
+        30,
+        100,
+        marble.width - 30,
+        marble.height - 100,
+        x,
+        y,
+        marble.width - 30,
+        marble.height - 100,
+      );
+  }
   g.fillStyle = 'rgba(255,250,240,0.7)';
   g.fillRect(0, 0, w, 1);
   g.fillRect(0, 0, 1, h);
@@ -2761,6 +2795,24 @@ export function paintEllipse(w: number, h: number): HTMLCanvasElement {
  * fractional pixels): an eleven-pixel cross of two one-pixel diagonals in black, a pale gold
  * pixel under each.
  */
+/** A glyph's mask in dark ink on a gold face, its lower right edge catching the light. */
+function drawInk(
+  g: CanvasRenderingContext2D,
+  mark: Uint8Array,
+  w: number,
+  h: number,
+  pressed: boolean,
+): void {
+  const dy = pressed ? 1 : 0;
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      const m = mark[(y - dy) * w + x];
+      if (y - dy >= 0 && m === 1) px(g, x, y, '#140f05');
+      else if (x > 0 && y - dy > 0 && mark[(y - dy - 1) * w + x - 1] === 1) px(g, x, y, '#6e5428');
+    }
+  }
+}
+
 function drawCross(g: CanvasRenderingContext2D, w: number, h: number, pressed: boolean): void {
   const n = 11;
   const x0 = Math.floor((w - n) / 2);
@@ -2781,13 +2833,15 @@ function buttonUrl(
   h: number,
   pressed: boolean,
   slab: boolean,
-  glyph: 'cross' | null = null,
+  glyph: string | null = null,
 ): string {
   const k = `${w}x${h}${pressed ? 'd' : 'u'}${slab ? 's' : 'o'}${glyph ?? ''}`;
   let url = buttonCache.get(k);
   if (!url) {
     const c = slab ? paintSlab(w, h, pressed) : paintButton(w, h, pressed);
     if (glyph === 'cross') drawCross(c.getContext('2d')!, w, h, pressed);
+    else if (glyph)
+      drawInk(c.getContext('2d')!, buttonGlyph(glyph as ButtonGlyph, w, h), w, h, pressed);
     url = `url("${c.toDataURL('image/png')}")`;
     buttonCache.set(k, url);
   }
@@ -2801,7 +2855,8 @@ function dress(b: HTMLElement): void {
   if (w < 6 || h < 6) return;
   const slab = w / h > 4.5;
   b.classList.toggle('slab', slab);
-  const glyph = b.classList.contains('ui-close') ? 'cross' : null;
+  // A glyph in dark ink on the gold, as MM6's ovals carried (`data-glyph`, paint-panel.ts).
+  const glyph = b.classList.contains('ui-close') ? 'cross' : (b.dataset['glyph'] ?? null);
   b.style.setProperty('--btn-up', buttonUrl(w, h, false, slab, glyph));
   b.style.setProperty('--btn-down', buttonUrl(w, h, true, slab, glyph));
 }
@@ -2946,6 +3001,11 @@ function pieceUrl(kind: string, w: number, h: number): string | null {
   else if (kind === 'tube-caps') c = paintTubeCaps(w, h);
   else if (kind === 'speckle') c = paintSpeckle(w, h);
   else if (kind === 'gold') c = paintCartouche(w, h, false);
+  else if (kind.startsWith('oval-')) c = paintCartouche(w, h, false, kind.slice(5) as OvalGlyph);
+  else if (kind === 'arch') c = paintArch(w, h, s.marble);
+  else if (kind === 'panorama') c = paintPanorama(w, h);
+  else if (kind === 'hourglass') c = paintHourglass(w, h);
+  else if (kind.startsWith('glass')) c = paintGlass(w, h, Number(kind.slice(6)) || 1);
   else if (kind === 'frame') c = paintFrame(w, h);
   else if (kind === 'tile') c = paintTile(w, h);
   else if (kind === 'tube') c = paintTube(w, h, 'empty');

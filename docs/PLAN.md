@@ -412,6 +412,14 @@ is interleaved for the outdoor slice.
 Left: dialogue with NPCs (step 7's talk), save slots in IndexedDB (step 9),
 the HUD frame (step 10), the paper doll, drag and drop, promotions.
 
+**Status 2026-10-24:** step 10's frame is MM6's (DESIGN 16.34): the right
+panel the screen's height with the minimap, the two windows, the clock, the
+four books (quests, notes, map, calendar), the purse and the four ovals (cast,
+rest, quick reference, options); every screen in the view's box in MM6's
+arrangement, houses and talk on a board over the panel. Talk (step 7) is in.
+Left: save slots, the paper doll, interior and school pictures, drag and drop,
+promotions, party spells kept to show in the windows.
+
 **Risks:** touch layout of dense screens (inventory grid, spellbook); solved
 by designing at device resolution from the start, with the phone's safe areas:
 every screen and service is checked at 932 by 430 with the insets forced

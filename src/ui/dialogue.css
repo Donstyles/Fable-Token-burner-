@@ -1,41 +1,41 @@
-/* The talk panel (DESIGN.md 16.7): MM6's wooden window at the right of the view. The
-   villager's living face shows through a square cut in the planks (the bust is drawn on the
-   canvas beneath, src/world/bust.ts), their name and calling under it on a brass plate,
-   their words beside it in pale ink and the topics below in the yellow italic, as the
-   tavern's menu was. Hard 1998 bevels throughout; the wood is drawn in wood.css. */
+/* Talk (src/ui/dialogue.ts; DESIGN.md 16.7, 16.34; reference mm6-tavern-talk). Over the panel
+   (its cover, panel.ts) MM6's wooden board: the calling at its head in white, the villager's
+   living face through a square cut in the planks (the bust is drawn on the canvas beneath,
+   src/world/bust.ts) in a turned frame, the name under it in MM6's blue, the topics in the
+   white italic, yellow once asked, and the gold oval with the door at the foot. Their words in
+   a box of the same wood along the foot of the view, a hard 1998 bevel round it. */
 .dlg {
   position: absolute;
-  top: calc(var(--sat) + 10px);
-  right: calc(var(--sar) + 12px);
-  width: 436px;
-  max-width: calc(100% - var(--sal) - var(--sar) - 24px);
-  max-height: calc(100% - var(--sat) - var(--sab) - 150px);
+  left: calc(var(--view-left) + 6px);
+  right: calc(var(--view-right) + 6px);
+  bottom: calc(var(--view-bottom) + 6px);
   z-index: 40;
   display: flex;
-  /* A dark edge and a two-tone bevel tight on the wood, lit above and left, in shade below
-     and right, as MM6's panel: no gold border. */
   border: 1px solid #120a04;
   box-shadow:
     inset 1px 1px 0 #9a5a34,
     inset -1px -1px 0 #1a0a04;
+  background: var(--mahogany) 0 0 / var(--mahogany-size);
+  image-rendering: pixelated;
   color: var(--ink-pale);
   font: var(--serif-italic);
 }
 .dlg-wood {
-  flex: 1;
-  min-width: 0;
-  min-height: 0;
-  display: grid;
-  /* The window a tenth of the width, as MM6's (critics, round 10); the side 309 pixels
-     (talk-world critic, round 14). */
-  grid-template-columns: 96px 309px;
-  /* The window, the name under it and Farewell at the column's foot; the words and the
-     topics down the side. */
-  grid-template-rows: 96px auto 1fr;
-  gap: 6px 10px;
-  padding: 8px;
+  position: absolute;
+  inset: 0;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 4px 6px;
+  border: 1px solid #120a04;
+  box-shadow:
+    inset 1px 1px 0 #9a5a34,
+    inset -1px -1px 0 #1a0a04;
   background: var(--mahogany) 0 0 / var(--mahogany-size);
   image-rendering: pixelated;
+  color: var(--ink-pale);
   /* The window is a hole in the planks: the mask keeps everything but it. */
   -webkit-mask-image: linear-gradient(#000 0 0), linear-gradient(#000 0 0);
   -webkit-mask-size:
@@ -56,81 +56,58 @@
   mask-repeat: no-repeat;
   mask-composite: exclude;
 }
+/* The board's head: the villager's calling, as MM6 named the house there. */
+.dlg-head {
+  font:
+    15px/18px 'Tinos',
+    Georgia,
+    serif;
+  color: #ffffff;
+  text-align: center;
+}
 
 /* The window: a turned gold frame round a square of nothing. */
 .dlg-frame {
-  grid-column: 1;
-  grid-row: 1;
+  flex: none;
   width: 96px;
   height: 96px;
   padding: 6px;
+  box-sizing: content-box;
+  margin: -6px 0;
   background: var(--paint) center / 100% 100% no-repeat;
   image-rendering: pixelated;
 }
 .dlg-window {
   width: 100%;
   height: 100%;
-  background: transparent;
+  background: var(--paint) center / 100% 100% no-repeat;
+  image-rendering: pixelated;
 }
 
-/* The brass plate under the window: the name engraved, the calling in the blue MM6 used. */
+/* The name in the blue MM6 used, under the window. */
 .dlg-plate {
-  grid-column: 1;
-  grid-row: 2;
-  align-self: start;
-  padding: 3px 0 0;
+  padding: 2px 0 0;
   text-align: center;
-}
-.dlg-plate {
-  text-align: center;
-}
-.dlg-role {
-  display: inline;
-  margin-left: 0.3em;
-  font:
-    20px/21px 'Tinos',
-    Georgia,
-    serif;
-  letter-spacing: 2px;
-  color: #109aef;
 }
 .dlg-name {
-  /* "Greta the Goodwife" in MM6's blue under the window, wrapping when it must: upright and
-     spaced a pixel apart, as MM6's names (talk critic, round 13). */
-  display: inline;
   margin: 0;
   font:
-    20px/21px 'Tinos',
+    15px/17px 'Tinos',
     Georgia,
     serif;
-  letter-spacing: 2px;
+  letter-spacing: 1px;
   color: #109aef;
 }
 
-.dlg-side {
-  grid-column: 2;
-  grid-row: 1 / 4;
-  display: flex;
-  flex-direction: column;
-  /* The topics stand at the foot, level with Farewell; what the words leave lies above them. */
-  justify-content: space-between;
-  min-height: 0;
-  min-width: 0;
-}
-/* The words' place: as tall as the topics leave it, the line wrapping inside it and, when it is
-   longer still, scrolling in it under a finger (owner, 2026-10-23: Old Tobin's thanks ran past
-   the box and lost their end). A gold mark in the right margin says there is more above or
-   below; the line always starts at its top. */
+/* The words' box along the view's foot: as tall as whole lines of them up to five (dialogue.ts
+   fits it), scrolling in it under a finger when a speech is longer; a gold mark in the right
+   margin says there is more above or below; the line always starts at its top. */
 .dlg-said {
   position: relative;
   flex: 1;
   box-sizing: border-box;
-  /* Two lines at the least, eight at the most; dialogue.ts fits it to whole lines between.
-     The margins round the words are here, outside the scroll, so the box shows whole lines
-     and nothing of the next peeks through. */
-  min-height: 52px;
-  max-height: 184px;
-  padding: 2px 0 6px;
+  min-height: 42px;
+  padding: 4px 0 4px;
   display: flex;
 }
 .dlg-text {
@@ -143,9 +120,9 @@
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
   /* The right margin keeps the marks off the words. */
-  padding: 0 14px 0 6px;
+  padding: 0 18px 0 10px;
   font:
-    italic 18px/22px 'Tinos',
+    italic 15px/17px 'Tinos',
     Georgia,
     serif;
   color: var(--ink-pale);
@@ -179,11 +156,11 @@
 .dlg-text::-webkit-scrollbar {
   display: none;
 }
-/* MM6's scroll marks: small gold arrows lit from the top left (paint.ts `arrow-up`, `arrow-down`),
-   shown only while there is more that way. They take no taps; the words do. */
+/* MM6's scroll marks: small gold arrows lit from the top left (paint.ts `arrow-up`,
+   `arrow-down`), shown only while there is more that way. They take no taps; the words do. */
 .dlg-more {
   position: absolute;
-  right: 1px;
+  right: 4px;
   width: 11px;
   height: 7px;
   pointer-events: none;
@@ -192,7 +169,7 @@
   image-rendering: pixelated;
 }
 .dlg-more.up {
-  top: 4px;
+  top: 5px;
 }
 .dlg-more.down {
   bottom: 5px;
@@ -200,52 +177,47 @@
 .dlg-more.shown {
   visibility: visible;
 }
+/* The topics down the board, a line each in the white italic, yellow once asked, as MM6's. */
 .dlg-topics {
+  flex: 1;
+  min-height: 0;
+  align-self: stretch;
   display: flex;
   flex-direction: column;
+  justify-content: center;
   gap: 1px;
-  padding-top: 4px;
+  overflow-y: auto;
+  scrollbar-width: none;
 }
-/* The topics a size up, so their thin strokes hold (talk critic, round 13). */
-.dlg-topic,
-.dlg-bye {
+.dlg-topic {
   appearance: none;
   background: none;
   border: 0;
-  padding: 3px 6px;
-  min-height: 27px;
+  padding: 2px 2px;
+  min-height: 22px;
   font:
-    italic 24px/27px 'Tinos',
+    italic 16px/18px 'Tinos',
     Georgia,
     serif;
   color: var(--ink-pale);
   text-align: center;
   cursor: pointer;
 }
-.dlg-topic:active,
-.dlg-bye:active {
+.dlg-topic:active {
   transform: translateY(1px);
 }
 .dlg-topic:active,
-.dlg-bye:active,
 .dlg-topic.said {
   color: var(--ink-yellow);
 }
 .dlg-foot {
-  grid-column: 1;
-  grid-row: 3;
-  align-self: end;
+  flex: none;
   display: flex;
   justify-content: center;
-  padding-top: 6px;
 }
-.dlg-foot .dlg-bye {
-  min-height: 30px;
-  padding: 2px 0;
-}
-
-/* A grain over the head and its ground (paint.ts `speckle`, critics, round 9). */
-.dlg-window {
-  background: var(--paint) center / 100% 100% no-repeat;
-  image-rendering: pixelated;
+.ui-btn.dlg-bye {
+  width: 56px;
+  height: 28px;
+  min-height: 28px;
+  padding: 0;
 }

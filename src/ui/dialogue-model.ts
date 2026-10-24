@@ -17,6 +17,7 @@ import {
   startQuest,
 } from '../game/quests';
 import { type GameState, grantReward, type RewardOutcome } from '../game/state';
+import { takeNote } from './books-model';
 
 export interface TopicRow {
   id: string;
@@ -121,6 +122,8 @@ export function chooseTopic(
   switch (topic.kind) {
     case 'say':
       outcome.text = topic.text;
+      // MM6 noted what it was told in its book of notes, and said so.
+      if (topic.note && takeNote(state, def.npc, topic.id)) outcome.notices.push('Note added');
       return outcome;
     case 'rumours': {
       // Each asking brings the next rumour; the count lives in the flags so a save keeps it.

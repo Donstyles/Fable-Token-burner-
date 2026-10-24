@@ -100,3 +100,32 @@ describe('no rest with foes about', () => {
     expect(restView(state).time).toBe('05:00');
   });
 });
+
+describe("MM6's waits without healing", () => {
+  it('passes an hour or five minutes and heals nothing', () => {
+    const s = freshState();
+    const hp = s.party[0]!.hp;
+    s.party[0]!.hp = Math.max(1, hp - 5);
+    const before = s.clock.minutes;
+    const hour = tryRest(s, 'hour', null);
+    expect(hour.ok).toBe(true);
+    expect(s.clock.minutes).toBe(before + 60);
+    expect(s.party[0]!.hp).toBe(Math.max(1, hp - 5));
+    tryRest(s, 'minutes', null);
+    expect(s.clock.minutes).toBe(before + 65);
+  });
+
+  it('is refused with foes about, as resting is', () => {
+    const s = freshState();
+    const before = s.clock.minutes;
+    expect(tryRest(s, 'hour', '').ok).toBe(false);
+    expect(s.clock.minutes).toBe(before);
+  });
+
+  it("gives the hourglass box MM6's clock and date", () => {
+    const s = freshState();
+    s.clock.minutes = 9 * 60 + 12;
+    const v = restView(s);
+    expect([v.clock12, v.day, v.month, v.year]).toEqual(['9:12 am', 1, 1, 1165]);
+  });
+});

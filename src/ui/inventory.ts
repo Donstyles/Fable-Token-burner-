@@ -1,15 +1,15 @@
 /**
- * The inventory screen (Phase 5 step 10): the member's 14 × 9 grid as a CSS grid with items
- * as blocks spanning their footprint, its cells as large as the box shows every row; the
- * equipment slots in two columns with the armour and attack they make; the selection named
- * on the message line and its actions in the foot. Tap an item to select it, a free cell to
- * move it there, a slot to wear it; tap a worn item to take it off. Every rule is in the
- * model.
+ * The inventory page (Phase 5 step 10; DESIGN.md 16.34; reference mm6-inventory): the member's
+ * 14 × 9 grid filling the view as MM6's, items as blocks spanning their footprint, its cells as
+ * large as the box shows every row; beside it the item in hand with what can be done with it;
+ * the worn slots over the panel with the member (character.ts `memberCover`), where MM6 stood
+ * the figure. Tap an item to select it, a free cell to move it there, a slot to wear it; tap a
+ * worn item to take it off. Every rule is in the model.
  */
 import type { Character } from '../game/character';
-import type { EquipSlot } from '../game/inventory';
+import { memberCover, memberTabs } from './character';
 import type { ScreenContext } from './context';
-import { button, el, heading } from './dom';
+import { button, el } from './dom';
 import { itemGlyph } from './glyphs';
 import { bagCell } from './layout-model';
 import {
@@ -66,30 +66,6 @@ function gridNode(
   return grid;
 }
 
-/**
- * The worn slots in two columns of one line each, the item's glyph and name, or the slot's
- * name dim while it is empty (owner, 2026-10-23: a slot a line of thirty pixels ran the list
- * off the box below Helmet).
- */
-function slotList(c: Character, sel: InvSelection, onTap: (slot: EquipSlot) => void): HTMLElement {
-  const list = el('div', 'inv-slots');
-  const rows = slotRows(c, sel);
-  list.style.gridTemplateRows = `repeat(${Math.ceil(rows.length / 2)}, auto)`;
-  for (const row of rows) {
-    const line = el('div', 'ui-row inv-slot');
-    if (row.selected) line.classList.add('selected');
-    if (!row.name) line.classList.add('dim');
-    line.title = row.name ? `${row.label}: ${row.name}` : row.label;
-    line.append(
-      row.kind ? itemGlyph(row.kind) : el('span', 'inv-glyph'),
-      el('span', 'grow ui-v', row.name ?? row.label),
-    );
-    line.addEventListener('click', () => onTap(row.slot));
-    list.appendChild(line);
-  }
-  return list;
-}
-
 export function renderInventory(ctx: ScreenContext): void {
   const { state, frame, hooks } = ctx;
   const active = state.selected;
@@ -102,9 +78,8 @@ export function renderInventory(ctx: ScreenContext): void {
     draw();
   };
 
-  // The selection's actions stand in the foot beside the close oval, as MM6's buttons did
-  // along its screens' foot; a reason an action cannot be taken is its button's title and the
-  // message line's when tapped.
+  // The selection's actions stand beside the grid under its name; a reason an action cannot be
+  // taken is its button's title and the message line's when tapped.
   const actionBar = (c: Character): HTMLElement[] => {
     const out: HTMLElement[] = [];
     for (const a of actions(c, sel)) {
@@ -156,23 +131,22 @@ export function renderInventory(ctx: ScreenContext): void {
   const draw = (): void => {
     const c = state.party[active];
     if (!c) return;
-    const side = el('div', 'ui-col scroll inv-side');
+    frame.setTitle(`Inventory of ${c.name}`);
     const d = derived(c);
-    // The fighting numbers the gear makes, beside the heading, so a change shows at once.
-    const head = el('div', 'inv-head');
-    head.append(
-      heading('Equipment'),
-      el('span', 'ui-v inv-fight', `AC ${d.armorClass} · ${signed(d.attack)} ${d.damage}`),
-    );
-    side.append(
-      head,
-      slotList(c, sel, (slot) => apply(tapSlot(c, sel, slot))),
-    );
-    frame.bar.replaceChildren(...actionBar(c));
+    frame.aside.textContent = `AC ${d.armorClass} · ${signed(d.attack)} ${d.damage}`;
+    // The item in hand, named, and what can be done with it.
+    const side = el('div', 'ui-col inv-side');
+    const held = selectedName(c, sel);
+    side.append(el('div', 'inv-held', held ?? 'Tap an item to take it in hand.'));
+    const acts = el('div', 'inv-actions');
+    acts.append(...actionBar(c));
+    side.appendChild(acts);
     frame.body.replaceChildren(
       gridNode(c, sel, (x, y) => apply(tapCell(c, sel, x, y))),
       side,
     );
+    memberCover(ctx, c, sel, (slot) => apply(tapSlot(c, sel, slot)));
   };
+  memberTabs(ctx, 'items');
   draw();
 }

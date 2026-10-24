@@ -3,11 +3,11 @@ import { BAG_CELL, bagCell, SPELL_PLACE, spellPlace } from './layout-model';
 
 /**
  * The phone in landscape (932 by 430) with and without its safe areas, 59 pixels each side
- * and 21 below: the screen's body is 222 pixels tall with them and 243 without, its spell
- * page 664 pixels wide with them and 782 without (ui.css, screens.css).
+ * and 21 below: the view's box MM6's frame leaves (hud.css) is 641 pixels wide with them and
+ * 759 without; the spell page in it 509 and 627 (ui.css, screens.css).
  */
 const BODY = { insets: 216, plain: 237 };
-const PAGE = { insets: 664, plain: 782 };
+const PAGE = { insets: 509, plain: 627 };
 
 describe('bag cell', () => {
   it('shows all nine rows in the room the phone leaves, insets and all', () => {
@@ -31,20 +31,20 @@ describe('bag cell', () => {
 });
 
 describe('spell places', () => {
-  it('puts six places across the page with and without the insets', () => {
+  it('puts three places across the page with and without the insets', () => {
     for (const w of [PAGE.insets, PAGE.plain]) {
-      const place = spellPlace(w, 6);
-      expect(place * 6).toBeLessThanOrEqual(w);
+      const place = spellPlace(w, 3);
+      expect(place * 3).toBeLessThanOrEqual(w);
       expect(place % 2).toBe(0);
       expect(place).toBeGreaterThanOrEqual(SPELL_PLACE.min);
     }
-    expect(spellPlace(PAGE.insets, 6)).toBe(110);
-    expect(spellPlace(PAGE.plain, 6)).toBe(130);
+    expect(spellPlace(PAGE.insets, 3)).toBe(168);
+    expect(spellPlace(PAGE.plain, 3)).toBe(180);
   });
 
-  it('never narrows a place below its oval nor spreads it past 130', () => {
-    expect(spellPlace(500, 6)).toBe(SPELL_PLACE.min);
-    expect(spellPlace(2000, 6)).toBe(SPELL_PLACE.max);
-    expect(spellPlace(6 * 113, 6)).toBe(112);
+  it('never narrows a place below its oval nor spreads it past 180', () => {
+    expect(spellPlace(150, 3)).toBe(SPELL_PLACE.min);
+    expect(spellPlace(2000, 3)).toBe(SPELL_PLACE.max);
+    expect(spellPlace(3 * 113, 3)).toBe(112);
   });
 });

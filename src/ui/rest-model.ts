@@ -6,9 +6,16 @@
  */
 import { type Character, isLiving, maxHp, maxSp } from '../game/character';
 import { type Affliction, CONDITION_DEFS, worstCondition } from '../game/conditions';
-import { isHungry, type MemberRest, rest, type RestResult, waitUntilDawn } from '../game/rest';
+import {
+  isHungry,
+  type MemberRest,
+  passTime,
+  rest,
+  type RestResult,
+  waitUntilDawn,
+} from '../game/rest';
 import type { GameState } from '../game/state';
-import { formatDate, formatTime, isDaylight, minutesUntilDawn } from '../game/time';
+import { formatDate, formatTime, gameDate, isDaylight, minutesUntilDawn } from '../game/time';
 import type { RestKind } from './context';
 
 export interface MemberLine {
@@ -24,6 +31,11 @@ export interface MemberLine {
 export interface RestView {
   time: string;
   date: string;
+  /** MM6's hourglass box: the hour on the twelve-hour clock, the day, month and year. */
+  clock12: string;
+  day: number;
+  month: number;
+  year: number;
   daylight: boolean;
   food: number;
   /** No food: resting heals nothing and weakens the party. */
@@ -52,9 +64,15 @@ export function memberLine(c: Character): MemberLine {
 
 export function restView(state: GameState): RestView {
   const minutes = state.clock.minutes;
+  const d = gameDate(minutes);
+  const h12 = d.hour % 12 === 0 ? 12 : d.hour % 12;
   return {
     time: formatTime(minutes),
     date: formatDate(minutes),
+    clock12: `${h12}:${String(d.minute).padStart(2, '0')} ${d.hour < 12 ? 'am' : 'pm'}`,
+    day: d.day,
+    month: d.month + 1,
+    year: d.year,
     daylight: isDaylight(minutes),
     food: state.food,
     hungry: isHungry(state),
@@ -117,6 +135,21 @@ export function doWait(state: GameState): RestSummary {
   };
 }
 
+/** MM6's waits without healing (reference mm6-rest): an hour, or five minutes. */
+export const WAITS = { hour: 60, minutes: 5 } as const;
+
+/** Wait without healing, applied to the state: timed conditions may run out. */
+export function doWaitFor(state: GameState, kind: keyof typeof WAITS): RestSummary {
+  const minutes = passTime(state.party, state.clock, WAITS[kind]);
+  return {
+    kind: 'wait',
+    lines: [
+      `You wait ${formatDuration(minutes)}.`,
+      `It is now ${formatTime(state.clock.minutes)}, ${formatDate(state.clock.minutes)}.`,
+    ],
+  };
+}
+
 /** MM6's refusal when foes are about (interface.md 9.7: "no rest near foes"). */
 export const HOSTILES_NEARBY = 'There are hostile creatures nearby!';
 
@@ -124,17 +157,20 @@ export const HOSTILES_NEARBY = 'There are hostile creatures nearby!';
 export type RestOutcome = { ok: true; summary: RestSummary } | { ok: false; message: string };
 
 /**
- * Rest eight hours (`rest`) or wait until dawn (`dawn`), unless the runtime gives a reason the
- * party may not (`blocked`, from `ScreenHooks.restBlocked`): then the clock, the food and every
- * member stay as they are and the reason is the line to show (MM6's own when it is blank).
+ * Rest eight hours (`rest`), wait until dawn (`dawn`), an hour (`hour`) or five minutes
+ * (`minutes`), unless the runtime gives a reason the party may not (`blocked`, from
+ * `ScreenHooks.restBlocked`): then the clock, the food and every member stay as they are and
+ * the reason is the line to show (MM6's own when it is blank).
  */
 export function tryRest(
   state: GameState,
-  kind: 'rest' | 'dawn',
+  kind: 'rest' | 'dawn' | keyof typeof WAITS,
   blocked: string | null | undefined,
 ): RestOutcome {
   if (typeof blocked === 'string') {
     return { ok: false, message: blocked.trim() || HOSTILES_NEARBY };
   }
-  return { ok: true, summary: kind === 'rest' ? doRest(state) : doWait(state) };
+  if (kind === 'rest') return { ok: true, summary: doRest(state) };
+  if (kind === 'dawn') return { ok: true, summary: doWait(state) };
+  return { ok: true, summary: doWaitFor(state, kind) };
 }

@@ -20,7 +20,6 @@ export async function writeMapSheet(level: TerrainLevel, out: string): Promise<v
   const half = hf.width / 2;
   const px = Buffer.alloc(size * size * 3);
   const sea = level.water.find((w) => w.name === 'sea')?.y ?? -Infinity;
-  const splat = level.splat;
   const put = (x: number, y: number, c: Rgb): void => {
     if (x < 0 || y < 0 || x >= size || y >= size) return;
     const i = (Math.floor(y) * size + Math.floor(x)) * 3;
@@ -32,39 +31,13 @@ export async function writeMapSheet(level: TerrainLevel, out: string): Promise<v
   const col = (x: number): number => x + half;
   const row = (z: number): number => half - z;
 
+  const ground = groundOf(level);
   for (let r = 0; r < size; r++) {
     for (let c = 0; c < size; c++) {
       const x = c - half + 0.5;
       const z = half - r - 0.5;
       const h = hf.sample(x, z);
-      let rgb: Rgb;
-      if (h < sea) {
-        const depth = Math.min(1, (sea - h) / 6);
-        rgb = [40 - 25 * depth, 90 - 40 * depth, 150 - 30 * depth];
-      } else {
-        // Light from the north-west: brighter on slopes facing it.
-        const dx = (hf.sample(x + 2, z) - hf.sample(x - 2, z)) / 4;
-        const dz = (hf.sample(x, z + 2) - hf.sample(x, z - 2)) / 4;
-        const shade = Math.max(0.55, Math.min(1.35, 1 + (dx - dz) * -0.9));
-        const i = Math.round((x + half) / hf.cell);
-        const j = Math.round((z + half) / hf.cell);
-        const k =
-          (Math.min(hf.n - 1, Math.max(0, j)) * hf.n + Math.min(hf.n - 1, Math.max(0, i))) * 3;
-        const path = splat?.[k] ?? 0;
-        const scree = splat?.[k + 1] ?? 0;
-        const sand = splat?.[k + 2] ?? 0;
-        const grass = Math.max(0, 1 - path - scree - sand);
-        const mix = (a: Rgb, w: number): Rgb => [a[0] * w, a[1] * w, a[2] * w];
-        const sum = [
-          mix([70, 120, 50], grass),
-          mix([130, 95, 60], path),
-          mix([120, 115, 105], scree),
-          mix([200, 180, 120], sand),
-        ];
-        rgb = [0, 1, 2].map((ch) =>
-          Math.min(255, sum.reduce((a, s) => a + s[ch]!, 0) * shade),
-        ) as Rgb;
-      }
+      let rgb = ground(x, z);
       if ((Math.round(x) % 100 === 0 || Math.round(z) % 100 === 0) && h >= sea) {
         rgb = [rgb[0] * 0.85, rgb[1] * 0.85, rgb[2] * 0.85];
       }
@@ -125,6 +98,129 @@ export async function writeMapSheet(level: TerrainLevel, out: string): Promise<v
   for (let k = -5; k <= 5; k++) {
     put(col(sx) + k, row(sz), [255, 255, 255]);
     put(col(sx), row(sz) + k, [255, 255, 255]);
+  }
+  await sharp(px, { raw: { width: size, height: size, channels: 3 } })
+    .png()
+    .toFile(out);
+}
+
+/** The ground's colour at (x, z): water blue by depth, else the splat's mix shaded by slope. */
+function groundOf(level: TerrainLevel): (x: number, z: number) => Rgb {
+  const hf = level.height;
+  const half = hf.width / 2;
+  const sea = level.water.find((w) => w.name === 'sea')?.y ?? -Infinity;
+  const splat = level.splat;
+  return (x, z) => {
+    const h = hf.sample(x, z);
+    if (h < sea) {
+      const depth = Math.min(1, (sea - h) / 6);
+      return [40 - 25 * depth, 90 - 40 * depth, 150 - 30 * depth];
+    }
+    // Light from the north-west: brighter on slopes facing it.
+    const dx = (hf.sample(x + 2, z) - hf.sample(x - 2, z)) / 4;
+    const dz = (hf.sample(x, z + 2) - hf.sample(x, z - 2)) / 4;
+    const shade = Math.max(0.55, Math.min(1.35, 1 + (dx - dz) * -0.9));
+    const i = Math.round((x + half) / hf.cell);
+    const j = Math.round((z + half) / hf.cell);
+    const k = (Math.min(hf.n - 1, Math.max(0, j)) * hf.n + Math.min(hf.n - 1, Math.max(0, i))) * 3;
+    const path = splat?.[k] ?? 0;
+    const scree = splat?.[k + 1] ?? 0;
+    const sand = splat?.[k + 2] ?? 0;
+    const grass = Math.max(0, 1 - path - scree - sand);
+    const mix = (a: Rgb, w: number): Rgb => [a[0] * w, a[1] * w, a[2] * w];
+    const sum = [
+      mix([70, 120, 50], grass),
+      mix([130, 95, 60], path),
+      mix([120, 115, 105], scree),
+      mix([200, 180, 120], sand),
+    ];
+    return [0, 1, 2].map((ch) => Math.min(255, sum.reduce((a, s) => a + s[ch]!, 0) * shade)) as Rgb;
+  };
+}
+
+/**
+ * The minimap's picture (src/ui/panel.ts; DESIGN.md 16.34): the region from above as MM6's
+ * minimap drew it, a pixel a metre, north up and the scene's east (its x, the kernel's -x) to
+ * the right, its middle at the origin: the ground as the map sheet's, brighter, each tree a
+ * crown lit at its upper left, each building a roof with a dark eave, the props as small
+ * blocks; no grid, no marks.
+ */
+export async function writeMiniMap(level: TerrainLevel, out: string): Promise<void> {
+  const hf = level.height;
+  const size = Math.round(hf.width);
+  const half = hf.width / 2;
+  const px = Buffer.alloc(size * size * 3);
+  const ground = groundOf(level);
+  // The scene's x is the kernel's mirrored: the picture's column runs with the scene's x.
+  const col = (kx: number): number => -kx + half;
+  const row = (z: number): number => half - z;
+  const put = (x: number, y: number, c: Rgb): void => {
+    if (x < 0 || y < 0 || x >= size || y >= size) return;
+    const i = (Math.floor(y) * size + Math.floor(x)) * 3;
+    px[i] = c[0];
+    px[i + 1] = c[1];
+    px[i + 2] = c[2];
+  };
+  for (let r = 0; r < size; r++) {
+    for (let c = 0; c < size; c++) {
+      const kx = -(c - half + 0.5);
+      const z = half - r - 0.5;
+      const g = ground(kx, z);
+      // MM6's minimap greens are brighter than the sheet's review tones.
+      put(c, r, [
+        Math.min(255, g[0] * 1.15),
+        Math.min(255, g[1] * 1.25),
+        Math.min(255, g[2] * 1.1),
+      ]);
+    }
+  }
+  for (const t of level.trees) {
+    const cx = Math.floor(col(t.x));
+    const cy = Math.floor(row(t.z));
+    for (let a = -1; a <= 1; a++) {
+      for (let b = -1; b <= 1; b++) {
+        if (a * a + b * b > 1) continue;
+        put(cx + a, cy + b, a < 0 || b < 0 ? [52, 104, 40] : [24, 58, 22]);
+      }
+    }
+  }
+  for (const p of level.props) {
+    const m = CATALOGUE[p.model];
+    if (!m) continue;
+    const [w, , d] = m.size;
+    const cx = m.min[0] + w / 2;
+    const cz = m.min[2] + d / 2;
+    const cos = Math.cos(p.yaw);
+    const sin = Math.sin(p.yaw);
+    const building = p.model.startsWith('building-');
+    const cells = new Set<number>();
+    for (let a = -w / 2; a <= w / 2; a += 0.4) {
+      for (let b = -d / 2; b <= d / 2; b += 0.4) {
+        const lx = cx + a;
+        const lz = cz + b;
+        const X = Math.floor(col(p.x + lx * cos - lz * sin));
+        const Y = Math.floor(row(p.z + lx * sin + lz * cos));
+        if (X >= 0 && Y >= 0 && X < size && Y < size) cells.add(Y * size + X);
+      }
+    }
+    for (const i of cells) {
+      const X = i % size;
+      const Y = (i - X) / size;
+      const edge = [
+        [1, 0],
+        [-1, 0],
+        [0, 1],
+        [0, -1],
+      ].some(([a, b]) => !cells.has((Y + b!) * size + X + a!));
+      const roof: Rgb = building
+        ? edge
+          ? [70, 36, 26]
+          : [150, 84, 58]
+        : edge
+          ? [70, 58, 44]
+          : [128, 108, 84];
+      put(X, Y, roof);
+    }
   }
   await sharp(px, { raw: { width: size, height: size, channels: 3 } })
     .png()

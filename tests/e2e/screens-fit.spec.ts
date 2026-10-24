@@ -2,11 +2,13 @@ import { expect, test } from '@playwright/test';
 
 /**
  * Every screen fits its frame on the phone (owner's phone, 2026-10-23: "Formatting is off
- * everywhere"). At 932 by 430 with the iPhone 14 Pro Max's landscape insets forced (59 pixels
- * each side, 21 below), each screen's content lies inside its panel and inside every box that
- * clips it without scrolling (a list that scrolls must itself fit); no two runs of words share
- * a line's pixels (a label running into its value); and the title stands at the panel's top
- * left, the close oval at its bottom right, on every screen alike.
+ * everywhere"), in MM6's layout (DESIGN.md 16.34). At 932 by 430 with the iPhone 14 Pro Max's
+ * landscape insets forced (59 pixels each side, 21 below), each screen stands in the view's box
+ * between the pillars and over the band; its content lies inside its panel and inside every box
+ * that clips it without scrolling (a list that scrolls must itself fit); what it draws over the
+ * right-hand panel (a member, a house's board) lies inside the panel's cover; no two runs of
+ * words share a line's pixels (a label running into its value); a title stands at the panel's
+ * head and a close oval at its foot, where the screen has them.
  */
 type Dev = {
   ready: boolean;
@@ -73,7 +75,20 @@ const HOUSES: Record<string, [string, unknown]> = {
 
 /** Each screen with the member it is opened for: the knight, and the casters for the book. */
 const CASES: { label: string; screen?: string; house?: string; member: number }[] = [
-  ...['sheet', 'items', 'spells', 'rest', 'quests', 'map'].map((screen) => ({
+  ...[
+    'sheet',
+    'skills',
+    'items',
+    'awards',
+    'spells',
+    'rest',
+    'reference',
+    'options',
+    'quests',
+    'notes',
+    'map',
+    'calendar',
+  ].map((screen) => ({
     label: screen,
     screen,
     member: 0,
@@ -89,6 +104,8 @@ interface Fit {
   panel: { left: number; top: number; right: number; bottom: number };
   title: { left: number; top: number } | null;
   close: { right: number; bottom: number } | null;
+  /** What the screen drew over the right-hand panel and lies outside its cover. */
+  coverOutside: string[];
 }
 
 /** Run in the page: what of the open screen lies outside its boxes, and which words overlap. */
@@ -146,18 +163,36 @@ function fitReport(): Fit {
       if (x > 1 && y > DESCENT) overlaps.add(`${a.text} | ${b.text}`);
     }
   }
-  const t = document.querySelector('.ui-modal .ui-title')?.getBoundingClientRect() ?? null;
-  const c = document.querySelector('.ui-modal .ui-close')?.getBoundingClientRect() ?? null;
+  // A title or a close oval counts where it shows: some of MM6's screens have neither.
+  const shown = (s: string): DOMRect | null => {
+    const e = document.querySelector(s);
+    const r = e?.getBoundingClientRect();
+    return r && r.width > 0 && r.height > 0 ? r : null;
+  };
+  const t = shown('.ui-modal .ui-title');
+  const c = shown('.ui-modal .ui-close');
+  const cover = document.querySelector('.panel-cover');
+  const coverOutside: string[] = [];
+  if (cover && cover.childElementCount) {
+    const b = cover.getBoundingClientRect();
+    for (const e of Array.from(cover.querySelectorAll('*'))) {
+      const r = e.getBoundingClientRect();
+      if (r.width === 0 || r.height === 0 || e.classList.contains('pxw') || e.closest('.pxs'))
+        continue;
+      if (!inside(r, b)) coverOutside.push(`${name(e)} outside the cover`);
+    }
+  }
   return {
     outside,
     overlaps: [...overlaps],
     panel: { left: p.left, top: p.top, right: p.right, bottom: p.bottom },
     title: t && { left: t.left, top: t.top },
     close: c && { right: c.right, bottom: c.bottom },
+    coverOutside,
   };
 }
 
-test('every screen fits its panel inside the safe areas, title top left, close bottom right', async ({
+test('every screen fits the view’s box inside the safe areas, its title at the head, its close at the foot', async ({
   page,
 }) => {
   test.setTimeout(150_000);
@@ -185,17 +220,20 @@ test('every screen fits its panel inside the safe areas, title top left, close b
     const fit = await page.evaluate(fitReport);
     expect(fit.outside, `${c.label}: cut off`).toEqual([]);
     expect(fit.overlaps, `${c.label}: words over words`).toEqual([]);
-    // The panel stands between the safe areas and above the band (114 pixels and the inset).
-    expect(fit.panel.left, c.label).toBeGreaterThanOrEqual(59);
-    expect(fit.panel.right, c.label).toBeLessThanOrEqual(932 - 59);
+    expect(fit.coverOutside, `${c.label}: past the panel's cover`).toEqual([]);
+    // The screen stands in the view's box: past the side pillar (59 and 15), short of the
+    // middle one (the panel's 128 and two pillars), under the lintel, over the band (114 and
+    // the inset).
+    expect(fit.panel.left, c.label).toBeGreaterThanOrEqual(59 + 15);
+    expect(fit.panel.right, c.label).toBeLessThanOrEqual(932 - 59 - 158);
+    expect(fit.panel.top, c.label).toBeGreaterThanOrEqual(7);
     expect(fit.panel.bottom, c.label).toBeLessThanOrEqual(430 - 21 - 114);
-    // One place for the title and the close on every screen: the title within the panel's
-    // top left (the spellbook's right of its binding), the close at its bottom right (the
-    // books' short of their page stack).
-    expect(fit.title!.top - fit.panel.top, `${c.label}: title`).toBeLessThan(24);
-    expect(fit.title!.left - fit.panel.left, `${c.label}: title`).toBeLessThan(90);
-    expect(fit.panel.right - fit.close!.right, `${c.label}: close`).toBeLessThan(80);
-    expect(fit.panel.bottom - fit.close!.bottom, `${c.label}: close`).toBeLessThan(10);
+    // A title at the panel's head, a close oval at its foot, where the screen has them.
+    if (fit.title) expect(fit.title.top - fit.panel.top, `${c.label}: title`).toBeLessThan(24);
+    if (fit.close) {
+      expect(fit.panel.right - fit.close.right, `${c.label}: close`).toBeLessThan(80);
+      expect(fit.panel.bottom - fit.close.bottom, `${c.label}: close`).toBeLessThan(12);
+    }
   }
   await page.evaluate(() => (window as unknown as W).ftb!.dev!.screens.close());
 });

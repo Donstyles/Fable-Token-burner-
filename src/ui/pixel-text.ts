@@ -63,9 +63,11 @@ function faceOf(el: Element): Face {
       ? 'Arimo'
       : 'Tinos';
   const cssSize = parseFloat(cs.fontSize) || 16;
-  // The CSS size is in CSS pixels; the glyphs are drawn in UI pixels, never under eighteen
-  // (twenty-seven for Pirata One), the smallest the phone keeps legible.
-  const size = Math.max(family === 'Pirata One' ? 27 : 18, Math.round(cssSize / PX));
+  // The CSS size is in CSS pixels; the glyphs are drawn in UI pixels, never under ten (twenty
+  // for Pirata One): at three device pixels to the CSS pixel the phone keeps MM6's own small
+  // type legible, which the screens need at MM6's layout (owner, 2026-10-24: "the exact same
+  // layout as the original"; 2026-10-23: "type is large for the space").
+  const size = Math.max(family === 'Pirata One' ? 20 : 10, Math.round(cssSize / PX));
   const fill = parseColor(cs.color);
   const lum = (0.299 * fill[0] + 0.587 * fill[1] + 0.114 * fill[2]) / 255;
   const italic = family !== 'Pirata One' && cs.fontStyle === 'italic';

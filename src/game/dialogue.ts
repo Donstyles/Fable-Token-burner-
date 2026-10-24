@@ -66,7 +66,14 @@ export const QUESTS: Record<string, QuestDef> = {
 export type QuestStage = 'offer' | 'active' | 'ready' | 'done';
 
 export type Topic =
-  | { kind: 'say'; id: string; label: string; text: string }
+  | {
+      kind: 'say';
+      id: string;
+      label: string;
+      text: string;
+      /** The note the party makes of it in its book of notes (src/ui/books-model.ts). */
+      note?: string;
+    }
   | { kind: 'rumours'; id: string; label: string; lines: string[] }
   | {
       kind: 'quest';
@@ -125,6 +132,9 @@ export const DIALOGUES: Record<string, DialogueDef> = {
           'The north road ends below the hills, and the hills belong to the goblins now. There ' +
           'is a cave on the slope that goes a long way down. My grandfather said there were halls ' +
           'under there, older than the town.',
+        note:
+          'A cave on the slope under the goblin hills, where the north road ends, goes a long ' +
+          'way down. Old Tobin’s grandfather spoke of halls beneath it, older than Gullhaven.',
       },
       {
         kind: 'quest',
@@ -192,6 +202,10 @@ export const DIALOGUES: Record<string, DialogueDef> = {
           'The inn faces the trader across the square. The temple stands on its knoll at the ' +
           'west end of the street; the smithy is at the east end, past the stables. Old Tobin ' +
           'farms up the north road, and the coast road runs west to the city.',
+        note:
+          'Gullhaven: the inn faces the trader across the square, the temple stands on its knoll ' +
+          'at the west end of the street, the smithy at the east end past the stables. Tobin’s ' +
+          'farm is up the north road; the coast road runs west to the city.',
       },
       {
         kind: 'say',
@@ -200,6 +214,7 @@ export const DIALOGUES: Record<string, DialogueDef> = {
         text:
           'The temple keeps a candle lit for those who go to sea. The priest heals for a price ' +
           'and prays for nothing; go in with gold and come out with both.',
+        note: 'The temple of Gullhaven heals the sick and the wounded, for gold.',
       },
       {
         kind: 'rumours',

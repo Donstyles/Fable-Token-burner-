@@ -1,8 +1,10 @@
 /**
- * The talk panel (DESIGN.md 16.7): a villager's name and calling under a window the runtime
- * draws their living face through, their words, and the topics to ask about. Plain DOM in
- * the house style; what is said and done comes from `dialogue-model.ts`. The runtime says
- * where the window is (for the bust), mouths the words and pauses the world meanwhile.
+ * Talk (DESIGN.md 16.7, 16.34; reference mm6-tavern-talk), as MM6 laid it out: over the
+ * right-hand panel a wooden board with the villager's calling at its head, a window the runtime
+ * draws their living face through, their name in MM6's blue, the topics to ask about and the
+ * gold oval with the door to leave by; their words in a box along the foot of the view. Plain
+ * DOM in the house style; what is said and done comes from `dialogue-model.ts`. The runtime
+ * says where the window is (for the bust), mouths the words and pauses the world meanwhile.
  */
 import './dialogue.css';
 import type { DialogueDef } from '../game/dialogue';
@@ -22,6 +24,8 @@ export interface DialogueHooks {
   /** A line for the status bar: a quest taken, a reward paid. */
   notice(text: string): void;
   onClose(): void;
+  /** The panel's cover (panel.ts) the board stands in; without it the board joins the words. */
+  cover?: HTMLElement;
 }
 
 export interface Dialogue {
@@ -44,7 +48,6 @@ interface Open {
   wood: HTMLElement;
   frame: HTMLElement;
   window: HTMLElement;
-  side: HTMLElement;
   /** The words' place in the side, as tall as whole lines of them that fit. */
   said: HTMLElement;
   text: HTMLElement;
@@ -59,8 +62,8 @@ interface Open {
   observer: ResizeObserver | null;
 }
 
-/** The most lines the words' box shows before it scrolls. */
-const MAX_LINES = 8;
+/** The most lines the words' box shows before it scrolls, as MM6's box along the view's foot. */
+const MAX_LINES = 5;
 
 export function createDialogue(
   uiLayer: HTMLElement,
@@ -97,23 +100,23 @@ export function createDialogue(
     open_.observer?.disconnect();
     window.removeEventListener('resize', measure);
     open_.root.remove();
+    open_.wood.remove();
     open_ = null;
     if (notify) hooks.onClose();
   }
 
   /**
-   * The words' box as tall as whole lines of them that fit beside the topics, so no line is
-   * cut through at its foot; whatever is left over falls between the words and the topics.
+   * The words' box as tall as whole lines of them, up to MM6's five, so no line is cut through
+   * at its foot; a longer speech scrolls in it.
    */
   const fit = (): void => {
     if (!open_) return;
-    const { side, said, text, topics } = open_;
-    const line = parseFloat(getComputedStyle(text).lineHeight) || 22;
+    const { said, text } = open_;
+    const line = parseFloat(getComputedStyle(text).lineHeight) || 17;
     const cs = getComputedStyle(said);
     const pad = (parseFloat(cs.paddingTop) || 0) + (parseFloat(cs.paddingBottom) || 0);
     said.style.maxHeight = '';
-    const room = side.clientHeight - topics.offsetHeight;
-    if (room <= 0) return;
+    const room = line * MAX_LINES + pad;
     said.style.maxHeight = `${wholeLines(room, line, pad, MAX_LINES)}px`;
   };
 
@@ -170,17 +173,20 @@ export function createDialogue(
   function open(npc: NpcDef, def: DialogueDef): void {
     unmount(false);
     const view = dialogueView(state, npc, def, quests);
+    // The words in their box along the view's foot.
     const root = el('div', 'dlg');
+    // The board over the panel: the calling at its head, the window, the name, the topics,
+    // the way out.
     const wood = el('div', 'dlg-wood');
+    const head = el('div', 'dlg-head', `The ${view.role}`);
     const frame = el('div', 'dlg-frame');
     frame.dataset['paint'] = 'frame';
     const window_ = el('div', 'dlg-window');
     window_.dataset['paint'] = 'speckle';
     frame.appendChild(window_);
     const plate = el('div', 'dlg-plate');
-    // "Maren the Goodwife", as MM6 named its people, in one line under the window.
-    plate.append(el('h2', 'dlg-name', view.name), el('span', 'dlg-role', `the ${view.role}`));
-    const side = el('div', 'dlg-side');
+    // The name in MM6's blue under the window, as "Dirk the Innkeep" stood under his.
+    plate.append(el('h2', 'dlg-name', view.name));
     // The words wrap in their box and scroll in it when a line is longer than the box holds
     // (owner, 2026-10-23: Old Tobin's thanks lost their end); a gold mark at the box's corner
     // says there is more, a swipe or a tap on the words reads on.
@@ -196,7 +202,7 @@ export function createDialogue(
     said.append(text, up, down);
     text.addEventListener('scroll', () => mark(), { passive: true });
     text.addEventListener('click', () => {
-      const line = parseFloat(getComputedStyle(text).lineHeight) || 22;
+      const line = parseFloat(getComputedStyle(text).lineHeight) || 17;
       const to = nextPage(text.scrollTop, text.clientHeight, text.scrollHeight, line);
       if (to !== text.scrollTop) text.scrollTop = to;
     });
@@ -211,21 +217,22 @@ export function createDialogue(
       });
       topics.appendChild(b);
     }
-    // Farewell is a line, not a gold pill (critics, round 8: MM6 had no gold pill), at the
-    // foot of the column under the name, so the words beside it keep the room it took under
-    // the topics (owner, 2026-10-23: the lines were cut off).
+    // MM6's way out: the gold oval with the door at the board's foot.
     const foot = el('div', 'dlg-foot');
-    const bye = el('button', 'dlg-bye', 'Farewell');
+    const bye = el('button', 'ui-btn dlg-bye');
     bye.type = 'button';
+    bye.dataset['glyph'] = 'exit';
+    bye.title = 'Farewell';
+    bye.setAttribute('aria-label', 'Farewell');
     bye.addEventListener('click', (e) => {
       e.preventDefault();
       unmount(true);
     });
     foot.appendChild(bye);
-    side.append(said, topics);
-    wood.append(frame, plate, foot, side);
-    root.appendChild(wood);
+    wood.append(head, frame, plate, topics, foot);
+    root.appendChild(said);
     uiLayer.appendChild(root);
+    (hooks.cover ?? root).appendChild(wood);
     const observer =
       typeof ResizeObserver === 'function'
         ? new ResizeObserver((entries) => {
@@ -246,7 +253,6 @@ export function createDialogue(
       wood,
       frame,
       window: window_,
-      side,
       said,
       text,
       words,

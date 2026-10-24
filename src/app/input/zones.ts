@@ -22,6 +22,11 @@ export interface ZoneConfig {
   strafeFactor: number;
   tapMaxMs: number;
   tapMaxPx: number;
+  /**
+   * Where the move half ends and the look half begins, CSS px from the left: the view's middle
+   * (src/app/view-box.ts), which MM6's frame puts left of the screen's; the screen's when unset.
+   */
+  splitX?: number;
 }
 
 export const DEFAULT_ZONES: Omit<ZoneConfig, 'width' | 'height'> = {
@@ -110,7 +115,7 @@ export class InputZones {
    */
   pointerDown(id: number, x: number, y: number, time: number, stamp?: number): void {
     if (this.pointers.has(id)) return;
-    const wantsMove = x < this.config.width / 2;
+    const wantsMove = x < (this.config.splitX ?? this.config.width / 2);
     const role: Pointer['role'] = wantsMove
       ? this.hasRole('move')
         ? 'ignored'

@@ -76,12 +76,13 @@ describe('automap view', () => {
     expect(visitedCells(level)).toEqual([[10, 6]]);
     const v = mapView(state, 400, 300);
     expect(v).not.toBeNull();
+    // North up: row 6 of ten from the grid's corner is drawn fourth from the page's top.
     expect(v).toMatchObject({
       levelId: 'showcase',
       visited: 1,
       total: 200,
-      cells: [[10, 6]],
-      party: { cx: 10, cy: 6, yawDeg: 90 },
+      cells: [[10, 3]],
+      party: { cx: 10, cy: 3, yawDeg: 90 },
     });
     state.level.x = 100;
     expect(mapView(state, 400, 300)?.party).toBeNull();
@@ -97,16 +98,16 @@ describe('map marks', () => {
     const level = automapLevel(state.automap, state.level.id, spec);
     const t = mapTransform(level, 720, 300);
     expect(t).toEqual({ scale: 3, offsetX: 240, offsetY: 30 });
-    // The party at (x, z) is drawn in cell ((x - originX) / 8, (z - originZ) / 8).
+    // The party at (x, z) is drawn in cell ((x - originX) / 8, (z - originZ) / 8), north up.
     state.level.x = 4;
     state.level.z = -100;
     const v = mapView(state, 720, 300, [{ x: 4, z: -100, kind: 'person', label: 'Maren' }]);
-    expect(v?.party).toMatchObject({ cx: 40, cy: 27 });
-    // (4 + 320) / 8 = 40.5 cells across and (-100 + 320) / 8 = 27.5 down, three pixels a
-    // cell from the offset, on a whole pixel: where the party's arrow stands (its cell's
-    // middle, 361.5 by 112.5) to within a pixel.
-    expect(v?.marks).toEqual([{ x: 4, z: -100, kind: 'person', label: 'Maren', px: 361, py: 112 }]);
-    const arrow = { x: 240 + (40 + 0.5) * 3, y: 30 + (27 + 0.5) * 3 };
+    expect(v?.party).toMatchObject({ cx: 40, cy: 52 });
+    // (4 + 320) / 8 = 40.5 cells across and (-100 + 320) / 8 = 27.5 up from the grid's foot,
+    // 52.5 down from its top, three pixels a cell from the offset, on a whole pixel: where
+    // the party's arrow stands (its cell's middle, 361.5 by 187.5) to within a pixel.
+    expect(v?.marks).toEqual([{ x: 4, z: -100, kind: 'person', label: 'Maren', px: 361, py: 187 }]);
+    const arrow = { x: 240 + (40 + 0.5) * 3, y: 30 + (52 + 0.5) * 3 };
     expect(Math.abs(arrow.x - v!.marks[0]!.px)).toBeLessThan(1);
     expect(Math.abs(arrow.y - v!.marks[0]!.py)).toBeLessThan(1);
   });
@@ -121,12 +122,12 @@ describe('map marks', () => {
       { x: 0, z: 0, kind: 'person', label: 'Old Tobin' },
       { x: -320, z: -320, kind: 'portal', label: 'The Old Halls' },
       { x: 320, z: 0, kind: 'person', label: 'Past the east edge' },
-      { x: 0, z: -321, kind: 'person', label: 'Past the north edge' },
+      { x: 0, z: -321, kind: 'person', label: 'Past the south edge' },
       { x: Number.NaN, z: 0, kind: 'person', label: 'Nowhere' },
     ]);
     // Tobin's pennant stands beside him rather than over him.
     expect(placed.map((m) => [m.kind, m.label, m.px, m.py])).toEqual([
-      ['portal', 'The Old Halls', 240, 30],
+      ['portal', 'The Old Halls', 240, 270],
       ['person', 'Old Tobin', 360, 150],
       ['quest', 'Old Tobin', 367, 146],
     ]);

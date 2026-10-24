@@ -103,13 +103,16 @@ export function mapView(
   const { cx, cy } = worldToCell(level, state.level.x, state.level.z);
   const inside = cx >= 0 && cy >= 0 && cx < level.width && cy < level.height;
   const transform = mapTransform(level, width, height);
+  // North up, as MM6's map and the minimap (DESIGN.md 16.34): the scene's z runs up the page,
+  // so a grid row is drawn from the page's foot.
+  const up = (row: number): number => level.height - 1 - row;
   return {
     levelId: state.level.id,
     transform,
-    cells: visitedCells(level),
+    cells: visitedCells(level).map(([x, y]): [number, number] => [x, up(y)]),
     visited: visitedCount(level),
     total: level.width * level.height,
-    party: inside ? { cx, cy, yawDeg: state.level.yawDeg } : null,
+    party: inside ? { cx, cy: up(cy), yawDeg: state.level.yawDeg } : null,
     marks: placeMarks(level, transform, marks),
   };
 }
@@ -123,7 +126,7 @@ export interface PlacedMark extends MapMark {
 /**
  * The marks on the map's canvas, by the transform the cells and the party are drawn with: a
  * scene position `(x, z)` lands `(x - originX) / cellSize` cells across and `(z - originZ) /
- * cellSize` down, at its own place in the cell (the party's arrow stands at its cell's
+ * cellSize` up from the grid's foot (north up), at its own place in the cell (the party's arrow stands at its cell's
  * middle), rounded to a whole pixel. Marks off the level's grid, or not finite, are left off;
  * whether their cells are walked does not matter. Quests are drawn over people over portals,
  * so the list comes back in that order of drawing, last on top; a mark that would cover one
@@ -143,10 +146,11 @@ export function placeMarks(
     const u = (m.x - level.originX) / level.cellSize;
     const v = (m.z - level.originZ) / level.cellSize;
     if (u < 0 || v < 0 || u >= level.width || v >= level.height) continue;
+    // North up: the scene's z runs up the page.
     onGrid.push({
       ...m,
       px: Math.floor(offsetX + u * scale),
-      py: Math.floor(offsetY + v * scale),
+      py: Math.floor(offsetY + (level.height - v) * scale),
     });
   }
   onGrid.sort((a, b) => order[a.kind] - order[b.kind]);

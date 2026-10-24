@@ -93,12 +93,15 @@ describe('quest topics', () => {
 });
 
 describe('talk and rumours', () => {
-  it('plain talk says its line and changes nothing', () => {
+  it('plain talk says its line and changes nothing but the note it makes, once', () => {
     const state = freshState();
-    const before = JSON.stringify(state);
     const out = chooseTopic(state, tobin, QUESTS, 'hills')!;
     expect(out.text).toMatch(/goblins/);
-    expect(out.notices).toEqual([]);
+    // MM6 noted what it was told in its book of notes, and said so (books-model.ts).
+    expect(out.notices).toEqual(['Note added']);
+    const before = JSON.stringify(state);
+    const again = chooseTopic(state, tobin, QUESTS, 'hills')!;
+    expect(again.notices).toEqual([]);
     expect(JSON.stringify(state)).toBe(before);
   });
 

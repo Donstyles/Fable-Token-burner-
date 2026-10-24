@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 
-/** The Phase 5 screens (DESIGN 14.5) in the dev build: the book shelf, the screens, creation. */
+/** The Phase 5 screens (DESIGN 14.5, 16.34) in the dev build: the panel, the screens, creation. */
 type Dev = {
   ready: boolean;
   simTime(): number;
@@ -9,10 +9,25 @@ type Dev = {
 };
 type W = Window & { ftb?: { dev?: Dev } };
 
-const SCREENS = ['sheet', 'items', 'spells', 'rest', 'quests', 'map'];
+const SCREENS = [
+  'sheet',
+  'skills',
+  'items',
+  'awards',
+  'spells',
+  'rest',
+  'reference',
+  'options',
+  'quests',
+  'notes',
+  'map',
+  'calendar',
+];
 
 test.describe('screens', () => {
-  test('the shelf opens every screen and an open screen pauses the world', async ({ page }) => {
+  test('the panel opens every screen and an open screen pauses the world', async ({ page }) => {
+    // Twelve screens on software GL at a frame a second.
+    test.setTimeout(300_000);
     await page.goto('dev/?dev&lite&level=showcase&seed=3');
     await page.waitForFunction(() => (window as unknown as W).ftb?.dev?.ready === true, null, {
       timeout: 120_000,
@@ -21,7 +36,9 @@ test.describe('screens', () => {
     expect(party.party.map((m) => m.name)).toEqual(['Alric', 'Mira', 'Tobin', 'Sera']);
     expect(party.gold).toBe(200);
     expect(party.food).toBe(7);
-    await expect(page.locator('.ui-shelf-btn')).toHaveCount(6);
+    // MM6's panel (DESIGN.md 16.34): four books on the shelf and four ovals under the purse.
+    await expect(page.locator('.panel-book')).toHaveCount(4);
+    await expect(page.locator('.panel-oval')).toHaveCount(4);
     for (const name of SCREENS) {
       await page.evaluate((n) => (window as unknown as W).ftb!.dev!.screens.open(n), name);
       expect(await page.evaluate(() => (window as unknown as W).ftb!.dev!.screens.current())).toBe(

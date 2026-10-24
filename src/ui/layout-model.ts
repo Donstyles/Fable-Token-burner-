@@ -18,14 +18,14 @@ export function bagCell(height: number, rows: number, frame = 6): number {
   return Math.max(BAG_CELL.min, Math.min(BAG_CELL.max, fit));
 }
 
-/** A spell's place on the book's page: its oval's 108 pixels at the least, 130 at the most. */
-export const SPELL_PLACE = { min: 108, max: 130 } as const;
+/** A spell's place on the book's page: its oval's 72 pixels at the least, 180 at the most. */
+export const SPELL_PLACE = { min: 72, max: 180 } as const;
 
 /**
- * The width of each of `columns` places across a page `width` pixels wide (DESIGN.md 16.22:
- * two rows of six): as wide as the page allows, an even number of pixels so a picture centres
- * on whole pixels, never under its oval (owner's phone, 2026-10-23: at 126 the last column ran
- * off the page inside the insets).
+ * The width of each of `columns` places across a page `width` pixels wide (DESIGN.md 16.34:
+ * MM6's three across and four down): as wide as the page allows, an even number of pixels so a
+ * picture centres on whole pixels, never under its oval (owner's phone, 2026-10-23: a place too
+ * wide ran the last column off the page inside the insets).
  */
 export function spellPlace(width: number, columns: number): number {
   let w = Math.floor(width / Math.max(1, columns));

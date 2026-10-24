@@ -221,3 +221,18 @@ describe('keyboard fallback', () => {
     expect(z.consume().move).toBe(1);
   });
 });
+
+describe('the split between the halves', () => {
+  it('falls at the view’s middle when one is given, not the screen’s', () => {
+    // MM6's frame: the view between the pillars, its middle at 394 on the phone.
+    z.configure({ splitX: 394 });
+    z.pointerDown(1, 420, 300, 0);
+    z.pointerMove(1, 420, 200, 10);
+    // Right of the view's middle, left of the screen's: a look, not a walk.
+    expect(z.consume().move).toBe(0);
+    z.pointerUp(1, 420, 200, 20);
+    z.pointerDown(2, 380, 300, 30);
+    z.pointerMove(2, 380, 200, 40);
+    expect(z.consume().move).toBe(1);
+  });
+});

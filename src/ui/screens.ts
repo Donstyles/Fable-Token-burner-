@@ -1,29 +1,32 @@
 /**
- * The game screens (Phase 5 step 10): a book-shelf button bar at the bottom right and the
- * full-viewport screens it opens: character sheet, inventory, spellbook, rest, quest log and
- * automap, plus the town services a house opens. Plain DOM and CSS in the house style; phone
- * landscape with the safe areas respected. One screen is open at a time; opening pauses
- * nothing, the runtime decides that through the hooks. Each screen's rows and actions come
- * from a pure `*-model.ts` module, tested without a DOM.
+ * The game screens (Phase 5 step 10; DESIGN.md 16.34): each opens in the view's box, as MM6's
+ * did, the band and the panel standing round it: character sheet, inventory, spellbook, rest,
+ * quest log and automap, plus the town services a house opens. The panel's books and ovals
+ * (panel.ts) and the band's portraits open them through the runtime. Plain DOM and CSS in the
+ * house style. One screen is open at a time; opening pauses nothing, the runtime decides that
+ * through the hooks. Each screen's rows and actions come from a pure `*-model.ts` module,
+ * tested without a DOM.
  */
 import './ui.css';
 import './screens.css';
 import { mulberry32 } from '../game/rng';
 import type { GameState } from '../game/state';
 import {
-  SCREEN_NAMES,
   type ScreenContext,
   type ScreenHooks,
   type ScreenName,
   type ServiceDefs,
   type ServiceKind,
 } from './context';
-import { button, createFrame, el, watchScrolls } from './dom';
+import { createFrame, watchScrolls } from './dom';
+import { renderCalendar, renderNotes, renderQuests } from './books';
+import { renderAwards, renderSheet, renderSkills } from './character';
 import { renderInventory } from './inventory';
-import { renderMap, renderQuests } from './journal';
+import { renderMap } from './journal';
+import { renderOptions } from './options';
+import { renderReference } from './reference';
 import { renderRest } from './rest';
 import { renderService, type ServiceRef } from './services';
-import { renderSheet } from './sheet';
 import { renderSpellbook } from './spellbook';
 import { installPressFeel } from './press';
 
@@ -40,31 +43,52 @@ export { SCREEN_NAMES, SERVICE_KINDS } from './context';
 export { HOSTILES_NEARBY } from './rest-model';
 
 export const SCREEN_LABELS: Record<ScreenName, string> = {
-  sheet: 'Sheet',
-  items: 'Items',
+  sheet: 'Statistics',
+  skills: 'Skills',
+  items: 'Inventory',
+  awards: 'Awards',
   spells: 'Spells',
   rest: 'Rest',
+  reference: 'Quick Reference',
+  options: 'Options',
   quests: 'Quests',
+  notes: 'Notes',
   map: 'Map',
+  calendar: 'Calendar',
 };
 
 const SCREEN_TITLES: Record<ScreenName, string> = {
   sheet: 'Character',
+  skills: 'Skills',
   items: 'Inventory',
+  awards: 'Awards',
   spells: 'Spellbook',
   rest: 'Rest',
-  quests: 'Quest Log',
-  map: 'Automap',
+  reference: 'Quick Reference',
+  options: 'Options',
+  quests: 'Current Quests',
+  notes: 'Auto Notes',
+  map: 'Map',
+  calendar: 'Calendar',
 };
 
 const RENDERERS: Record<ScreenName, (ctx: ScreenContext) => void> = {
   sheet: renderSheet,
+  skills: renderSkills,
   items: renderInventory,
+  awards: renderAwards,
   spells: renderSpellbook,
   rest: renderRest,
+  reference: renderReference,
+  options: renderOptions,
   quests: renderQuests,
+  notes: renderNotes,
   map: renderMap,
+  calendar: renderCalendar,
 };
+
+/** The screens MM6 drew as open books (paint.ts `book`). */
+const BOOKS: readonly string[] = ['spells', 'quests', 'notes', 'map', 'calendar'];
 
 export interface Screens {
   open(name: ScreenName): void;
@@ -85,23 +109,6 @@ export function installScreens(
   hooks: ScreenHooks,
 ): Screens {
   const rng = hooks.rng ?? mulberry32((state.seed ^ Math.floor(hooks.now() * 1000)) >>> 0 || 1);
-  const shelf = el('div', 'ui-shelf');
-  const books = el('div', 'ui-shelf-books');
-  books.dataset['paint'] = 'alcove';
-  shelf.appendChild(books);
-  for (const name of SCREEN_NAMES) {
-    // Book spines with gold glyphs, as MM6's shelf; rest is the round gold button.
-    const b = button('', () => open(name), {
-      className: `ui-shelf-btn ${name === 'rest' ? 'rest' : ''}`.trim(),
-    });
-    // The emblems are painted on the spines (paint.ts `spine-<name>`) and the moon on the
-    // rest button's gold (paint.ts `gold`); the label is for the reader alone.
-    b.innerHTML = `<span class="ui-shelf-label">${SCREEN_LABELS[name]}</span>`;
-    b.title = SCREEN_LABELS[name];
-    b.dataset['paint'] = name === 'rest' ? 'gold' : `spine-${name}`;
-    (name === 'rest' ? shelf : books).appendChild(b);
-  }
-  uiLayer.appendChild(shelf);
   installPressFeel(uiLayer);
 
   let open_: { name: ScreenName | ServiceKind; root: HTMLElement; stop: () => void } | null = null;
@@ -112,6 +119,7 @@ export function installScreens(
     open_.stop();
     open_.root.remove();
     open_ = null;
+    hooks.cover?.replaceChildren();
     portraitClaim = null;
     if (notify) hooks.onClose();
   }
@@ -126,17 +134,20 @@ export function installScreens(
     render: (ctx: ScreenContext) => void,
   ): void {
     unmount(false);
-    const frame = createFrame(title, close);
+    // What a screen says goes to MM6's message bar on the band when the runtime has one.
+    const frame = createFrame(title, close, hooks.say);
     // The screen's own class, so the spellbook can be parchment and the sheet stone.
     frame.root.classList.add(`screen-${name}`);
-    // The spellbook and the quest log are open books, as MM6's (paint.ts `book`). Their foot
-    // is the painted page edges, the close oval standing on them; the message line goes up
-    // beside the title, on the page.
-    if (name === 'spells' || name === 'quests' || name === 'map') {
+    // The books are open books, as MM6's (paint.ts `book`): their foot is the painted page
+    // edges, the clasp that closes them standing on them.
+    if (BOOKS.includes(name)) {
       const panel = frame.root.querySelector<HTMLElement>('.ui-panel');
       if (panel) panel.dataset['paint'] = 'book';
-      const say = frame.root.querySelector('.ui-say');
-      if (say) frame.root.querySelector('.ui-head')?.appendChild(say);
+      frame.root.classList.add('screen-book');
+      frame.root.querySelector<HTMLElement>('.ui-close')?.setAttribute('data-glyph', 'close-book');
+      // The title on MM6's knotwork banner across the page's head.
+      const t = frame.root.querySelector<HTMLElement>('.ui-title');
+      if (t) t.dataset['paint'] = 'banner';
     }
     portraitClaim = null;
     render({
@@ -145,6 +156,8 @@ export function installScreens(
       frame,
       rng,
       close,
+      open,
+      cover: hooks.cover ?? null,
       claimPortraits: (handler) => {
         portraitClaim = handler;
       },
@@ -172,12 +185,11 @@ export function installScreens(
     pickMember(index) {
       return portraitClaim ? portraitClaim(index) : false;
     },
-    toggleButtonBar(on) {
-      shelf.classList.toggle('hidden', !on);
+    toggleButtonBar() {
+      // The books and the ovals stand in the panel now (panel.ts), which the talk covers.
     },
     dispose() {
       unmount(false);
-      shelf.remove();
     },
   };
 }

@@ -1,11 +1,15 @@
 /**
- * The town service screens (Phase 5 step 10): tavern (room, food), temple (heal and cure by
- * member with the price), guild (membership, spellbooks for the active member), trainer
- * (level up per member) and shop (buy from the stock, sell from the active member's pack,
- * identify and repair). Each is driven by its house record through `services-model.ts`.
+ * The houses of the town (Phase 5 step 10; DESIGN.md 16.34; references mm6-smith-menu,
+ * mm6-tavern-talk), as MM6 laid them out: over the right-hand panel the house's wooden board,
+ * its name at the head and its choices down it in the white italic, the gold oval with the door
+ * at its foot; the view keeps the street, where MM6 showed the room, until a choice needs a
+ * list: the stock to buy, the member's pack to sell, identify or repair, the guild's books.
+ * The member the choices are for is the one picked in the band (a tap on a portrait turns the
+ * house to them, as MM6's); what passes is said on the message bar. Each house is driven by its
+ * record through `services-model.ts` and `shop-model.ts`.
  */
 import type { ScreenContext, ServiceDefs, ServiceKind } from './context';
-import { button, el, heading, kv, memberTabs, note } from './dom';
+import { button, el } from './dom';
 import {
   type ActionOutcome,
   buyBook,
@@ -24,293 +28,286 @@ import { buy, identify, repair, sell, shopView } from './shop-model';
 /** A house to open: its kind and the record of that kind. */
 export type ServiceRef = { [K in ServiceKind]: { kind: K; house: ServiceDefs[K] } }[ServiceKind];
 
-function goldLine(gold: number): HTMLElement {
-  return kv('Gold', gold, 'svc-gold');
+/** A choice on the board: its words, and why it cannot be taken now (said when tapped). */
+interface Choice {
+  label: string;
+  reason?: string | null;
+  /** The list it opens in the view, which shows lit while open. */
+  list?: string;
+  go(): void;
 }
 
-/** A list's heading with the party's gold at its right, so the rows below get the room. */
-function headLine(title: string, gold: number): HTMLElement {
-  const row = el('div', 'svc-head');
-  row.append(heading(title), goldLine(gold));
-  return row;
+/** A line of a list in the view: its name, its price, why it cannot be had. */
+interface Row {
+  name: string;
+  note?: string;
+  price: string;
+  reason: string | null;
+  go(): void;
+}
+
+/** What a house's choices do beyond themselves: open a list, or say what passed. */
+interface House {
+  show(list: string): void;
+  say(r: ActionOutcome | string): void;
 }
 
 /**
- * A row's action: always MM6's gold oval with its word alone (owner, 2026-10-23: a price or a
- * reason in the button made it a wide slab of another style). One that cannot be taken now
- * sits dim and, tapped, says why on the message line.
+ * The board over the panel and the list in the view for one house. `choices` and `lists` are
+ * asked again at each redraw, so the board always says what the gold and the member allow.
  */
-function act(
+function house(
   ctx: ScreenContext,
-  label: string,
-  reason: string | null,
-  onTap: () => void,
-): HTMLButtonElement {
-  const b = button(label, () => {
-    if (reason !== null) ctx.frame.message(reason);
-    else onTap();
-  });
-  b.classList.add('svc-act');
-  if (reason !== null) {
-    b.classList.add('off');
-    b.title = reason;
-  }
-  return b;
-}
-
-/**
- * The price, or the reason the row's action cannot be taken (a member's training or healing),
- * dim, in its own column.
- */
-function priceCell(price: number, reason: string | null): HTMLElement {
-  return el('span', `svc-price ${reason === null ? '' : 'dim'}`.trim(), reason ?? `${price} gold`);
-}
-
-/**
- * A list's rows as one table, so names, figures, prices and the gold ovals stand in columns
- * whatever wraps (owner, 2026-10-23: the row buttons and their notes ran out of line).
- */
-function table(className: string): HTMLElement {
-  return el('div', `svc-rows ${className}`);
-}
-
-/** One row of the table: its cells, then the gold ovals in the last. */
-function tableRow(cells: HTMLElement[], acts: HTMLElement[], dim = false): HTMLElement {
-  const line = el('div', 'svc-line');
-  if (dim) line.classList.add('dim');
-  const end = el('span', 'svc-acts');
-  end.append(...acts);
-  line.append(...cells, end);
-  return line;
-}
-
-function renderTavern(ctx: ScreenContext, house: ServiceDefs['tavern']): void {
-  const { state, frame, hooks, close } = ctx;
-  const draw = (rested: ActionOutcome | null): void => {
-    const v = tavernView(state, house);
-    const left = el('div', 'ui-col narrow');
-    left.append(goldLine(v.gold), kv('Food', `${v.food} / ${v.foodCapacity}`));
-    const right = el('div', 'ui-col');
-    if (rested) {
-      right.appendChild(heading('The night'));
-      for (const line of rested.lines ?? []) right.appendChild(note(line));
-      right.appendChild(button('Done', close, { className: 'primary' }));
-    } else {
-      right.appendChild(heading(house.name));
-      const actions = el('div', 'ui-col rest-actions');
-      actions.append(
-        button(
-          'Rent a room',
-          () => {
-            const r = rent(state, house);
-            frame.message(r.message);
-            if (r.ok) hooks.onRest('room');
-            draw(r.ok ? r : null);
-          },
-          {
-            className: 'primary',
-            disabled: !v.canRent,
-            note: `${v.roomPrice} gold · rest, no food`,
-          },
-        ),
-        button(
-          'Buy food',
-          () => {
-            frame.message(buyFoodAction(state, house).message);
-            draw(null);
-          },
-          {
-            disabled: !v.canBuyFood,
-            note: v.foodReason ?? `${v.foodUnits} for ${v.foodCost} gold (${v.foodPrice} each)`,
-          },
-        ),
-      );
-      right.appendChild(actions);
-    }
-    frame.body.replaceChildren(left, right);
-  };
-  draw(null);
-}
-
-function renderTemple(ctx: ScreenContext, house: ServiceDefs['temple']): void {
-  const { state, frame } = ctx;
-  const draw = (): void => {
-    // One line a member, the four in sight without scrolling.
-    const col = el('div', 'ui-col');
-    col.appendChild(headLine('Healing', state.gold));
-    const rows = table('svc-temple');
-    for (const row of templeRows(state, house)) {
-      rows.appendChild(
-        tableRow(
-          [
-            el('span', 'svc-name', row.name),
-            el('span', 'sub', row.condition),
-            el('span', 'ui-v svc-num', `${row.hp} / ${row.maxHp}`),
-            priceCell(row.price, row.reason),
-          ],
-          [
-            act(ctx, 'Heal', row.reason, () => {
-              frame.message(heal(state, house, row.index).message);
-              draw();
-            }),
-          ],
-        ),
-      );
-    }
-    col.appendChild(rows);
-    frame.body.replaceChildren(col);
-  };
-  draw();
-}
-
-function renderGuild(ctx: ScreenContext, house: ServiceDefs['guild']): void {
-  const { state, frame } = ctx;
-  let active = state.selected;
-  const draw = (): void => {
-    // The members beside the title; the message line keeps the foot's whole width.
-    frame.aside.replaceChildren(
-      memberTabs(state.party, active, (i) => {
-        active = i;
-        draw();
-      }),
-    );
-    const v = guildView(state, house, active);
-    const left = el('div', 'ui-col narrow');
-    left.append(goldLine(state.gold), heading('Membership'));
-    if (v.member) left.appendChild(note('The party are members.', 'good'));
-    else {
-      left.appendChild(
-        button(
-          'Join',
-          () => {
-            frame.message(join(state, house).message);
-            draw();
-          },
-          { className: 'primary', disabled: !v.canJoin, note: `${v.fee} gold` },
-        ),
-      );
-    }
-    const right = el('div', 'ui-col scroll');
-    right.appendChild(heading(`Spellbooks for ${state.party[active]?.name ?? ''}`));
-    const rows = table('svc-books');
-    for (const s of v.spells) {
-      const text = el('div', 'svc-name');
-      text.append(el('div', '', s.name), el('div', 'sub', `Level ${s.level}`));
-      rows.appendChild(
-        tableRow(
-          [text, priceCell(s.price, null)],
-          [
-            act(ctx, 'Buy', s.canBuy ? null : (s.reason ?? 'Not now.'), () => {
-              frame.message(buyBook(state, house, s.id, active).message);
-              draw();
-            }),
-          ],
-          s.known,
-        ),
-      );
-    }
-    right.appendChild(rows);
-    frame.body.replaceChildren(left, right);
-  };
-  draw();
-}
-
-function renderTrainer(ctx: ScreenContext, house: ServiceDefs['trainer']): void {
-  const { state, frame } = ctx;
-  const draw = (): void => {
-    // One line a member in aligned columns, the four in sight without scrolling (owner,
-    // 2026-10-23: two lines a member ran Tobin's off the box and Sera's out of sight).
-    const col = el('div', 'ui-col');
-    col.appendChild(headLine(`Training to level ${house.maxLevel}`, state.gold));
-    const rows = table('svc-trainer');
-    for (const row of trainerRows(state, house)) {
-      const sp = row.spGain > 0 ? `, +${row.spGain} SP` : '';
-      rows.appendChild(
-        tableRow(
-          [
-            el('span', 'svc-name', row.name),
-            el('span', 'ui-v svc-num', `Level ${row.level}`),
-            el('span', 'sub', `next +${row.hpGain} HP${sp}`),
-            priceCell(row.price, row.reason),
-          ],
-          [
-            act(ctx, 'Train', row.reason, () => {
-              frame.message(trainMember(state, house, row.index).message);
-              draw();
-            }),
-          ],
-        ),
-      );
-    }
-    col.appendChild(rows);
-    frame.body.replaceChildren(col);
-  };
-  draw();
-}
-
-function renderShop(ctx: ScreenContext, house: ServiceDefs['shop']): void {
-  const { state, frame } = ctx;
-  let active = state.selected;
-  const done = (r: ActionOutcome): void => {
-    frame.message(r.message);
+  name: string,
+  choices: () => Choice[],
+  lists: Record<string, { title: () => string; rows: () => Row[]; empty: string }>,
+): House {
+  const { frame, state } = ctx;
+  frame.root.classList.add('screen-house');
+  frame.setTitle(name);
+  let open: string | null = null;
+  const say = (r: ActionOutcome | string): void => {
+    frame.message(typeof r === 'string' ? r : r.message);
     draw();
   };
   const draw = (): void => {
-    // The members beside the title; the message line keeps the foot's whole width.
-    frame.aside.replaceChildren(
-      memberTabs(state.party, active, (i) => {
-        active = i;
-        draw();
-      }),
-    );
-    const v = shopView(state, house, active);
-    // Each list scrolls in its box when the stock or the pack is longer than it.
-    const left = el('div', 'ui-col scroll');
-    left.appendChild(headLine('For sale', state.gold));
-    if (v.merchant > 0) left.appendChild(note(`Merchant: ${v.merchant} % better prices.`, 'good'));
-    const wares = table('svc-wares');
-    for (const b of v.buy) {
-      wares.appendChild(
-        tableRow(
-          [el('span', 'svc-name', b.name), priceCell(b.price, null)],
-          [
-            act(ctx, 'Buy', b.canBuy ? null : (b.reason ?? 'Not now.'), () =>
-              done(buy(state, house, b.id, active)),
-            ),
-          ],
-        ),
-      );
+    // The board.
+    const board = el('div', 'house-board');
+    board.appendChild(el('div', 'house-name', name));
+    const menu = el('div', 'house-choices');
+    for (const c of choices()) {
+      const b = el('button', 'house-choice', c.label);
+      b.type = 'button';
+      if (c.reason) b.classList.add('dim');
+      if (c.list && c.list === open) b.classList.add('lit');
+      b.addEventListener('click', (e) => {
+        e.preventDefault();
+        if (c.reason) say(c.reason);
+        else c.go();
+      });
+      menu.appendChild(b);
     }
-    left.appendChild(wares);
-    const right = el('div', 'ui-col scroll');
-    right.appendChild(heading(`${state.party[active]?.name ?? ''}'s pack`));
-    if (v.sell.length === 0) right.appendChild(note('Nothing to sell.'));
-    const pack = table('svc-wares');
-    for (const s of v.sell) {
-      // What the smith would charge first, under the name: the buttons carry their word alone.
-      const text = el('div', 'svc-name');
-      text.appendChild(el('div', '', s.name));
-      const extra = [
-        s.identified ? '' : `identify ${s.identifyPrice} gold`,
-        s.broken ? `repair ${s.repairPrice} gold` : '',
-      ].filter(Boolean);
-      if (extra.length) text.appendChild(el('div', 'sub', extra.join(' · ')));
-      const acts: HTMLElement[] = [];
-      if (!s.identified) {
-        acts.push(
-          act(ctx, 'Identify', null, () => done(identify(state, house, active, s.gridIndex))),
-        );
-      }
-      if (s.broken) {
-        acts.push(act(ctx, 'Repair', null, () => done(repair(state, house, active, s.gridIndex))));
-      }
-      acts.push(act(ctx, 'Sell', null, () => done(sell(state, house, active, s.gridIndex))));
-      pack.appendChild(tableRow([text, priceCell(s.price, null)], acts, s.broken));
+    const foot = el('div', 'house-foot');
+    const exit = button('', () => ctx.close(), { className: 'house-exit' });
+    exit.dataset['glyph'] = 'exit';
+    exit.title = 'Leave';
+    exit.setAttribute('aria-label', 'Leave');
+    foot.appendChild(exit);
+    board.append(menu, foot);
+    ctx.cover?.replaceChildren(board);
+    // The list in the view, or the street.
+    const list = open ? lists[open] : null;
+    frame.root.classList.toggle('listing', !!list);
+    if (!list) {
+      frame.body.replaceChildren();
+      return;
     }
-    right.appendChild(pack);
-    frame.body.replaceChildren(left, right);
+    const col = el('div', 'ui-col scroll house-list');
+    const head = el('div', 'house-list-head');
+    head.append(el('span', 'ui-h', list.title()), el('span', 'ui-v', `Gold ${state.gold}`));
+    col.appendChild(head);
+    const rows = list.rows();
+    if (!rows.length) col.appendChild(el('div', 'house-row dim', list.empty));
+    for (const r of rows) {
+      const line = el('button', 'house-row');
+      line.type = 'button';
+      if (r.reason) line.classList.add('dim');
+      const label = el('span', 'house-row-name', r.name);
+      line.append(label);
+      if (r.note) line.append(el('span', 'house-row-note', r.note));
+      line.append(el('span', 'house-row-price', r.price));
+      line.addEventListener('click', (e) => {
+        e.preventDefault();
+        if (r.reason) say(r.reason);
+        else r.go();
+      });
+      col.appendChild(line);
+    }
+    frame.body.replaceChildren(col);
   };
+  const show = (list: string): void => {
+    open = open === list ? null : list;
+    draw();
+  };
+  // The band's portraits turn the house to the member tapped, as MM6's.
+  ctx.claimPortraits((i) => {
+    state.selected = i;
+    draw();
+    return true;
+  });
+  state.selected = Math.max(0, Math.min(state.party.length - 1, state.selected));
   draw();
+  return { show, say };
+}
+
+const gold = (n: number): string => `${n} gold`;
+
+function renderTavern(ctx: ScreenContext, def: ServiceDefs['tavern']): void {
+  const { state, hooks } = ctx;
+  const h: House = house(
+    ctx,
+    def.name,
+    () => {
+      const v = tavernView(state, def);
+      return [
+        {
+          label: `Rent Room for ${def.roomPrice} gold`,
+          reason: v.canRent ? null : 'Not enough gold.',
+          go: () => {
+            const r = rent(state, def);
+            if (r.ok) hooks.onRest('room');
+            h.say(r);
+          },
+        },
+        {
+          label: `Fill Packs to ${def.foodCapacity} days for ${v.foodCost || def.foodPrice} gold`,
+          reason: v.foodReason,
+          go: () => h.say(buyFoodAction(state, def)),
+        },
+      ];
+    },
+    {},
+  );
+}
+
+function renderTemple(ctx: ScreenContext, def: ServiceDefs['temple']): void {
+  const { state } = ctx;
+  const h: House = house(
+    ctx,
+    def.name,
+    () => {
+      const row = templeRows(state, def)[state.selected];
+      if (!row) return [];
+      return [
+        {
+          label: `Heal ${row.name} for ${row.price} gold`,
+          reason: row.reason,
+          go: () => h.say(heal(state, def, row.index)),
+        },
+      ];
+    },
+    {},
+  );
+}
+
+function renderTrainer(ctx: ScreenContext, def: ServiceDefs['trainer']): void {
+  const { state } = ctx;
+  const h: House = house(
+    ctx,
+    def.name,
+    () => {
+      const row = trainerRows(state, def)[state.selected];
+      if (!row) return [];
+      return [
+        {
+          label: `Train ${row.name} to level ${row.level + 1} for ${row.price} gold`,
+          reason: row.reason,
+          go: () => h.say(trainMember(state, def, row.index)),
+        },
+      ];
+    },
+    {},
+  );
+}
+
+function renderGuild(ctx: ScreenContext, def: ServiceDefs['guild']): void {
+  const { state } = ctx;
+  const h: House = house(
+    ctx,
+    def.name,
+    () => {
+      const v = guildView(state, def, state.selected);
+      const out: Choice[] = [];
+      if (!v.member) {
+        out.push({
+          label: `Join the guild for ${v.fee} gold`,
+          reason: v.canJoin ? null : 'Not enough gold.',
+          go: () => h.say(join(state, def)),
+        });
+      }
+      out.push({ label: 'Buy Spells', list: 'books', go: () => h.show('books') });
+      return out;
+    },
+    {
+      books: {
+        title: () => `Spellbooks for ${state.party[state.selected]?.name ?? ''}`,
+        empty: 'Nothing for sale.',
+        rows: () =>
+          guildView(state, def, state.selected).spells.map((s) => ({
+            name: s.name,
+            note: `Level ${s.level}`,
+            price: gold(s.price),
+            reason: s.canBuy ? null : (s.reason ?? 'Not now.'),
+            go: () => h.say(buyBook(state, def, s.id, state.selected)),
+          })),
+      },
+    },
+  );
+}
+
+function renderShop(ctx: ScreenContext, def: ServiceDefs['shop']): void {
+  const { state } = ctx;
+  const pack = (pick: 'sell' | 'identify' | 'repair'): Row[] => {
+    const i = state.selected;
+    return shopView(state, def, i)
+      .sell.filter((s) =>
+        pick === 'identify' ? !s.identified : pick === 'repair' ? s.broken : true,
+      )
+      .map((s) => ({
+        name: s.name,
+        price: gold(
+          pick === 'sell' ? s.price : pick === 'identify' ? s.identifyPrice : s.repairPrice,
+        ),
+        reason: null,
+        go: () =>
+          h.say(
+            pick === 'sell'
+              ? sell(state, def, i, s.gridIndex)
+              : pick === 'identify'
+                ? identify(state, def, i, s.gridIndex)
+                : repair(state, def, i, s.gridIndex),
+          ),
+      }));
+  };
+  const name = (): string => state.party[state.selected]?.name ?? '';
+  const h: House = house(
+    ctx,
+    def.name,
+    () => [
+      { label: 'Buy', list: 'buy', go: () => h.show('buy') },
+      { label: 'Sell', list: 'sell', go: () => h.show('sell') },
+      { label: 'Identify', list: 'identify', go: () => h.show('identify') },
+      { label: 'Repair', list: 'repair', go: () => h.show('repair') },
+    ],
+    {
+      buy: {
+        title: () => 'For sale',
+        empty: 'Nothing for sale.',
+        rows: () =>
+          shopView(state, def, state.selected).buy.map((b) => ({
+            name: b.name,
+            price: gold(b.price),
+            reason: b.canBuy ? null : (b.reason ?? 'Not now.'),
+            go: () => h.say(buy(state, def, b.id, state.selected)),
+          })),
+      },
+      sell: {
+        title: () => `${name()}'s pack: sell`,
+        empty: 'Nothing to sell.',
+        rows: () => pack('sell'),
+      },
+      identify: {
+        title: () => `${name()}'s pack: identify`,
+        empty: 'Nothing to identify.',
+        rows: () => pack('identify'),
+      },
+      repair: {
+        title: () => `${name()}'s pack: repair`,
+        empty: 'Nothing to repair.',
+        rows: () => pack('repair'),
+      },
+    },
+  );
 }
 
 export function renderService(ctx: ScreenContext, ref: ServiceRef): void {

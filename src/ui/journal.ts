@@ -1,26 +1,19 @@
 /**
- * The quest log and automap screens (Phase 5 step 10): the log as two lists, active and
- * done, each entry with its text and current objective; the map as a canvas of the current
- * level's visited cells with the party's cell and heading drawn on it, and the runtime's
- * marks (`ScreenHooks.marks`: people, quests, ways on) inked over them, walked or not; a tap
- * on a mark writes its name beside it. The map pinches, drags and double-taps, and three gold
- * ovals down the page's right edge zoom in, zoom out and find the party (map-view.ts); the
- * view is kept per level while the game runs.
+ * The map book (Phase 5 step 10; DESIGN.md 16.34): the current level north up, the land the
+ * party has walked shown in the region's picture from above as MM6's map book showed it (or,
+ * without one, the walked cells in sepia), the party's cell and heading drawn on it, and the
+ * runtime's marks (`ScreenHooks.marks`: people, quests, ways on) inked over them, walked or not;
+ * a tap on a mark writes its name beside it. The map pinches, drags and double-taps, and three
+ * gold ovals down the page's right edge zoom in, zoom out and find the party (map-view.ts); the
+ * view is kept per level while the game runs. The other books are books.ts's.
  */
 import './map.css';
 import { appSize, toAppPoint } from '../app/orientation';
+import { type AutomapLevel, isVisited } from '../game/automap';
 import type { GameState } from '../game/state';
 import type { MapMark, ScreenContext } from './context';
-import { button, el, heading, note } from './dom';
-import {
-  type MapView,
-  mapView,
-  markAt,
-  type PlacedMark,
-  placeMarks,
-  type QuestRow,
-  questRows,
-} from './journal-model';
+import { button, el, note } from './dom';
+import { type MapView, mapView, markAt, type PlacedMark, placeMarks } from './journal-model';
 import {
   cameraTransform,
   type GestureResult,
@@ -34,36 +27,6 @@ import {
   zoomStep,
 } from './map-view';
 import { PX } from './pixel-text';
-
-function questList(title: string, rows: QuestRow[], empty: string): HTMLElement {
-  const col = el('div', 'ui-col scroll');
-  // A heading over a rule (critics, round 7): MM6's knotwork banner is the owner's to
-  // commission; a pill is not it.
-  const head = heading(title);
-  head.classList.add('ui-rule');
-  col.appendChild(head);
-  if (rows.length === 0) col.appendChild(note(empty));
-  for (const q of rows) {
-    const row = el('div', 'ui-row');
-    if (q.done) row.classList.add('dim');
-    const text = el('div', 'grow');
-    text.appendChild(el('div', '', q.title));
-    if (q.text) text.appendChild(el('div', 'sub', q.text));
-    if (q.objective) text.appendChild(el('div', 'quest-objective', q.objective));
-    row.appendChild(text);
-    col.appendChild(row);
-  }
-  return col;
-}
-
-export function renderQuests(ctx: ScreenContext): void {
-  const { state, frame, hooks } = ctx;
-  const rows = questRows(state.quests, hooks.questDefs ?? {});
-  frame.body.replaceChildren(
-    questList('Active', rows.active, 'No quests yet.'),
-    questList('Completed', rows.done, 'Nothing completed yet.'),
-  );
-}
 
 /** The map's size before its page is laid out (a screen drawn off the page, a test). */
 const MAP_WIDTH = 720;
@@ -160,11 +123,12 @@ function drawRing(g: CanvasRenderingContext2D, cx: number, cy: number, r: number
 /**
  * The party's arrowhead as whole pixels, centred on `(px, py)`, `r` pixels from its middle to
  * its tip: the pixels whose middles fall inside it, so it stays as crisp as the cells at
- * every zoom. Babylon's heading: forward is (sin yaw, cos yaw) on the ground, z down the page.
+ * every zoom. Babylon's heading: forward is (sin yaw, cos yaw) on the ground, z up the page
+ * (north up, as MM6's map).
  */
 function arrowPixels(px: number, py: number, r: number, yawDeg: number): [number, number][] {
   const dx = Math.sin(yawDeg * DEG);
-  const dy = Math.cos(yawDeg * DEG);
+  const dy = -Math.cos(yawDeg * DEG);
   const k = r * 0.6;
   const tri: [number, number][] = [
     [px + dx * r, py + dy * r],
@@ -200,20 +164,71 @@ function drawArrow(
   for (const [x, y] of pixels) g.fillRect(x, y, 1, 1);
 }
 
-function drawMap(canvas: HTMLCanvasElement, v: MapView, picked: PlacedMark | null): void {
+/**
+ * The land the party has walked, as MM6's map book showed it: the region's picture from above
+ * (the minimap's, tools/lib/map-sheet.ts `writeMiniMap`) over the level's grid, north up, every
+ * cell not yet walked cleared to the page. Made once as the book opens; null without a picture.
+ */
+function landOf(
+  level: AutomapLevel,
+  pic: { picture: HTMLImageElement; size: number } | null,
+): HTMLCanvasElement | null {
+  const img = pic?.picture;
+  if (!pic || !img || !img.complete || img.naturalWidth === 0) return null;
+  const k = img.naturalWidth / pic.size;
+  const per = Math.max(1, Math.round(level.cellSize * k));
+  const c = document.createElement('canvas');
+  c.width = level.width * per;
+  c.height = level.height * per;
+  const g = c.getContext('2d');
+  if (!g) return null;
+  g.imageSmoothingEnabled = false;
+  const top = level.originZ + level.height * level.cellSize;
+  g.drawImage(
+    img,
+    (level.originX + pic.size / 2) * k,
+    (pic.size / 2 - top) * k,
+    level.width * level.cellSize * k,
+    level.height * level.cellSize * k,
+    0,
+    0,
+    c.width,
+    c.height,
+  );
+  for (let cy = 0; cy < level.height; cy++) {
+    for (let cx = 0; cx < level.width; cx++) {
+      if (!isVisited(level, cx, cy)) g.clearRect(cx * per, (level.height - 1 - cy) * per, per, per);
+    }
+  }
+  return c;
+}
+
+function drawMap(
+  canvas: HTMLCanvasElement,
+  v: MapView,
+  picked: PlacedMark | null,
+  land: HTMLCanvasElement | null,
+  grid: Size,
+): void {
   const g = canvas.getContext('2d');
   if (!g) return;
   const { scale, offsetX, offsetY } = v.transform;
   g.clearRect(0, 0, canvas.width, canvas.height);
-  // Ink on the page: the walked cells in sepia, a page-coloured pixel between them, on
-  // whole pixels at every zoom; those off the page are skipped.
-  g.fillStyle = INK.cell;
-  const side = Math.max(1, scale - 1);
-  for (const [cx, cy] of v.cells) {
-    const x = offsetX + cx * scale;
-    const y = offsetY + cy * scale;
-    if (x + side <= 0 || y + side <= 0 || x >= canvas.width || y >= canvas.height) continue;
-    g.fillRect(x, y, side, side);
+  if (land) {
+    // The walked land in its colours, pixel for pixel at every zoom.
+    g.imageSmoothingEnabled = false;
+    g.drawImage(land, offsetX, offsetY, grid.width * scale, grid.height * scale);
+  } else {
+    // Ink on the page: the walked cells in sepia, a page-coloured pixel between them, on
+    // whole pixels at every zoom; those off the page are skipped.
+    g.fillStyle = INK.cell;
+    const side = Math.max(1, scale - 1);
+    for (const [cx, cy] of v.cells) {
+      const x = offsetX + cx * scale;
+      const y = offsetY + cy * scale;
+      if (x + side <= 0 || y + side <= 0 || x >= canvas.width || y >= canvas.height) continue;
+      g.fillRect(x, y, side, side);
+    }
   }
   // The marks over the cells, walked or not; the party over them.
   for (const m of v.marks) drawMark(g, m);
@@ -290,6 +305,7 @@ export function renderMap(ctx: ScreenContext): void {
   }
   const partyCell = base.party ? { cx: base.party.cx, cy: base.party.cy } : null;
   const grid: Size = { width: level.width, height: level.height };
+  const land = landOf(level, hooks.mapPicture?.() ?? null);
   const key = viewKey(state);
   // The page the map is inked on fills the column beside its tools; the canvas is its size in
   // whole pixels, so the map fits the frame whatever the phone's insets leave (MM6 clips
@@ -371,7 +387,7 @@ export function renderMap(ctx: ScreenContext): void {
     // A mark named before the view moved is found again at its new place.
     const was = picked;
     picked = was ? (placed.find((m) => same(m, was)) ?? null) : null;
-    drawMap(canvas, { ...base, transform, marks: placed }, picked);
+    drawMap(canvas, { ...base, transform, marks: placed }, picked, land, grid);
     showLabel();
     const { min, max } = zoomLimits(grid, page());
     zoomIn.disabled = cam.scale >= max;
