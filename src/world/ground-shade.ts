@@ -4,10 +4,13 @@
  * into the terrain's light by its shader. Nothing is drawn per frame for it: no shadow map, no
  * caster pass, one texture read per ground pixel.
  *
- * Each texel carries two occlusions, both 0 (open sky) to 1:
- * - **sun**, the share of the direct sun a caster takes: under a crown, a pool from the
- *   crown's own silhouette seen from above, set a little away from the day's average sun; round
- *   a house or a prop, its shadow cast along that sun onto the ground at its foot.
+ * Each texel carries four occlusions, all 0 (open sky) to 1:
+ * - **sun**, three times over, for the morning's sun, noon's and the evening's (`SUN_HOURS`):
+ *   the share of the direct sun a caster takes, under a crown a pool from the crown's own
+ *   silhouette seen from above set a little away from that sun, round a house or a prop its
+ *   shadow cast along that sun onto the ground at its foot. The shader blends the three by the
+ *   hour, so the shadows swing from west of a house in the morning to east of it at dusk and
+ *   shorten toward noon (owner, 2026-10-24: "shadows for time of day"; DESIGN.md 17.4).
  * - **sky**, the share of the sky's ambient light it takes: the walls' skirt, darkest under the
  *   eaves and fading over a metre or two, and a broader, lighter pool under a crown.
  *
@@ -21,6 +24,55 @@ import { daylightAt } from './daylight';
 
 /** Texels across the map: 640 m at about 31 cm a texel, fine enough to seat a wall. */
 export const SHADE_TEXELS = 2048;
+
+/** The hours whose suns the three sun channels are cast for: morning, noon, evening. */
+export const SUN_HOURS = [8.5, 13, 17.5] as const;
+/** The longest shadow, metres a metre of height: a low sun's cast stops at this. */
+const MAX_STEP = 1.6;
+/** Channels a texel: the three suns, then the sky. */
+const CHANNELS = 4;
+const SKY = 3;
+
+type Step = { x: number; z: number };
+
+/** The shadow's step along the ground per metre of height under the sun of `hour`. */
+export function shadowStepAt(hour: number): Step {
+  const s = daylightAt(hour * 60).sunDirection;
+  const y = Math.max(0.05, s.y);
+  let x = -s.x / y;
+  let z = -s.z / y;
+  const l = Math.hypot(x, z);
+  if (l > MAX_STEP) {
+    x *= MAX_STEP / l;
+    z *= MAX_STEP / l;
+  }
+  return { x, z };
+}
+
+/** The three suns' steps, morning, noon and evening. */
+export function sunSteps(): [Step, Step, Step] {
+  return SUN_HOURS.map(shadowStepAt) as [Step, Step, Step];
+}
+
+/**
+ * How much of each of the three casts the ground shows at `minuteOfDay`: all the morning's
+ * until its hour, then easing to noon's and on to the evening's, all the evening's after; they
+ * sum to one (the sun's part fades with the day itself in the shader).
+ */
+export function sunBlend(minuteOfDay: number): [number, number, number] {
+  const h = minuteOfDay / 60;
+  const [m, n, e] = SUN_HOURS;
+  if (h <= m) return [1, 0, 0];
+  if (h <= n) {
+    const t = (h - m) / (n - m);
+    return [1 - t, t, 0];
+  }
+  if (h <= e) {
+    const t = (h - n) / (e - n);
+    return [0, 1 - t, t];
+  }
+  return [0, 0, 1];
+}
 
 /** A square of the level's ground plane in scene space (x mirrored from the kernel's). */
 export interface ShadeGrid {
@@ -280,8 +332,9 @@ function canopyMask(mesh: ShadeMesh): CanopyMask {
 }
 
 /**
- * Paint the shade of every instance into a two-channel texture over the grid, sun then sky
- * per texel, row by row along z (row 0 at the grid's min z), a byte each. Overlapping shade
+ * Paint the shade of every instance into a four-channel texture over the grid, the three
+ * suns' then the sky's per texel, row by row along z (row 0 at the grid's min z), a byte each.
+ * `step` is the three suns' shadow steps (`sunSteps`), or one for all three. Overlapping shade
  * keeps the darker of the two, so a dense wood is as dark as its densest crown and no darker:
  * the forest floor keeps its colour.
  */
@@ -289,14 +342,15 @@ export function paintGroundShade(
   grid: ShadeGrid,
   casters: ReadonlyMap<string, ShadeCaster>,
   instances: readonly ShadeInstance[],
-  step: { x: number; z: number } = averageShadowStep(),
+  step: Step | readonly Step[] = sunSteps(),
 ): Uint8Array {
+  const steps: readonly Step[] = Array.isArray(step) ? step : [step, step, step];
   const n = grid.texels;
   const cell = grid.size / n;
-  const out = new Uint8Array(n * n * 2);
+  const out = new Uint8Array(n * n * CHANNELS);
   const put = (i: number, j: number, channel: number, v: number): void => {
     if (i < 0 || j < 0 || i >= n || j >= n || v <= 0) return;
-    const k = (j * n + i) * 2 + channel;
+    const k = (j * n + i) * CHANNELS + channel;
     const b = Math.min(255, Math.round(v * 255));
     if (b > out[k]!) out[k] = b;
   };
@@ -308,9 +362,9 @@ export function paintGroundShade(
     if (caster.canopy) {
       let mask = masks.get(inst.model);
       if (!mask) masks.set(inst.model, (mask = canopyMask(caster.mesh)));
-      stampCanopy(mask, m, grid, cell, step, out);
+      stampCanopy(mask, m, grid, cell, steps, out);
     } else {
-      castSolid(caster.mesh, m, grid, cell, step, put);
+      castSolid(caster.mesh, m, grid, cell, steps, put);
     }
   }
   return out;
@@ -324,7 +378,7 @@ function stampCanopy(
   m: ArrayLike<number>,
   grid: ShadeGrid,
   cell: number,
-  step: { x: number; z: number },
+  steps: readonly Step[],
   out: Uint8Array,
 ): void {
   // Local (x, 0, z) lands at (x m0 + z m8 + m12, x m2 + z m10 + m14), as Babylon transforms
@@ -337,9 +391,8 @@ function stampCanopy(
   if (Math.abs(det) < 1e-12) return;
   const heightScale = Math.hypot(m[4]!, m[5]!, m[6]!);
   const lift = mask.crown * heightScale * CROWN_CAST;
-  // The sun's pool is the sky's moved along the ground by the cast.
-  const ox = step.x * lift;
-  const oz = step.z * lift;
+  // Each sun's pool is the sky's moved along the ground by its cast.
+  const offs = steps.map((st) => ({ x: st.x * lift, z: st.z * lift }));
   const tx = m[12]!;
   const tz = m[14]!;
   // The ground the two pools cover: the mask's corners placed, and placed again with the cast.
@@ -357,10 +410,12 @@ function stampCanopy(
   ] as const) {
     const wx = lx * a + lz * b + tx;
     const wz = lx * c + lz * d + tz;
-    minX = Math.min(minX, wx, wx + ox);
-    maxX = Math.max(maxX, wx, wx + ox);
-    minZ = Math.min(minZ, wz, wz + oz);
-    maxZ = Math.max(maxZ, wz, wz + oz);
+    for (const o of [{ x: 0, z: 0 }, ...offs]) {
+      minX = Math.min(minX, wx + o.x);
+      maxX = Math.max(maxX, wx + o.x);
+      minZ = Math.min(minZ, wz + o.z);
+      maxZ = Math.max(maxZ, wz + o.z);
+    }
   }
   const n = grid.texels;
   const i0 = Math.max(0, Math.floor((minX - grid.minX) / cell));
@@ -379,25 +434,26 @@ function stampCanopy(
   const v0 = -mask.z0 / MASK_RES;
   const du = toU(cell, 0);
   const dv = toV(cell, 0);
-  const su = toU(ox, oz);
-  const sv = toV(ox, oz);
+  const shifts = offs.map((o) => ({ u: toU(o.x, o.z), v: toV(o.x, o.z) }));
   const { w, h, sun, sky } = mask;
   for (let j = j0; j <= j1; j++) {
     const dz = grid.minZ + (j + 0.5) * cell - tz;
     const dx = grid.minX + (i0 + 0.5) * cell - tx;
     let u = u0 + toU(dx, dz);
     let v = v0 + toV(dx, dz);
-    let o = (j * n + i0) * 2;
-    for (let i = i0; i <= i1; i++, u += du, v += dv, o += 2) {
+    let o = (j * n + i0) * CHANNELS;
+    for (let i = i0; i <= i1; i++, u += du, v += dv, o += CHANNELS) {
       if (u >= 0 && v >= 0 && u < w && v < h) {
         const s = sky[(v | 0) * w + (u | 0)]!;
-        if (s > out[o + 1]!) out[o + 1] = s;
+        if (s > out[o + SKY]!) out[o + SKY] = s;
       }
-      const us = u - su;
-      const vs = v - sv;
-      if (us >= 0 && vs >= 0 && us < w && vs < h) {
-        const s = sun[(vs | 0) * w + (us | 0)]!;
-        if (s > out[o]!) out[o] = s;
+      for (let c = 0; c < shifts.length; c++) {
+        const us = u - shifts[c]!.u;
+        const vs = v - shifts[c]!.v;
+        if (us >= 0 && vs >= 0 && us < w && vs < h) {
+          const s = sun[(vs | 0) * w + (us | 0)]!;
+          if (s > out[o + c]!) out[o + c] = s;
+        }
       }
     }
   }
@@ -405,15 +461,15 @@ function stampCanopy(
 
 /**
  * A house, a prop or a rock: its triangles placed by its matrix and laid on the ground at its
- * foot twice, cast along the average sun for the sun's shadow and straight down for the
- * skirt, whose blur spreads past the eaves and seats the walls.
+ * foot, cast along each sun for that sun's shadow and straight down for the skirt, whose blur
+ * spreads past the eaves and seats the walls.
  */
 function castSolid(
   mesh: ShadeMesh,
   m: ArrayLike<number>,
   grid: ShadeGrid,
   cell: number,
-  step: { x: number; z: number },
+  steps: readonly Step[],
   put: Put,
 ): void {
   const p = mesh.positions;
@@ -421,7 +477,7 @@ function castSolid(
   if (!count) return;
   const footY = m[13]!;
   const flat = new Float64Array(count * 2);
-  const cast = new Float64Array(count * 2);
+  const casts = steps.map(() => new Float64Array(count * 2));
   let minX = Infinity;
   let maxX = -Infinity;
   let minZ = Infinity;
@@ -436,12 +492,20 @@ function castSolid(
     const rise = Math.max(0, wy - footY) * SOLID_CAST;
     flat[k * 2] = wx;
     flat[k * 2 + 1] = wz;
-    cast[k * 2] = wx + step.x * rise;
-    cast[k * 2 + 1] = wz + step.z * rise;
-    minX = Math.min(minX, wx, cast[k * 2]!);
-    maxX = Math.max(maxX, wx, cast[k * 2]!);
-    minZ = Math.min(minZ, wz, cast[k * 2 + 1]!);
-    maxZ = Math.max(maxZ, wz, cast[k * 2 + 1]!);
+    minX = Math.min(minX, wx);
+    maxX = Math.max(maxX, wx);
+    minZ = Math.min(minZ, wz);
+    maxZ = Math.max(maxZ, wz);
+    steps.forEach((st, c) => {
+      const cx = wx + st.x * rise;
+      const cz = wz + st.z * rise;
+      casts[c]![k * 2] = cx;
+      casts[c]![k * 2 + 1] = cz;
+      minX = Math.min(minX, cx);
+      maxX = Math.max(maxX, cx);
+      minZ = Math.min(minZ, cz);
+      maxZ = Math.max(maxZ, cz);
+    });
   }
   // A tile on the grid's own texels round the caster, with room for the blur.
   const margin = 3 * SKIRT_SOFT + cell;
@@ -449,7 +513,7 @@ function castSolid(
   const j0 = Math.floor((minZ - margin - grid.minZ) / cell);
   const w = Math.ceil((maxX + margin - grid.minX) / cell) - i0;
   const h = Math.ceil((maxZ + margin - grid.minZ) / cell) - j0;
-  const sun = new Float32Array(w * h);
+  const suns = steps.map(() => new Float32Array(w * h));
   const sky = new Float32Array(w * h);
   const tu = (xy: Float64Array, k: number): number => (xy[k * 2]! - grid.minX) / cell - i0;
   const tv = (xy: Float64Array, k: number): number => (xy[k * 2 + 1]! - grid.minZ) / cell - j0;
@@ -458,18 +522,20 @@ function castSolid(
     const a = idx[t]!;
     const b = idx[t + 1]!;
     const c = idx[t + 2]!;
-    fillTriangle(
-      sun,
-      w,
-      h,
-      tu(cast, a),
-      tv(cast, a),
-      tu(cast, b),
-      tv(cast, b),
-      tu(cast, c),
-      tv(cast, c),
-      1,
-      false,
+    casts.forEach((cast, s0) =>
+      fillTriangle(
+        suns[s0]!,
+        w,
+        h,
+        tu(cast, a),
+        tv(cast, a),
+        tu(cast, b),
+        tv(cast, b),
+        tu(cast, c),
+        tv(cast, c),
+        1,
+        false,
+      ),
     );
     fillTriangle(
       sky,
@@ -485,29 +551,34 @@ function castSolid(
       false,
     );
   }
-  boxBlur(sun, w, h, blurRadius(CAST_SOFT, cell));
+  for (const sun of suns) boxBlur(sun, w, h, blurRadius(CAST_SOFT, cell));
   boxBlur(sky, w, h, blurRadius(SKIRT_SOFT, cell));
   for (let j = 0; j < h; j++) {
     for (let i = 0; i < w; i++) {
-      put(i0 + i, j0 + j, 0, sun[j * w + i]!);
-      put(i0 + i, j0 + j, 1, Math.min(1, sky[j * w + i]! * SKIRT_LIFT));
+      suns.forEach((sun, c) => put(i0 + i, j0 + j, c, sun[j * w + i]!));
+      put(i0 + i, j0 + j, SKY, Math.min(1, sky[j * w + i]! * SKIRT_LIFT));
     }
   }
 }
 
-/** The shade at a point of the ground in scene space, nearest texel: for tests and the dev. */
+/**
+ * The shade at a point of the ground in scene space, nearest texel: for tests and the dev.
+ * `sun` is noon's; `suns` the morning's, noon's and the evening's.
+ */
 export function shadeAt(
   data: Uint8Array,
   grid: ShadeGrid,
   x: number,
   z: number,
-): { sun: number; sky: number } {
+): { sun: number; sky: number; suns: [number, number, number] } {
   const cell = grid.size / grid.texels;
   const i = Math.floor((x - grid.minX) / cell);
   const j = Math.floor((z - grid.minZ) / cell);
-  if (i < 0 || j < 0 || i >= grid.texels || j >= grid.texels) return { sun: 0, sky: 0 };
-  const k = (j * grid.texels + i) * 2;
-  return { sun: data[k]! / 255, sky: data[k + 1]! / 255 };
+  if (i < 0 || j < 0 || i >= grid.texels || j >= grid.texels)
+    return { sun: 0, sky: 0, suns: [0, 0, 0] };
+  const k = (j * grid.texels + i) * CHANNELS;
+  const suns: [number, number, number] = [data[k]! / 255, data[k + 1]! / 255, data[k + 2]! / 255];
+  return { sun: suns[1], sky: data[k + SKY]! / 255, suns };
 }
 
 /**
@@ -526,7 +597,7 @@ export class GroundShade {
     scene: Scene,
     readonly grid: ShadeGrid,
   ) {
-    this.texture = RawTexture.CreateLuminanceAlphaTexture(
+    this.texture = RawTexture.CreateRGBATexture(
       null,
       grid.texels,
       grid.texels,
@@ -556,7 +627,7 @@ export class GroundShade {
   }
 
   /** The painted shade at a point of the ground in scene space. */
-  at(x: number, z: number): { sun: number; sky: number } {
-    return this.data ? shadeAt(this.data, this.grid, x, z) : { sun: 0, sky: 0 };
+  at(x: number, z: number): { sun: number; sky: number; suns: [number, number, number] } {
+    return this.data ? shadeAt(this.data, this.grid, x, z) : { sun: 0, sky: 0, suns: [0, 0, 0] };
   }
 }

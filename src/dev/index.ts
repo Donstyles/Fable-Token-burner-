@@ -87,6 +87,7 @@ import { ENVIRONMENTS, ENVIRONMENT_PRESETS, type EnvironmentPreset } from '../re
 import { UPSCALE_MODES, type UpscaleMode } from '../app/settings';
 import { createDevPanel, type Field } from './panel';
 import { installLensShift, type ViewBox } from '../app/view-box';
+import { sunBlend } from '../world/ground-shade';
 import { diag, diagText } from '../app/diag';
 import {
   AUDIO_SESSION_TYPES,
@@ -1156,6 +1157,8 @@ export async function startDev(app: App): Promise<DevHandle> {
         app.sky.apply(app.materials.env);
         app.sky.setNight(light.night);
         daylightNow = light.daylight;
+        // The shadows follow the sun from morning to evening (DESIGN.md 17.4).
+        app.materials.setSunBlend(sunBlend(minute));
         // Lanterns and the forge come up as the day goes, and the lanterns' halos with them.
         level.setLiveLights(true, 0.15 + 0.85 * (1 - light.daylight));
         halos.setStrength(1 - light.daylight);

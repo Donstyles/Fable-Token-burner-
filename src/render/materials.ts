@@ -218,10 +218,12 @@ vec3 tileAt(sampler2D s, vec2 u) {
 #endif
 #ifdef GROUNDSHADE
 // The ground's painted shade (DESIGN.md 17.4, src/world/ground-shade.ts): the share of the
-// sun (luminance) and of the sky (alpha) the trees, houses and props take, over the whole map;
-// shadeRect is its min x, min z and one over its size in metres.
+// sun the trees, houses and props take under the morning's, noon's and the evening's suns
+// (red, green, blue) and of the sky (alpha), over the whole map; sunBlend weighs the three
+// suns by the hour; shadeRect is its min x, min z and one over its size in metres.
 uniform sampler2D shadeSampler;
 uniform vec4 shadeRect;
+uniform vec3 sunBlend;
 uniform vec3 ambientColor;
 #endif
 uniform vec3 fogColor;
@@ -300,7 +302,7 @@ void main(void) {
   vec4 shade = texture2D(shadeSampler, (vWorldPos.xz - shadeRect.xy) * shadeRect.zw);
   float sunUp = smoothstep(0.05, 0.45, -lightDirection.y);
   vec3 key = max(vLight - ambientColor, vec3(0.0));
-  float keyShade = max(0.75 * shade.r * sunUp, 0.55 * shade.a);
+  float keyShade = max(0.75 * dot(shade.rgb, sunBlend) * sunUp, 0.55 * shade.a);
   vec3 shaded = light - key * keyShade - ambientColor * (0.65 * shade.a);
   vec3 groundShade = max(shaded / max(light, vec3(0.001)), vec3(0.45));
 #endif
@@ -476,6 +478,9 @@ export class RetroMaterials {
   toon = true;
   /** Weather (DESIGN.md 15.7): 0 is still air and an even sky. */
   readonly weather: Weather = { heat: 0, cloudShadow: 0, gust: 0 };
+  /** The ground shade's three suns by the hour (src/world/ground-shade.ts `sunBlend`). */
+  private sunBlend: [number, number, number] = [0, 1, 0];
+  private readonly shaded = new Set<ShaderMaterial>();
 
   constructor(
     private readonly scene: Scene,
@@ -539,6 +544,7 @@ export class RetroMaterials {
         'cloudShadow',
         'gust',
         'shadeRect',
+        'sunBlend',
       ],
       samplers: [
         'diffuseSampler',
@@ -561,6 +567,8 @@ export class RetroMaterials {
       if (opts.splat.shade) {
         mat.setTexture('shadeSampler', opts.splat.shade.texture);
         mat.setVector4('shadeRect', new Vector4(...opts.splat.shade.rect));
+        mat.setVector3('sunBlend', new Vector3(...this.sunBlend));
+        this.shaded.add(mat);
       }
     }
     mat.setVector2('uvScale', new Vector2(...(opts.uvScale ?? [1, 1])));
@@ -597,7 +605,10 @@ export class RetroMaterials {
     mat.setArray3('pointPos', new Array<number>(MAX_POINT_LIGHTS * 3).fill(0));
     mat.setArray3('pointColor', new Array<number>(MAX_POINT_LIGHTS * 3).fill(0));
     mat.setFloats('pointRange', new Array<number>(MAX_POINT_LIGHTS).fill(0));
-    mat.onDisposeObservable.add(() => this.materials.delete(mat));
+    mat.onDisposeObservable.add(() => {
+      this.materials.delete(mat);
+      this.shaded.delete(mat);
+    });
     mat.backFaceCulling = !opts.doubleSided;
     if (opts.ambient) this.ambientOverride.set(mat, opts.ambient);
     this.materials.add(mat);
@@ -613,6 +624,15 @@ export class RetroMaterials {
       m.setFloat('cloudShadow', this.weather.cloudShadow);
       m.setFloat('gust', this.weather.gust);
     }
+  }
+
+  /**
+   * How much each of the ground shade's three casts, morning, noon and evening, shows now
+   * (src/world/ground-shade.ts `sunBlend`), so the shadows follow the sun through the day.
+   */
+  setSunBlend(blend: readonly [number, number, number]): void {
+    this.sunBlend = [blend[0], blend[1], blend[2]];
+    for (const m of this.shaded) m.setVector3('sunBlend', new Vector3(...this.sunBlend));
   }
 
   /** Paint a material white: 0 normal, 1 fully white (hit flash). */

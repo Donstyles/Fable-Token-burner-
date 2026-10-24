@@ -5,8 +5,11 @@ import {
   paintGroundShade,
   shadeAt,
   shadeGridFor,
+  shadowStepAt,
   type ShadeCaster,
   type ShadeMesh,
+  sunBlend,
+  sunSteps,
 } from './ground-shade';
 
 /** A box in its own metres, foot at y = 0, centred on x and z. */
@@ -196,5 +199,39 @@ describe('ground shade', () => {
     // Radius 3 or 6: 4 m out is beyond the one and well inside the other.
     expect(shadeAt(small, GRID, 4, 0).sun).toBeLessThan(0.05);
     expect(shadeAt(big, GRID, 4, 0).sun).toBeGreaterThan(0.5);
+  });
+
+  it('casts three suns, the morning’s to the west, noon’s north, the evening’s to the east', () => {
+    // The scene's east is its -x (the kernel's +x, mirrored): the morning sun stands there.
+    const [morning, noon, evening] = sunSteps();
+    expect(morning.x).toBeGreaterThan(0.5);
+    expect(evening.x).toBeLessThan(-0.5);
+    expect(Math.abs(noon.x)).toBeLessThan(0.1);
+    expect(noon.z).toBeGreaterThan(0.2);
+    // A low sun's shadow is long, but never past its cap.
+    expect(Math.hypot(morning.x, morning.z)).toBeGreaterThan(Math.hypot(noon.x, noon.z));
+    expect(Math.hypot(shadowStepAt(5.5).x, shadowStepAt(5.5).z)).toBeLessThanOrEqual(1.6001);
+    const casters = new Map<string, ShadeCaster>([
+      ['house', { canopy: false, mesh: box(6, 6, 6) }],
+    ]);
+    const data = paintGroundShade(GRID, casters, [{ model: 'house', matrix: placed(0, 0, 0, 0) }]);
+    const at = (x: number, z: number) => shadeAt(data, GRID, x, z).suns;
+    // West of the house (+x) in the morning's cast only; east (-x) in the evening's only.
+    expect(at(5, 0)[0]).toBeGreaterThan(0.6);
+    expect(at(5, 0)[2]).toBeLessThan(0.1);
+    expect(at(-5, 0)[2]).toBeGreaterThan(0.6);
+    expect(at(-5, 0)[0]).toBeLessThan(0.1);
+  });
+
+  it('blends the three casts through the day, all the morning’s early, the evening’s late', () => {
+    expect(sunBlend(6 * 60)).toEqual([1, 0, 0]);
+    expect(sunBlend(13 * 60)).toEqual([0, 1, 0]);
+    expect(sunBlend(20 * 60)).toEqual([0, 0, 1]);
+    const mid = sunBlend(10.75 * 60);
+    expect(mid[0]).toBeCloseTo(0.5, 6);
+    expect(mid[1]).toBeCloseTo(0.5, 6);
+    for (const m of [7 * 60, 11 * 60, 15 * 60, 19 * 60]) {
+      expect(sunBlend(m).reduce((a, b) => a + b, 0)).toBeCloseTo(1, 9);
+    }
   });
 });

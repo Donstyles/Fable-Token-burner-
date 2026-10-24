@@ -2589,8 +2589,10 @@ loads, not cast by a real-time shadow map:
   SSAO is a full-screen depth pass every frame that the posteriser would band, and it has no
   lightmap baker. A painted texture costs one read per ground pixel and nothing else.
 - **The texture** (`src/world/ground-shade.ts`): one 2048-texel square over the 640 m map, 31 cm
-  a texel, two bytes a texel (luminance and alpha), mipmapped and read bilinear: the share of
-  the **sun** a caster takes, and the share of the **sky**. 10.7 MiB on the GPU with its mips.
+  a texel, four bytes a texel, mipmapped and read bilinear: the share of the **sun** a caster
+  takes three times over, under the morning's sun (8:30), noon's (13:00) and the evening's
+  (17:30), in red, green and blue, and the share of the **sky** in alpha. 21.3 MiB on the GPU
+  with its mips (10.7 when it held one sun).
 - **Casters are the models.** Each loaded model's own triangles, placed by the very matrix its
   thin instance is drawn with, so the shade lines up with what is drawn by construction, the
   kernel's mirror on X included (a unit test checks the placement against Babylon's own
@@ -2599,13 +2601,19 @@ loads, not cast by a real-time shadow map:
   shade (two layers take three quarters of the sun), so a dense oak is dark and a bare tree
   dapples; the sun's pool is set north by a quarter of the day's average sun for the crown's
   height (about 1.5 m under a big oak), soft over 60 cm; a broader, lighter sky pool under it.
-- **Round a house, a prop or a rock**: its triangles laid on the ground along the day's average
-  sun (north, 0.6 m a metre from `daylight.ts`'s path; four fifths of it, so a 10 m inn casts
-  about 5 m) for the sun's shadow, and straight down for the skirt: the roof's outline with its
+- **Round a house, a prop or a rock**: its triangles laid on the ground along each of the three
+  suns from `daylight.ts`'s path (owner, 2026-10-24: "shadows for time of day"; four fifths of
+  the true length and never more than 1.6 m a metre, so the low suns' casts stay on the town's
+  ground) for the sun's shadow, and straight down for the skirt: the roof's outline with its
   eaves, spread over three metres and lifted so it holds dark a good way past the eaves and is
   gone by about nine (a first pass of two metres hid under the eaves and did not read from the
   street). Overlapping shade keeps the darker, never the sum, so a wood's
   floor is no darker than its densest crown and keeps its colour.
+- **The hour.** The shader weighs the three casts by the hour (`sunBlend`, set with the daylight
+  every game quarter hour): all the morning's until 8:30, easing into noon's and on into the
+  evening's, all the evening's after 17:30. So a house's shadow lies west of it in the morning,
+  draws in under it towards noon and swings out east through the afternoon. The pools under
+  the crowns move the same way.
 - **The terrain shader** takes up to three quarters of the key light in the sun's shade and, in
   the skirt, two thirds of the ambient and over half the key; never the lanterns or the torch. It
   is reckoned as a share of the light and laid on after the light's knee, which would otherwise
@@ -2617,13 +2625,14 @@ loads, not cast by a real-time shadow map:
   walls' foot remain. Every terrain chunk at every detail level shares the one material, so
   the road, the dirt and the grass darken alike; the sea is its own water material and is
   never shaded.
-- **Cost**, measured on the shared cloud box: painting Gullhaven's 1,050 casters takes about
-  200 ms at load in headless Chromium (180 to 490 as the box was busy; about 100 in Node once
-  warm), the crowns' stamps most of it, and the upload with its mipmaps 4 ms; a frame's
+- **Cost**, measured on the shared cloud box: painting Gullhaven's 1,050 casters took about
+  200 ms at load in headless Chromium with one sun (180 to 490 as the box was busy; about 100
+  in Node once warm), the crowns' stamps most of it, and the upload with its mipmaps 4 ms; with
+  three suns 686 ms and 11 ms (2026-10-24, one run); a frame's
   render with and without the shade's lookup compiled in is the same within the noise (7.3
   and 7.1 ms in the square, 7.5 and 7.5 in the wood, software GL, `gl.finish` timed).
 - **Not yet**: the kernel's fences and the cave mouth cast none; nothing shades a wall or a
-  trunk; the cast does not follow the hour (that needs a height per texel and several reads).
+  trunk; between the three hours the shadow is a cross-fade of two casts, not one moving cast.
 
 ### 17.5 Lights on the models (owner, 2026-10-23)
 
