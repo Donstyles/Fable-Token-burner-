@@ -2759,108 +2759,82 @@ radius, centred a metre out, so the party walked deep into it before a thin post
 - **Checked** by an end-to-end test that casts rays at a big oak from ten metres round: the
   party's collider and the drawn trunk meet within a metre on every side the ray hits.
 
-### 17.8 A room behind every door (plan, owner, 2026-10-24; awaiting sign-off)
+### 17.8 A room behind every door (owner, 2026-10-24)
 
-"Make a plan how we implement the cool animated interior views of shops or houses." MM6 cut
-from the street to a looping film of the room (references mm6-smith-menu, mm6-tavern-talk): a
-fixed camera on the keeper at work behind the counter, the forge burning, and the keeper's
-face with the choices on the board at the right. Here the view's box keeps the street until
-this lands (16.34). The plan is PLAN.md Phase 6a.
+"Make a plan how we implement the cool animated interior views of shops or houses." The first
+plan drew each room live, the keeper a rigged model in it; the owner turned it down ("Your
+Interior plan is shit. How did mm6 do it?") and set the way: "Pictures with minimal
+animations. Just some pulsing lighting on some hearths or a swinging lamp or something."
 
-**Four decisions for the owner:**
+**How MM6 did it** (MM6's manual; OpenEnroth, the open re-implementation of its engine, read in
+MM7's tables, which run on the same engine):
 
-1. **Drawn live, not filmed.** Each room is a small Babylon scene drawn in the view's box, not
-   a pre-rendered loop. The keeper can look up at the party, greet it and answer a choice; the
-   hour shows through the window; it uses the same models, light and filter as the street;
-   there are no video files to ship (megabytes each, and WebM plays poorly on iOS). A room
-   costs less to draw than the street (at most 40k triangles and three lights), and the street
-   stops drawing while the party is inside. Babylon provides every part:
-   - a second `Scene` on the one engine, with its own camera, grade and filter passes;
-   - `AssetContainer` to load a room and keep it;
-   - `AnimationGroup` clips, whose `AnimationEvent`s time the hammer's ring;
-   - `ParticleSystem` for fire, smoke, sparks and dust;
-   - the audio engine for the room's sound.
-2. **The keeper is a model** standing in the room, as the townsfolk are. This overturns
-   "service NPCs behind a counter are portraits, no model at all" (`kernel/characters/clips.ts`).
-   The face on the board is the talk panel's living bust (`src/world/bust.ts`), not a painting.
-3. **One room per kind of house**, re-dressed per town, as MM6 mostly reused its films.
-   Gullhaven's inn, temple, store, smithy and training hall come first. Then two homes, a
-   cottage kitchen and a fisher's hut, shared by every house without a service, each with its
-   resident standing in it.
-4. **Going in and out.** A tap on the door fades the street in a quarter of a second. The room
-   opens on its threshold and the camera eases 1.5 m in to the framing in a second and a
-   quarter, while the keeper looks up, sets down the work and greets (a wave, a nod, the
-   priest's bow); the board slides in over the panel. Leaving plays the same backwards and puts
-   the party in the street at the door. Once in, the camera holds still, as MM6's did, and
-   everything else moves.
+- A door swapped the 3D view (460 by 344 of the 640 by 480 screen) for a looping film of the
+  room, a Smacker video, and the clock and the music stopped while the party was inside.
+- One film per kind of house, not per house, shown in every town of its style. MM7 has one per
+  kind of shop and culture, homes of three sorts a culture (poor, medium, rich) with nobody in
+  them, and the dungeon entrances ("Enter?") on the same screen.
+- The keeper in the film is only part of the picture. The one spoken to is a still portrait on
+  the board, "Converse with" and their name, beside the portraits of anyone else who lives there.
+- Buying showed a still picture instead, a weapon table, an armour wall, a magic shelf or a
+  guild's bookshelf, with the stock's item pictures laid on it.
+
+**Here:**
+
+- **A picture, not a film.** Each kind of house has one picture of its room, the keeper behind
+  their counter painted into it, filling the view's box. The world stops drawing while it is up
+  (no frame of the street is spent behind it), and the clock stops, as now.
+- **Barely moving, as the owner asked.** A room has two or three things that move, no more:
+  - **Pulsing light**: a hearth, a forge, a candle, a lamp. Its light is a mask on the picture,
+    found on the picture's own warm, bright paint (`isGlow` in `tools/lib/glow.ts`, which finds
+    the smithy's coals on its model) and softened; it brightens and dims over the picture in a
+    flicker of two or three rhythms out of step, a candle quicker than a hearth.
+  - **A swinging lamp** or a hanging pot: cut out of the picture as its own layer, the hole
+    behind it filled, swinging a few degrees about its hook on a slow pendulum, its pool of
+    light swinging with it.
+  - Each moves at MM6's step (ten frames a second, as the models' clips), not smoothly.
+- **Drawn by the page.** The picture and its layers are images in the view's box, moved by CSS
+  (opacity for the light, a rotation for the lamp); there is nothing to build that Babylon or
+  the browser does not already do.
+- **The board** stays MM6's (16.34): the keeper's portrait with "Converse with" and their name,
+  the choices under it. One room serves every house of its kind in a town; the keeper's name
+  and portrait are the house's own.
+- **The look**: the room is drawn as MM6's were, a pre-rendered 3D Studio interior of 1998,
+  warm, dim, cluttered with the trade's things, the keeper at work behind the counter. The
+  picture is cut to the view's box (about 2.2 wide to 1 high on the phone, its middle kept on
+  other screens) at one UI pixel, about 640 by 290, and put through the palette the world's
+  filter uses, so it sits in the frame like the street.
 
 **How a room is made** (the usual rules hold):
 
-- **The shell comes from the kernel**: walls, beams, floor, counter, hearth surround and window
-  openings, from the level planner, in the CC0 role textures (timber, plaster, flagstone,
-  brick), with light baked per vertex (warm bounce off the hearth, dark corners). It is final
-  art like the kernel's doors and walls, and costs no credits.
-- **The look is approved first**: before any 3D credit, one text-to-image establishing picture
-  of each room (3 credits) is its art target, approved by the owner with the room's prop list.
-  It is reference only and never shipped.
-- **The furnishing comes from Meshy, image first**: each prop is a nano-banana-2-lite concept on
-  fuchsia, looked at, then image-to-3D, then the review sheet and the gap screen, retried until
-  it has no see-through gap. Props shared between rooms (barrels, crates, stools, shelves,
-  candles, tankards) are made once.
-- **Keepers** are Meshy T2/T2.5 at about 4,000 triangles, image first, rigged. Their clips come
-  from Meshy's library (`pipeline/animation-catalog.md`):
-  - idle, and talk (313);
-  - a greeting: 28 Big Wave Hello, 290 Wave One Hand, or 41 Formal Bow for the priest;
-  - 25 Agree Gesture when a deal is struck;
-  - a work loop per trade: the storekeeper 284 Collect Object or 318 Scheming Hand Rub, the
-    innkeeper 34 Checkout Gesture behind the bar;
-  - patrons at the inn: 342 Stand and Drink, 33 Chair Sit Idle, 268 Sit and Doze Off.
+- **A card per room** (`pipeline/cards/room-<kind>.md`): what is in it, where the keeper
+  stands, what glows and what swings. The owner reads the cards first.
+- **One text-to-image picture per room**, as the spell icons were: a numbered batch, approved
+  by the owner before it runs, a few candidates each, the owner choosing. The owner's own
+  pictures can stand in for any of them, dropped in `pipeline/inbox/rooms/`.
+- **The keeper's portrait** is a picture of its own, in the band portraits' style, cut to the
+  board's oval.
+- **The swinging lamp** is drawn alone on fuchsia in the same style and keyed out (`asset
+inbox`), so nothing has to be cut from the room.
+- **A review sheet** per room: the cut picture, its light mask and the lamp's pivot marked, and
+  a strip of frames as it moves; looked at before it goes in.
 
-  The catalogue has no smith at an anvil. The candidate is 128 Heavy Hammer Swing, trimmed to
-  its downstroke and looped, checked on a review sheet before the smithy is built round it. If
-  it reads as a fight, the smith works the bellows instead and the hammering is heard from the
-  back.
+**Cost**: a picture is 3 credits (nano-banana-2-lite) or 6 (nano-banana-2). Four candidates a
+room, a portrait and a lamp make about 20 credits a room, about 100 for Gullhaven's five
+(inn, temple, store, smithy, training hall).
 
-- **A room script per kind** (`levels/interiors/<kind>.ts`) holds:
-  - the shell, and each prop's place;
-  - the keeper's mark and facing;
-  - the camera's framing and threshold;
-  - the lights: hearth, candles, window;
-  - the effect points: fire, smoke up the hood, sparks, steam, dust in the window's beam;
-  - the sound points.
-
-  `level:build` compiles it like a level, to `public/levels/interiors/<kind>.glb` and a sidecar.
-
-- **Review**: `asset review` draws each room's sheet from the game's camera at three hours
-  (morning, dusk, night), beside its establishing picture.
-
-**The room alive** (`src/world/interior.ts`):
-
-- **The keeper** works their loop, turns their head to the party (a look-at on the head bone)
-  when spoken to, talks while a choice is answered, and nods agreement on a sale.
-- **Things move**: fire and candles (sprites), smoke, sparks on the hammer's strike, steam from
-  the quench, dust in the window's light; a lantern or hanging pot sways slowly.
-- **The hour shows**: the window's pane and beam take the sky's colour. After dark the candles
-  burn and the room changes to its night dressing (the inn fills, two patrons at the tables).
-- **Sound**: the hearth, the hammer on its clip's event frame, the inn's murmur, the temple's
-  bell at the hour, all through Babylon's audio from CC0 recordings fetched like the textures.
-- **The phone's budget**: at most 40k triangles, 25 draw calls, three point lights and
-  1024-pixel textures, and a GLB under 1.5 MB per room. A room loads while the party is within
-  25 m of its door, and the last two rooms are kept loaded, so the door opens without a wait.
-  It is measured on the phone before the second room is built.
-
-**Cost**: a prop is 18 credits (3 for its picture, 15 for image-to-3D), and a keeper about 41
-(3, 15, rigging 5, six clips at 3). Retries have run at about half as much again. The smithy is
-about 200 credits, 300 with retries. All five of Gullhaven's rooms are about 1,000 credits
-before retries and 1,400 with them (about 35 props once shared ones are counted once, five
-keepers, three patrons); the two homes add about 200. Every step is its own numbered batch,
-run only once the owner approves it.
-
-**Not yet**: the goods on show. MM6's Buy shows the stock on a shelf or a rack; here the stock
-stays a list until items have pictures. The bank, the guilds, the town hall and the stables
-wait for their houses.
+**Later**: the homes (poor, medium and rich, their residents' portraits on the board), the
+stock on its shelf for Buy once items have pictures, the cave's "Enter?" picture once a
+dungeon lies behind it, and the keeper's greeting.
 
 ## 13. Decision log
+
+- 2026-10-24 – Rooms as pictures (owner: "Pictures with minimal animations. Just some pulsing
+  lighting on some hearths or a swinging lamp or something"; 17.8). A house shows one picture of
+  its room in the view's box, as MM6 showed its looping film there, with two or three things
+  that move: light pulsing on a hearth or candle, a lamp swinging. It replaces the first plan,
+  each room drawn live with its keeper a rigged model, which the owner turned down. About 100
+  credits for Gullhaven's five rooms, where that plan was about 1,400.
 
 - 2026-10-24 – The test dungeon scrapped (owner: "Scrap the test room dungeon completely").
   The showcase level (the Phase 2 kernel demo of hall, gallery, shaft, flooded undercroft,
