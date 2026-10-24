@@ -291,6 +291,8 @@ test.describe('Gullhaven', () => {
   test('walking into the cave leads into the dungeon, and its door leads back out', async ({
     page,
   }) => {
+    // Three level loads, each allowed two minutes below; the default budget is one load's.
+    test.setTimeout(300_000);
     // Stand on the slope below the cave: the portal arms once the party stands clear of it.
     const cave = await page.evaluate(() => (window as unknown as W).ftb!.dev!.pointOf('cave')!);
     await page.evaluate(() => {
