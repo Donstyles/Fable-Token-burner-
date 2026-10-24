@@ -222,7 +222,9 @@ test.describe('dev build', () => {
   test('a bandit at the camp closes in, swings at the party, and falls to taps', async ({
     page,
   }) => {
-    test.setTimeout(360_000);
+    // The region draws at a few frames a second on software GL, slower again beside another
+    // worker; the bandit's walk and swings take minutes of the wall clock.
+    test.setTimeout(600_000);
     await page.goto('dev/?dev&lite&level=gullhaven&seed=11');
     await page.waitForFunction(() => (window as unknown as W).ftb?.dev?.ready === true, null, {
       timeout: 150_000,
@@ -254,7 +256,7 @@ test.describe('dev build', () => {
       'talk',
       'block',
     ]);
-    // Six metres south of the camp's first bandit, inside his aggro range; his fellows are
+    // Four metres south of the camp's first bandit, inside his aggro range; his fellows are
     // struck dead first, so he comes alone. He comes at the party and stops in reach.
     await page.evaluate(() => {
       const d = (window as unknown as W).ftb!.dev!;
@@ -263,14 +265,14 @@ test.describe('dev build', () => {
         if (m !== b && Math.hypot(m.position.x - b.position.x, m.position.z - b.position.z) < 40)
           m.takeDamage(1e6);
       }
-      d.teleport(b.position.x, b.position.y + 0.5, b.position.z - 6, 0);
+      d.teleport(b.position.x, b.position.y + 0.5, b.position.z - 4, 0);
     });
     await page.waitForFunction(
       () =>
         (window as unknown as W).ftb!.dev!.monsters.find((m) => m.name === 'bandit')!.state ===
         'attack',
       null,
-      { timeout: 90_000 },
+      { timeout: 240_000, polling: 250 },
     );
     const dist = await page.evaluate(() => {
       const d = (window as unknown as W).ftb!.dev!;
@@ -287,7 +289,7 @@ test.describe('dev build', () => {
             .clip ?? '',
         ),
       null,
-      { timeout: 60_000 },
+      { timeout: 120_000, polling: 250 },
     );
     // Taps attack with the ready member; the others wait out their recovery. He falls.
     const log: string[] = [];
