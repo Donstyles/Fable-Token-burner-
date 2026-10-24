@@ -125,8 +125,11 @@ export interface RegionScript {
   /** Glades the woods keep out of: a camp's, a ring of stones', the crossroads'. */
   clearings?: { at: P2; radius: number }[];
   plots: Plot[];
-  /** The cave mouth into the dungeon: its threshold and the heading it faces out to. */
-  cave?: { at: P2; facing: number; target: { level: string; entry: string } };
+  /**
+   * The cave mouth: its threshold, the heading it faces out to and the level its tunnel leads
+   * into. Without a target the tunnel ends in rock, with no portal.
+   */
+  cave?: { at: P2; facing: number; target?: { level: string; entry: string } };
   /** Split-rail fences the kernel builds, each a line of corners (src/kernel/terrain/fence.ts). */
   fences?: P2[][];
   residents: Resident[];
@@ -536,14 +539,16 @@ export function buildRegion(s: RegionScript): TerrainLevel {
     appendTo(solids, caveMesh.collider);
     // No light inside: the dark is the depth (owner, 2026-10-23), and the party's torch shows
     // the walls as it goes in.
-    portals.push({
-      name: 'cave',
-      position: caveMesh.portal,
-      radius: CAVE.portalRadius,
-      target: s.cave.target,
-      arrive: { position: caveMesh.arrive, yawDeg: s.cave.facing },
-    });
-    points.push({ name: 'cave', position: caveMesh.portal, kind: 'door' });
+    if (s.cave.target) {
+      portals.push({
+        name: 'cave',
+        position: caveMesh.portal,
+        radius: CAVE.portalRadius,
+        target: s.cave.target,
+        arrive: { position: caveMesh.arrive, yawDeg: s.cave.facing },
+      });
+    }
+    points.push({ name: 'cave', position: caveMesh.portal, kind: s.cave.target ? 'door' : 'poi' });
   }
   // The party wades the shallows to the ankles and no further.
   if (s.sea) wallAlong(solids, offshore(s.sea.coast, 7), s.sea.floor - 4, s.sea.level + 6);

@@ -11,12 +11,12 @@ import { expect, test } from '@playwright/test';
 test('the band and the panel stand between their pillars inside the safe areas', async ({
   page,
 }) => {
-  test.setTimeout(120_000);
-  await page.goto('dev/?dev&lite&level=showcase&seed=11');
+  test.setTimeout(240_000);
+  await page.goto('dev/?dev&lite&level=gullhaven&seed=11');
   await page.waitForFunction(
     () => (window as unknown as { ftb?: { dev?: { ready?: boolean } } }).ftb?.dev?.ready === true,
     null,
-    { timeout: 90_000 },
+    { timeout: 150_000 },
   );
   await page.addStyleTag({
     content:
@@ -68,12 +68,12 @@ test('the band and the panel stand between their pillars inside the safe areas',
  * it, so hiding the view changes nothing there.
  */
 test('the marble covers the safe areas outside the pillars', async ({ page }) => {
-  test.setTimeout(120_000);
-  await page.goto('dev/?dev&lite&level=showcase&seed=11');
+  test.setTimeout(240_000);
+  await page.goto('dev/?dev&lite&level=gullhaven&seed=11');
   await page.waitForFunction(
     () => (window as unknown as { ftb?: { dev?: { ready?: boolean } } }).ftb?.dev?.ready === true,
     null,
-    { timeout: 90_000 },
+    { timeout: 150_000 },
   );
   await page.addStyleTag({
     content:

@@ -47,14 +47,14 @@ export const QUESTS: Record<string, QuestDef> = {
     id: 'the-old-halls',
     title: 'The Old Halls',
     text:
-      'The dead walk in the halls under the hills and on the headland by night. Old Tobin ' +
-      'pays three hundred gold to have five of them put back in the ground.',
+      'The dead come up out of the old halls under the hills and walk on the headland by ' +
+      'night. Old Tobin pays three hundred gold to have five of them put back in the ground.',
     objectives: [
       {
         kind: 'kill',
         monster: 'skeleton-warrior',
         count: 5,
-        text: 'Put down five of the walking dead, in the halls or on the headland',
+        text: 'Put down five of the walking dead on the headland',
       },
       { kind: 'talk', npc: 'villager-man', text: 'Tell Old Tobin at his farm gate' },
     ],
@@ -130,11 +130,11 @@ export const DIALOGUES: Record<string, DialogueDef> = {
         label: 'The hills',
         text:
           'The north road ends below the hills, and the hills belong to the goblins now. There ' +
-          'is a cave on the slope that goes a long way down. My grandfather said there were halls ' +
-          'under there, older than the town.',
+          'is a cave on the slope. My grandfather said it went down to halls older than the ' +
+          'town, but the roof came in before I was born.',
         note:
-          'A cave on the slope under the goblin hills, where the north road ends, goes a long ' +
-          'way down. Old Tobin’s grandfather spoke of halls beneath it, older than Gullhaven.',
+          'A cave on the slope under the goblin hills, where the north road ends. Old Tobin’s ' +
+          'grandfather spoke of halls beneath it, older than Gullhaven; its roof has fallen in.',
       },
       {
         kind: 'quest',
@@ -142,17 +142,18 @@ export const DIALOGUES: Record<string, DialogueDef> = {
         quest: 'the-old-halls',
         label: 'The old halls',
         offer:
-          'My grandfather went down that cave on the slope once. He came back white and would ' +
-          'not say what walked there. Now the dead come up onto the headland by night. Put five ' +
-          'of them back in the ground and I will pay three hundred gold, which is all I have.',
+          'My grandfather went down that cave on the slope once, before the roof came in. He ' +
+          'came back white and would not say what walked there. Now the dead come up onto the ' +
+          'headland by night. Put five of them back in the ground and I will pay three hundred ' +
+          'gold, which is all I have.',
         active:
-          'Five of the dead, in the halls under the hills or up on the headland. Take a torch; ' +
-          'my grandfather said the dark down there is older than the town.',
+          'Five of the dead, up on the headland by the ruin. Go by day if you have any sense; ' +
+          'they walk at night.',
         ready:
           'Five, and you came back on your own feet. My grandfather would have stood you a ' +
           'drink. Three hundred gold, as I said, and keep the torch.',
         done: 'The headland is quiet at night now. I can hear the sea again.',
-        greetReady: 'You smell of the grave. Did you go down there? Tell me.',
+        greetReady: 'You smell of the grave. Did you go up there? Tell me.',
       },
       {
         kind: 'rumours',

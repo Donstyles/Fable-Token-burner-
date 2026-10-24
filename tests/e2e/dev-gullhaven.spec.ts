@@ -3,7 +3,7 @@ import { expect, test } from '@playwright/test';
 /**
  * Gullhaven, the starting region (docs/ROADMAP.md): a hand-designed 640 m map with terrain
  * detail levels, woods as thin instances, the sea, the harbour town, packs of monsters on the
- * navmesh and the cave into the dungeon.
+ * navmesh and the goblins' cave, its tunnel ending in rock.
  */
 type Dev = {
   ready: boolean;
@@ -90,9 +90,10 @@ test.describe('Gullhaven', () => {
       (window as unknown as W).ftb!.dev!.monsters.map((m) => m.state),
     );
     expect(states.every((s) => s === 'idle')).toBe(true);
-    // The cave in the goblin hills leads into the dungeon.
+    // The cave in the goblin hills is dug, its tunnel ending in rock: no level behind it yet,
+    // so no portal (the test halls were scrapped, owner, 2026-10-24).
     expect(info.cave).not.toBeNull();
-    expect(info.portals).toEqual(['cave>showcase:exit']);
+    expect(info.portals).toEqual([]);
     // The party wakes at the foot of the square, between the waterfront and the well.
     expect(Math.hypot(info.square!.x - info.spawn.x, info.square!.z - info.spawn.z)).toBeLessThan(
       20,
@@ -317,93 +318,42 @@ test.describe('Gullhaven', () => {
       null,
       { timeout: 60_000 },
     );
-    // Then stand four metres inside the arch, seven short of the portal, on the line from the
-    // portal out to the slope: the pack must find the way in through the mouth.
+    // Then stand four metres inside the arch, seven short of the tunnel's end, on the line from
+    // the end out to the slope: the pack must find the way in through the mouth.
     const inside = await page.evaluate(() => {
       const d = (window as unknown as W).ftb!.dev!;
-      const portal = d.pointOf('cave')!;
+      const end = d.pointOf('cave')!;
       const below = d.pointOf('goblin-hills')!;
-      const len = Math.hypot(below.x - portal.x, below.z - portal.z);
+      const len = Math.hypot(below.x - end.x, below.z - end.z);
       const at = {
-        x: portal.x + ((below.x - portal.x) / len) * 7,
-        y: portal.y,
-        z: portal.z + ((below.z - portal.z) / len) * 7,
+        x: end.x + ((below.x - end.x) / len) * 7,
+        y: end.y,
+        z: end.z + ((below.z - end.z) / len) * 7,
       };
       d.teleport(at.x, at.y + 0.5, at.z, 0);
       return at;
     });
-    // A goblin inside the arch at floor level: closer to the portal than the mouth is (11.5 m),
-    // and not up on the brow over it.
+    // A goblin inside the arch at floor level: closer to the tunnel's end than the mouth is
+    // (11.5 m), and not up on the brow over it.
     await page.waitForFunction(
       () => {
         const d = (window as unknown as W).ftb!.dev!;
-        const portal = d.pointOf('cave')!;
+        const end = d.pointOf('cave')!;
         return d.monsters.some(
           (m) =>
-            Math.hypot(m.position.x - portal.x, m.position.z - portal.z) < 9.5 &&
-            Math.abs(m.position.y - portal.y) < 1.5,
+            Math.hypot(m.position.x - end.x, m.position.z - end.z) < 9.5 &&
+            Math.abs(m.position.y - end.y) < 1.5,
         );
       },
       null,
       { timeout: 330_000 },
     );
-    // The party is still where it was put, in the tunnel short of the portal.
+    // The party is still where it was put, in the tunnel short of its end.
     const p = await page.evaluate(() => (window as unknown as W).ftb!.dev!.positionOf());
     expect(Math.hypot(p.x - inside.x, p.z - inside.z)).toBeLessThan(2);
     expect(page.url()).toMatch(/level=gullhaven/);
   });
 
-  test('walking into the cave leads into the dungeon, and its door leads back out', async ({
-    page,
-  }) => {
-    // Three level loads, each allowed two minutes below; the default budget is one load's.
-    test.setTimeout(300_000);
-    // Stand on the slope below the cave: the portal arms once the party stands clear of it.
-    const cave = await page.evaluate(() => (window as unknown as W).ftb!.dev!.pointOf('cave')!);
-    await page.evaluate(() => {
-      const d = (window as unknown as W).ftb!.dev!;
-      const below = d.pointOf('goblin-hills')!;
-      d.teleport(below.x, below.y + 0.5, below.z, 0);
-    });
-    await page.waitForTimeout(600);
-    expect(
-      await page.evaluate(() => (window as unknown as W).ftb!.dev!.portals.isArmed('cave')),
-    ).toBe(true);
-    // Step into the portal: the page travels to the dungeon and arrives at its exit door.
-    await page.evaluate((c) => {
-      const d = (window as unknown as W).ftb!.dev!;
-      d.teleport(c.x, c.y + 0.5, c.z, 0);
-    }, cave);
-    await page.waitForURL(/level=showcase.*entry=exit/, { timeout: 20_000 });
-    await page.waitForFunction(() => (window as unknown as W).ftb?.dev?.ready === true, null, {
-      timeout: 120_000,
-    });
-    const arrived = await page.evaluate(() => {
-      const d = (window as unknown as W).ftb!.dev!;
-      return { p: d.positionOf(), portals: d.portals.portals.map((x) => x.name) };
-    });
-    expect(arrived.portals).toEqual(['exit']);
-    // The showcase's exit door is at its spawn; the party arrives just inside it.
-    // Kernel (-3, 0, -2) is Babylon (3, 0, -2): X is mirrored.
-    expect(Math.hypot(arrived.p.x - 3, arrived.p.z + 2)).toBeLessThan(1.5);
-    // Step away to arm the door, then back through it: out onto the cave's threshold.
-    await page.evaluate(() => (window as unknown as W).ftb!.dev!.teleport(3, 0.5, 4, 180));
-    await page.waitForTimeout(600);
-    await page.evaluate(() => (window as unknown as W).ftb!.dev!.teleport(3, 0.5, -4.5, 180));
-    await page.waitForURL(/level=gullhaven.*entry=cave/, { timeout: 20_000 });
-    await page.waitForFunction(() => (window as unknown as W).ftb?.dev?.ready === true, null, {
-      timeout: 120_000,
-    });
-    await page.waitForTimeout(1500);
-    const back = await page.evaluate(() => {
-      const d = (window as unknown as W).ftb!.dev!;
-      return { p: d.positionOf(), cave: d.pointOf('cave')! };
-    });
-    const d = Math.hypot(back.p.x - back.cave.x, back.p.z - back.cave.z);
-    expect(d).toBeGreaterThan(10);
-    expect(d).toBeLessThan(20);
-    expect(Math.abs(back.p.y - back.cave.y)).toBeLessThan(2);
-  });
   test('a house opens only from its door', async ({ page }) => {
     // Three metres back from the place before the inn's door, facing the house.
     await page.evaluate(() => {

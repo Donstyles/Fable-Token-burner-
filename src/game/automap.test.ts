@@ -50,11 +50,11 @@ describe('automap', () => {
 
   it('keeps one map per level and survives JSON', () => {
     const map = createAutomap();
-    const a = automapLevel(map, 'showcase', spec);
-    expect(automapLevel(map, 'showcase', spec)).toBe(a);
+    const a = automapLevel(map, 'gullhaven', spec);
+    expect(automapLevel(map, 'gullhaven', spec)).toBe(a);
     reveal(a, 5, 5, 2);
     const copy = JSON.parse(JSON.stringify(map)) as typeof map;
-    expect(visitedCount(copy.levels['showcase']!)).toBe(visitedCount(a));
-    expect(isVisited(copy.levels['showcase']!, 5, 7)).toBe(true);
+    expect(visitedCount(copy.levels['gullhaven']!)).toBe(visitedCount(a));
+    expect(isVisited(copy.levels['gullhaven']!, 5, 7)).toBe(true);
   });
 });

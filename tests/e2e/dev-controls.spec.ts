@@ -1,49 +1,32 @@
 import { expect, test, type CDPSession, type Page } from '@playwright/test';
 
 /**
- * Drives the development build (the compiled showcase level) with real touch events
- * through the Chrome DevTools Protocol, since Playwright's touchscreen API only taps.
- * Touch state lives in the CDP session, so one session is shared across each test.
+ * Drives the development build in Gullhaven with real touch events through the Chrome
+ * DevTools Protocol, since Playwright's touchscreen API only taps. Touch state lives in the
+ * CDP session, so one session is shared across each test.
  *
- * Showcase geometry (scene space, X mirrored from the level script): the party spawns
- * at (3, 0, -3) in the great hall facing +Z with 8 m of clear floor ahead and 3 m behind.
+ * The party stands where it wakes, on the flat lane at the foot of the square, turned to face
+ * due north (+Z) up the lane, fifteen metres clear every way.
  */
 type Point = { x: number; y: number };
 type Dev = {
   ready: boolean;
   simTime(): number;
   feedback: { frozen: boolean; flash: number };
-  debug(): { move: number; velocity: [number, number, number]; waterDepth: number };
-  water: { currentQuality: string; clock: number; setQuality(q: string): void };
-  level: {
-    water: {
-      y: number;
-      mesh: {
-        material: { getClassName(): string; bumpTexture?: { isReady(): boolean } | null } | null;
-        position: { y: number };
-        subMeshes: { materialDefines: Record<string, unknown> | null }[];
-      };
-    }[];
-    waterfalls: unknown[];
-  };
+  debug(): { move: number; velocity: [number, number, number] };
   positionOf(): { x: number; y: number; z: number };
-  pointOf(name: string): { x: number; y: number; z: number } | null;
   teleport(x: number, y: number, z: number, yaw: number): void;
   yawDeg(): number;
   pitchDeg(): number;
   screenPointOf(name: string): Point | null;
   lastTap: string | null;
-  character: {
-    clip: string | null;
-    clips: string[];
-    frame: number;
-    play(name: string): void;
-  } | null;
   monsters: {
     name: string;
     state: string;
     hp: number;
     position: { x: number; y: number; z: number };
+    character: { clip: string | null; clips: string[] };
+    takeDamage(n: number): string;
   }[];
   roster: { members: { hp: number }[]; selected: number };
   attack(name: string): string | null;
@@ -113,32 +96,25 @@ async function simWait(page: Page, seconds: number, maxMs = 40_000) {
   return (await simTime(page)) - t0;
 }
 
-/** Poll the party position until `done` holds or the deadline passes (headless pacing varies). */
-async function untilPosition(
-  page: Page,
-  done: (p: { x: number; y: number; z: number }) => boolean,
-  maxMs = 45_000,
-) {
-  const start = Date.now();
-  let p = await position(page);
-  while (!done(p) && Date.now() - start < maxMs) {
-    await page.waitForTimeout(200);
-    p = await position(page);
-  }
-  return p;
-}
 const yaw = (page: Page) => page.evaluate(() => (window as unknown as W).ftb!.dev!.yawDeg());
 const pitch = (page: Page) => page.evaluate(() => (window as unknown as W).ftb!.dev!.pitchDeg());
 
 test.describe('dev build', () => {
   test.beforeEach(async ({ page, browserName }) => {
+    // A region's load on software GL takes most of a minute.
+    test.setTimeout(240_000);
     if (browserName === 'chromium') cdp = await page.context().newCDPSession(page);
-    await page.goto('dev/?dev&lite&level=showcase');
+    await page.goto('dev/?dev&lite&level=gullhaven');
     await page.waitForFunction(() => (window as unknown as W).ftb?.dev?.ready === true, null, {
-      timeout: 90_000,
+      timeout: 150_000,
     });
-    // Let physics settle the capsule onto the floor.
-    await page.waitForTimeout(500);
+    // Due north where the party wakes; let physics settle the capsule onto the lane.
+    await page.evaluate(() => {
+      const d = (window as unknown as W).ftb!.dev!;
+      const p = d.positionOf();
+      d.teleport(p.x, p.y + 0.2, p.z, 0);
+    });
+    await page.waitForTimeout(800);
   });
 
   test('walks forward on a left-side drag up and stops on release', async ({
@@ -243,33 +219,29 @@ test.describe('dev build', () => {
     expect(pitch2).toBeCloseTo(pitch1, 1);
   });
 
-  test('climbs the switchback stair from the undercroft to the landing', async ({
+  test('a bandit at the camp closes in, swings at the party, and falls to taps', async ({
     page,
-    browserName,
   }) => {
-    test.skip(browserName !== 'chromium', 'touch injection needs CDP');
-    // The second flight rises from the undercroft's south door (x = -5.4, z = -7.2) toward
-    // -Z up to the landing at y = -4.5. Start just inside the undercroft facing south.
-    await page.evaluate(() => (window as unknown as W).ftb!.dev!.teleport(-5.4, -9, -5.0, 180));
-    await page.waitForTimeout(400);
-    await touch('touchStart', [{ x: 200, y: 320 }]);
-    await touch('touchMove', [{ x: 200, y: 180 }]);
-    const p = await untilPosition(page, (q) => q.y > -4.8);
-    await touch('touchEnd', []);
-    expect(p.y).toBeGreaterThan(-4.8);
-    expect(p.z).toBeLessThan(-12);
-  });
-
-  test('the bandit closes in, swings at the party, and falls to taps', async ({ page }) => {
-    test.setTimeout(240_000);
-    await page.goto('dev/?dev&lite&level=showcase&seed=11');
+    test.setTimeout(360_000);
+    await page.goto('dev/?dev&lite&level=gullhaven&seed=11');
     await page.waitForFunction(() => (window as unknown as W).ftb?.dev?.ready === true, null, {
-      timeout: 60_000,
+      timeout: 150_000,
     });
-    await page.waitForFunction(() => (window as unknown as W).ftb!.dev!.monsters.length > 0, null, {
-      timeout: 60_000,
-    });
-    const clips = await page.evaluate(() => (window as unknown as W).ftb!.dev!.character!.clips);
+    await page.waitForFunction(
+      () => (window as unknown as W).ftb!.dev!.monsters.some((m) => m.name === 'bandit'),
+      null,
+      { timeout: 150_000 },
+    );
+    const bandit = () =>
+      page.evaluate(() => {
+        const m = (window as unknown as W).ftb!.dev!.monsters.find((b) => b.name === 'bandit')!;
+        return { state: m.state, hp: m.hp, clip: m.character.clip, position: m.position };
+      });
+    const clips = await page.evaluate(
+      () =>
+        (window as unknown as W).ftb!.dev!.monsters.find((m) => m.name === 'bandit')!.character
+          .clips,
+    );
     expect(clips).toEqual([
       'idle',
       'walk',
@@ -282,22 +254,38 @@ test.describe('dev build', () => {
       'talk',
       'block',
     ]);
-    // Six metres ahead is inside his aggro range: he comes at the party and stops in reach.
+    // Six metres south of the camp's first bandit, inside his aggro range; his fellows are
+    // struck dead first, so he comes alone. He comes at the party and stops in reach.
+    await page.evaluate(() => {
+      const d = (window as unknown as W).ftb!.dev!;
+      const b = d.monsters.find((m) => m.name === 'bandit')!;
+      for (const m of d.monsters) {
+        if (m !== b && Math.hypot(m.position.x - b.position.x, m.position.z - b.position.z) < 40)
+          m.takeDamage(1e6);
+      }
+      d.teleport(b.position.x, b.position.y + 0.5, b.position.z - 6, 0);
+    });
     await page.waitForFunction(
-      () => (window as unknown as W).ftb!.dev!.monsters[0]!.state === 'attack',
+      () =>
+        (window as unknown as W).ftb!.dev!.monsters.find((m) => m.name === 'bandit')!.state ===
+        'attack',
       null,
       { timeout: 90_000 },
     );
     const dist = await page.evaluate(() => {
       const d = (window as unknown as W).ftb!.dev!;
-      const m = d.monsters[0]!;
+      const m = d.monsters.find((b) => b.name === 'bandit')!;
       const p = d.positionOf();
       return Math.hypot(m.position.x - p.x, m.position.z - p.z);
     });
     expect(dist).toBeLessThan(2.6);
     // He swings: an attack clip plays.
     await page.waitForFunction(
-      () => /^attack_/.test((window as unknown as W).ftb!.dev!.character!.clip ?? ''),
+      () =>
+        /^attack_/.test(
+          (window as unknown as W).ftb!.dev!.monsters.find((m) => m.name === 'bandit')!.character
+            .clip ?? '',
+        ),
       null,
       { timeout: 60_000 },
     );
@@ -314,120 +302,42 @@ test.describe('dev build', () => {
       const line = r.line;
       if (line && /hits Bandit/.test(line) && r.frozen && r.flash === 1) punchy++;
       if (line && line !== 'nobody is ready') log.push(line);
-      const state = await page.evaluate(
-        () => (window as unknown as W).ftb!.dev!.monsters[0]!.state,
-      );
-      if (state === 'dead') break;
+      if ((await bandit()).state === 'dead') break;
       await page.waitForTimeout(200);
     }
     expect(log.some((l) => /hits Bandit for \d+/.test(l))).toBe(true);
     expect(punchy).toBe(log.filter((l) => /hits Bandit/.test(l)).length);
     expect(log.at(-1)).toMatch(/Bandit falls/);
-    expect(await page.evaluate(() => (window as unknown as W).ftb!.dev!.monsters[0]!.hp)).toBe(0);
-    expect(await page.evaluate(() => (window as unknown as W).ftb!.dev!.character!.clip)).toBe(
-      'death',
-    );
+    const fallen = await bandit();
+    expect(fallen.hp).toBe(0);
+    expect(fallen.clip).toBe('death');
     await page.screenshot({ path: `test-results/bandit-${test.info().project.name}.png` });
-  });
-
-  test('wades at half speed through the undercroft pool', async ({ page, browserName }) => {
-    test.skip(browserName !== 'chromium', 'touch injection needs CDP');
-    // The undercroft floor is at y = -9 under 0.4 m of water: shallow wading. Start on the
-    // centre line, between the two rows of columns, with 10 m of clear water ahead.
-    await page.evaluate(() => (window as unknown as W).ftb!.dev!.teleport(0, -9, -4.5, 0));
-    await page.waitForTimeout(400);
-    const depth = await page.evaluate(() => (window as unknown as W).ftb!.dev!.debug().waterDepth);
-    expect(depth).toBeGreaterThan(0.3);
-    expect(depth).toBeLessThan(0.5);
-    await touch('touchStart', [{ x: 200, y: 320 }]);
-    await touch('touchMove', [{ x: 200, y: 180 }]);
-    const { speed } = await measureSpeed(page, (s) => s.z, 1);
-    await touch('touchEnd', []);
-    expect(speed).toBeGreaterThan(1.8);
-    expect(speed).toBeLessThan(2.7);
-  });
-
-  test('water bodies and the waterfall are live', async ({ page }) => {
-    const info = await page.evaluate(() => {
-      const d = (window as unknown as W).ftb!.dev!;
-      return {
-        quality: d.water.currentQuality,
-        bodies: d.level.water.map((w) => w.mesh.material?.getClassName() ?? null),
-        // Babylon mirrors and clips at the mesh's own height, so it must sit at the water level.
-        levelOffsets: d.level.water.map((w) => Math.abs(w.mesh.position.y - w.y)),
-        falls: d.level.waterfalls.length,
-      };
-    });
-    // Indoors the mirrors run at an eighth (DESIGN 16.11); outdoors they are off.
-    expect(info.quality).toBe('eighth');
-    expect(info.bodies.length).toBe(3);
-    for (const cls of info.bodies) expect(cls).toBe('WaterMaterial');
-    for (const off of info.levelOffsets) expect(off).toBeLessThan(1e-6);
-    expect(info.falls).toBe(1);
-    // The surfaces animate on our simulated clock (not Babylon's delta-equality guard),
-    // which lags wall time on slow renderers because each frame is capped at 50 ms.
-    const clocks = (): Promise<{ water: number; sim: number }> =>
-      page.evaluate(() => {
-        const d = (window as unknown as W).ftb!.dev!;
-        return { water: d.water.clock, sim: d.simTime() };
-      });
-    const before = await clocks();
-    await page.waitForTimeout(500);
-    const after = await clocks();
-    expect(after.water - before.water).toBeGreaterThan(0.04);
-    expect(after.water - before.water).toBeCloseTo(after.sim - before.sim, 3);
-    // Changing the passes rebuilds the materials; the shared ripple map must survive that
-    // (Babylon's water material disposes its bump texture with itself).
-    const rippleAlive = await page.evaluate(() => {
-      const d = (window as unknown as W).ftb!.dev!;
-      d.water.setQuality('half');
-      d.water.setQuality('quarter');
-      return d.level.water.map((w) => w.mesh.material?.bumpTexture?.isReady() ?? false);
-    });
-    for (const alive of rippleAlive) expect(alive).toBe(true);
-    // The shader perturbs the reflection per pixel only with NORMAL on (needs a light).
-    // Defines exist only for a body that has been drawn, so look at the pool first.
-    await page.evaluate(() => (window as unknown as W).ftb!.dev!.teleport(0, -9, -4.5, 0));
-    await page.waitForFunction(
-      () =>
-        (window as unknown as W).ftb!.dev!.level.water.some(
-          (w) => w.mesh.subMeshes[0]?.materialDefines != null,
-        ),
-      null,
-      { timeout: 30_000 },
-    );
-    const normals = await page.evaluate(() =>
-      (window as unknown as W)
-        .ftb!.dev!.level.water.map((w) => w.mesh.subMeshes[0]?.materialDefines?.['NORMAL'])
-        .filter((n) => n !== undefined),
-    );
-    expect(normals.length).toBeGreaterThan(0);
-    for (const n of normals) expect(n).toBe(true);
   });
 
   test('tap on the level registers through picking', async ({ page, browserName }) => {
     test.skip(browserName !== 'chromium', 'touch injection needs CDP');
     // Playwright's tap sends touch start and end back-to-back. A timed CDP sequence is
     // unreliable here because headless software rendering stalls event processing.
-    await page.touchscreen.tap(466, 215);
+    // Low in the view's box: the lane a few metres ahead, a terrain chunk.
+    await page.touchscreen.tap(395, 260);
     await page.waitForTimeout(150);
     const tapped = await page.evaluate(() => (window as unknown as W).ftb!.dev!.lastTap);
     expect(tapped).not.toBeNull();
-    expect(tapped!.startsWith('chunk:')).toBe(true);
+    expect(tapped!.startsWith('t:')).toBe(true);
   });
 
-  test('renders the showcase (not a black canvas) and captures the filter', async ({
+  test('renders Gullhaven (not a black canvas) and captures the filter', async ({
     page,
     browserName,
   }) => {
     // Full look for the capture (the shared setup loads the lite variant).
-    await page.goto('dev/?dev&level=showcase');
+    await page.goto('dev/?dev&level=gullhaven');
     await page.waitForFunction(() => (window as unknown as W).ftb?.dev?.ready === true, null, {
-      timeout: 90_000,
+      timeout: 150_000,
     });
     await page.waitForTimeout(500);
     const shot = await page.screenshot({
-      path: `test-results/showcase-palette-${browserName}.png`,
+      path: `test-results/filter-palette-${browserName}.png`,
     });
     // Mean brightness of the lower 80% of the frame; the empty clear colour scores ~8.
     const { default: sharp } = await import('sharp');
@@ -442,13 +352,13 @@ test.describe('dev build', () => {
       .greyscale()
       .stats();
     expect(stats.channels[0]?.mean ?? 0).toBeGreaterThan(14);
-    await page.screenshot({ path: 'test-results/showcase-palette.png' });
+    await page.screenshot({ path: 'test-results/filter-palette.png' });
     await page.evaluate(() => (window as unknown as W).ftb!.setFilter({ mode: 'posterize' }));
     await page.waitForTimeout(100);
-    await page.screenshot({ path: 'test-results/showcase-posterize.png' });
+    await page.screenshot({ path: 'test-results/filter-posterize.png' });
     await page.evaluate(() => (window as unknown as W).ftb!.setFilter({ mode: 'off' }));
     await page.waitForTimeout(100);
-    await page.screenshot({ path: 'test-results/showcase-off.png' });
+    await page.screenshot({ path: 'test-results/filter-off.png' });
     await page.evaluate(() => (window as unknown as W).ftb!.setFilter({ mode: 'palette' }));
   });
 });

@@ -1,6 +1,7 @@
 /**
- * Development entry: loads the compiled showcase level with the party controller, a free
- * fly camera, wireframe and navmesh overlays and the tuning panel. Never in production.
+ * Development entry: loads a compiled level (Gullhaven unless `?level=` names another) with the
+ * party controller, a free fly camera, wireframe and navmesh overlays and the tuning panel.
+ * Never in production.
  */
 import './dev.css';
 // Side-effect import: enables scene.pick (tree-shaken away otherwise).
@@ -134,7 +135,7 @@ export interface DevHandle {
   pickAt(x: number, y: number): string | null;
   /** Pointer event counters and consumed taps, for diagnosing input on real devices. */
   events: { down: number; move: number; up: number; cancel: number; taps: number; types: string[] };
-  /** The first Meshy character, placed ahead of the spawn; null until loaded. */
+  /** The first character loaded (the level's first spawn); null until loaded. */
   character: Character | null;
   stepper: AnimationStepper;
   /** Monsters in the level, for tests: state, hit points and a programmatic tap. */
@@ -158,13 +159,11 @@ export interface DevHandle {
 
 const DEG = Math.PI / 180;
 const QUERY = new URLSearchParams(location.search);
-// Gullhaven, the starting region, is the first thing a visitor sees; the dungeon is a portal
-// away (or ?level=showcase).
+// Gullhaven, the starting region, is the first thing a visitor sees.
 const LEVEL = QUERY.get('level') ?? 'gullhaven';
 /** What the veil calls each level while it loads. */
 const PLACE_NAMES: Record<string, string> = {
   gullhaven: 'Gullhaven',
-  showcase: 'The Old Halls',
 };
 /** Arriving through a portal: the portal of this level to appear at (DESIGN.md 15.3). */
 const ENTRY = QUERY.get('entry');
@@ -303,8 +302,8 @@ export async function startDev(app: App): Promise<DevHandle> {
   const underwater = new UnderwaterTint(uiLayer);
   diag(`water: ${level.water.length} bodies, ${level.waterfalls.length} falls`);
   veilProgress(0.55);
-  // Combat test bed (PLAN Phase 5 step 4): the test party, a seeded die, the level's navmesh
-  // and one bandit six metres ahead of the spawn. Clips step at MM6's rate regardless of the
+  // Combat (PLAN Phase 5 step 4): the test party, a seeded die, the level's navmesh and its
+  // monsters where the level script stands them. Clips step at MM6's rate regardless of the
   // display refresh. `?seed=<n>` makes a run repeatable.
   const stepper = new AnimationStepper(scene, 10);
   const seed = Number(new URLSearchParams(location.search).get('seed')) || Date.now() % 100000;
@@ -523,11 +522,6 @@ export async function startDev(app: App): Promise<DevHandle> {
       };
     },
   };
-  const ahead = new Vector3(
-    Math.sin(level.spawnYawDeg * DEG),
-    0,
-    Math.cos(level.spawnYawDeg * DEG),
-  );
   let navigation: Navigation | null = null;
   const startCombat = async (): Promise<void> => {
     let nav: Navigation | null = null;
@@ -538,21 +532,13 @@ export async function startDev(app: App): Promise<DevHandle> {
     } catch (e) {
       diag(`navmesh failed: ${e instanceof Error ? e.message : String(e)}`);
     }
-    // The level's spawns; underground the test bed's bandit six metres ahead comes first
-    // (the combat and spell tests strike it), the halls' own dead behind it.
-    const testBed = level.sidecar.outdoor
-      ? []
-      : [
-          {
-            kind: 'bandit',
-            position: level.spawn.add(ahead.scale(6)),
-            yawDeg: level.spawnYawDeg + 180,
-          },
-        ];
-    const placements = [...testBed, ...level.spawns].map((s, i) => ({
-      ...s,
-      name: i === 0 ? 'bandit' : `${s.kind}-${i + 1}`,
-    }));
+    // The level's spawns, named for tests by kind: the first bandit `bandit`, then `bandit-2`.
+    const counts = new Map<string, number>();
+    const placements = level.spawns.map((s) => {
+      const n = (counts.get(s.kind) ?? 0) + 1;
+      counts.set(s.kind, n);
+      return { ...s, name: n === 1 ? s.kind : `${s.kind}-${n}` };
+    });
     // Everyone loads at once: one after another, each waited frames of its own, and at a
     // frame a second (software GL in CI) eight of them took longer than the tests allow.
     const loaded = await Promise.all(
@@ -704,7 +690,8 @@ export async function startDev(app: App): Promise<DevHandle> {
     saveGame(state);
     travel(
       uiLayer,
-      p.target.level === 'showcase' ? 'Into the dark…' : 'Out into the light…',
+      // Out of a region a portal goes underground; out of anywhere else, up into the day.
+      level.sidecar.outdoor ? 'Into the dark…' : 'Out into the light…',
       portalUrl(location.href, p),
     );
   });

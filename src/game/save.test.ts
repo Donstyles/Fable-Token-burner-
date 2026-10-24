@@ -30,7 +30,7 @@ function playedState() {
   state.party[3]!.skills.fire = { level: 3, rank: 'expert' };
   startQuest(state.quests, { id: 'q1', title: 'Q', text: 'T', objectives: [] });
   reveal(
-    automapLevel(state.automap, 'showcase', {
+    automapLevel(state.automap, 'gullhaven', {
       width: 32,
       height: 32,
       cellSize: 1,
@@ -57,8 +57,8 @@ describe('save round trip', () => {
     expect(loaded.migrated).toBe(false);
     expect(loaded.state).toEqual(state);
     expect(loaded.state.party[1]!.conditions.poisoned).toEqual({ since: 100, severity: 2 });
-    expect(loaded.state.automap.levels['showcase']!.words).toEqual(
-      state.automap.levels['showcase']!.words,
+    expect(loaded.state.automap.levels['gullhaven']!.words).toEqual(
+      state.automap.levels['gullhaven']!.words,
     );
     // Loading again is idempotent.
     expect(fromJson(toJson(loaded.state))).toMatchObject({ ok: true });

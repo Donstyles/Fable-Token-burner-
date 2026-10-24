@@ -78,7 +78,7 @@ describe('automap view', () => {
     expect(v).not.toBeNull();
     // North up: row 6 of ten from the grid's corner is drawn fourth from the page's top.
     expect(v).toMatchObject({
-      levelId: 'showcase',
+      levelId: 'gullhaven',
       visited: 1,
       total: 200,
       cells: [[10, 3]],

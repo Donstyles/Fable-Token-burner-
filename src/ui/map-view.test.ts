@@ -247,7 +247,7 @@ describe('map opening view', () => {
         JSON.stringify({
           '5:gullhaven': { camera, party: { cx: 40, cy: 25 } },
           '5:halls': { camera, party: null },
-          '5:showcase': { camera: { scale: 'big', cx: 1, cy: 2 }, party: null },
+          '5:barrow': { camera: { scale: 'big', cx: 1, cy: 2 }, party: null },
           '5:void': { camera: { scale: 0, cx: 1, cy: 2 }, party: null },
           '5:old': { scale: 8, cx: 1, cy: 2 },
           '5:null': null,

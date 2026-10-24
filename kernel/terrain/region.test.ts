@@ -61,7 +61,7 @@ const SMALL: RegionScript = {
     },
   ],
   plots: [{ model: 'building-cottage-01', at: [0, 14], face: [0, 0] }],
-  cave: { at: [44, 52], facing: 225, target: { level: 'showcase', entry: 'exit' } },
+  cave: { at: [44, 52], facing: 225, target: { level: 'barrow', entry: 'mouth' } },
   residents: [{ kind: 'villager-woman', at: [5, -5], face: [0, 0] }],
   packs: [{ kind: 'goblin-scout', at: [-80, -20], count: 3, spread: 5 }],
   points: [{ name: 'square', at: [0, 0] }],
@@ -133,7 +133,7 @@ describe('authored regions', () => {
 
   it('cuts the cave into the hill with its portal inside and the party arriving outside', () => {
     const portal = level.portals.find((p) => p.name === 'cave')!;
-    expect(portal.target).toEqual({ level: 'showcase', entry: 'exit' });
+    expect(portal.target).toEqual({ level: 'barrow', entry: 'mouth' });
     const h = (225 * Math.PI) / 180;
     const yaw = Math.atan2(-Math.sin(h), -Math.cos(h));
     const spec = { x: 44, y: 0, z: 52, yaw };
@@ -176,7 +176,7 @@ describe('a script drawn as a map', () => {
       ...SMALL,
       flats: [{ at: [30, -10], halfA: 4, halfB: 2, heading: 30, y: 5, soft: 2 }],
       plots: [{ model: 'building-cottage-01', at: [20, 0], face: [30, 0] }],
-      cave: { at: [40, 50], facing: 90, target: { level: 'showcase', entry: 'exit' } },
+      cave: { at: [40, 50], facing: 90, target: { level: 'barrow', entry: 'mouth' } },
     });
     expect(k.flats[0]!.at).toEqual([-30, -10]);
     expect(k.flats[0]!.heading).toBe(30);
@@ -215,7 +215,9 @@ describe('Gullhaven', () => {
   it('is the 640 m starting region with its town, cave, sea and woods', () => {
     expect(level.height.width).toBe(640);
     expect(buildings.length).toBeGreaterThanOrEqual(10);
-    expect(level.portals.map((p) => p.name)).toEqual(['cave']);
+    // The cave's tunnel ends in rock: no level behind it yet, so no portal.
+    expect(level.portals).toEqual([]);
+    expect(level.points.find((p) => p.name === 'cave')?.kind).toBe('poi');
     expect(level.water.map((w) => w.name)).toEqual(['sea']);
     expect(level.trees.length).toBeGreaterThan(500);
   });
@@ -265,8 +267,7 @@ describe('Gullhaven', () => {
   });
 
   it('digs the cave into the goblin hills, facing down to the north road', () => {
-    const portal = level.portals.find((p) => p.name === 'cave')!;
-    const floor = portal.position[1];
+    const floor = level.points.find((p) => p.name === 'cave')!.position[1];
     const h = (g.cave!.facing * Math.PI) / 180;
     const [cx, cz] = g.cave!.at;
     const spec = { x: cx, y: floor, z: cz, yaw: Math.atan2(-Math.sin(h), -Math.cos(h)) };

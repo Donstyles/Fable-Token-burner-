@@ -699,8 +699,9 @@ stays). Every one of these timers runs on the world's step, never on the
 clips' clock, so a slow phone lands the same blows as a fast one. Test data:
 the bandit, level 2, 25 hp, AC 8, attack 3, 1d6+1. Regions carry `spawns`
 in their sidecar (kind, position, facing), and a planned level may export
-its own: Gullhaven's packs stand about its hills and roads; the halls keep
-the test bed's one bandit six metres ahead and six skeletons beyond it. A
+its own: Gullhaven's packs stand about its hills and roads. The dev build
+names them by kind for its tests, the first bandit `bandit`, the next
+`bandit-2`. A
 fallen monster is searched with a tap within 6 m for the gold on it
 (`gold` in `src/game/monsters.ts`), once.
 
@@ -932,12 +933,13 @@ was that knoll: a stone-shored tunnel under four sloped quads, the terrain cut
   stops at the rock where it is drawn, and the goblins below come up the apron
   and in through the arch (an end-to-end test).
 - Portals (`PortalRecord`): a trigger disc with a target level and entry
-  name, and an arrival point for the party coming the other way. The
-  region's `cave` portal lies 4.5 m before the tunnel's end (clear
-  of a navmesh cell's erosion), 2.4 m across so nobody walks past it along the
-  narrowing wall, and leads to the showcase dungeon's `exit`;
-  the showcase's `exit` portal at its spawn leads back to the region's
-  `cave`, arriving on the apron 3.5 m out, facing out. A portal arms only once
+  name, and an arrival point for the party coming the other way. A region's
+  cave with a `target` gets its `cave` portal 4.5 m before the tunnel's end
+  (clear of a navmesh cell's erosion), 2.4 m across so nobody walks past it
+  along the narrowing wall, arriving from the other side on the apron 3.5 m
+  out, facing out. Gullhaven's cave has none: the test halls behind it were
+  scrapped (owner, 2026-10-24), and its tunnel ends in rock until the
+  region's first dungeon is built. A portal arms only once
   the party has stood 1.5 m clear of it, so arriving through it does not
   bounce the party straight back.
 - The transition is a fade to black with a line of text and a fresh load
@@ -2758,6 +2760,14 @@ radius, centred a metre out, so the party walked deep into it before a thin post
   party's collider and the drawn trunk meet within a metre on every side the ray hits.
 
 ## 13. Decision log
+
+- 2026-10-24 – The test dungeon scrapped (owner: "Scrap the test room dungeon completely").
+  The showcase level (the Phase 2 kernel demo of hall, gallery, shaft, flooded undercroft,
+  switchback, chasm bridge and cavern, reached through Gullhaven's cave) is deleted with its
+  tests; the cave's tunnel ends in rock, with no portal, until the first real dungeon. The
+  controls, combat and spell tests run in Gullhaven: on the lane below the square and at the
+  bandits' camp. Old Tobin's quest sends the party to the headland's dead, the cave's roof
+  having fallen in. The planner, the water and waterfall code stay for that dungeon.
 
 - 2026-10-24 – Trees collide at their drawn trunks (owner: "The very large trees have no
   collision"; 17.7). Each tree model's trunk is measured off its own triangles at chest height,

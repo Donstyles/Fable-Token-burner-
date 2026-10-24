@@ -3,7 +3,7 @@
  * reachability validation → GLB + sidecar JSON in public/levels/.
  *
  *   npm run level:build                  every level under levels/
- *   npm run level:build -- showcase      one level
+ *   npm run level:build -- gullhaven     one level
  *   npm run level:build -- --no-validate keep going when a point is unreachable
  *
  * Outputs are build artifacts and never committed; CI and the Pages deploy run this before

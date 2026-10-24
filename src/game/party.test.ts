@@ -10,7 +10,7 @@ import { statBonus } from './stats';
 function outfittedParty() {
   const r = newGame(testCharacters(), {
     seed: 1,
-    level: { id: 'showcase', x: 0, y: 0, z: 0, yawDeg: 0 },
+    level: { id: 'gullhaven', x: 0, y: 0, z: 0, yawDeg: 0 },
   });
   if (!r.ok) throw new Error('fixture');
   return r.state.party;

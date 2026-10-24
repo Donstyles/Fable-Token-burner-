@@ -70,7 +70,7 @@ src/
   ui/            HTML/CSS HUD and screens
   data/          tables: classes, skills, spells, items, monsters, NPCs
 kernel/          geometry kernel (pure TypeScript, runs in Node and browser)
-levels/          level scripts: gullhaven (region.ts, the starting region), showcase (the dungeon)
+levels/          level scripts: gullhaven (region.ts, the starting region)
 tools/           pipeline CLIs, manifest, validation
 assets/          committed generated assets (textures/ with manifest.json)
 pipeline/        inbox/ (owner images), batches/, style.md
@@ -598,7 +598,9 @@ by the hour. Then Gullhaven rebuilt packed (DESIGN 17.2): the square and a
 high street built up house to house, the farm, crossroads, cave, stones,
 camps and ruin a minute apart, woods between; and the regions the right
 way round (DESIGN 17.1), east on the screen's right and the sun rising there.
-Then trees that stop the party at their drawn trunks (DESIGN 17.7).
+Then trees that stop the party at their drawn trunks (DESIGN 17.7), and the
+test dungeon scrapped (owner): the showcase level and its portal are gone,
+the cave's tunnel ends in rock, and its tests run in Gullhaven.
 
 **Status, night of 2026-10-16 (owner asleep, best judgement):** steps 1 to 6
 are in: the valley (village, road, pass, gorge with eight cascades, cave

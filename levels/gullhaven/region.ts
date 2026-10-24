@@ -6,11 +6,10 @@
  * street built up on both sides, house to house, gardens and yards behind, the temple on its
  * knoll over the west end, the smithy's forge at the east, the quay below. Up the north road,
  * through the hedges, Old Tobin's farm with its orchard, fields and paddock; the crossroads and
- * their shrine under an old oak; on through the wood to the goblin hills and the cave into the
- * old halls. West, the woodcutter's glade, the ring of stones and the bandits' camp on the
- * coast road; east, the track through the oaks to the ruin on the headland. Woods fill the
- * ground between, the ridges close it in, and nothing stands more than a minute's walk from
- * the next thing.
+ * their shrine under an old oak; on through the wood to the goblin hills and their cave. West,
+ * the woodcutter's glade, the ring of stones and the bandits' camp on the coast road; east, the
+ * track through the oaks to the ruin on the headland. Woods fill the ground between, the ridges
+ * close it in, and nothing stands more than a minute's walk from the next thing.
  *
  * Drawn as a map: x east, z north, metres from the map's centre, the map ±320 m; headings a
  * compass's (kernel/terrain/region.ts `fromMap`).
@@ -558,8 +557,9 @@ const region: RegionScript = {
     { kind: 'oak', at: [86, -110], scale: 0.9 },
   ],
   plots: [...town, ...farm, ...wilds],
-  // The mouth faces down the slope to the north road's end.
-  cave: { at: CAVE, facing: 225, target: { level: 'showcase', entry: 'exit' } },
+  // The mouth faces down the slope to the north road's end. Its tunnel ends in rock until the
+  // region's first dungeon is built (the test halls behind it were scrapped, owner, 2026-10-24).
+  cave: { at: CAVE, facing: 225 },
   // Split rails the kernel builds (owner, 2026-10-23): Tobin's paddock and fields, the
   // stables' paddock at the west gate, the temple's garden.
   fences: [

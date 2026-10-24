@@ -195,10 +195,10 @@ function fitReport(): Fit {
 test('every screen fits the view’s box inside the safe areas, its title at the head, its close at the foot', async ({
   page,
 }) => {
-  test.setTimeout(150_000);
-  await page.goto('dev/?dev&lite&level=showcase&seed=11');
+  test.setTimeout(240_000);
+  await page.goto('dev/?dev&lite&level=gullhaven&seed=11');
   await page.waitForFunction(() => (window as unknown as W).ftb?.dev?.ready === true, null, {
-    timeout: 90_000,
+    timeout: 150_000,
   });
   await page.addStyleTag({
     content:

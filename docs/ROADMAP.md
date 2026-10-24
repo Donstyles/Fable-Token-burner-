@@ -130,6 +130,7 @@ rest as recommended below. Meshy batches still go to the owner one by one.
 - `dev-outdoor` is new: a small authored map with two houses, a door, a villager, a pack of three skeletons, and a portal to `dev-showcase`. It keeps the outdoor runtime and talk under test during the refactor.
 - The showcase becomes `dev-showcase`; its portal (`levels/showcase/level.ts:19`) now points at `dev-outdoor`. Its 4.68 MB GLB is exempt from the budgets.
 - Both are deleted when the start region and the den land (CLAUDE.md), and their tests move with them.
+- 2026-10-24: the owner scrapped the showcase outright ("Scrap the test room dungeon completely"). It is deleted, Gullhaven's cave has no portal, and its tests run in Gullhaven; the den will be the first dungeon.
 
 **The new start:** an authored coastal region on the 640 m grid, with:
 
@@ -178,7 +179,7 @@ Calendar figures assume about 6 working days a week, at most two lanes of agents
 1. Open the app: the title screen appears.
 2. New Game, then create four: you arrive in `dev-outdoor`.
 3. Talk to the villager, then kill the three skeletons.
-4. Go through the portal to `dev-showcase`, then come back.
+4. Go through a portal and come back (the den's, now that the showcase is scrapped).
 5. Save to slot 2, kill the app, reopen it and load slot 2: same spot, same hit points.
 6. Set the music volume: after the next deploy it is still set.
 7. Send the self-test screenshot.
@@ -223,7 +224,7 @@ Calendar figures assume about 6 working days a week, at most two lanes of agents
 - **The quest:** a three-step quest from the town hall, its reward, and the end screen with a score. **M**
 - **MM6's wipe rule:** the party wakes a week later at the start town's temple, without its carried gold; banked gold is kept. Down and dead faces on the band. **S–M**
 - **Content validator v0.** **M**
-- **Start-region performance:** the budgets enforced in `level:build`. `dev-showcase` is deleted. **M–L**
+- **Start-region performance:** the budgets enforced in `level:build`. `dev-showcase` is deleted (done 2026-10-24). **M–L**
 
 **Exit test** (about week 9–11; the loop is complete here):
 

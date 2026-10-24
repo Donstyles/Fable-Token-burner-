@@ -92,9 +92,9 @@ export function testCharacters(): Character[] {
   return [must(knightInput()), must(archerInput()), must(clericInput()), must(sorcererInput())];
 }
 
-export const TEST_LEVEL: LevelPosition = { id: 'showcase', x: 1, y: 2, z: 3, yawDeg: 90 };
+export const TEST_LEVEL: LevelPosition = { id: 'gullhaven', x: 1, y: 2, z: 3, yawDeg: 90 };
 
-/** A new game with the four test characters, outfitted and at the showcase spawn. */
+/** A new game with the four test characters, outfitted and at a spot in Gullhaven. */
 export function freshState(): GameState {
   const r = newGame(testCharacters(), { seed: 7, level: TEST_LEVEL });
   if (!r.ok) throw new Error(`fixture: ${r.reason}`);
