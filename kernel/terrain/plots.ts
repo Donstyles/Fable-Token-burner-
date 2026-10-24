@@ -22,6 +22,8 @@ export interface PropPlacement {
   z: number;
   yaw: number;
   scale: number;
+  /** A building's name: its named place, and which house it is (src/game/content.ts). */
+  name?: string;
 }
 
 /** A rectangle of ground to level: centre, half sizes along its own axes, and its yaw. */
@@ -97,7 +99,8 @@ export function layoutPlots(
     const rise = p.rise ?? 0;
     const y = groundAt(x, z) + rise;
     const base = m.base ?? 0;
-    props.push({ model: p.model, x, y: y - base, z, yaw, scale: 1 });
+    const name = p.light ? undefined : (p.name ?? p.model.replace('building-', ''));
+    props.push({ model: p.model, x, y: y - base, z, yaw, scale: 1, ...(name ? { name } : {}) });
     const [w, full, d] = m.size;
     const h = full - base;
     const cx = m.min[0] + w / 2;
@@ -114,7 +117,7 @@ export function layoutPlots(
       const across = PROPS[p.model]?.door?.x ?? cx;
       const out = m.min[2] + d + 2.5;
       points.push({
-        name: p.name ?? p.model.replace('building-', ''),
+        name: name!,
         position: [x + across * cos - out * sin, y, z + across * sin + out * cos],
         kind: 'poi',
       });

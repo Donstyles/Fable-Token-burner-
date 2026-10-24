@@ -2523,7 +2523,10 @@ map sheet is drawn the way the minimap is.
   off roads, pads, squares, the cave and the water.
 - **Plots**: each building or prop at a point, facing the point its door faces,
   on a dead-level pad, sunk by its wall base (`kernel/terrain/plots.ts`); a named
-  point on the apron before each door.
+  point on the apron before each door. A building carries its name (its model's without
+  `building-` unless the plot gives one) into the level and onto its copy at runtime, and the
+  houses' services go by it (`src/game/content.ts`): one townhouse is the training hall, its
+  twins along the street are only houses.
 - **The cave**: its threshold and the heading it faces, down the slope; the floor is
   dug in, the ground round the mouth drawn again finer with an apron and a brow, the
   rock face, the dark tunnel and Meshy's rocks about it, and the portal at its back

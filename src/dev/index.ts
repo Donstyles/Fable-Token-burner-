@@ -893,9 +893,11 @@ export async function startDev(app: App): Promise<DevHandle> {
     // into the copy's own frame to be tested against the door.
     if (mesh.name.startsWith('props:')) {
       const model = mesh.name.split(':')[1] ?? '';
-      const house = VILLAGE_HOUSES[model];
-      const point = pick?.pickedPoint;
       const copy = pick?.thinInstanceIndex ?? -1;
+      // Which house this copy is: its plot's name (src/world/level.ts keeps them by copy).
+      const names = (mesh.metadata as { names?: string[] } | null)?.names;
+      const house = VILLAGE_HOUSES[names?.[copy] ?? model.replace('building-', '')];
+      const point = pick?.pickedPoint;
       const matrices = copy >= 0 ? mesh.thinInstanceGetWorldMatrices() : [];
       const door =
         house !== undefined &&
@@ -913,7 +915,8 @@ export async function startDev(app: App): Promise<DevHandle> {
         screens.openService(house.kind, house.house);
         return;
       }
-      status.say(house && door ? `${propLabel(model)} (come closer)` : propLabel(model));
+      const label = propLabel(model, house?.house.name);
+      status.say(house && door ? `${label} (come closer)` : label);
     }
   };
 

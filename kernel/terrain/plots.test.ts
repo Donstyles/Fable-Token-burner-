@@ -72,3 +72,18 @@ describe('a plot carries its model’s chimneys', () => {
     }
   });
 });
+
+describe('a building carries its name', () => {
+  it('names a house after its model unless its plot names it; small things go unnamed', () => {
+    const { props, points } = layoutPlots(
+      [
+        { model: 'building-inn', at: [0, 0], face: [0, 10] },
+        { model: 'building-cottage-03', at: [20, 0], face: [20, 10], name: 'training' },
+        { model: 'prop-well', at: [10, 10], face: [10, 0], light: true },
+      ],
+      flat,
+    );
+    expect(props.map((p) => p.name)).toEqual(['inn', 'training', undefined]);
+    expect(points.map((p) => p.name)).toEqual(['inn', 'training']);
+  });
+});

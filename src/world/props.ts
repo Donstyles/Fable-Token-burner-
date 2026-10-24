@@ -193,8 +193,9 @@ export function pickModel(ids: readonly string[], x: number, z: number): string 
   return ids[Math.floor((h - Math.floor(h)) * ids.length)]!;
 }
 
-/** What the status line calls a tapped model. */
-export function propLabel(id: string): string {
+/** What the status line calls a tapped model; a building by its house when it is one. */
+export function propLabel(id: string, house?: string): string {
+  if (house) return house;
   const named: Record<string, string> = {
     'building-inn': 'The Inn',
     'building-store': "The Trader's Store",
@@ -203,7 +204,6 @@ export function propLabel(id: string): string {
     'building-stables': 'The Stables',
     'building-barn': 'The Barn',
     'building-farmhouse': 'The Farmhouse',
-    'building-cottage-03': 'The Training Hall',
     'prop-well': 'The Village Well',
     'prop-shrine': 'A Wayside Shrine',
     'prop-cart': 'A Cart',

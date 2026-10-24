@@ -210,7 +210,7 @@ const region: RegionScript = {
     { model: 'prop-lantern-post', at: [-10, -133.5], face: [-10, -120], light: true },
     // East along the street: cottages, the stables by the yard, the smithy at the end.
     { model: 'building-cottage-01', at: [32, -104], face: [32, -121] },
-    { model: 'building-cottage-03', at: [38, -140], face: [38, -121] },
+    { model: 'building-cottage-03', at: [38, -140], face: [38, -121], name: 'training' },
     { model: 'building-stables', at: [64, -145], face: [64, -124] },
     { model: 'building-smithy', at: [86, -106], face: [86, -124] },
     { model: 'prop-woodpile', at: [96, -114], face: [96, -124], light: true },

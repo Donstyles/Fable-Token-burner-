@@ -95,6 +95,8 @@ export interface LevelSidecar {
   propModels?: string[];
   /** Buildings, rocks and small props as [model, x, y, z, yaw, scale] in kernel space. */
   props?: [number, number, number, number, number, number][];
+  /** Each prop's name by the props' order: a building's, which house it is; '' for the rest. */
+  propNames?: string[];
   spawn: { position: V3; yawDeg: number };
   points: { name: string; position: V3; kind: string }[];
   /** Doors to other levels (DESIGN.md 15.3). */
@@ -466,7 +468,7 @@ export async function loadLevel(
     // Instances per model per region; buildings in one bucket each, never switched off.
     const buckets = new Map<
       string,
-      { model: string; rx: number; rz: number; matrices: Matrix[] }
+      { model: string; rx: number; rz: number; matrices: Matrix[]; names: string[] }
     >();
     const place = (
       model: string,
@@ -476,6 +478,7 @@ export async function loadLevel(
       yaw: number,
       scale: number,
       keep: boolean,
+      name = '',
     ): void => {
       const rx = keep ? -1 : Math.min(regions - 1, Math.floor((kx + half) / regionSize));
       const rz = keep ? -1 : Math.min(regions - 1, Math.floor((kz + half) / regionSize));
@@ -489,9 +492,10 @@ export async function loadLevel(
         Quaternion.RotationAxis(Vector3.Up(), yaw),
         new Vector3(-kx, ky, kz),
       );
-      (
-        buckets.get(key) ?? buckets.set(key, { model, rx, rz, matrices: [] }).get(key)!
-      ).matrices.push(m);
+      const bucket =
+        buckets.get(key) ?? buckets.set(key, { model, rx, rz, matrices: [], names: [] }).get(key)!;
+      bucket.matrices.push(m);
+      bucket.names.push(name);
       // The shade is painted by the very matrix the instance is drawn with.
       shadeInstances.push({ model, matrix: m.m });
     };
@@ -504,14 +508,14 @@ export async function loadLevel(
       addCollider(-kx, kz, { kind: 'cylinder', x: -kx, y: ky, z: kz, r: trunk, h: 4 });
     }
     const propModels = sidecar.propModels ?? [];
-    for (const [mi, kx, ky, kz, yaw, scale] of sidecar.props ?? []) {
+    for (const [k, [mi, kx, ky, kz, yaw, scale]] of (sidecar.props ?? []).entries()) {
       const model = propModels[mi];
       if (!model) throw new Error(`prop model ${mi} is not in propModels`);
       const spec = PROPS[model];
       const measure = CATALOGUE[model];
       if (!spec || !measure) throw new Error(`prop ${model}: not in the catalogue`);
       const keep = spec.kind === 'building';
-      place(model, kx, ky, kz, yaw, scale, keep);
+      place(model, kx, ky, kz, yaw, scale, keep, sidecar.propNames?.[k] ?? '');
       propPlacements.push({ model, position: new Vector3(-kx, ky, kz), yaw, scale });
       if (spec.kind === 'building' || spec.kind === 'prop') {
         addCollider(-kx, kz, {
@@ -587,7 +591,11 @@ export async function loadLevel(
         // thousands of instances.
         const house = PROPS[bucket.model]?.kind === 'building' && suffix === '';
         mesh.isPickable = house;
-        if (house) mesh.thinInstanceEnablePicking = true;
+        if (house) {
+          mesh.thinInstanceEnablePicking = true;
+          // Which house each copy is, by its thin instance's index (src/game/content.ts).
+          mesh.metadata = { names: bucket.names };
+        }
         meshes.push(mesh);
         return mesh;
       };

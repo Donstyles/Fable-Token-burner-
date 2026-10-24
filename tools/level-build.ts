@@ -138,6 +138,8 @@ async function buildRegionLevel(id: string, validate: boolean): Promise<boolean>
       round(p.yaw),
       round(p.scale),
     ]),
+    // Each building's name, by the props' order ('' for the rest).
+    propNames: level.props.map((p) => p.name ?? ''),
     spawn: level.spawn,
     points: level.points,
     lights: level.lights,
