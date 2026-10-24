@@ -23,7 +23,7 @@ import { ROLE } from '../kernel/elements/roles';
 import { bakeVertexLight } from '../kernel/light/bake';
 import { buildNavMesh, checkReachability } from '../kernel/nav/navmesh';
 import { buildLevelGlb } from '../kernel/export/glb';
-import { buildRegion, type RegionScript } from '../kernel/terrain/region';
+import { buildRegion, fromMap, type RegionScript } from '../kernel/terrain/region';
 import { writeMapSheet, writeMiniMap } from './lib/map-sheet';
 import { TREE_KINDS } from '../kernel/terrain/trees';
 import { existsSync } from 'node:fs';
@@ -73,7 +73,8 @@ async function buildRegionLevel(id: string, validate: boolean): Promise<boolean>
   const t0 = performance.now();
   const url = pathToFileURL(resolve('levels', id, 'region.ts')).href;
   const script = ((await import(url)) as { default: RegionScript }).default;
-  const level = buildRegion(script);
+  // Drawn as a map, built in the kernel's frame.
+  const level = buildRegion(fromMap(script));
   const chunkMetres = script.chunkCells * script.cell;
   const t1 = performance.now();
   // Coarse voxels for a region kilometres wide; the climb must cover one cell's rise on the

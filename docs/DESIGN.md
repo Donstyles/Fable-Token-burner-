@@ -2504,7 +2504,14 @@ records them); every outdoor map is written by hand.
 ### 17.1 The region script
 
 A region is `levels/<id>/region.ts`, a `RegionScript` (`kernel/terrain/region.ts`)
-in metres on a 640 m square of 5 m cells, x east and z north:
+in metres on a 640 m square of 5 m cells, drawn as a map: x east, z north, headings a
+compass's (2026-10-24). The kernel's own frame is glTF's, right-handed, so with z north its x
+runs west; `fromMap` turns a script over into it as level:build reads it, and the runtime's
+handedness mirror turns it back, so what was drawn east stands on the right of a party facing
+north. Until then every region stood mirrored: Gullhaven's temple, "at the west end" in the
+script and the townsfolk's talk, stood east on the compass, the minimap and the screen, and the
+sun rose over the western hills. The sun now rises at the scene's +x (`daylight.ts`), and the
+map sheet is drawn the way the minimap is.
 
 - **Land**: a base height and a little ripple; hills (round or stretched bumps)
   and ridges (along a line); a coast polygon with the sea outside it, the shore

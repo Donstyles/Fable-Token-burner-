@@ -6,7 +6,7 @@ import { ROLE } from '../elements/roles';
 import { CAVE, caveLocalOf } from './cave';
 import { rectDistance } from './plots';
 import type { PropCatalogue } from './props';
-import { buildRegion, inside, type RegionScript } from './region';
+import { buildRegion, fromMap, inside, type RegionScript } from './region';
 import { GroundPath, smoothPath, type P2 } from './spline';
 
 const CATALOGUE = catalogueJson as unknown as PropCatalogue;
@@ -170,8 +170,31 @@ describe('authored regions', () => {
   });
 });
 
+describe('a script drawn as a map', () => {
+  it('turns east on the map into the kernel’s west; a compass heading needs no turning', () => {
+    const k = fromMap({
+      ...SMALL,
+      flats: [{ at: [30, -10], halfA: 4, halfB: 2, heading: 30, y: 5, soft: 2 }],
+      plots: [{ model: 'building-cottage-01', at: [20, 0], face: [30, 0] }],
+      cave: { at: [40, 50], facing: 90, target: { level: 'showcase', entry: 'exit' } },
+    });
+    expect(k.flats[0]!.at).toEqual([-30, -10]);
+    expect(k.flats[0]!.heading).toBe(30);
+    expect(k.plots[0]!.at).toEqual([-20, 0]);
+    expect(k.plots[0]!.face).toEqual([-30, 0]);
+    // A mouth facing east on the map opens toward the kernel's -x, which the runtime's mirror
+    // shows on the right of a party facing north: east.
+    const h = (k.cave!.facing * Math.PI) / 180;
+    expect(-Math.sin(h)).toBeCloseTo(-1, 6);
+    expect(Math.cos(h)).toBeCloseTo(0, 6);
+    expect(k.start.at[0]).toBe(-SMALL.start.at[0]);
+  });
+});
+
 describe('Gullhaven', () => {
-  const level = buildRegion(gullhaven);
+  // Drawn as a map; built, and checked, in the kernel's frame.
+  const g = fromMap(gullhaven);
+  const level = buildRegion(g);
   const buildings = level.props.filter((p) => p.model.startsWith('building-'));
 
   it('is the 640 m starting region with its town, cave, sea and woods', () => {
@@ -203,7 +226,7 @@ describe('Gullhaven', () => {
           }
         }
       }
-      for (const road of gullhaven.roads) {
+      for (const road of g.roads) {
         const g = new GroundPath(smoothPath(road.path, 10));
         const d = g.nearest(a.x, a.z).distance;
         const m = CATALOGUE[a.model]!;
@@ -215,7 +238,7 @@ describe('Gullhaven', () => {
   });
 
   it('faces every building toward the point its script names', () => {
-    for (const plot of gullhaven.plots.filter((p) => p.model.startsWith('building-'))) {
+    for (const plot of g.plots.filter((p) => p.model.startsWith('building-'))) {
       const placed = level.props.find(
         (p) => p.model === plot.model && p.x === plot.at[0] && p.z === plot.at[1],
       )!;
@@ -229,11 +252,11 @@ describe('Gullhaven', () => {
   it('digs the cave into the goblin hills, facing down to the north road', () => {
     const portal = level.portals.find((p) => p.name === 'cave')!;
     const floor = portal.position[1];
-    const h = (gullhaven.cave!.facing * Math.PI) / 180;
-    const [cx, cz] = gullhaven.cave!.at;
+    const h = (g.cave!.facing * Math.PI) / 180;
+    const [cx, cz] = g.cave!.at;
     const spec = { x: cx, y: floor, z: cz, yaw: Math.atan2(-Math.sin(h), -Math.cos(h)) };
     // The north road ends on the slope before the mouth, not beside it.
-    const road = gullhaven.roads.find((r) => r.name === 'north-road')!.path;
+    const road = g.roads.find((r) => r.name === 'north-road')!.path;
     const end = caveLocalOf(spec, road[road.length - 1]![0], road[road.length - 1]![1]);
     expect(end.z).toBeLessThan(-8);
     expect(Math.abs(end.x)).toBeLessThan(10);
@@ -278,7 +301,7 @@ describe('Gullhaven', () => {
   it('wakes the party on the waterfront, above the sea, facing the town', () => {
     const [x, y, z] = level.spawn.position;
     expect(y).toBeGreaterThan(2);
-    expect(inside(gullhaven.sea!.coast, x, z)).toBe(true);
+    expect(inside(g.sea!.coast, x, z)).toBe(true);
     // Heading north-ish, toward the square.
     expect(Math.abs(level.spawn.yawDeg)).toBeLessThan(30);
   });

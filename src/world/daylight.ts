@@ -53,10 +53,11 @@ export function daylightAt(minuteOfDay: number): DaylightState {
   // 0 at dawn, 1 at dusk; beyond that the sun is under the horizon and keeps going round.
   const t = (minuteOfDay - dawn) / (dusk - dawn);
   const arc = Math.PI * t;
-  // Scene space: north +Z, east -X (the kernel mirrors X). Rises east, noon south, sets west.
+  // Scene space: north +Z, east +X, as a party facing north sees it (the regions are drawn
+  // that way, kernel/terrain/region.ts `fromMap`). Rises east, noon south, sets west.
   const elevation = Math.sin(arc) * 1.15;
   const sunDirection = new Vector3(
-    -Math.cos(arc) * Math.cos(elevation),
+    Math.cos(arc) * Math.cos(elevation),
     Math.sin(elevation),
     -Math.sin(arc) * Math.cos(elevation),
   ).normalize();

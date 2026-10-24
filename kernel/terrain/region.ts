@@ -5,6 +5,12 @@
  * building plots, the cave mouth, townsfolk, monster packs and named places. Nothing comes
  * from a seed but the ground's small ripple. This module turns the script into the same
  * `TerrainLevel` the build tool and the runtime already know.
+ *
+ * A script is drawn as a map: x east, z north, headings a compass's. The kernel's
+ * own frame is glTF's, right-handed, so with z north its x runs west, and the runtime's
+ * handedness mirror puts the kernel's +x on the left of a party facing north. `fromMap` turns a
+ * script into the kernel's frame; until it existed every region stood mirrored, its temple
+ * "at the west end" standing east and its sun rising over the western hills.
  */
 import type { MeshData } from '../core/mesh';
 import type { Vec3 } from '../core/math';
@@ -125,6 +131,37 @@ export interface RegionScript {
   start: { at: P2; face: P2 };
   environment: RegionEnvironment;
   textures: TerrainTextures;
+}
+
+/** A point on the map in the kernel's frame. */
+const kernelPoint = (p: P2): P2 => [-p[0], p[1]];
+
+/**
+ * A region script as drawn on a map (x east, headings clockwise from north, a compass's) in the
+ * kernel's frame (x west): every point's x turned over. Headings carry over as they are: the
+ * kernel turns its +z anticlockwise to (-sin, cos), which in a frame whose x runs west is the
+ * compass's clockwise turn.
+ */
+export function fromMap(s: RegionScript): RegionScript {
+  const pts = (ps: readonly P2[]): P2[] => ps.map(kernelPoint);
+  return {
+    ...s,
+    ...(s.sea ? { sea: { ...s.sea, coast: pts(s.sea.coast) } } : {}),
+    hills: s.hills.map((h) => ({ ...h, at: kernelPoint(h.at) })),
+    ridges: s.ridges.map((r) => ({ ...r, path: pts(r.path) })),
+    flats: s.flats.map((f) => ({ ...f, at: kernelPoint(f.at) })),
+    roads: s.roads.map((r) => ({ ...r, path: pts(r.path) })),
+    squares: s.squares.map((q) => ({ ...q, at: kernelPoint(q.at) })),
+    lanes: s.lanes.map((l) => ({ ...l, from: kernelPoint(l.from), to: kernelPoint(l.to) })),
+    forests: s.forests.map((f) => ({ ...f, area: pts(f.area) })),
+    plots: s.plots.map((p) => ({ ...p, at: kernelPoint(p.at), face: kernelPoint(p.face) })),
+    ...(s.cave ? { cave: { ...s.cave, at: kernelPoint(s.cave.at) } } : {}),
+    ...(s.fences ? { fences: s.fences.map(pts) } : {}),
+    residents: s.residents.map((r) => ({ ...r, at: kernelPoint(r.at), face: kernelPoint(r.face) })),
+    packs: s.packs.map((p) => ({ ...p, at: kernelPoint(p.at) })),
+    points: s.points.map((p) => ({ ...p, at: kernelPoint(p.at) })),
+    start: { at: kernelPoint(s.start.at), face: kernelPoint(s.start.face) },
+  };
 }
 
 /** Inside a polygon (even-odd). */

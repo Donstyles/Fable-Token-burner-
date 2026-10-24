@@ -21,11 +21,11 @@ describe('daylight', () => {
     const dawn = daylightAt(5 * 60 + 40);
     const noon = daylightAt(13 * 60);
     const dusk = daylightAt(20 * 60 + 20);
-    expect(dawn.sunDirection.x).toBeLessThan(-0.8);
+    expect(dawn.sunDirection.x).toBeGreaterThan(0.8);
     expect(dawn.sunDirection.y).toBeGreaterThan(0);
     expect(dawn.sunDirection.y).toBeLessThan(0.3);
     expect(noon.sunDirection.y).toBeGreaterThan(0.85);
-    expect(dusk.sunDirection.x).toBeGreaterThan(0.8);
+    expect(dusk.sunDirection.x).toBeLessThan(-0.8);
     expect(noon.daylight).toBe(1);
     expect(noon.night).toBe(0);
   });

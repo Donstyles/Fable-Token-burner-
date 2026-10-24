@@ -234,7 +234,7 @@ const region: RegionScript = {
   ],
   // The mouth faces down the slope toward the north road's end, its tunnel running up into
   // the hill (2026-10-23: at 225 it ran along the slope, a box seen side-on from the road).
-  cave: { at: CAVE, facing: 140, target: { level: 'showcase', entry: 'exit' } },
+  cave: { at: CAVE, facing: 220, target: { level: 'showcase', entry: 'exit' } },
   // The farm's yard, split rails the kernel builds (owner, 2026-10-23: the fence model never
   // looked like a fence).
   fences: [

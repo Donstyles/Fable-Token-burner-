@@ -27,14 +27,15 @@ export async function writeMapSheet(level: TerrainLevel, out: string): Promise<v
     px[i + 1] = c[1];
     px[i + 2] = c[2];
   };
-  // World (x, z) to the sheet's column and row.
-  const col = (x: number): number => x + half;
+  // Kernel (x, z) to the sheet's column and row: the kernel's x runs west (region.ts
+  // `fromMap`), so the column runs against it and east is to the right, as the region was drawn.
+  const col = (kx: number): number => -kx + half;
   const row = (z: number): number => half - z;
 
   const ground = groundOf(level);
   for (let r = 0; r < size; r++) {
     for (let c = 0; c < size; c++) {
-      const x = c - half + 0.5;
+      const x = -(c - half + 0.5);
       const z = half - r - 0.5;
       const h = hf.sample(x, z);
       let rgb = ground(x, z);
@@ -140,8 +141,8 @@ function groundOf(level: TerrainLevel): (x: number, z: number) => Rgb {
 
 /**
  * The minimap's picture (src/ui/panel.ts; DESIGN.md 16.34): the region from above as MM6's
- * minimap drew it, a pixel a metre, north up and the scene's east (its x, the kernel's -x) to
- * the right, its middle at the origin: the ground as the map sheet's, brighter, each tree a
+ * minimap drew it, a pixel a metre, north up and east (the scene's x, the kernel's -x) to
+ * the right, as the map sheet is, its middle at the origin: the ground as the map sheet's, brighter, each tree a
  * crown lit at its upper left, each building a roof with a dark eave, the props as small
  * blocks; no grid, no marks.
  */

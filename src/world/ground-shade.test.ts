@@ -202,10 +202,10 @@ describe('ground shade', () => {
   });
 
   it('casts three suns, the morning’s to the west, noon’s north, the evening’s to the east', () => {
-    // The scene's east is its -x (the kernel's +x, mirrored): the morning sun stands there.
+    // The scene's east is its +x, where the morning sun stands.
     const [morning, noon, evening] = sunSteps();
-    expect(morning.x).toBeGreaterThan(0.5);
-    expect(evening.x).toBeLessThan(-0.5);
+    expect(morning.x).toBeLessThan(-0.5);
+    expect(evening.x).toBeGreaterThan(0.5);
     expect(Math.abs(noon.x)).toBeLessThan(0.1);
     expect(noon.z).toBeGreaterThan(0.2);
     // A low sun's shadow is long, but never past its cap.
@@ -216,11 +216,11 @@ describe('ground shade', () => {
     ]);
     const data = paintGroundShade(GRID, casters, [{ model: 'house', matrix: placed(0, 0, 0, 0) }]);
     const at = (x: number, z: number) => shadeAt(data, GRID, x, z).suns;
-    // West of the house (+x) in the morning's cast only; east (-x) in the evening's only.
-    expect(at(5, 0)[0]).toBeGreaterThan(0.6);
-    expect(at(5, 0)[2]).toBeLessThan(0.1);
-    expect(at(-5, 0)[2]).toBeGreaterThan(0.6);
-    expect(at(-5, 0)[0]).toBeLessThan(0.1);
+    // West of the house (-x) in the morning's cast only; east (+x) in the evening's only.
+    expect(at(-5, 0)[0]).toBeGreaterThan(0.6);
+    expect(at(-5, 0)[2]).toBeLessThan(0.1);
+    expect(at(5, 0)[2]).toBeGreaterThan(0.6);
+    expect(at(5, 0)[0]).toBeLessThan(0.1);
   });
 
   it('blends the three casts through the day, all the morning’s early, the evening’s late', () => {
