@@ -14,6 +14,7 @@
  *   npm run asset -- run <nnn> [--dry-run] [--force] run an approved batch through Meshy
  *   npm run asset -- review <id>...                 each model's review sheet in pipeline/work/review/
  *   npm run asset -- windows <id>... [--accept]     find a house's window panes; --accept takes the mask
+ *   npm run asset -- trunk <id>...                  measure a tree's trunk for the props table
  *
  * Only `run` talks to Meshy, and only for an approved batch (`--dry-run` prints the commands).
  */
@@ -49,6 +50,7 @@ import { CHARACTER_TEXTURE_SIZE, inspectGlb } from './lib/postprocess';
 import { MESHY_LICENCE, WORK_DIR, runBatch } from './lib/run';
 import { describeGap } from './lib/quality';
 import { reviewSheets } from './lib/review';
+import { TRUNK, findTrunk } from './lib/trunk';
 import { findWindows, writeWindowMask } from './lib/windows';
 import { PROPS } from '../kernel/terrain/props';
 
@@ -481,6 +483,23 @@ async function windows(args: string[]): Promise<void> {
   }
 }
 
+async function trunk(args: string[]): Promise<void> {
+  // `trunk <id>...`: each tree's trunk read off its model (tools/lib/trunk.ts), printed as the
+  // props table's `trunk` and `trunkAt`, which the collider and the navmesh stand on.
+  if (!args.length) fail('trunk <tree id>...');
+  try {
+    for (const id of args) {
+      const spec = PROPS[id];
+      if (spec?.kind !== 'tree') fail(`${id}: not a tree in the props table`);
+      const t = await findTrunk(`assets/props/${id}/${id}.glb`, spec.height);
+      if (!t) fail(`${id}: nothing stands solid between ${TRUNK.band.join(' and ')} m`);
+      console.info(`${id.padEnd(24)} trunk: ${t.radius}, trunkAt: [${t.at.join(', ')}]`);
+    }
+  } catch (e) {
+    fail(`asset trunk: ${e instanceof Error ? e.message : String(e)}`);
+  }
+}
+
 async function run(args: string[]): Promise<void> {
   const number = Number(args[0]);
   if (!Number.isInteger(number)) fail('run <nnn> [--dry-run] [--force]');
@@ -531,6 +550,9 @@ switch (command) {
     break;
   case 'windows':
     await windows(args);
+    break;
+  case 'trunk':
+    await trunk(args);
     break;
   default: {
     const size = (await stat('pipeline/style.md')).size;

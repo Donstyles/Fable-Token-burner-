@@ -2735,7 +2735,34 @@ lights, both belong to the models and are found on the models themselves.
 - **Not yet**: the lit panes cast no light on the ground outside; every lit house is lit every
   night, all night.
 
+### 17.7 Trees stop the party at their drawn trunks (owner, 2026-10-24)
+
+"The very large trees have no collision." They had colliders, but the props table's trunk
+radii (22 to 45 cm) were guesses stood at the model's origin. Meshy's trunks are 40 cm to 2.7 m
+across and stand up to a metre off the origin: the big oak's buttressed trunk is 2.7 m in
+radius, centred a metre out, so the party walked deep into it before a thin post stopped them.
+
+- **Measured, not guessed.** `tools/lib/trunk.ts` draws a model's triangles between 1.0 and
+  1.8 m (a chest's height, over the roots' flare and under the crown) from above on a 5 cm
+  grid, fills every ring, takes off spurs thinner than 30 cm (a root, a twig) and measures the
+  solid piece nearest the model's middle: its middle (`trunkAt`, metres in the model's frame)
+  and the radius of a disc of its area (`trunk`). A fir whose boughs sweep the ground measures
+  as its boughs, as the party meets them. `npm run asset -- trunk <id>...` prints both for the
+  props table; every tree in `kernel/terrain/props.ts` carries the measured values.
+- **The collider** is a 4 m cylinder of that radius at that point, turned and scaled with its
+  copy (the same instance matrix the tree is drawn with), built in the lazy 200 m cells.
+- **The navmesh** gets the same trunk, from the same model the region's hash picks for each
+  tree (`pickModel`, now in the kernel), for every tree within 60 m of a road, so a villager
+  walks round the oak the party bumps into.
+- **Checked** by an end-to-end test that casts rays at a big oak from ten metres round: the
+  party's collider and the drawn trunk meet within a metre on every side the ray hits.
+
 ## 13. Decision log
+
+- 2026-10-24 – Trees collide at their drawn trunks (owner: "The very large trees have no
+  collision"; 17.7). Each tree model's trunk is measured off its own triangles at chest height,
+  its radius and its middle, and the collider and the navmesh stand on those; they had been a
+  guessed 22 to 45 cm post at the model's origin, inside trunks up to 2.7 m across.
 
 - 2026-10-24 – Gullhaven packed close, and the world the right way round (owner: "Then you
   make a new concept for the starting area. Village is extremely spaced out. Wide empty spaces

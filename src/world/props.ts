@@ -16,6 +16,7 @@ import type { Scene } from '@babylonjs/core/scene';
 import { Color3 } from '@babylonjs/core/Maths/math.color';
 import catalogueJson from '../../assets/props/catalogue.json';
 import { PROPS, type PropCatalogue, type PropMeasure } from '../../kernel/terrain/props';
+export { pickModel } from '../../kernel/terrain/props';
 import { applyRetroSampling, type RetroMaterials } from '../render/materials';
 import { bitmapTexture } from '../render/bitmap';
 
@@ -185,12 +186,6 @@ export function doorPoint(id: string): { x: number; y: number; z: number } | nul
   const measure = CATALOGUE[id];
   if (!door || !measure) return null;
   return { x: -door.x, y: 1, z: measure.min[2] + measure.size[2] };
-}
-
-/** Deterministic pick among models for a placement, so a rebuild keeps the same forest. */
-export function pickModel(ids: readonly string[], x: number, z: number): string {
-  const h = Math.abs(Math.sin(x * 12.9898 + z * 78.233) * 43758.5453);
-  return ids[Math.floor((h - Math.floor(h)) * ids.length)]!;
 }
 
 /** What the status line calls a tapped model; a building by its house when it is one. */

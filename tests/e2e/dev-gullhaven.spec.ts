@@ -183,6 +183,71 @@ test.describe('Gullhaven', () => {
     expect(r.wallWithout).toBe(0);
   });
 
+  test('a big oak stops the party at its drawn trunk, not inside it', async ({ page }) => {
+    // Owner, 2026-10-24: "The very large trees have no collision". Their colliders had been a
+    // hand-set 0.45 m at the model's middle, inside a trunk and roots five metres across. Rays
+    // at chest height from all round must meet the collider within a step of the bark.
+    const r = await page.evaluate(async () => {
+      type Vec = { x: number; y: number; z: number; add(v: Vec): Vec; scale(s: number): Vec };
+      type VecClass = (new (x: number, y: number, z: number) => Vec) & {
+        Distance(a: Vec, b: Vec): number;
+      };
+      type Picked = { hit: boolean; distance: number } | null;
+      type Mesh = {
+        name: string;
+        isPickable: boolean;
+        thinInstanceEnablePicking: boolean;
+        thinInstanceGetWorldMatrices(): { m: number[] }[];
+      };
+      type Scene = {
+        meshes: Mesh[];
+        activeCamera: { position: Vec; getForwardRay(): object };
+        pickWithRay(ray: object, predicate: (m: Mesh) => boolean): Picked;
+        getPhysicsEngine(): { raycast(a: Vec, b: Vec): { hasHit: boolean; hitPointWorld: Vec } };
+      };
+      const ftb = (window as unknown as { ftb: { dev: Dev; scene: Scene } }).ftb;
+      const d = ftb.dev;
+      const scene = ftb.scene;
+      const V = scene.activeCamera.position.constructor as VecClass;
+      const Ray = scene.activeCamera.getForwardRay().constructor as new (
+        o: Vec,
+        d: Vec,
+        l: number,
+      ) => object;
+      const oaks = scene.meshes.filter(
+        (m) => m.name.startsWith('props:tree-oak-01:') && !m.name.endsWith(':far'),
+      );
+      const oak = oaks.find((m) => m.thinInstanceGetWorldMatrices().length > 0);
+      if (!oak) return null;
+      const at = oak.thinInstanceGetWorldMatrices()[0]!.m;
+      const c = { x: at[12]!, y: at[13]!, z: at[14]! };
+      // Up above it, so the cell colliders round it are built and the party is in no ray.
+      d.teleport(c.x + 20, c.y + 40, c.z + 20, 0);
+      await new Promise((done) => setTimeout(done, 500));
+      oak.isPickable = true;
+      oak.thinInstanceEnablePicking = true;
+      const engine = scene.getPhysicsEngine();
+      const gaps: number[] = [];
+      const R = 10;
+      for (let k = 0; k < 12; k++) {
+        const a = (k / 12) * Math.PI * 2;
+        const o = new V(c.x + Math.sin(a) * R, c.y + 1.3, c.z + Math.cos(a) * R);
+        const dir = new V(-Math.sin(a), 0, -Math.cos(a));
+        const seen = scene.pickWithRay(new Ray(o, dir, R), (m) => m === oak);
+        const felt = engine.raycast(o, o.add(dir.scale(R)));
+        if (!seen?.hit) continue;
+        // How far past the bark the party would walk; the whole ray if nothing stops it.
+        gaps.push((felt.hasHit ? V.Distance(o, felt.hitPointWorld) : R) - seen.distance);
+      }
+      return gaps;
+    });
+    expect(r).not.toBeNull();
+    expect(r!.length).toBeGreaterThanOrEqual(8);
+    // A disc of the trunk's area sits inside its flared roots and outside its hollows: within a
+    // step of the bark either way, nowhere deep inside it.
+    for (const gap of r!) expect(gap).toBeLessThan(1);
+  });
+
   test('paints shade on the ground under its trees and houses, where they stand', async ({
     page,
   }) => {

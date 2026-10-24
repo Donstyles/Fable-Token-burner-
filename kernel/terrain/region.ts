@@ -31,7 +31,8 @@ import { Heightfield } from './heightfield';
 import { appendMesh, terrainMesh, type ColouredMeshData } from './mesh';
 import { fbm, lerp, smoothstep } from './noise';
 import { layRoad } from './road';
-import { quad } from './solids';
+import { box, nb, quad } from './solids';
+import { PROPS, pickModel, treesOfClass } from './props';
 import { GroundPath, headingDeg, smoothPath, type P2 } from './spline';
 import { forestMeshes, scatterTrees, type TreeKind } from './trees';
 import { laneDistance, layoutPlots, rectDistance, type Lane, type Plot } from './plots';
@@ -561,10 +562,21 @@ export function buildRegion(s: RegionScript): TerrainLevel {
   );
 
   // The navmesh: terrain, footprint boxes, the cave and its rocks' boxes, trunks near the roads
-  // where monsters walk.
-  const navTrunks = forestMeshes(
-    trees.filter((t) => roads.some((r) => r.ground.nearest(t.x, t.z).distance < 60)),
-  ).collider;
+  // where monsters walk, each the trunk of the model the runtime draws there, where it draws it
+  // and as thick (kernel/terrain/props.ts `trunk`), so a monster paths round a big oak's roots
+  // as the party is stopped by them.
+  const navTrunks = nb();
+  for (const t of trees) {
+    if (!roads.some((r) => r.ground.nearest(t.x, t.z).distance < 60)) continue;
+    const spec = PROPS[pickModel(treesOfClass(t.kind), t.x, t.z)];
+    const [ax, az] = spec?.trunkAt ?? [0, 0];
+    const r = (spec?.trunk ?? 0.3) * t.scale;
+    const cos = Math.cos(t.yaw);
+    const sin = Math.sin(t.yaw);
+    const x = t.x + (ax * cos - az * sin) * t.scale;
+    const z = t.z + (ax * sin + az * cos) * t.scale;
+    box(navTrunks, [x - r, t.y - 0.5, z - r], [x + r, t.y + 4, z + r], ROLE.collider);
+  }
   const collider = terrainMesh({ height: hf, splat });
   appendMesh(collider, navTrunks);
   appendMesh(collider, plots.collider);

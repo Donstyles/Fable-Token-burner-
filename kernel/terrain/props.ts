@@ -11,8 +11,15 @@ export interface PropSpec {
   kind: PropKind;
   /** Height the model stands in the world, metres (its tallest point above the ground). */
   height: number;
-  /** Trees: trunk radius at the foot, metres, for the trunk collider. */
+  /**
+   * Trees: the trunk the party meets, for its collider (tools/lib/trunk.ts, read off the
+   * model between a metre and 1.8 m up): the radius of a disc of its area, and its middle in
+   * metres in the model's own frame, as `door`. A big oak's trunk and roots are over five
+   * metres across and stand a metre off the model's middle; a fir's boughs sweep to head
+   * height. (A hand-set 0.2 to 0.45 m at the model's middle had let the party walk into them.)
+   */
   trunk?: number;
+  trunkAt?: readonly [number, number];
   /** Trees: the forest classes this model stands in for (kernel/terrain/trees.ts). */
   classes?: readonly ('pine' | 'broadleaf' | 'spruce' | 'oak' | 'palm')[];
   /**
@@ -51,24 +58,114 @@ export function frontTurnDeg(front: PropSpec['front']): number {
 }
 
 export const PROPS: Record<string, PropSpec> = {
-  'tree-spruce-01': { kind: 'tree', height: 22, trunk: 0.35, classes: ['spruce'] },
-  'tree-spruce-02': { kind: 'tree', height: 26, trunk: 0.38, classes: ['spruce'] },
-  'tree-spruce-03': { kind: 'tree', height: 20, trunk: 0.32, classes: ['spruce'] },
-  'tree-fir-01': { kind: 'tree', height: 24, trunk: 0.4, classes: ['spruce', 'pine'] },
-  'tree-pine-01': { kind: 'tree', height: 20, trunk: 0.36, classes: ['pine'] },
-  'tree-pine-02': { kind: 'tree', height: 9, trunk: 0.22, classes: ['pine'] },
-  'tree-larch-01': { kind: 'tree', height: 18, trunk: 0.3, classes: ['pine'] },
-  'tree-oak-01': { kind: 'tree', height: 16, trunk: 0.45, classes: ['oak'] },
-  'tree-oak-02': { kind: 'tree', height: 14, trunk: 0.42, classes: ['oak'] },
-  'tree-beech-01': { kind: 'tree', height: 18, trunk: 0.36, classes: ['broadleaf'] },
-  'tree-birch-01': { kind: 'tree', height: 14, trunk: 0.22, classes: ['broadleaf'] },
-  'tree-maple-01': { kind: 'tree', height: 13, trunk: 0.3, classes: ['broadleaf'] },
-  'tree-linden-01': { kind: 'tree', height: 15, trunk: 0.34, classes: ['broadleaf'] },
-  'tree-willow-01': { kind: 'tree', height: 10, trunk: 0.4, classes: ['broadleaf'] },
-  'tree-dead-01': { kind: 'tree', height: 9, trunk: 0.3 },
-  'tree-dead-02': { kind: 'tree', height: 7, trunk: 0.28 },
-  'tree-palm-01': { kind: 'tree', height: 9, trunk: 0.25, classes: ['palm'] },
-  'tree-palm-02': { kind: 'tree', height: 7, trunk: 0.22, classes: ['palm'] },
+  'tree-spruce-01': {
+    kind: 'tree',
+    height: 22,
+    trunk: 0.69,
+    trunkAt: [0.05, 0.01],
+    classes: ['spruce'],
+  },
+  'tree-spruce-02': {
+    kind: 'tree',
+    height: 26,
+    trunk: 0.5,
+    trunkAt: [0.11, -0.08],
+    classes: ['spruce'],
+  },
+  'tree-spruce-03': {
+    kind: 'tree',
+    height: 20,
+    trunk: 0.62,
+    trunkAt: [0.02, -0.2],
+    classes: ['spruce'],
+  },
+  'tree-fir-01': {
+    kind: 'tree',
+    height: 24,
+    trunk: 1.74,
+    trunkAt: [0.06, -0.04],
+    classes: ['spruce', 'pine'],
+  },
+  'tree-pine-01': {
+    kind: 'tree',
+    height: 20,
+    trunk: 0.66,
+    trunkAt: [0.02, -0.33],
+    classes: ['pine'],
+  },
+  'tree-pine-02': {
+    kind: 'tree',
+    height: 9,
+    trunk: 0.41,
+    trunkAt: [0.01, 0.05],
+    classes: ['pine'],
+  },
+  'tree-larch-01': {
+    kind: 'tree',
+    height: 18,
+    trunk: 0.51,
+    trunkAt: [0.01, -0.02],
+    classes: ['pine'],
+  },
+  'tree-oak-01': {
+    kind: 'tree',
+    height: 16,
+    trunk: 2.67,
+    trunkAt: [-0.04, 1.04],
+    classes: ['oak'],
+  },
+  'tree-oak-02': { kind: 'tree', height: 14, trunk: 0.72, trunkAt: [0.07, 0.11], classes: ['oak'] },
+  'tree-beech-01': {
+    kind: 'tree',
+    height: 18,
+    trunk: 0.75,
+    trunkAt: [-0.13, -0.14],
+    classes: ['broadleaf'],
+  },
+  'tree-birch-01': {
+    kind: 'tree',
+    height: 14,
+    trunk: 0.4,
+    trunkAt: [0.09, -0.02],
+    classes: ['broadleaf'],
+  },
+  'tree-maple-01': {
+    kind: 'tree',
+    height: 13,
+    trunk: 0.85,
+    trunkAt: [0.19, 0.36],
+    classes: ['broadleaf'],
+  },
+  'tree-linden-01': {
+    kind: 'tree',
+    height: 15,
+    trunk: 0.57,
+    trunkAt: [-0.03, 0.14],
+    classes: ['broadleaf'],
+  },
+  'tree-willow-01': {
+    kind: 'tree',
+    height: 10,
+    trunk: 1.07,
+    trunkAt: [-0.02, 0.13],
+    classes: ['broadleaf'],
+  },
+  'tree-dead-01': { kind: 'tree', height: 9, trunk: 1.03, trunkAt: [0.21, 0.1] },
+  'tree-dead-02': { kind: 'tree', height: 7, trunk: 0.52, trunkAt: [-0.02, 0.04] },
+  'tree-palm-01': {
+    kind: 'tree',
+    height: 9,
+    trunk: 0.51,
+    trunkAt: [0.15, 0.63],
+    classes: ['palm'],
+  },
+  'tree-palm-02': {
+    kind: 'tree',
+    height: 7,
+    trunk: 0.95,
+    trunkAt: [0.04, -0.18],
+    classes: ['palm'],
+  },
   'bush-01': { kind: 'bush', height: 1.4 },
   'bush-02': { kind: 'bush', height: 1.8 },
   'building-inn': {
@@ -186,4 +283,11 @@ export function treesOfClass(cls: NonNullable<PropSpec['classes']>[number]): str
   return Object.entries(PROPS)
     .filter(([, p]) => p.kind === 'tree' && p.classes?.includes(cls))
     .map(([id]) => id);
+}
+
+/** Deterministic pick among models for a placement, so a rebuild keeps the same forest
+ * and the kernel knows which model the runtime draws for each tree. */
+export function pickModel(ids: readonly string[], x: number, z: number): string {
+  const h = Math.abs(Math.sin(x * 12.9898 + z * 78.233) * 43758.5453);
+  return ids[Math.floor((h - Math.floor(h)) * ids.length)]!;
 }

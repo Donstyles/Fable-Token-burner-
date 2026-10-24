@@ -598,6 +598,7 @@ by the hour. Then Gullhaven rebuilt packed (DESIGN 17.2): the square and a
 high street built up house to house, the farm, crossroads, cave, stones,
 camps and ruin a minute apart, woods between; and the regions the right
 way round (DESIGN 17.1), east on the screen's right and the sun rising there.
+Then trees that stop the party at their drawn trunks (DESIGN 17.7).
 
 **Status, night of 2026-10-16 (owner asleep, best judgement):** steps 1 to 6
 are in: the valley (village, road, pass, gorge with eight cascades, cave

@@ -470,6 +470,16 @@ export async function loadLevel(
       string,
       { model: string; rx: number; rz: number; matrices: Matrix[]; names: string[] }
     >();
+    // Kernel space is mirrored on X, so the position flips; the yaw carries over as it is, the
+    // kernel turning +Z to (-sin, cos) where Babylon turns it to (sin, cos), so the two flips
+    // cancel. Negating it too had stood every house facing east or west backwards
+    // (2026-10-23: the farmhouse showed the road its back wall).
+    const instanceMatrix = (kx: number, ky: number, kz: number, yaw: number, scale: number) =>
+      Matrix.Compose(
+        new Vector3(scale, scale, scale),
+        Quaternion.RotationAxis(Vector3.Up(), yaw),
+        new Vector3(-kx, ky, kz),
+      );
     const place = (
       model: string,
       kx: number,
@@ -483,15 +493,7 @@ export async function loadLevel(
       const rx = keep ? -1 : Math.min(regions - 1, Math.floor((kx + half) / regionSize));
       const rz = keep ? -1 : Math.min(regions - 1, Math.floor((kz + half) / regionSize));
       const key = `${model}:${rx}:${rz}`;
-      // Kernel space is mirrored on X, so the position flips; the yaw carries over as it is,
-      // the kernel turning +Z to (-sin, cos) where Babylon turns it to (sin, cos), so the two
-      // flips cancel. Negating it too had stood every house facing east or west backwards
-      // (2026-10-23: the farmhouse showed the road its back wall).
-      const m = Matrix.Compose(
-        new Vector3(scale, scale, scale),
-        Quaternion.RotationAxis(Vector3.Up(), yaw),
-        new Vector3(-kx, ky, kz),
-      );
+      const m = instanceMatrix(kx, ky, kz, yaw, scale);
       const bucket =
         buckets.get(key) ?? buckets.set(key, { model, rx, rz, matrices: [], names: [] }).get(key)!;
       bucket.matrices.push(m);
@@ -504,8 +506,16 @@ export async function loadLevel(
       if (!cls) throw new Error(`tree kind ${kind} is not in TREE_KINDS`);
       const model = pickModel(treesOfClass(cls), kx, kz);
       place(model, kx, ky, kz, yaw, scale, false);
-      const trunk = (PROPS[model]?.trunk ?? 0.3) * scale;
-      addCollider(-kx, kz, { kind: 'cylinder', x: -kx, y: ky, z: kz, r: trunk, h: 4 });
+      // The trunk where the model draws it, turned and scaled with the tree; the loader
+      // mirrors the model's x as it mirrors the kernel's (kernel/terrain/props.ts `trunk`).
+      const spec = PROPS[model];
+      const [ax, az] = spec?.trunkAt ?? [0, 0];
+      const at = Vector3.TransformCoordinates(
+        new Vector3(-ax, 0, az),
+        instanceMatrix(kx, ky, kz, yaw, scale),
+      );
+      const trunk = (spec?.trunk ?? 0.3) * scale;
+      addCollider(at.x, at.z, { kind: 'cylinder', x: at.x, y: ky, z: at.z, r: trunk, h: 4 });
     }
     const propModels = sidecar.propModels ?? [];
     for (const [k, [mi, kx, ky, kz, yaw, scale]] of (sidecar.props ?? []).entries()) {
