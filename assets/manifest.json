@@ -935,7 +935,7 @@
         "assets/rooms/chamber.json"
       ],
       "date": "2026-10-25",
-      "notes": "20 fire(s), 0 magic glow(s), sparks off the biggest, 1 falls marked, 1 sprays marked, 1 ripples marked, 2 shines marked, 3 drapes marked, 2 stars marked, 1 incense marked, 8 glints marked, 3 still marked"
+      "notes": "20 fire(s), 0 magic glow(s), sparks off the biggest, 1 falls marked, 1 sprays marked, 1 ripples marked, 2 shines marked, 3 drapes marked, 2 stars marked, 1 incense marked, 8 glints marked, 3 still marked, 1 fronts marked"
     },
     {
       "id": "room-chamber-still",
@@ -948,7 +948,7 @@
         "assets/rooms/chamber-still.json"
       ],
       "date": "2026-10-25",
-      "notes": "20 fire(s), 0 magic glow(s), sparks off the biggest, 1 falls marked, 1 sprays marked, 1 ripples marked, 3 drapes marked, 2 stars marked, 1 incense marked, 8 glints marked, 5 still marked"
+      "notes": "20 fire(s), 0 magic glow(s), sparks off the biggest, 1 falls marked, 1 sprays marked, 1 ripples marked, 3 drapes marked, 2 stars marked, 1 incense marked, 8 glints marked, 5 still marked, 1 fronts marked"
     },
     {
       "id": "room-guild",
@@ -1039,7 +1039,7 @@
         "assets/rooms/guild-water.json"
       ],
       "date": "2026-10-25",
-      "notes": "6 fire(s), 0 magic glow(s), no sparks, 1 falls marked, 1 sprays marked, 1 ripples marked, 6 glass marked, 1 shines marked"
+      "notes": "6 fire(s), 0 magic glow(s), no sparks, 1 falls marked, 1 sprays marked, 1 ripples marked, 6 glass marked, 1 shines marked, 2 fronts marked"
     },
     {
       "id": "room-home-poor",
