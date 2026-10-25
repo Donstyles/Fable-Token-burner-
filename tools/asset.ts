@@ -15,8 +15,12 @@
  *   npm run asset -- review <id>...                 each model's review sheet in pipeline/work/review/
  *   npm run asset -- windows <id>... [--accept]     find a house's window panes; --accept takes the mask
  *   npm run asset -- trunk <id>...                  measure a tree's trunk for the props table
+ *   npm run asset -- import <id> <model.glb>        take a model the owner made in Meshy's web app
  *
  * Only `run` talks to Meshy, and only for an approved batch (`--dry-run` prints the commands).
+ * `import` takes a GLB the owner downloaded from Meshy's web app, where its free retries are
+ * (owner, 2026-10-25: "Use the free remakes! Don't burn more meshy credits for those!"; the
+ * API has none), through the same packing and gap screen as a batch's model.
  */
 import { access, copyFile, mkdir, readdir, readFile, stat } from 'node:fs/promises';
 import sharp from 'sharp';
@@ -46,13 +50,14 @@ import {
 } from './lib/manifest';
 import { postProcessIcon } from './lib/icon';
 import { keyPicture } from './lib/key';
-import { CHARACTER_TEXTURE_SIZE, inspectGlb } from './lib/postprocess';
+import { CHARACTER_TEXTURE_SIZE, inspectGlb, postProcessProp } from './lib/postprocess';
+import { checkModel } from './lib/quality';
 import { MESHY_LICENCE, WORK_DIR, runBatch } from './lib/run';
 import { describeGap } from './lib/quality';
 import { reviewSheets } from './lib/review';
 import { TRUNK, findTrunk } from './lib/trunk';
 import { findWindows, writeWindowMask } from './lib/windows';
-import { PROPS } from '../kernel/terrain/props';
+import { PROPS, frontTurnDeg } from '../kernel/terrain/props';
 
 /** Where accepted spell icons live; the spellbook looks them up by spell id. */
 const SPELL_ICON_DIR = 'assets/icons/spells';
@@ -526,6 +531,55 @@ async function run(args: string[]): Promise<void> {
   }
 }
 
+async function importModel(args: string[]): Promise<void> {
+  // `import <id> <model.glb>`: a prop the owner made in Meshy's web app (a free retry of one of
+  // our models), packed as `run` packs a batch's: a house's texture at 1024 pixels, the rest at
+  // 512, JPEG, its front turned to +Z; then the gap screen and the manifest. Its review sheet
+  // is drawn and must be looked at before it goes into the game.
+  const [id, from] = args;
+  if (!id || !from || !isValidId(id)) fail('import <id> <model.glb>');
+  const spec = PROPS[id];
+  if (!spec) fail(`${id}: not in the props table (kernel/terrain/props.ts)`);
+  try {
+    await access(from);
+    const output = `assets/props/${id}/${id}.glb`;
+    const report = await postProcessProp(
+      from,
+      output,
+      id.startsWith('building-') ? 1024 : 512,
+      'jpeg',
+      frontTurnDeg(spec.front),
+    );
+    const quality = await checkModel(output, spec.height);
+    const worst = quality.gaps[0];
+    const verdict = quality.problems.length
+      ? `FAILS (${quality.problems.join('; ')})`
+      : quality.suspect && worst
+        ? `suspect, a gap of ${describeGap(worst)}`
+        : 'no gap found';
+    const manifest = await readManifest();
+    const before = manifest.assets.find((a) => a.id === id);
+    upsertAsset(manifest, {
+      ...(before ?? {}),
+      id,
+      kind: before?.kind ?? 'prop',
+      source: `Meshy image-to-3D, made by the owner in Meshy's web app (a free retry), imported from ${from}`,
+      licence: MESHY_LICENCE,
+      files: [output],
+      date: new Date().toISOString().slice(0, 10),
+      notes: `${report.triangles} triangles; quality: ${verdict}`,
+    });
+    await writeManifest(manifest);
+    console.info(
+      `${output}: ${report.triangles} triangles, ${(report.bytes / 1024).toFixed(0)} KiB`,
+    );
+    console.info(`quality: ${verdict}`);
+    for (const sheet of await reviewSheets([id], {})) console.info(`review it: ${sheet.file}`);
+  } catch (e) {
+    fail(`asset import: ${e instanceof Error ? e.message : String(e)}`);
+  }
+}
+
 const [command, ...args] = process.argv.slice(2);
 switch (command) {
   case 'manifest':
@@ -557,6 +611,9 @@ switch (command) {
     break;
   case 'trunk':
     await trunk(args);
+    break;
+  case 'import':
+    await importModel(args);
     break;
   default: {
     const size = (await stat('pipeline/style.md')).size;

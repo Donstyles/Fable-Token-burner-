@@ -18,6 +18,9 @@ anything. Both are the source of truth; update them when a decision changes.
   starts as a low-poly text-to-image concept (`--ai-model nano-banana-2-lite`,
   the cheapest), then image-to-3D; the image is reviewed first. The tooling
   refuses text-to-3D: no batch step, no Meshy client call; keep it that way.
+- A model that needs remaking is remade with Meshy's free retries in the owner's web app,
+  not with credits (owner, 2026-10-25: "Use the free remakes! Don't burn more meshy credits
+  for those!"); the owner downloads it and `npm run asset -- import` takes it in.
 - Every generated model is checked before it goes into the game:
   `npm run asset -- review <id>...` draws its review sheet (its eight sides
   as the game draws them, then the inside of every face in magenta) with the
@@ -48,7 +51,7 @@ anything. Both are the source of truth; update them when a decision changes.
   firelight, into `assets/rooms/`; what moves that is not fire (clouds, vapour) is marked by
   hand in `pipeline/rooms.json`; the dev build shows a room alone with `?room=<id>`
 - `npm run asset -- <command>` – asset pipeline: `manifest`, `validate`,
-  `card <kind> <id> "<subject>"`, `batch new <name> <id>:<height-m>[:civilian]|props|creatures|icons|show|approve|approve-images`, `inbox <id> <picture>` (keys the owner's fuchsia-ground concept picture into `pipeline/inbox/<id>.png`), `review <id>...` (each model's review sheet in `pipeline/work/review/`), `windows <id>... [--accept]` (finds a house's window panes on its skin and draws them lit on the sheet's night row; `--accept` puts the looked-at mask beside the model), `trunk <id>...` (measures a tree's trunk off its model for the props table's collider), `run <nnn> [--dry-run] [--force]` (runs only a batch the owner approved by number; props and creatures stop after their concept pictures until `approve-images`)
+  `card <kind> <id> "<subject>"`, `batch new <name> <id>:<height-m>[:civilian]|props|creatures|icons|show|approve|approve-images`, `inbox <id> <picture>` (keys the owner's fuchsia-ground concept picture into `pipeline/inbox/<id>.png`), `review <id>...` (each model's review sheet in `pipeline/work/review/`), `windows <id>... [--accept]` (finds a house's window panes on its skin and draws them lit on the sheet's night row; `--accept` puts the looked-at mask beside the model), `trunk <id>...` (measures a tree's trunk off its model for the props table's collider), `run <nnn> [--dry-run] [--force]` (runs only a batch the owner approved by number; props and creatures stop after their concept pictures until `approve-images`), `import <id> <model.glb>` (a model the owner made in Meshy's web app, packed and gap-checked as a batch's)
 
 ## Layout
 

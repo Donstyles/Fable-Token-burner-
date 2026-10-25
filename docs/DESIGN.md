@@ -2923,6 +2923,12 @@ cave's "Enter?" picture once a dungeon lies behind it.
 
 ## 13. Decision log
 
+- 2026-10-25 – Remakes are free (owner: "Use the free remakes! Don't burn more meshy credits
+  for those!"). Meshy's API has no free retry; its web app gives a few per generation. A model
+  that needs remaking (the half-timbered cottage, the stone townhouse) is retried there by
+  the owner and taken in with `npm run asset -- import <id> <model.glb>`, which packs it and
+  runs the gap screen as a batch's model is, and draws its review sheet.
+
 - 2026-10-25 – A shop's sell, identify and repair open the member's bag on its leather, as
   MM6's, a tap naming the price and a second doing it (owner: "it should open the leather
   inventory of the selected character and Not just a List"; 16.34).
