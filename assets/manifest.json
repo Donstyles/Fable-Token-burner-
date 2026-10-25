@@ -925,6 +925,28 @@
       "notes": "batch 014; 534 triangles"
     },
     {
+      "id": "room-guild",
+      "kind": "image",
+      "source": "The owner's ChatGPT image pipeline/inbox/rooms/guild.png, rows 39 to 749 cut to the view box at 640 by 296, its flames, coals and firelight found on its paint (tools/room.ts)",
+      "licence": "The owner's ChatGPT image (OpenAI's terms: the output is the user's): owner holds full rights",
+      "files": [
+        "assets/rooms/guild.png",
+        "assets/rooms/guild.lights.png",
+        "assets/rooms/guild.json"
+      ],
+      "date": "2026-10-25",
+      "notes": "16 fire(s), 1 magic glow(s), sparks off the biggest"
+    },
+    {
+      "id": "room-inn",
+      "kind": "image",
+      "source": "The owner's ChatGPT image pipeline/inbox/rooms/inn.png, rows 43 to 713 cut to the view box at 640 by 296, its flames, coals and firelight found on its paint (tools/room.ts)",
+      "licence": "The owner's ChatGPT image (OpenAI's terms: the output is the user's): owner holds full rights",
+      "files": ["assets/rooms/inn.png", "assets/rooms/inn.lights.png", "assets/rooms/inn.json"],
+      "date": "2026-10-25",
+      "notes": "11 fire(s), 0 magic glow(s), sparks off the biggest"
+    },
+    {
       "id": "room-smithy",
       "kind": "image",
       "source": "The owner's ChatGPT image pipeline/inbox/rooms/smithy.png, rows 18 to 688 cut to the view box at 640 by 296, its flames, coals and firelight found on its paint (tools/room.ts)",
@@ -935,7 +957,46 @@
         "assets/rooms/smithy.json"
       ],
       "date": "2026-10-25",
-      "notes": "2 fire(s), sparks off the biggest"
+      "notes": "3 fire(s), 0 magic glow(s), sparks off the biggest"
+    },
+    {
+      "id": "room-store",
+      "kind": "image",
+      "source": "The owner's ChatGPT image pipeline/inbox/rooms/store.png, rows 66 to 736 cut to the view box at 640 by 296, its flames, coals and firelight found on its paint (tools/room.ts)",
+      "licence": "The owner's ChatGPT image (OpenAI's terms: the output is the user's): owner holds full rights",
+      "files": [
+        "assets/rooms/store.png",
+        "assets/rooms/store.lights.png",
+        "assets/rooms/store.json"
+      ],
+      "date": "2026-10-25",
+      "notes": "3 fire(s), 0 magic glow(s), sparks off the biggest"
+    },
+    {
+      "id": "room-temple",
+      "kind": "image",
+      "source": "The owner's ChatGPT image pipeline/inbox/rooms/temple.png, rows 208 to 878 cut to the view box at 640 by 296, its flames, coals and firelight found on its paint (tools/room.ts)",
+      "licence": "The owner's ChatGPT image (OpenAI's terms: the output is the user's): owner holds full rights",
+      "files": [
+        "assets/rooms/temple.png",
+        "assets/rooms/temple.lights.png",
+        "assets/rooms/temple.json"
+      ],
+      "date": "2026-10-25",
+      "notes": "4 fire(s), 0 magic glow(s), sparks off the biggest"
+    },
+    {
+      "id": "room-training",
+      "kind": "image",
+      "source": "The owner's ChatGPT image pipeline/inbox/rooms/training.png, rows 0 to 710 cut to the view box at 640 by 296, its flames, coals and firelight found on its paint (tools/room.ts)",
+      "licence": "The owner's ChatGPT image (OpenAI's terms: the output is the user's): owner holds full rights",
+      "files": [
+        "assets/rooms/training.png",
+        "assets/rooms/training.lights.png",
+        "assets/rooms/training.json"
+      ],
+      "date": "2026-10-25",
+      "notes": "6 fire(s), 0 magic glow(s), sparks off the biggest"
     },
     {
       "id": "skeleton-warrior",
