@@ -2948,11 +2948,40 @@ Rocks, and very colourful dark magic Sparks"). Each is made ahead of its house
   rule would take for a lamp, keeps its embers and sparks;
 - `top`, the band's first row by hand where the fires and the marks would put it wrong.
 
+**The bedchamber** (owner, 2026-10-25: "Your magnum opus. You can take all night with this one.
+Think you can manage light reflections on the marble floor in this one? Give me one with and
+without"): the owner's picture of a purple bedchamber, made ahead of its house as `chamber`
+(its floor alive) and `chamber-still` (the same, its floor as painted), the second cut from the
+first's picture (`from`). Its band starts at row 130, keeping the statue's head and the
+reflecting floor. Beside its fireplace, its many candles, its waterfall with spray and its
+petal pool's ripples, its glints on the gold:
+
+- **the floor's reflections** (`shines`): a flame's reflection on polished marble is paint
+  brighter than the stone a few pixels either side of it, or bright outright. Each flickers
+  with the flame it mirrors (the fires above it, the nearest across weighing most), sways as
+  that flame sways, the licks running down it as a reflection is upside down, a warm glow
+  breathing round it and specks of light glinting along it; the bed's magenta glow on the
+  floor, not warm, stays as it is;
+- **the canopy's drapes** (`drapes`) stir in slow gusts, still where they hang from, swaying
+  more toward their hems;
+- **stars** (`stars`) twinkle in the night sky through the arches, on its dark paint only;
+- **incense** (`incense`) rises thin from the gold bowl on its stand, curling and spreading;
+- **still** areas (`still`), the gold jug and the lion-head knockers, whose polish mirrors the
+  fire brightly enough to read as flame, and the plain room's floor: no flame is read in them
+  and nothing moves them.
+
+The room view keeps up to 32 small fires flickering each on its own, for rooms of many
+candles.
+
 **Next**: the keeper's portrait and "Converse with" on the board; the homes behind the
 town's houses' doors; the stock on its shelf for Buy once items have pictures; the cave's
 "Enter?" picture once a dungeon lies behind it.
 
 ## 13. Decision log
+
+- 2026-10-25 – The bedchamber, the owner's "magnum opus" (17.8), with and without the floor's
+  reflections alive: each reflection of a flame flickers and sways with the flame it mirrors;
+  the canopy's drapes stir, stars twinkle, incense rises.
 
 - 2026-10-25 – The owner's fire, water, earth, spirit and dark guilds and three homes (17.8):
   a pillar of fire, falling water with spray and ripples, floating rocks, a turning ring of
