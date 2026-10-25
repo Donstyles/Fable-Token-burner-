@@ -558,12 +558,27 @@ export interface RoomMarks {
   stars?: Box[];
   /** Smoke rising thin from the foot of the box (a censer, a bowl of incense). */
   incense?: Box[];
+  /**
+   * Things standing before what moves (a sofa before the hearth, a mage before his waterfall):
+   * nothing moving is drawn over them, where their paint is not water's blue.
+   */
+  fronts?: Box[];
 }
 
 /** The kinds of mark that are circles, not boxes. */
 const CIRCLES = new Set(['rings', 'discs']);
 /** The kinds the band need not hold: a floor runs off the picture's foot, a beam off its head. */
-const LOOSE = new Set(['from', 'top', 'shines', 'still', 'glass', 'beams', 'hearths', 'stars']);
+const LOOSE = new Set([
+  'from',
+  'top',
+  'shines',
+  'still',
+  'glass',
+  'beams',
+  'hearths',
+  'stars',
+  'fronts',
+]);
 
 export interface CutRoom {
   /** The picture at ROOM_SIZE, RGB bytes. */

@@ -48,6 +48,7 @@ interface RoomData {
   drapes?: Quad[];
   stars?: Quad[];
   incense?: Quad[];
+  fronts?: Quad[];
 }
 
 type Quad = [number, number, number, number];
@@ -84,6 +85,7 @@ const COUNTS: Record<string, string> = {
   drapes: 'drapeCount',
   stars: 'starCount',
   incense: 'incenseCount',
+  fronts: 'frontCount',
 };
 
 // Babylon's shader processor breaks the source at every semicolon, those in comments too:
@@ -143,6 +145,8 @@ uniform vec4 stars[2];
 uniform float starCount;
 uniform vec4 incense[2];
 uniform float incenseCount;
+uniform vec4 fronts[4];   // things standing before what moves: nothing moving is drawn over them
+uniform float frontCount;
 
 float hash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
 float noise(vec2 p) {
@@ -165,6 +169,21 @@ vec3 pic(vec2 p) { return texture2D(picture, uvAt(p)).rgb; }
 float luma(vec3 c) { return dot(c, vec3(0.3, 0.55, 0.15)); }
 vec2 rot(vec2 v, float a) { float c = cos(a), s = sin(a); return vec2(c * v.x - s * v.y, s * v.x + c * v.y); }
 bool inside(vec2 p, vec4 b) { return p.x >= b.x && p.x <= b.z && p.y >= b.y && p.y <= b.w; }
+// How much p is on something standing before what moves (a sofa before the hearth, a mage
+// before his waterfall): inside a front's box, softly at its edges, where the paint is not
+// water's blue, so the water between a crown's points still falls.
+float frontAt(vec2 p) {
+  float f = 0.0;
+  for (int i = 0; i < 4; i++) {
+    if (float(i) >= frontCount) break;
+    vec4 b = fronts[i];
+    float e = min(min(p.x - b.x, b.z - p.x), min(p.y - b.y, b.w - p.y));
+    if (e < -1.0) continue;
+    vec3 here = texture2D(picture, vec2(p.x / res.x, 1.0 - p.y / res.y)).rgb;
+    f = max(f, smoothstep(-1.0, 1.5, e) * (1.0 - smoothstep(0.02, 0.09, here.b - here.r)));
+  }
+  return f;
+}
 // Where a box of the picture is and how far in, softly: 0 outside, 1 well inside.
 float within(vec2 uv, vec2 edge) {
   return smoothstep(0.0, edge.x, uv.x) * smoothstep(1.0, 1.0 - edge.x, uv.x)
@@ -176,8 +195,11 @@ vec3 flow(vec2 p, vec2 along, float period, float seed, vec4 b) {
   float run = t / period + seed;
   float p1 = fract(run);
   float p2 = fract(run + 0.5);
-  vec3 a1 = pic(clamp(p + along * p1, b.xy, b.zw));
-  vec3 a2 = pic(clamp(p + along * p2, b.xy, b.zw));
+  vec2 q1 = clamp(p + along * p1, b.xy, b.zw);
+  vec2 q2 = clamp(p + along * p2, b.xy, b.zw);
+  // Nothing standing before the flow is drawn along with it.
+  vec3 a1 = frontAt(q1) > 0.5 ? pic(p) : pic(q1);
+  vec3 a2 = frontAt(q2) > 0.5 ? pic(p) : pic(q2);
   return mix(a1, a2, abs(2.0 * p1 - 1.0));
 }
 // How much the paint at p is a flame's reflection on a polished floor: brighter than the
@@ -217,8 +239,14 @@ float pillarAt(vec2 p, float flame) {
   }
   return w;
 }
-// The paint at p, moved where a marked thing moves it.
+// The paint at p, moved where a marked thing moves it, but on what stands before it.
+vec3 moved(vec2 p, float flame);
 vec3 paint(vec2 p, float flame) {
+  float fr = frontAt(p);
+  if (fr > 0.99) return pic(p);
+  return mix(moved(p, flame), pic(p), fr);
+}
+vec3 moved(vec2 p, float flame) {
   // A disc turning on the wall: its paint turned round its middle.
   if (disc.x >= 0.0) {
     vec2 d = p - disc.xy;
@@ -346,18 +374,22 @@ vec3 paint(vec2 p, float flame) {
     float sway = sin(uv.y * 9.0 - t * 2.0 + fi) * (b.z - b.x) * 0.03 * w;
     return flow(vec2(p.x + sway, p.y), vec2(0.0, (b.w - b.y) * 0.15 * w), 3.2, fi * 0.37, b);
   }
-  // Hanging cloth stirs in a draught: still where it hangs from, swaying more toward its hem,
-  // in slow gusts.
+  // Hanging cloth stirs in a draught: it swings as a whole from where it hangs, more and a
+  // little later toward its hem, its middle billowing more than its edges, in slow gusts. No
+  // ripple runs along it: a wave climbing the cloth reads as hot air rising (owner,
+  // 2026-10-25: "Looks like hot air rising").
   for (int i = 0; i < 4; i++) {
     if (float(i) >= drapeCount) break;
     vec4 b = drapes[i];
     if (!inside(p, b)) continue;
     vec2 uv = (p - b.xy) / (b.zw - b.xy);
-    float w = within(uv, vec2(0.18, 0.06)) * smoothstep(0.0, 0.6, uv.y);
+    float w = within(uv, vec2(0.2, 0.04)) * pow(uv.y, 1.4);
     float fi = float(i);
-    float gust = 0.55 + 0.45 * sin(t * 0.37 + fi * 1.7);
-    float dx = (sin(p.y / 11.0 - t * 1.1 + fi * 2.3) * 0.7 + sin(p.y / 5.0 - t * 1.9 + fi) * 0.3) * 1.7 * gust * w;
-    return pic(vec2(p.x + dx, p.y));
+    float gust = 0.6 + 0.4 * sin(t * 0.23 + fi * 1.7);
+    float swing = sin(t * 0.55 + fi * 2.1 - uv.y * 0.6) + 0.35 * sin(t * 0.9 + fi * 0.7 - uv.y * 0.4);
+    float billow = 0.7 + 0.3 * sin(uv.x * 3.1416);
+    float dx = swing * 1.8 * gust * billow * w;
+    return pic(vec2(p.x - dx, p.y));
   }
   return pic(p);
 }
@@ -496,8 +528,11 @@ void main() {
     float speck = smoothstep(0.93, 1.0, noise(vec2(px.x * 1.7 + floor(t * 3.0) * 13.0, px.y * 0.9)));
     c += vec3(1.0, 0.9, 0.75) * speck * max(streak, halo) * warm * w * (0.5 + 0.5 * k) * 0.6;
   }
-  // Sparks off the coals, a few at a time, rising and dying.
-  if (sparks.x >= 0.0) {
+  // Sparks off the coals, a few at a time, rising and dying, behind what stands before them.
+  float fr = frontAt(px);
+  bool front = fr > 0.5;
+  vec3 before = c;
+  if (sparks.x >= 0.0 && !front) {
     for (int i = 0; i < 12; i++) {
       float n = float(i);
       float per = 1.2 + hash(vec2(n, 1.0)) * 1.4;
@@ -517,7 +552,7 @@ void main() {
     vec4 b = pillars[i];
     float wd = b.z - b.x;
     float hg = b.w - b.y;
-    if (!inside(px, b + vec4(-wd * 0.3, -hg * 0.2, wd * 0.3, 0.0))) continue;
+    if (front || !inside(px, b + vec4(-wd * 0.3, -hg * 0.2, wd * 0.3, 0.0))) continue;
     for (int k = 0; k < 18; k++) {
       float n = float(k) + float(i) * 18.0;
       float per = 0.9 + hash(vec2(n, 1.0)) * 1.1;
@@ -537,7 +572,8 @@ void main() {
     if (!inside(px, b)) continue;
     float w = within((px - b.xy) / (b.zw - b.xy), vec2(0.1, 0.03));
     float streak = smoothstep(0.75, 1.0, noise(vec2(px.x / 1.3, px.y / 14.0 - t * 7.0)));
-    c += vec3(0.65, 0.82, 1.0) * streak * 0.35 * w;
+    // A thin far fall's streaks are fainter.
+    c += vec3(0.65, 0.82, 1.0) * streak * mix(0.18, 0.35, smoothstep(15.0, 40.0, b.z - b.x)) * w;
   }
   // Where water lands: mist rolls up and out, and drops leap and fall back.
   for (int i = 0; i < 2; i++) {
@@ -545,11 +581,17 @@ void main() {
     vec4 b = sprays[i];
     if (!inside(px, b)) continue;
     vec2 uv = (px - b.xy) / (b.zw - b.xy);
-    float puff = fbm(vec2(px.x / 9.0 + sin(t * 0.4 + float(i)), px.y / 6.0 + t * 0.7));
-    c = mix(c, vec3(0.78, 0.88, 0.97), smoothstep(0.5, 0.82, puff) * within(uv, vec2(0.25, 0.3)) * 0.38);
     float wd = b.z - b.x;
     float hg = b.w - b.y;
-    c = mix(c, vec3(0.85, 0.93, 1.0), drops(px, vec2((b.x + b.z) * 0.5, b.w - hg * 0.25), wd, hg, float(i)) * 0.9);
+    // A small far splash is a soft haze of its own light, its drops faint and tinted by what
+    // is behind them (owner, 2026-10-25: "needs to be soft to blend into the background"), a
+    // near torrent's bright and white.
+    float soft = 1.0 - smoothstep(25.0, 70.0, wd);
+    float puff = fbm(vec2(px.x / mix(9.0, 4.0, soft) + sin(t * 0.4 + float(i)), px.y / mix(6.0, 3.0, soft) + t * 0.7));
+    vec3 haze = mix(vec3(0.78, 0.88, 0.97), c * 1.15 + vec3(0.04, 0.05, 0.07), soft);
+    c = mix(c, haze, smoothstep(0.5, 0.82, puff) * within(uv, vec2(0.3, 0.35)) * mix(0.38, 0.5, soft));
+    vec3 drop = mix(vec3(0.85, 0.93, 1.0), c * 1.2 + vec3(0.05, 0.06, 0.08), soft);
+    c = mix(c, drop, drops(px, vec2((b.x + b.z) * 0.5, b.w - hg * 0.25), wd, hg, float(i)) * mix(0.9, 0.25, soft));
   }
   // A fountain's jet breaks into drops at its top that fall back round it.
   for (int i = 0; i < 2; i++) {
@@ -648,6 +690,8 @@ void main() {
     float a = body * mix(1.0, wisps, rise) * smoothstep(0.0, 0.04, rise) * (1.0 - smoothstep(0.55, 1.0, rise));
     c = mix(c, vec3(0.78, 0.7, 0.86), a * 0.32);
   }
+  // What stands before the room's moving things hides them.
+  c = mix(c, before, fr);
   // Glints: a star twinkles now and then on the brightest paint of a box, a crystal's face or
   // a polished orb's highlight.
   for (int i = 0; i < 8; i++) {
@@ -853,6 +897,7 @@ export class RoomView {
       drapes: boxes(d.drapes, 4),
       stars: boxes(d.stars, 2),
       incense: boxes(d.incense, 2),
+      fronts: boxes(d.fronts, 4),
     };
     const none: Quad = [-1, -1, -1, -1];
     const mist = d.mists?.[0] ?? none;

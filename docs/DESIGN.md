@@ -2928,8 +2928,11 @@ Rocks, and very colourful dark magic Sparks"). Each is made ahead of its house
 - **a polished floor** (`shines`): no flame is read in its reflections, which flicker with the
   fire they mirror;
 - **falling water** (`falls`): its sheet drawn from higher up, quivering, bright streaks
-  running down it; **spray** (`sprays`) where it lands, mist rolling up and drops leaping and
-  falling back; **ripples** (`ripples`) spreading from the middle of a still water;
+  running down it, fainter on a thin far fall; **spray** (`sprays`) where it lands, mist
+  rolling up and drops leaping and falling back, a near torrent's bright and white, a small far
+  splash a soft haze tinted by what is behind it, its drops faint (owner, 2026-10-25: "needs to
+  be soft to blend into the background"); **ripples** (`ripples`) spreading from the middle of
+  a still water;
 - **a fountain's jet** (`jets`) rising and breaking into drops that fall round it; **water
   flowing** down a channel toward the viewer (`waters`), only the water's own blue-green paint
   moving, the marble rims standing, glints running on it;
@@ -2946,6 +2949,11 @@ Rocks, and very colourful dark magic Sparks"). Each is made ahead of its house
   polished orb's highlight;
 - **a small hearth** (`hearths`): a cottage's low fire on its bed of coals, which the size
   rule would take for a lamp, keeps its embers and sparks;
+- **what stands before** what moves (`fronts`), a sofa before the hearth, a mage before his
+  waterfall: nothing moving is drawn over it, no spark, ember, streak or splash, and no flow
+  carries its paint along, where its paint is not water's blue, so the water between a
+  crown's points still falls (owner, 2026-10-25: "Some embers clipping through the sofa in the
+  foreground"; "The water is cutting off the top of the mages head");
 - `top`, the band's first row by hand where the fires and the marks would put it wrong.
 
 **The bedchamber** (owner, 2026-10-25: "Your magnum opus. You can take all night with this one.
@@ -2962,8 +2970,10 @@ petal pool's ripples, its glints on the gold:
   that flame sways, the licks running down it as a reflection is upside down, a warm glow
   breathing round it and specks of light glinting along it; the bed's magenta glow on the
   floor, not warm, stays as it is;
-- **the canopy's drapes** (`drapes`) stir in slow gusts, still where they hang from, swaying
-  more toward their hems;
+- **the canopy's drapes** (`drapes`) swing as whole cloth in slow gusts, each carried
+  sideways as one, still where they hang from, swinging more toward their hems and bellying
+  more in their middles than at their edges; no ripple runs up them (owner, 2026-10-25: "The
+  curtain swaying doenst make sense. Looks like hot air rising");
 - **stars** (`stars`) twinkle in the night sky through the arches, on its dark paint only;
 - **incense** (`incense`) rises thin from the gold bowl on its stand, curling and spreading;
 - **still** areas (`still`), the gold jug and the lion-head knockers, whose polish mirrors the
@@ -2978,6 +2988,12 @@ town's houses' doors; the stock on its shelf for Buy once items have pictures; t
 "Enter?" picture once a dungeon lies behind it.
 
 ## 13. Decision log
+
+- 2026-10-25 – The owner's notes on the bedchamber and the water guild (17.8): what stands
+  before what moves is marked (`fronts`) and nothing moving is drawn over it, so no ember
+  crosses the sofa and the mage's crown and head stand whole before his waterfall; the
+  bedchamber's small far splash is soft and tinted by what is behind it; the drapes swing as
+  whole cloth instead of rippling upward.
 
 - 2026-10-25 – The bedchamber, the owner's "magnum opus" (17.8), with and without the floor's
   reflections alive: each reflection of a flame flickers and sways with the flame it mirrors;
