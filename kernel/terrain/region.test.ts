@@ -347,8 +347,7 @@ describe('Gullhaven', () => {
         expect(gap, `${a.model} to ${b.model}`).toBeLessThan(7.5);
       }
     }
-    expect(level.props.filter((p) => p.name === 'training')).toHaveLength(1);
-    for (const house of ['inn', 'temple', 'store', 'smithy']) {
+    for (const house of ['inn', 'temple', 'store', 'smithy', 'training', 'guild']) {
       expect(
         level.props.filter((p) => p.name === house),
         house,

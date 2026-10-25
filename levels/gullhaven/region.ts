@@ -108,11 +108,12 @@ function round(v: number): number {
 const prop = (model: string, at: P2, face: P2): Plot => ({ model, at, face, light: true });
 
 const town: Plot[] = [
-  // The square: the inn on its north side, the training hall at its shoulder, the trader
-  // across, the well in the middle, stalls along the south, lanterns at the corners.
+  // The square: the inn on its north side, the training hall at its shoulder and the guild at
+  // the other, the trader across, the well in the middle, stalls along the south, lanterns at
+  // the corners.
   { model: 'building-inn', at: [-3, -103], face: [-3, STREET] },
   { model: 'building-cottage-03', at: [-12.6, -103], face: [-12.6, STREET], name: 'training' },
-  { model: 'building-cottage-02', at: [5.6, -103.9], face: [5.6, STREET], name: 'house' },
+  { model: 'building-cottage-02', at: [5.6, -103.9], face: [5.6, STREET], name: 'guild' },
   { model: 'building-store', at: [-5, -132.6], face: [-5, STREET] },
   { model: 'building-cottage-01', at: [14, -131.4], face: [14, STREET], name: 'house' },
   prop('prop-well', [0, -117], [0, -140]),
