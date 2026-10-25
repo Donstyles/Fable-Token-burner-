@@ -43,6 +43,9 @@ anything. Both are the source of truth; update them when a decision changes.
 - `npm run portrait -- <appearance> [<expression>...]` – cut the owner's
   portraits in `pipeline/inbox/portraits/<appearance>/` to the band's oval
   (head box in `pipeline/portraits.json`)
+- `npm run room -- <house> [--top <px>]` – cut the owner's picture of a house's room
+  (`pipeline/inbox/rooms/<house>.png`) to the view box and find its flames, coals and
+  firelight, into `assets/rooms/`
 - `npm run asset -- <command>` – asset pipeline: `manifest`, `validate`,
   `card <kind> <id> "<subject>"`, `batch new <name> <id>:<height-m>[:civilian]|props|creatures|icons|show|approve|approve-images`, `inbox <id> <picture>` (keys the owner's fuchsia-ground concept picture into `pipeline/inbox/<id>.png`), `review <id>...` (each model's review sheet in `pipeline/work/review/`), `windows <id>... [--accept]` (finds a house's window panes on its skin and draws them lit on the sheet's night row; `--accept` puts the looked-at mask beside the model), `trunk <id>...` (measures a tree's trunk off its model for the props table's collider), `run <nnn> [--dry-run] [--force]` (runs only a batch the owner approved by number; props and creatures stop after their concept pictures until `approve-images`)
 

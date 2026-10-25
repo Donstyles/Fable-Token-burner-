@@ -925,6 +925,19 @@
       "notes": "batch 014; 534 triangles"
     },
     {
+      "id": "room-smithy",
+      "kind": "image",
+      "source": "The owner's ChatGPT image pipeline/inbox/rooms/smithy.png, rows 18 to 688 cut to the view box at 640 by 296, its flames, coals and firelight found on its paint (tools/room.ts)",
+      "licence": "The owner's ChatGPT image (OpenAI's terms: the output is the user's): owner holds full rights",
+      "files": [
+        "assets/rooms/smithy.png",
+        "assets/rooms/smithy.lights.png",
+        "assets/rooms/smithy.json"
+      ],
+      "date": "2026-10-25",
+      "notes": "2 fire(s), sparks off the biggest"
+    },
+    {
       "id": "skeleton-warrior",
       "kind": "character",
       "source": "Meshy image-to-3D (smart topology) from the owner's concept image pipeline/inbox/skeleton-warrior.png",
