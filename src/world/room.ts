@@ -17,6 +17,8 @@ interface RoomData {
   /** Where sparks rise from, picture pixels: x from, x to, y; null for none. */
   sparks: [number, number, number] | null;
   fires: number;
+  /** The magic glows: middle and radius in picture pixels, colour in bytes. */
+  orbs?: { at: [number, number]; r: number; colour: [number, number, number] }[];
 }
 
 const PICTURES = import.meta.glob('../../assets/rooms/*.png', {
@@ -45,6 +47,9 @@ uniform float t;
 uniform vec4 box;         // the view's box in render pixels: left, bottom, right, top
 uniform vec2 res;
 uniform vec3 sparks;      // x from, x to, y, x from below zero for none
+uniform vec4 orbs[4];     // a magic glow's middle and radius, picture pixels
+uniform vec4 orbColours[4];
+uniform float orbCount;
 
 float hash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
 float noise(vec2 p) {
@@ -92,8 +97,15 @@ void main() {
   // Coals breathe, each on its own.
   float glow = m.g * 0.6 * (noise(px / 2.5 + vec2(t * 0.8, -t * 0.5)) - 0.45);
   c = glow > 0.0 ? c + fire * glow * 0.6 : c * max(vec3(0.0), 1.0 + glow * cool);
-  // Each fire's light over the room rises and falls with its own flicker.
-  float room = m.b * 0.16 * flick(t, 0.0) + m.a * 0.2 * flick(t * 1.3, 3.0);
+  // The room is dim away from its fires, and each fire's light, on the wall round it and in
+  // a pool on the floor before it, rises and falls with its own flicker. The small fires
+  // (candles, torches) each keep a rhythm of their own, from where they stand.
+  float fb = flick(t, 0.0);
+  float fo = flick(t * 1.3, 3.0 + noise(px / 70.0) * 9.0);
+  float lit = clamp(m.b + m.a, 0.0, 1.0);
+  c *= 0.74 + 0.26 * lit;
+  c += fire * (m.b * (0.11 + 0.07 * fb) + m.a * (0.07 + 0.05 * fo)) * (0.4 + c);
+  float room = m.b * 0.3 * fb + m.a * 0.28 * fo;
   c *= room > 0.0 ? 1.0 + room * vec3(1.0, 0.75, 0.5) : 1.0 + room * vec3(0.7, 1.0, 1.1);
   // Sparks off the coals, a few at a time, rising and dying.
   if (sparks.x >= 0.0) {
@@ -108,6 +120,68 @@ void main() {
       vec2 p = p0 + vec2(sin(ph * 5.0 + n) * 2.5, -ph * (28.0 + 22.0 * hash(vec2(n, 3.0))));
       float near = 1.0 - smoothstep(0.4, 1.3, length(px - p));
       c += vec3(1.0, 0.62, 0.22) * near * (1.0 - ph) * 1.4;
+    }
+  }
+  // Magic glows: an orb's insides swirl and its heart throbs, its halo breathes out and its
+  // colour washes the room, lights dance round it on tilted orbits with short trails, and
+  // arcs crackle off its rim, a step or two at a time.
+  for (int i = 0; i < 4; i++) {
+    if (float(i) >= orbCount) break;
+    vec2 o = orbs[i].xy;
+    float R = max(orbs[i].z, 2.0);
+    vec3 oc = orbColours[i].rgb;
+    vec2 rel = px - o;
+    float dist = length(rel) / R;
+    float fi = float(i);
+    float beat = 0.5 + 0.5 * sin(t * 4.6 + fi) * (0.65 + 0.35 * sin(t * 1.3 + fi * 2.0));
+    c *= 1.0 + oc * 0.35 * beat * exp(-dist / 5.0);
+    if (dist > 7.0) continue;
+    if (dist < 1.0) {
+      float ang = (1.0 - dist) * (2.6 + 1.6 * sin(t * 0.9 + fi)) + t * 2.2;
+      vec2 turned = vec2(cos(ang) * rel.x - sin(ang) * rel.y, sin(ang) * rel.x + cos(ang) * rel.y);
+      vec3 inside = texture2D(picture, uvAt(o + turned * 0.92)).rgb;
+      c = mix(c, inside, smoothstep(1.0, 0.7, dist));
+      float vein = fbm(vec2(atan(rel.y, rel.x) * 2.0 + t * 1.5, dist * 4.0 - t * 2.5));
+      c += mix(oc, vec3(1.0), 0.35) * (1.0 - dist) * (0.35 + 0.65 * beat) * (0.5 + vein);
+    } else {
+      c += oc * exp(-(dist - 1.0) * (1.9 - 0.8 * beat)) * (0.18 + 0.32 * beat);
+    }
+    for (int k = 0; k < 7; k++) {
+      float n = float(k) + fi * 7.0;
+      float orbit = R * (1.35 + 1.4 * hash(vec2(n, 4.0)));
+      float speed = (0.7 + 0.9 * hash(vec2(n, 5.0))) * (hash(vec2(n, 6.0)) > 0.5 ? 1.0 : -1.0);
+      float tilt = 0.25 + 0.45 * hash(vec2(n, 7.0));
+      for (int j = 0; j < 3; j++) {
+        float a = t * speed * 2.0 + hash(vec2(n, 8.0)) * 6.283 - float(j) * 0.14 * speed;
+        vec2 p = o + vec2(cos(a) * orbit, sin(a) * orbit * tilt + sin(t * 3.1 + n) * R * 0.18);
+        bool behind = sin(a) < 0.0 && length(p - o) < R;
+        if (behind) continue;
+        float twinkle = 0.55 + 0.45 * sin(t * 9.0 + n * 3.0);
+        float near = 1.0 - smoothstep(0.35, 1.25, length(px - p));
+        c += mix(oc, vec3(1.0), 0.6) * near * twinkle * (1.0 - float(j) * 0.38) * 1.2;
+      }
+    }
+    for (int k = 0; k < 3; k++) {
+      float n = float(k) + fi * 3.0;
+      float clock = t * 2.6 + hash(vec2(n, 9.0));
+      float lot = floor(clock);
+      if (hash(vec2(n, lot)) < 0.45 || fract(clock) > 0.4) continue;
+      float th = hash(vec2(lot, n + 11.0)) * 6.283;
+      vec2 dir = vec2(cos(th), sin(th));
+      vec2 side = vec2(-dir.y, dir.x);
+      float reach = R * (0.9 + 1.1 * hash(vec2(lot, n + 12.0)));
+      vec2 from = o + dir * R * 0.95;
+      float arc = 0.0;
+      for (int g = 0; g < 4; g++) {
+        float a0 = float(g) / 4.0;
+        float a1 = float(g + 1) / 4.0;
+        vec2 p0 = from + dir * reach * a0 + side * (hash(vec2(lot + float(g), n)) - 0.5) * R * 0.5 * a0;
+        vec2 p1 = from + dir * reach * a1 + side * (hash(vec2(lot + float(g) + 1.0, n)) - 0.5) * R * 0.5 * a1;
+        vec2 e = p1 - p0;
+        float h = clamp(dot(px - p0, e) / dot(e, e), 0.0, 1.0);
+        arc = max(arc, 1.0 - smoothstep(0.3, 1.1, length(px - p0 - e * h)));
+      }
+      c += mix(oc, vec3(1.0), 0.7) * arc * 1.3;
     }
   }
   // MM6's frame: thirty-two levels a channel, as the world's filter.
@@ -198,6 +272,13 @@ export class RoomView {
       height - b.top * scale,
     ];
     const sparks = room.data.sparks ?? [-1, -1, -1];
+    const orbs = (room.data.orbs ?? []).slice(0, 4);
+    const orbAt = new Array<number>(16).fill(0);
+    const orbColour = new Array<number>(16).fill(0);
+    orbs.forEach((o, i) => {
+      orbAt.splice(i * 4, 4, o.at[0], o.at[1], o.r, 0);
+      orbColour.splice(i * 4, 4, o.colour[0] / 255, o.colour[1] / 255, o.colour[2] / 255, 1);
+    });
     const apply = wrapper.onApplyObservable.addOnce(() => {
       const e = wrapper.effect;
       e.setTexture('picture', room.picture);
@@ -206,6 +287,9 @@ export class RoomView {
       e.setFloat4('box', box[0]!, box[1]!, box[2]!, box[3]!);
       e.setFloat2('res', RES[0], RES[1]);
       e.setFloat3('sparks', sparks[0], sparks[1], sparks[2]);
+      e.setArray4('orbs', orbAt);
+      e.setArray4('orbColours', orbColour);
+      e.setFloat('orbCount', orbs.length);
     });
     this.renderer.render(wrapper);
     wrapper.onApplyObservable.remove(apply);
@@ -220,7 +304,7 @@ export class RoomView {
       engine,
       name: 'room',
       fragmentShader: FRAGMENT,
-      uniformNames: ['t', 'box', 'res', 'sparks'],
+      uniformNames: ['t', 'box', 'res', 'sparks', 'orbs', 'orbColours', 'orbCount'],
       samplerNames: ['picture', 'lights'],
     });
   }
