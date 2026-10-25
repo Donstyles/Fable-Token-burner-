@@ -938,6 +938,45 @@
       "notes": "10 fire(s), 0 magic glow(s), no sparks, 4 clouds marked, 1 mists marked"
     },
     {
+      "id": "room-guild-dark",
+      "kind": "image",
+      "source": "The owner's ChatGPT image pipeline/inbox/rooms/guild-dark.png, rows 40 to 750 cut to the view box at 640 by 296, its flames, coals and firelight found on its paint (tools/room.ts)",
+      "licence": "The owner's ChatGPT image (OpenAI's terms: the output is the user's): owner holds full rights",
+      "files": [
+        "assets/rooms/guild-dark.png",
+        "assets/rooms/guild-dark.lights.png",
+        "assets/rooms/guild-dark.json"
+      ],
+      "date": "2026-10-25",
+      "notes": "0 fire(s), 0 magic glow(s), no sparks, 6 smokes marked, 1 beams marked, 6 glints marked"
+    },
+    {
+      "id": "room-guild-earth",
+      "kind": "image",
+      "source": "The owner's ChatGPT image pipeline/inbox/rooms/guild-earth.png, rows 50 to 760 cut to the view box at 640 by 296, its flames, coals and firelight found on its paint (tools/room.ts)",
+      "licence": "The owner's ChatGPT image (OpenAI's terms: the output is the user's): owner holds full rights",
+      "files": [
+        "assets/rooms/guild-earth.png",
+        "assets/rooms/guild-earth.lights.png",
+        "assets/rooms/guild-earth.json"
+      ],
+      "date": "2026-10-25",
+      "notes": "8 fire(s), 0 magic glow(s), no sparks, 5 rocks marked"
+    },
+    {
+      "id": "room-guild-fire",
+      "kind": "image",
+      "source": "The owner's ChatGPT image pipeline/inbox/rooms/guild-fire.png, rows 0 to 710 cut to the view box at 640 by 296, its flames, coals and firelight found on its paint (tools/room.ts)",
+      "licence": "The owner's ChatGPT image (OpenAI's terms: the output is the user's): owner holds full rights",
+      "files": [
+        "assets/rooms/guild-fire.png",
+        "assets/rooms/guild-fire.lights.png",
+        "assets/rooms/guild-fire.json"
+      ],
+      "date": "2026-10-25",
+      "notes": "18 fire(s), 0 magic glow(s), no sparks, 1 pillars marked, 6 glass marked, 1 shines marked"
+    },
+    {
       "id": "room-guild-light",
       "kind": "image",
       "source": "The owner's ChatGPT image pipeline/inbox/rooms/guild-light.png, rows 71 to 741 cut to the view box at 640 by 296, its flames, coals and firelight found on its paint (tools/room.ts)",
@@ -948,7 +987,72 @@
         "assets/rooms/guild-light.json"
       ],
       "date": "2026-10-25",
-      "notes": "0 fire(s), 0 magic glow(s), no sparks, 6 vapours marked"
+      "notes": "0 fire(s), 0 magic glow(s), no sparks, 6 vapours marked, 1 beams marked"
+    },
+    {
+      "id": "room-guild-spirit",
+      "kind": "image",
+      "source": "The owner's ChatGPT image pipeline/inbox/rooms/guild-spirit.png, rows 220 to 930 cut to the view box at 640 by 296, its flames, coals and firelight found on its paint (tools/room.ts)",
+      "licence": "The owner's ChatGPT image (OpenAI's terms: the output is the user's): owner holds full rights",
+      "files": [
+        "assets/rooms/guild-spirit.png",
+        "assets/rooms/guild-spirit.lights.png",
+        "assets/rooms/guild-spirit.json"
+      ],
+      "date": "2026-10-25",
+      "notes": "8 fire(s), 0 magic glow(s), no sparks, 1 rings marked, 1 discs marked, 1 jets marked, 1 falls marked, 1 ripples marked, 1 waters marked, 2 glints marked, 2 shines marked"
+    },
+    {
+      "id": "room-guild-water",
+      "kind": "image",
+      "source": "The owner's ChatGPT image pipeline/inbox/rooms/guild-water.png, rows 30 to 740 cut to the view box at 640 by 296, its flames, coals and firelight found on its paint (tools/room.ts)",
+      "licence": "The owner's ChatGPT image (OpenAI's terms: the output is the user's): owner holds full rights",
+      "files": [
+        "assets/rooms/guild-water.png",
+        "assets/rooms/guild-water.lights.png",
+        "assets/rooms/guild-water.json"
+      ],
+      "date": "2026-10-25",
+      "notes": "6 fire(s), 0 magic glow(s), no sparks, 1 falls marked, 1 sprays marked, 1 ripples marked, 6 glass marked, 1 shines marked"
+    },
+    {
+      "id": "room-home-poor",
+      "kind": "image",
+      "source": "The owner's ChatGPT image pipeline/inbox/rooms/home-poor.png, rows 148 to 858 cut to the view box at 640 by 296, its flames, coals and firelight found on its paint (tools/room.ts)",
+      "licence": "The owner's ChatGPT image (OpenAI's terms: the output is the user's): owner holds full rights",
+      "files": [
+        "assets/rooms/home-poor.png",
+        "assets/rooms/home-poor.lights.png",
+        "assets/rooms/home-poor.json"
+      ],
+      "date": "2026-10-25",
+      "notes": "3 fire(s), 0 magic glow(s), sparks off the biggest"
+    },
+    {
+      "id": "room-home-rich",
+      "kind": "image",
+      "source": "The owner's ChatGPT image pipeline/inbox/rooms/home-rich.png, rows 60 to 770 cut to the view box at 640 by 296, its flames, coals and firelight found on its paint (tools/room.ts)",
+      "licence": "The owner's ChatGPT image (OpenAI's terms: the output is the user's): owner holds full rights",
+      "files": [
+        "assets/rooms/home-rich.png",
+        "assets/rooms/home-rich.lights.png",
+        "assets/rooms/home-rich.json"
+      ],
+      "date": "2026-10-25",
+      "notes": "10 fire(s), 0 magic glow(s), sparks off the biggest, 2 shines marked"
+    },
+    {
+      "id": "room-home-town",
+      "kind": "image",
+      "source": "The owner's ChatGPT image pipeline/inbox/rooms/home-town.png, rows 157 to 867 cut to the view box at 640 by 296, its flames, coals and firelight found on its paint (tools/room.ts)",
+      "licence": "The owner's ChatGPT image (OpenAI's terms: the output is the user's): owner holds full rights",
+      "files": [
+        "assets/rooms/home-town.png",
+        "assets/rooms/home-town.lights.png",
+        "assets/rooms/home-town.json"
+      ],
+      "date": "2026-10-25",
+      "notes": "3 fire(s), 0 magic glow(s), sparks off the biggest"
     },
     {
       "id": "room-inn",
