@@ -64,7 +64,7 @@ const characterUrl = (id: string): string => {
 };
 import { Braziers, ChimneySmoke, FogBySpace, Torch } from '../world/atmosphere';
 import { Halos } from '../world/halos';
-import { RoomView } from '../world/room';
+import { hasRoom, RoomView } from '../world/room';
 import { CATALOGUE, doorPoint, loadPropModels, onDoor, propLabel } from '../world/props';
 import { createStatusLine } from '../ui/status';
 import { Npc } from '../world/npc';
@@ -1765,6 +1765,16 @@ export async function startDev(app: App): Promise<DevHandle> {
   diag(`dev level ready: ${LEVEL}`);
   veilProgress(1);
   hideVeil(600);
+  // `?room=<id>` puts up a room by itself, one made ahead of its house among them (dev only);
+  // a tap on it takes it down. The world's frame, where taps are read, does not run under a
+  // room, so the canvas hears this one itself.
+  const roomId = QUERY.get('room');
+  if (roomId) {
+    if (!hasRoom(roomId)) throw new Error(`room ${roomId}: no picture in assets/rooms`);
+    enterRoom(roomId);
+    status.say('Tap to leave the room', 5000);
+    canvas.addEventListener('pointerup', () => leaveRoom(), { once: true });
+  }
 
   handle.ready = true;
   return handle;

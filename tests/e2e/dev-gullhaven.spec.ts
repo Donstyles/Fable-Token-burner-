@@ -494,3 +494,35 @@ test.describe('Gullhaven', () => {
       .toBeGreaterThan(b.world);
   });
 });
+
+test.describe('a room made ahead of its house', () => {
+  test('?room=guild-light puts up the light guild, its vapour climbing, and a tap takes it down', async ({
+    page,
+  }) => {
+    // Owner, 2026-10-25: "light Guild will need the ray pillars to be moving" (DESIGN 17.8).
+    test.setTimeout(240_000);
+    await page.goto('dev/?dev&lite&level=gullhaven&seed=5&room=guild-light');
+    await page.waitForFunction(() => (window as unknown as W).ftb?.dev?.ready === true, null, {
+      timeout: 120_000,
+    });
+    const id = () => page.evaluate(() => (window as unknown as W).ftb!.dev!.room.id);
+    const draws = () => page.evaluate(() => (window as unknown as W).ftb!.dev!.room.draws);
+    expect(await id()).toBe('guild-light');
+    await expect.poll(draws, { timeout: 30_000 }).toBeGreaterThan(2);
+    // The big column at the left of the view's box climbs.
+    const column = { x: 80, y: 60, width: 50, height: 160 };
+    const one = await page.screenshot({ clip: column });
+    const n = await draws();
+    await expect.poll(draws, { timeout: 30_000 }).toBeGreaterThan(n + 3);
+    const two = await page.screenshot({ clip: column });
+    expect(one.equals(two)).toBe(false);
+    // And the hall is bright: a room without fires is not darkened away from them.
+    const { default: sharp } = await import('sharp');
+    expect((await sharp(one).stats()).channels[0]!.mean).toBeGreaterThan(150);
+    await page.screenshot({
+      path: `test-results/room-guild-light-${test.info().project.name}.png`,
+    });
+    await page.mouse.click(400, 150);
+    await expect.poll(id, { timeout: 10_000 }).toBeNull();
+  });
+});
