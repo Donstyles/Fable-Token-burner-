@@ -45,6 +45,9 @@ interface RoomData {
   discs?: Quad[];
   glints?: Quad[];
   beams?: Quad[];
+  drapes?: Quad[];
+  stars?: Quad[];
+  incense?: Quad[];
 }
 
 type Quad = [number, number, number, number];
@@ -78,6 +81,9 @@ const COUNTS: Record<string, string> = {
   rocks: 'rockCount',
   glints: 'glintCount',
   beams: 'beamCount',
+  drapes: 'drapeCount',
+  stars: 'starCount',
+  incense: 'incenseCount',
 };
 
 // Babylon's shader processor breaks the source at every semicolon, those in comments too:
@@ -91,7 +97,7 @@ uniform float t;
 uniform vec4 box;         // the view's box in render pixels: left, bottom, right, top
 uniform vec2 res;
 uniform vec3 sparks;      // x from, x to, y, x from below zero for none
-uniform vec4 fires[16];   // the small fires: middle and size, picture pixels
+uniform vec4 fires[32];   // the small fires: middle and size, picture pixels
 uniform float fireCount;
 uniform float hearth;     // 1 when the biggest fire is a hearth's or a brazier's
 uniform float moody;      // how much darker the room is away from its fires: none without one
@@ -131,6 +137,12 @@ uniform vec4 glints[8];
 uniform float glintCount;
 uniform vec4 beams[2];
 uniform float beamCount;
+uniform vec4 drapes[4];
+uniform float drapeCount;
+uniform vec4 stars[2];
+uniform float starCount;
+uniform vec4 incense[2];
+uniform float incenseCount;
 
 float hash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
 float noise(vec2 p) {
@@ -167,6 +179,13 @@ vec3 flow(vec2 p, vec2 along, float period, float seed, vec4 b) {
   vec3 a1 = pic(clamp(p + along * p1, b.xy, b.zw));
   vec3 a2 = pic(clamp(p + along * p2, b.xy, b.zw));
   return mix(a1, a2, abs(2.0 * p1 - 1.0));
+}
+// How much the paint at p is a flame's reflection on a polished floor: brighter than the
+// stone a few pixels either side of it, or bright outright.
+float reflection(vec2 p) {
+  float l = luma(pic(p));
+  float side = luma(pic(p + vec2(-4.0, 0.0)) + pic(p + vec2(4.0, 0.0))) * 0.5;
+  return clamp(smoothstep(0.02, 0.14, l - side) + 0.7 * smoothstep(0.42, 0.7, l), 0.0, 1.0);
 }
 // A crystal's paint: pale on every channel, as no cloth, gold or stone is.
 float crystal(vec3 c) { return smoothstep(0.5, 0.72, min(c.r, min(c.g, c.b))); }
@@ -327,6 +346,19 @@ vec3 paint(vec2 p, float flame) {
     float sway = sin(uv.y * 9.0 - t * 2.0 + fi) * (b.z - b.x) * 0.03 * w;
     return flow(vec2(p.x + sway, p.y), vec2(0.0, (b.w - b.y) * 0.15 * w), 3.2, fi * 0.37, b);
   }
+  // Hanging cloth stirs in a draught: still where it hangs from, swaying more toward its hem,
+  // in slow gusts.
+  for (int i = 0; i < 4; i++) {
+    if (float(i) >= drapeCount) break;
+    vec4 b = drapes[i];
+    if (!inside(p, b)) continue;
+    vec2 uv = (p - b.xy) / (b.zw - b.xy);
+    float w = within(uv, vec2(0.18, 0.06)) * smoothstep(0.0, 0.6, uv.y);
+    float fi = float(i);
+    float gust = 0.55 + 0.45 * sin(t * 0.37 + fi * 1.7);
+    float dx = (sin(p.y / 11.0 - t * 1.1 + fi * 2.3) * 0.7 + sin(p.y / 5.0 - t * 1.9 + fi) * 0.3) * 1.7 * gust * w;
+    return pic(vec2(p.x + dx, p.y));
+  }
   return pic(p);
 }
 // A spray of drops thrown up and out from base, falling back: how much of one is at p.
@@ -395,7 +427,7 @@ void main() {
   c += fire * (m.b * 0.11 + m.a * 0.07) * (0.4 + c);
   float big = hearth * m.b * m.b * flick(t, 0.0);
   float near = 0.0;
-  for (int i = 0; i < 16; i++) {
+  for (int i = 0; i < 32; i++) {
     if (float(i) >= fireCount) break;
     float dd = length(px - fires[i].xy) / (fires[i].z * 1.5 + 2.0);
     near += flick(t * 1.3, float(i) * 2.17 + 0.5) / (1.0 + dd * dd);
@@ -423,14 +455,46 @@ void main() {
       c *= 1.0 + smoothstep(0.75, 1.0, 1.0 - threads) * 0.1 * w * vec3(0.6, 1.0, 1.0);
     }
   }
-  // A polished floor: its reflections of the fires flicker with them.
+  // A polished floor: each reflection of a flame, brighter than the stone either side of it,
+  // flickers with the flame it mirrors (the fires above it, the nearest across weighing most)
+  // and sways as it sways, the licks running down it, a reflection being upside down. A warm
+  // glow breathes round it, and specks of light glint on the polish along it.
   for (int i = 0; i < 4; i++) {
     if (float(i) >= shineCount) break;
     vec4 b = shines[i];
     if (!inside(px, b)) continue;
-    float w = within((px - b.xy) / (b.zw - b.xy), vec2(0.02, 0.03)) * smoothstep(0.3, 0.65, luma(c));
-    float k = hearth > 0.5 ? flick(t, 0.0) : flick(t * 1.3, float(i) * 2.0);
-    c *= 1.0 + k * 0.1 * w;
+    float w = within((px - b.xy) / (b.zw - b.xy), vec2(0.03, 0.05));
+    vec3 here = pic(px);
+    float streak = reflection(px);
+    float halo = (reflection(px + vec2(-3.0, 0.0)) + reflection(px + vec2(3.0, 0.0))
+      + reflection(px + vec2(-6.0, 0.0)) * 0.6 + reflection(px + vec2(6.0, 0.0)) * 0.6) / 3.2;
+    float warm = smoothstep(0.0, 0.1, here.r - here.b);
+    float k = 0.0;
+    float swayx = 0.0;
+    float wsum = 0.001;
+    float seed = 0.0;
+    float best = 0.0;
+    for (int j = 0; j < 32; j++) {
+      if (float(j) >= fireCount) break;
+      vec4 f = fires[j];
+      if (f.y > px.y) continue;
+      float dx = (px.x - f.x) / (f.z * 1.5 + 3.0);
+      float wt = 1.0 / (1.0 + dx * dx);
+      k += wt * flick(t * 1.3, float(j) * 2.17 + 0.5);
+      swayx += wt * (noise(vec2(float(j) * 3.0, t * 6.0)) - 0.5);
+      wsum += wt;
+      if (wt > best) { best = wt; seed = float(j); }
+    }
+    k /= wsum;
+    swayx /= wsum;
+    float amt = w * streak * warm;
+    float moved = luma(pic(px + vec2(swayx * 3.0, 0.0)));
+    c *= mix(1.0, moved / max(luma(here), 0.03), amt * 0.85);
+    float lick = fbm(vec2(px.x / 3.0 + seed, px.y / 4.0 - t * 7.0)) - 0.45;
+    c *= 1.0 + (k * 0.5 + lick * 0.6) * amt;
+    c += fire * (0.05 + 0.07 * k) * halo * warm * w * (1.0 - streak * 0.5);
+    float speck = smoothstep(0.93, 1.0, noise(vec2(px.x * 1.7 + floor(t * 3.0) * 13.0, px.y * 0.9)));
+    c += vec3(1.0, 0.9, 0.75) * speck * max(streak, halo) * warm * w * (0.5 + 0.5 * k) * 0.6;
   }
   // Sparks off the coals, a few at a time, rising and dying.
   if (sparks.x >= 0.0) {
@@ -555,6 +619,34 @@ void main() {
       float tw = 0.5 + 0.5 * sin(t * 2.0 + n * 1.3);
       c += vec3(1.0, 0.98, 0.92) * (1.0 - smoothstep(0.2, 0.8, length(px - at))) * tw * fade * 0.5;
     }
+  }
+  // Stars twinkle in a night sky, on its dark paint only.
+  for (int i = 0; i < 2; i++) {
+    if (float(i) >= starCount) break;
+    if (!inside(px, stars[i])) continue;
+    vec2 cell = floor(px / 3.0);
+    float h = hash(cell + 17.0 + float(i) * 31.0);
+    if (h < 0.88) continue;
+    vec2 at = (cell + 0.2 + 0.6 * vec2(hash(cell + 3.1), hash(cell + 7.7))) * 3.0;
+    float tw = 0.5 + 0.5 * sin(t * (1.5 + 3.0 * hash(cell + 5.0)) + h * 40.0);
+    float dark = 1.0 - smoothstep(0.14, 0.24, luma(pic(px)));
+    c += vec3(0.85, 0.86, 1.0) * (1.0 - smoothstep(0.2, 0.75, length(px - at))) * tw * tw * dark * 0.75;
+  }
+  // Incense rises thin from the foot of its box, curling and spreading as it climbs.
+  for (int i = 0; i < 2; i++) {
+    if (float(i) >= incenseCount) break;
+    vec4 b = incense[i];
+    if (!inside(px, b)) continue;
+    vec2 uv = (px - b.xy) / (b.zw - b.xy);
+    float rise = 1.0 - uv.y;
+    float fi = float(i);
+    float cx = 0.5 + (sin(rise * 5.0 - t * 0.9 + fi) * 0.12 + (fbm(vec2(rise * 3.0 - t * 0.35, fi * 4.0)) - 0.5) * 0.5) * rise;
+    float width = 0.03 + 0.2 * rise;
+    float dd = abs(uv.x - cx) / width;
+    float body = exp(-dd * dd * 2.0);
+    float wisps = smoothstep(0.3, 0.75, fbm(vec2(uv.x * 6.0 + t * 0.2, uv.y * 5.0 + t * 0.8)));
+    float a = body * mix(1.0, wisps, rise) * smoothstep(0.0, 0.04, rise) * (1.0 - smoothstep(0.55, 1.0, rise));
+    c = mix(c, vec3(0.78, 0.7, 0.86), a * 0.32);
   }
   // Glints: a star twinkles now and then on the brightest paint of a box, a crystal's face or
   // a polished orb's highlight.
@@ -734,8 +826,8 @@ export class RoomView {
     // biggest is only a lamp (the air guild's), it flickers close round itself as they do.
     const first = room.data.fires[0];
     const hearth = room.data.hearth ?? (first !== undefined && first[2] >= RES[0] * 0.03);
-    const small = room.data.fires.slice(hearth ? 1 : 0, hearth ? 17 : 16);
-    const fireAt = new Array<number>(64).fill(0);
+    const small = room.data.fires.slice(hearth ? 1 : 0, hearth ? 33 : 32);
+    const fireAt = new Array<number>(128).fill(0);
     small.forEach((f, i) => fireAt.splice(i * 4, 4, f[0], f[1], f[2], 0));
     // What was marked by hand: boxes as vec4s.
     const boxes = (list: Quad[] | undefined, most: number) => {
@@ -758,6 +850,9 @@ export class RoomView {
       rocks: boxes(d.rocks, 6),
       glints: boxes(d.glints, 8),
       beams: boxes(d.beams, 2),
+      drapes: boxes(d.drapes, 4),
+      stars: boxes(d.stars, 2),
+      incense: boxes(d.incense, 2),
     };
     const none: Quad = [-1, -1, -1, -1];
     const mist = d.mists?.[0] ?? none;

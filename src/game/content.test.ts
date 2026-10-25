@@ -16,6 +16,8 @@ describe('village houses', () => {
       'home-poor',
       'home-town',
       'home-rich',
+      'chamber',
+      'chamber-still',
     ];
     const rooms = Object.keys(import.meta.glob('../../assets/rooms/*.json'))
       .map((path) => path.slice(path.lastIndexOf('/') + 1, -'.json'.length))
