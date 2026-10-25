@@ -2913,15 +2913,52 @@ the middle, with one big thing moving:
   for dark; nobody in it.
 
 The owner made the air and the light guilds' pictures to these prompts (above), and then the
-fire, water, earth, spirit and dark guilds' and three homes' (poor, middling, rich).
+fire, water, earth, spirit and dark guilds' and three homes' (poor, middling, rich; owner:
+"I'm looking forward to pillars of Fire, water ripples, water spray, falling water, floating
+Rocks, and very colourful dark magic Sparks"). Each is made ahead of its house
+(`?room=guild-fire`, `guild-water`, `guild-earth`, `guild-spirit`, `guild-dark`,
+`home-poor`, `home-town`, `home-rich`), and what moves in it is marked by hand:
 
-**Next**: the fire, water, earth, spirit and dark guilds' effects (a pillar of fire, falling
-water, its spray and ripples, floating rocks, a turning ring of crystals, smoke with bright
-sparks) and the homes; the keeper's portrait and "Converse
-with" on the board; the homes; the stock on its shelf for Buy once items have pictures; the
-cave's "Enter?" picture once a dungeon lies behind it.
+- **a pillar of fire** (`pillars`): its flames drawn from lower down in two crossfading layers
+  so they climb fast, wrestling side to side, broad licks racing up it, the air shimmering
+  round it, embers flying out and up, yellow cooling to red; the climb dies away at the
+  flames' foot so the brazier never rises with them, and no coal is read in it;
+- **glass lit from behind** (`glass`): each pane brightening and dimming as one with the fire,
+  or under water's light with faint bright threads drifting over it;
+- **a polished floor** (`shines`): no flame is read in its reflections, which flicker with the
+  fire they mirror;
+- **falling water** (`falls`): its sheet drawn from higher up, quivering, bright streaks
+  running down it; **spray** (`sprays`) where it lands, mist rolling up and drops leaping and
+  falling back; **ripples** (`ripples`) spreading from the middle of a still water;
+- **a fountain's jet** (`jets`) rising and breaking into drops that fall round it; **water
+  flowing** down a channel toward the viewer (`waters`), only the water's own blue-green paint
+  moving, the marble rims standing, glints running on it;
+- **floating rocks** (`rocks`): each lifted and tilted where it hangs, the wall behind it read
+  from above and below its box;
+- **a ring of crystals** (`rings`, middle and radii): each crystal's wedge painted out with the
+  cloth from between two crystals and painted in again, outline and all, where the ring has
+  carried it, the diagonal crystals' reach shorter than the axial ones' so the corners'
+  knotwork stands; **a disc** (`discs`) turning, the triskele inside it;
+- **dark smoke** (`smokes`): the vapour's climb with sparks of every colour, brighter and
+  haloed, each shifting its colour as it climbs, some flung out of the column;
+- **a shaft of light** (`beams`) with dust drifting and glittering in it; **glints**
+  (`glints`): a star twinkling now and then on a box's brightest paint, a crystal's face or a
+  polished orb's highlight;
+- **a small hearth** (`hearths`): a cottage's low fire on its bed of coals, which the size
+  rule would take for a lamp, keeps its embers and sparks;
+- `top`, the band's first row by hand where the fires and the marks would put it wrong.
+
+**Next**: the keeper's portrait and "Converse with" on the board; the homes behind the
+town's houses' doors; the stock on its shelf for Buy once items have pictures; the cave's
+"Enter?" picture once a dungeon lies behind it.
 
 ## 13. Decision log
+
+- 2026-10-25 – The owner's fire, water, earth, spirit and dark guilds and three homes (17.8):
+  a pillar of fire, falling water with spray and ripples, floating rocks, a turning ring of
+  crystals and its triskele, a fountain and its channel, dark smoke with sparks of every
+  colour, a shaft of light, glints, glass and polished floors, all marked by hand in
+  pipeline/rooms.json and made ahead of their houses.
 
 - 2026-10-25 – Remakes are free (owner: "Use the free remakes! Don't burn more meshy credits
   for those!"). Meshy's API has no free retry; its web app gives a few per generation. A model
