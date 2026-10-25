@@ -1305,6 +1305,24 @@ button.member-line {
   min-height: 28px;
   padding: 0;
 }
+/* A shop's sell, identify and repair: the member's bag on its leather in the view, as MM6
+   opened it, the item tapped and its price beside it. */
+.house-pack {
+  flex: 1;
+  min-height: 0;
+}
+.house-pack-row {
+  display: flex;
+  gap: 8px;
+  min-height: 0;
+}
+.house-pack-side {
+  flex: 1;
+  min-width: 0;
+  gap: 6px;
+  font: var(--serif-italic);
+  color: var(--ink-pale);
+}
 /* A house's list in the view: a line an item, its name, a note, its price at the right. */
 .house-list {
   flex: 1;

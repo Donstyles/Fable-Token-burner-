@@ -74,7 +74,14 @@ const HOUSES: Record<string, [string, unknown]> = {
 };
 
 /** Each screen with the member it is opened for: the knight, and the casters for the book. */
-const CASES: { label: string; screen?: string; house?: string; member: number }[] = [
+const CASES: {
+  label: string;
+  screen?: string;
+  house?: string;
+  /** A choice on the house's board to tap. */
+  choice?: string;
+  member: number;
+}[] = [
   ...[
     'sheet',
     'skills',
@@ -96,6 +103,9 @@ const CASES: { label: string; screen?: string; house?: string; member: number }[
   { label: 'sheet of Tobin', screen: 'sheet', member: 2 },
   { label: 'spells of Sera', screen: 'spells', member: 3 },
   ...Object.keys(HOUSES).map((house) => ({ label: house, house, member: 0 })),
+  // The member's bag on its leather in the view (owner, 2026-10-25).
+  { label: 'smithy: sell', house: 'smithy', choice: 'Sell', member: 0 },
+  { label: 'store: identify', house: 'store', choice: 'Identify', member: 1 },
 ];
 
 interface Fit {
@@ -217,6 +227,7 @@ test('every screen fits the view’s box inside the safe areas, its title at the
       },
       [c, c.house ? HOUSES[c.house] : null] as const,
     );
+    if (c.choice) await page.locator('.house-choice', { hasText: c.choice }).click();
     // The words are painted a frame or two after the screen draws (pixel-text.ts).
     await page.waitForTimeout(400);
     const fit = await page.evaluate(fitReport);
@@ -238,4 +249,49 @@ test('every screen fits the view’s box inside the safe areas, its title at the
     }
   }
   await page.evaluate(() => (window as unknown as W).ftb!.dev!.screens.close());
+});
+
+test("a shop's Sell opens the member's bag on its leather, and a second tap on an item sells it", async ({
+  page,
+}) => {
+  // Owner, 2026-10-25: "When selecting indentify or sell it should open the leather inventory
+  // of the selected character and Not just a List (works like this in the original mm6)".
+  test.setTimeout(240_000);
+  await page.goto('dev/?dev&lite&level=gullhaven&seed=11');
+  await page.waitForFunction(() => (window as unknown as W).ftb?.dev?.ready === true, null, {
+    timeout: 150_000,
+  });
+  type Full = Dev & {
+    state: { gold: number; party: { grid: { items: unknown[] } }[] };
+  };
+  const count = () =>
+    page.evaluate(
+      () => (window as unknown as { ftb: { dev: Full } }).ftb.dev.state.party[0]!.grid.items.length,
+    );
+  await page.evaluate((house) => {
+    const d = (window as unknown as W).ftb!.dev!;
+    d.state.selected = 0;
+    d.screens.openService(house[0], house[1]);
+  }, HOUSES['smithy']!);
+  await page.locator('.house-choice', { hasText: 'Sell' }).click();
+  // The bag, not a list.
+  await expect(page.locator('.house-pack .inv-grid')).toBeVisible();
+  await expect(page.locator('.house-row')).toHaveCount(0);
+  const before = await count();
+  expect(before).toBeGreaterThan(0);
+  const gold = await page.evaluate(
+    () => (window as unknown as { ftb: { dev: Full } }).ftb.dev.state.gold,
+  );
+  const item = page.locator('.house-pack .inv-item').first();
+  // The first tap names its price and sells nothing.
+  await item.click();
+  await expect(page.locator('.house-pack-side .ui-btn')).toBeVisible();
+  expect(await count()).toBe(before);
+  // The second sells it.
+  await page.locator('.house-pack .inv-item.selected').click();
+  await expect.poll(count).toBe(before - 1);
+  expect(
+    await page.evaluate(() => (window as unknown as { ftb: { dev: Full } }).ftb.dev.state.gold),
+  ).toBeGreaterThan(gold);
+  await page.screenshot({ path: `test-results/shop-sell-${test.info().project.name}.png` });
 });

@@ -61,6 +61,9 @@
 .inv-item.broken {
   color: #e06050;
 }
+.inv-item.dim {
+  opacity: 0.45;
+}
 .inv-glyph {
   display: inline-flex;
   width: 22px;

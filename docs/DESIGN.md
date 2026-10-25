@@ -2475,9 +2475,14 @@ MM6's share of the height, the view taking the extra width.
   Exit Rest. A choice applies at once and the screen stays, as MM6's.
 - **Houses** (`src/ui/services.ts`; references mm6-smith-menu, mm6-tavern-talk): the house's
   wooden board over the panel, its name at the head, its choices down it, the door oval at the
-  foot; the view keeps the street, where MM6 showed the room, until a choice opens a list
-  there (the stock, the member's pack to sell, identify or repair, the guild's books). The
-  member is the one picked in the band; a tap on a portrait turns the house to them.
+  foot; the view shows the house's room (17.8) until a choice opens a list there (the stock,
+  the guild's books). Sell, identify and repair open the member's bag instead, on its leather
+  as the inventory page draws it, the items the choice does not apply to greyed (owner,
+  2026-10-25: "it should open the leather inventory of the selected character and Not just a
+  List (works like this in the original mm6)"): a tap on an item says on the message bar what
+  it fetches or costs, and a second tap on it, or the button beside the bag, does it; MM6 said
+  it under the pointer and did it at a click. The member is the one picked in the band; a tap
+  on a portrait turns the house to them.
 - **Talk** (`src/ui/dialogue.ts`): the same board, the calling at its head, the living face in
   its window, the name in MM6's blue, the topics, the door oval; the words in a box along the
   view's foot, five lines at most before they scroll.
@@ -2917,6 +2922,10 @@ with" on the board; the homes; the stock on its shelf for Buy once items have pi
 cave's "Enter?" picture once a dungeon lies behind it.
 
 ## 13. Decision log
+
+- 2026-10-25 – A shop's sell, identify and repair open the member's bag on its leather, as
+  MM6's, a tap naming the price and a second doing it (owner: "it should open the leather
+  inventory of the selected character and Not just a List"; 16.34).
 
 - 2026-10-25 – Trees' roots collide (owner: "Can still Walk through the Roots of this big
   tree"; 17.7): measured off each model at shin height and covered by a few short cylinders.

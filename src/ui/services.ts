@@ -3,7 +3,9 @@
  * mm6-tavern-talk), as MM6 laid them out: over the right-hand panel the house's wooden board,
  * its name at the head and its choices down it in the white italic, the gold oval with the door
  * at its foot; the view keeps the street, where MM6 showed the room, until a choice needs a
- * list: the stock to buy, the member's pack to sell, identify or repair, the guild's books.
+ * list: the stock to buy, the guild's books; or the member's bag, on its leather as MM6 opened
+ * it, to sell, identify or repair from: a tap on an item says what it fetches or costs, a
+ * second tap on it does it (MM6 said it under the pointer and did it at a click).
  * The member the choices are for is the one picked in the band (a tap on a portrait turns the
  * house to them, as MM6's); what passes is said on the message bar. Each house is driven by its
  * record through `services-model.ts` and `shop-model.ts`.
@@ -24,6 +26,10 @@ import {
   trainerRows,
 } from './services-model';
 import { buy, identify, repair, sell, shopView } from './shop-model';
+import type { Character } from '../game/character';
+import { gridBlocks } from './inventory-model';
+import { bagGrid } from './inventory';
+import { bagCell } from './layout-model';
 
 /** A house to open: its kind and the record of that kind. */
 export type ServiceRef = { [K in ServiceKind]: { kind: K; house: ServiceDefs[K] } }[ServiceKind];
@@ -46,6 +52,15 @@ interface Row {
   go(): void;
 }
 
+/** A choice done on an item of the member's bag: its verb, and each item's price or reason. */
+interface Pack {
+  verb: string;
+  member(): Character | undefined;
+  /** The item's price as said, and why the choice does not apply to it (null when it does). */
+  of(index: number): { price: string; reason: string | null };
+  act(index: number): ActionOutcome;
+}
+
 /** What a house's choices do beyond themselves: open a list, or say what passed. */
 interface House {
   show(list: string): void;
@@ -60,12 +75,14 @@ function house(
   ctx: ScreenContext,
   name: string,
   choices: () => Choice[],
-  lists: Record<string, { title: () => string; rows: () => Row[]; empty: string }>,
+  lists: Record<string, { title: () => string; rows?: () => Row[]; pack?: Pack; empty: string }>,
 ): House {
   const { frame, state } = ctx;
   frame.root.classList.add('screen-house');
   frame.setTitle(name);
   let open: string | null = null;
+  // The item of the bag tapped once, waiting for the second tap.
+  let picked: number | null = null;
   const say = (r: ActionOutcome | string): void => {
     frame.message(typeof r === 'string' ? r : r.message);
     draw();
@@ -102,11 +119,15 @@ function house(
       frame.body.replaceChildren();
       return;
     }
-    const col = el('div', 'ui-col scroll house-list');
     const head = el('div', 'house-list-head');
     head.append(el('span', 'ui-h', list.title()), el('span', 'ui-v', `Gold ${state.gold}`));
+    if (list.pack) {
+      drawPack(list.pack, head);
+      return;
+    }
+    const col = el('div', 'ui-col scroll house-list');
     col.appendChild(head);
-    const rows = list.rows();
+    const rows = list.rows?.() ?? [];
     if (!rows.length) col.appendChild(el('div', 'house-row dim', list.empty));
     for (const r of rows) {
       const line = el('button', 'house-row');
@@ -125,13 +146,91 @@ function house(
     }
     frame.body.replaceChildren(col);
   };
-  const show = (list: string): void => {
-    open = open === list ? null : list;
+  // The member's bag in the view, its leather and its items as the inventory page draws them,
+  // the items the choice does not apply to greyed; beside it the item tapped and its price.
+  const drawPack = (pack: Pack, head: HTMLElement): void => {
+    const c = pack.member();
+    const col = el('div', 'ui-col house-pack');
+    col.appendChild(head);
+    if (!c) {
+      frame.body.replaceChildren(col);
+      return;
+    }
+    const blocks = gridBlocks(c, null);
+    if (picked !== null && !blocks[picked]) picked = null;
+    const tap = (x: number, y: number): void => {
+      const b = blocks.find((k) => x >= k.x && x < k.x + k.w && y >= k.y && y < k.y + k.h);
+      if (!b) {
+        picked = null;
+        say('');
+        return;
+      }
+      const it = pack.of(b.index);
+      if (it.reason) {
+        picked = null;
+        say(`${b.name}: ${it.reason}`);
+      } else if (picked === b.index) {
+        picked = null;
+        say(pack.act(b.index));
+      } else {
+        picked = b.index;
+        say(
+          `${b.name}: ${pack.verb.toLowerCase()} for ${it.price}. Tap it again to ${pack.verb.toLowerCase()}.`,
+        );
+      }
+    };
+    const row = el('div', 'house-pack-row');
+    const grid = bagGrid(
+      c,
+      picked === null ? null : { kind: 'grid', index: picked },
+      tap,
+      (i) => pack.of(i).reason !== null,
+    );
+    const side = el('div', 'ui-col house-pack-side');
+    const held = picked === null ? null : blocks[picked];
+    if (held) {
+      side.append(el('div', 'inv-held', held.name), el('div', 'ui-v', pack.of(held.index).price));
+      const index = held.index;
+      side.appendChild(
+        button(pack.verb, () => {
+          picked = null;
+          say(pack.act(index));
+        }),
+      );
+    } else {
+      side.appendChild(
+        el(
+          'div',
+          'inv-held',
+          blocks.length
+            ? `Tap an item to ${pack.verb.toLowerCase()} it.`
+            : (list(open)?.empty ?? ''),
+        ),
+      );
+    }
+    row.append(grid, side);
+    col.appendChild(row);
+    frame.body.replaceChildren(col);
+    // The cells as large as the view lets all nine rows show under the head (layout-model.ts).
+    const cs = getComputedStyle(frame.body);
+    const h =
+      frame.body.clientHeight -
+      parseFloat(cs.paddingTop) -
+      parseFloat(cs.paddingBottom) -
+      head.offsetHeight -
+      4;
+    if (h > 0) frame.body.style.setProperty('--cell', `${bagCell(h, c.grid.height)}px`);
+  };
+  const list = (key: string | null) => (key ? lists[key] : null);
+  const show = (key: string): void => {
+    open = open === key ? null : key;
+    picked = null;
     draw();
   };
   // The band's portraits turn the house to the member tapped, as MM6's.
   ctx.claimPortraits((i) => {
     state.selected = i;
+    picked = null;
     draw();
     return true;
   });
@@ -247,28 +346,31 @@ function renderGuild(ctx: ScreenContext, def: ServiceDefs['guild']): void {
 
 function renderShop(ctx: ScreenContext, def: ServiceDefs['shop']): void {
   const { state } = ctx;
-  const pack = (pick: 'sell' | 'identify' | 'repair'): Row[] => {
-    const i = state.selected;
-    return shopView(state, def, i)
-      .sell.filter((s) =>
-        pick === 'identify' ? !s.identified : pick === 'repair' ? s.broken : true,
-      )
-      .map((s) => ({
-        name: s.name,
+  // Sell, identify and repair open the member's bag (owner, 2026-10-25: "When selecting
+  // indentify or sell it should open the leather inventory of the selected character and Not
+  // just a List (works like this in the original mm6)").
+  const pack = (pick: 'sell' | 'identify' | 'repair'): Pack => ({
+    verb: pick === 'sell' ? 'Sell' : pick === 'identify' ? 'Identify' : 'Repair',
+    member: () => state.party[state.selected],
+    of: (index) => {
+      const s = shopView(state, def, state.selected).sell.find((r) => r.gridIndex === index);
+      if (!s) return { price: '', reason: 'No such item.' };
+      if (pick === 'identify' && s.identified) return { price: '', reason: 'Already identified.' };
+      if (pick === 'repair' && !s.broken) return { price: '', reason: 'Not broken.' };
+      return {
         price: gold(
           pick === 'sell' ? s.price : pick === 'identify' ? s.identifyPrice : s.repairPrice,
         ),
         reason: null,
-        go: () =>
-          h.say(
-            pick === 'sell'
-              ? sell(state, def, i, s.gridIndex)
-              : pick === 'identify'
-                ? identify(state, def, i, s.gridIndex)
-                : repair(state, def, i, s.gridIndex),
-          ),
-      }));
-  };
+      };
+    },
+    act: (index) =>
+      pick === 'sell'
+        ? sell(state, def, state.selected, index)
+        : pick === 'identify'
+          ? identify(state, def, state.selected, index)
+          : repair(state, def, state.selected, index),
+  });
   const name = (): string => state.party[state.selected]?.name ?? '';
   const h: House = house(
     ctx,
@@ -294,17 +396,17 @@ function renderShop(ctx: ScreenContext, def: ServiceDefs['shop']): void {
       sell: {
         title: () => `${name()}'s pack: sell`,
         empty: 'Nothing to sell.',
-        rows: () => pack('sell'),
+        pack: pack('sell'),
       },
       identify: {
         title: () => `${name()}'s pack: identify`,
         empty: 'Nothing to identify.',
-        rows: () => pack('identify'),
+        pack: pack('identify'),
       },
       repair: {
         title: () => `${name()}'s pack: repair`,
         empty: 'Nothing to repair.',
-        rows: () => pack('repair'),
+        pack: pack('repair'),
       },
     },
   );

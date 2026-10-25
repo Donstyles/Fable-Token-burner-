@@ -35,10 +35,16 @@ function selectedName(c: Character | undefined, sel: InvSelection): string | nul
   return gridBlocks(c, sel).find((b) => b.selected)?.name ?? null;
 }
 
-function gridNode(
+/**
+ * The member's bag as MM6 drew it, on its leather: `onTap` gets the cell tapped, an item's
+ * top-left cell when the item is tapped; `dim` greys the items a choice does not apply to (a
+ * shop's identify, its repair).
+ */
+export function bagGrid(
   c: Character,
   sel: InvSelection,
   onTap: (x: number, y: number) => void,
+  dim?: (index: number) => boolean,
 ): HTMLElement {
   const grid = el('div', 'inv-grid');
   for (let y = 0; y < c.grid.height; y++) {
@@ -54,6 +60,7 @@ function gridNode(
     block.dataset['paint'] = 'tile';
     if (b.selected) block.classList.add('selected');
     if (b.broken) block.classList.add('broken');
+    if (dim?.(b.index)) block.classList.add('dim');
     block.style.gridArea = `${b.y + 1} / ${b.x + 1} / span ${b.h} / span ${b.w}`;
     block.classList.add(`w${Math.min(b.w, 3)}`);
     block.appendChild(itemGlyph(b.kind));
@@ -142,7 +149,7 @@ export function renderInventory(ctx: ScreenContext): void {
     acts.append(...actionBar(c));
     side.appendChild(acts);
     frame.body.replaceChildren(
-      gridNode(c, sel, (x, y) => apply(tapCell(c, sel, x, y))),
+      bagGrid(c, sel, (x, y) => apply(tapCell(c, sel, x, y))),
       side,
     );
     memberCover(ctx, c, sel, (slot) => apply(tapSlot(c, sel, slot)));
