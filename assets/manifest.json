@@ -925,6 +925,32 @@
       "notes": "batch 014; 534 triangles"
     },
     {
+      "id": "room-chamber",
+      "kind": "image",
+      "source": "The owner's ChatGPT image pipeline/inbox/rooms/chamber.png, rows 130 to 840 cut to the view box at 640 by 296, its flames, coals and firelight found on its paint (tools/room.ts)",
+      "licence": "The owner's ChatGPT image (OpenAI's terms: the output is the user's): owner holds full rights",
+      "files": [
+        "assets/rooms/chamber.png",
+        "assets/rooms/chamber.lights.png",
+        "assets/rooms/chamber.json"
+      ],
+      "date": "2026-10-25",
+      "notes": "20 fire(s), 0 magic glow(s), sparks off the biggest, 1 falls marked, 1 sprays marked, 1 ripples marked, 2 shines marked, 3 drapes marked, 2 stars marked, 1 incense marked, 8 glints marked, 3 still marked"
+    },
+    {
+      "id": "room-chamber-still",
+      "kind": "image",
+      "source": "The owner's ChatGPT image pipeline/inbox/rooms/chamber.png, rows 130 to 840 cut to the view box at 640 by 296, its flames, coals and firelight found on its paint (tools/room.ts)",
+      "licence": "The owner's ChatGPT image (OpenAI's terms: the output is the user's): owner holds full rights",
+      "files": [
+        "assets/rooms/chamber-still.png",
+        "assets/rooms/chamber-still.lights.png",
+        "assets/rooms/chamber-still.json"
+      ],
+      "date": "2026-10-25",
+      "notes": "20 fire(s), 0 magic glow(s), sparks off the biggest, 1 falls marked, 1 sprays marked, 1 ripples marked, 3 drapes marked, 2 stars marked, 1 incense marked, 8 glints marked, 5 still marked"
+    },
+    {
       "id": "room-guild",
       "kind": "image",
       "source": "The owner's ChatGPT image pipeline/inbox/rooms/guild.png, rows 74 to 744 cut to the view box at 640 by 296, its flames, coals and firelight found on its paint (tools/room.ts)",
