@@ -40,7 +40,11 @@ async function main(): Promise<void> {
   };
   await writeFile(files.picture, room.picture);
   await writeFile(files.lights, await lightsPng(room.lights));
-  const data = { sparks: room.lights.sparks, fires: room.lights.fires.length };
+  const data = {
+    sparks: room.lights.sparks,
+    fires: room.lights.fires.length,
+    orbs: room.lights.orbs,
+  };
   await writeFile(files.data, `${JSON.stringify(data, null, 2)}\n`);
 
   // The sheet: the picture, then its masks over it darkened, flames red, coals green, the
@@ -71,11 +75,11 @@ async function main(): Promise<void> {
       "The owner's ChatGPT image (OpenAI's terms: the output is the user's): owner holds full rights",
     files: [files.picture, files.lights, files.data],
     date: new Date().toISOString().slice(0, 10),
-    notes: `${l.fires.length} fire(s), ${l.sparks ? 'sparks off the biggest' : 'no sparks'}`,
+    notes: `${l.fires.length} fire(s), ${l.orbs.length} magic glow(s), ${l.sparks ? 'sparks off the biggest' : 'no sparks'}`,
   });
   await writeManifest(manifest);
   console.info(
-    `${files.picture}: rows ${room.top}-${room.top + room.band}, ${l.fires.length} fire(s), sparks ${JSON.stringify(l.sparks)}\n${sheet}`,
+    `${files.picture}: rows ${room.top}-${room.top + room.band}, ${l.fires.length} fire(s), ${l.orbs.length} orb(s), sparks ${JSON.stringify(l.sparks)}\n${sheet}`,
   );
 }
 

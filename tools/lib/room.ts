@@ -32,6 +32,8 @@ export interface RoomLights {
   fires: Fire[];
   /** Where sparks rise from: the biggest fire's coal bed (x from, x to, y), or null. */
   sparks: [number, number, number] | null;
+  /** The magic glows, in ROOM_SIZE pixels. */
+  orbs: Orb[];
 }
 
 /** A flame's core: white-yellow paint, brighter and yellower than the firelit stone round it. */
@@ -39,9 +41,32 @@ export function isFlame(r: number, g: number, b: number): boolean {
   return r >= 245 && g >= 175 && b <= 190 && r - b >= 70;
 }
 
-/** A coal's or an ember's paint: red-orange, glowing but not white. */
+/**
+ * A candle's or a lamp's core: near white or pale yellow. It is a flame only with a flame's
+ * orange beside it (`isFlameEdge`), which a lit window or a white robe has not.
+ */
+export function isWhiteHot(r: number, g: number, b: number): boolean {
+  return Math.min(r, g, b) >= 232 || (r >= 238 && g >= 212 && b <= 230 && r - b >= 18);
+}
+
+/** A flame's orange edge. */
+export function isFlameEdge(r: number, g: number, b: number): boolean {
+  return r >= 200 && g >= 80 && g <= 215 && b <= 140 && r - b >= 100;
+}
+
+/** A magic glow's paint: bright, and bluer than it is red or green (an orb, a crystal). */
+export function isMagic(r: number, g: number, b: number): boolean {
+  return b >= 170 && b - r >= 40 && b - g >= 15 && r + g + b >= 330;
+}
+
+/** A coal's or an ember's paint: deep red-orange, glowing but not white (firelit wood is browner). */
 export function isCoal(r: number, g: number, b: number): boolean {
-  return r >= 150 && g <= 150 && b <= 90 && r - g >= 60;
+  return r >= 170 && g <= 120 && b <= 70 && r - g >= 80;
+}
+
+/** The fewest pixels of flame that make a fire in a `w` × `h` picture: a far candle's. */
+export function minFireArea(w: number, h: number): number {
+  return Math.max(12, Math.round(w * h * 1.5e-5));
 }
 
 /** Box blur by running sums, edges held, `rad` pixels each way, in place on a copy. */
@@ -101,11 +126,25 @@ export function findFires(
   w: number,
   h: number,
   minArea: number,
+  notFlame?: Uint8Array,
 ): { fires: FirePiece[]; label: Int32Array } {
   const core = new Uint8Array(w * h);
+  const edge = new Float32Array(w * h);
   for (let i = 0; i < w * h; i++) {
-    if (isFlame(rgb[i * 3]!, rgb[i * 3 + 1]!, rgb[i * 3 + 2]!)) core[i] = 1;
+    const r = rgb[i * 3]!;
+    const g = rgb[i * 3 + 1]!;
+    const b = rgb[i * 3 + 2]!;
+    if (isFlame(r, g, b)) core[i] = 1;
+    else if (isFlameEdge(r, g, b)) edge[i] = 1;
   }
+  // A white or pale core within a few pixels of a flame's orange is a flame too: a candle.
+  const nearEdge = boxBlur(edge, w, h, Math.max(2, Math.round(Math.max(w, h) / 200)));
+  for (let i = 0; i < w * h; i++) {
+    if (!core[i] && nearEdge[i]! > 0 && isWhiteHot(rgb[i * 3]!, rgb[i * 3 + 1]!, rgb[i * 3 + 2]!)) {
+      core[i] = 1;
+    }
+  }
+  if (notFlame) for (let i = 0; i < w * h; i++) if (notFlame[i]) core[i] = 0;
   const label = new Int32Array(w * h);
   const pieces: FirePiece[] = [];
   const queue = new Int32Array(w * h);
@@ -144,7 +183,7 @@ export function findFires(
   }
   let fires = pieces.filter((f) => f.area >= minArea);
   // Pieces within a few pixels of each other are one fire.
-  const near = Math.round(Math.max(w, h) * 0.03);
+  const near = Math.round(Math.max(w, h) * 0.015);
   for (let merged = true; merged;) {
     merged = false;
     outer: for (let i = 0; i < fires.length; i++) {
@@ -182,51 +221,156 @@ async function shrink(m: Float32Array, w: number, h: number): Promise<Uint8Array
   return new Uint8Array(out.buffer, out.byteOffset, ROOM_SIZE.width * ROOM_SIZE.height);
 }
 
+/** A magic glow found on the picture: its middle and radius, and its colour, picture pixels. */
+export interface Orb {
+  at: [number, number];
+  r: number;
+  colour: [number, number, number];
+}
+
 /**
- * The lights of a cut picture (its RGB bytes, `w` × `h`, already the view box's shape),
- * as masks at ROOM_SIZE.
+ * The magic glows: pieces of bright blue paint holding near-white light, an orb's or a
+ * crystal's (a dim blue window holds none). Biggest first, at most four.
  */
-export async function findLights(rgb: Uint8Array, w: number, h: number): Promise<RoomLights> {
-  const minArea = Math.max(40, Math.round(w * h * 1.2e-4));
-  const { fires, label } = findFires(rgb, w, h, minArea);
-  const flame = new Float32Array(w * h);
-  const coal = new Float32Array(w * h);
-  const light = new Float32Array(w * h);
-  const others = new Float32Array(w * h);
-  const unit = Math.max(w, h) / 1448;
-  let coalBed = 0;
-  fires.slice(0, 4).forEach((f, i) => {
-    const m = new Float32Array(w * h);
-    for (let k = 0; k < w * h; k++) if (label[k] === f.n) m[k] = 1;
-    const soft = blur(m, w, h, Math.round(10 * unit));
-    for (let k = 0; k < w * h; k++) flame[k] = Math.max(flame[k]!, Math.min(1, soft[k]! * 4));
-    // The coals: red-orange paint in a band from the flames' top to under their foot.
-    const bx0 = Math.max(0, f.x0 - Math.round(40 * unit));
-    const bx1 = Math.min(w, f.x1 + Math.round(40 * unit));
-    const by0 = f.y0;
-    const by1 = Math.min(h, f.y1 + Math.round(50 * unit));
-    const c = new Float32Array(w * h);
-    let count = 0;
-    for (let y = by0; y < by1; y++) {
-      for (let x = bx0; x < bx1; x++) {
-        const k = y * w + x;
-        if (!label[k] && isCoal(rgb[k * 3]!, rgb[k * 3 + 1]!, rgb[k * 3 + 2]!)) {
-          c[k] = 1;
-          count++;
+export function findOrbs(rgb: Uint8Array, w: number, h: number, minArea: number): Orb[] {
+  const glow = new Uint8Array(w * h);
+  for (let i = 0; i < w * h; i++) {
+    if (isMagic(rgb[i * 3]!, rgb[i * 3 + 1]!, rgb[i * 3 + 2]!)) glow[i] = 1;
+  }
+  const seen = new Uint8Array(w * h);
+  const queue = new Int32Array(w * h);
+  const orbs: (Orb & { area: number })[] = [];
+  for (let s0 = 0; s0 < w * h; s0++) {
+    if (!glow[s0] || seen[s0]) continue;
+    let head = 0;
+    let tail = 0;
+    queue[tail++] = s0;
+    seen[s0] = 1;
+    let area = 0;
+    let white = 0;
+    let x0 = w;
+    let x1 = 0;
+    let y0 = h;
+    let y1 = 0;
+    const sum: [number, number, number] = [0, 0, 0];
+    while (head < tail) {
+      const k = queue[head++]!;
+      const x = k % w;
+      const y = (k - x) / w;
+      area++;
+      x0 = Math.min(x0, x);
+      x1 = Math.max(x1, x);
+      y0 = Math.min(y0, y);
+      y1 = Math.max(y1, y);
+      sum[0] += rgb[k * 3]!;
+      sum[1] += rgb[k * 3 + 1]!;
+      sum[2] += rgb[k * 3 + 2]!;
+      for (let dy = -2; dy <= 2; dy++) {
+        for (let dx = -2; dx <= 2; dx++) {
+          const xx = x + dx;
+          const yy = y + dy;
+          if (xx < 0 || yy < 0 || xx >= w || yy >= h) continue;
+          const q = yy * w + xx;
+          if (seen[q]) continue;
+          const r = rgb[q * 3]!;
+          const g = rgb[q * 3 + 1]!;
+          const b = rgb[q * 3 + 2]!;
+          // The white heart is part of the glow.
+          if (glow[q] || Math.min(r, g, b) >= 225) {
+            if (Math.min(r, g, b) >= 225) white++;
+            seen[q] = 1;
+            queue[tail++] = q;
+          }
         }
       }
     }
-    if (i === 0) coalBed = count;
-    const cs = blur(c, w, h, Math.round(2 * unit));
-    for (let k = 0; k < w * h; k++) coal[k] = Math.max(coal[k]!, Math.min(1, cs[k]! * 2));
-    // Its light over the room: wide and soft, a little wider for a bigger fire.
-    const size = Math.max(f.x1 - f.x0, f.y1 - f.y0);
-    const l = blur(m, w, h, Math.round(Math.min(260 * unit, Math.max(140 * unit, size * 2.2))));
-    let top = 0;
-    for (let k = 0; k < w * h; k++) top = Math.max(top, l[k]!);
-    const into = i === 0 ? light : others;
-    for (let k = 0; k < w * h; k++) into[k] = Math.max(into[k]!, l[k]! / (top || 1));
+    if (area < minArea || white < Math.max(4, area * 0.02)) continue;
+    orbs.push({
+      at: [(x0 + x1) / 2, (y0 + y1) / 2],
+      r: Math.max(x1 - x0, y1 - y0) / 2,
+      colour: sum.map((v) => Math.round(v / area)) as [number, number, number],
+      area,
+    });
+  }
+  orbs.sort((a, b) => b.area - a.area);
+  return orbs.slice(0, 4).map(({ at, r, colour }) => ({ at, r, colour }));
+}
+
+/**
+ * The lights of a cut picture (its RGB bytes, `w` × `h`, already the view box's shape),
+ * as masks at ROOM_SIZE. Each fire lights the wall round it and throws a pool on the floor
+ * in front of and under it, as a hearth does.
+ */
+export async function findLights(rgb: Uint8Array, w: number, h: number): Promise<RoomLights> {
+  const unit = Math.max(w, h) / 1448;
+  const minArea = minFireArea(w, h);
+  // An orb's white heart is no candle: the orbs take their pixels first.
+  const orbsFound = findOrbs(rgb, w, h, minArea * 4);
+  const orbPixels = new Uint8Array(w * h);
+  for (const o of orbsFound) {
+    const r = o.r * 1.4;
+    for (let y = Math.max(0, Math.floor(o.at[1] - r)); y < Math.min(h, o.at[1] + r); y++) {
+      for (let x = Math.max(0, Math.floor(o.at[0] - r)); x < Math.min(w, o.at[0] + r); x++) {
+        if (Math.hypot(x - o.at[0], y - o.at[1]) <= r) orbPixels[y * w + x] = 1;
+      }
+    }
+  }
+  const { fires, label } = findFires(rgb, w, h, minArea, orbPixels);
+  const index = new Map(fires.map((f, i) => [f.n, i] as const));
+  const flameAll = new Float32Array(w * h);
+  const coalAll = new Float32Array(w * h);
+  const big = new Float32Array(w * h);
+  const rest = new Float32Array(w * h);
+  for (let k = 0; k < w * h; k++) {
+    const i = index.get(label[k]!);
+    if (i === undefined) continue;
+    flameAll[k] = 1;
+    (i === 0 ? big : rest)[k] = 1;
+  }
+  // The coals: red-orange paint in a band from each fire's middle to under its foot.
+  let coalBed = 0;
+  fires.forEach((f, i) => {
+    const bx0 = Math.max(0, f.x0 - Math.round(40 * unit));
+    const bx1 = Math.min(w, f.x1 + Math.round(40 * unit));
+    const by1 = Math.min(h, f.y1 + Math.round(50 * unit));
+    for (let y = Math.round((f.y0 + f.y1) / 2); y < by1; y++) {
+      for (let x = bx0; x < bx1; x++) {
+        const k = y * w + x;
+        if (!label[k] && isCoal(rgb[k * 3]!, rgb[k * 3 + 1]!, rgb[k * 3 + 2]!)) {
+          if (!coalAll[k] && i === 0) coalBed++;
+          coalAll[k] = 1;
+        }
+      }
+    }
   });
+  const soft = blur(flameAll, w, h, Math.round(10 * unit));
+  const flame = soft.map((v) => Math.min(1, v * 4));
+  const coal = blur(coalAll, w, h, Math.round(2 * unit)).map((v) => Math.min(1, v * 2));
+  // A fire's light: a wide soft field round it, and a pool on the floor before and under
+  // it, wider than it is deep, as far down as the fire is wide.
+  const lightOf = (fs: FirePiece[], mask: Float32Array): Float32Array => {
+    const src = Float32Array.from(mask);
+    for (const f of fs) {
+      const size = Math.max(f.x1 - f.x0, f.y1 - f.y0, 8 * unit);
+      const cx = (f.x0 + f.x1) / 2;
+      const cy = f.y1 + size * 1.1;
+      const rx = size * 2.2;
+      const ry = size * 0.9;
+      for (let y = Math.max(0, Math.floor(cy - ry)); y < Math.min(h, Math.ceil(cy + ry)); y++) {
+        for (let x = Math.max(0, Math.floor(cx - rx)); x < Math.min(w, Math.ceil(cx + rx)); x++) {
+          const d = ((x - cx) / rx) ** 2 + ((y - cy) / ry) ** 2;
+          if (d < 1) src[y * w + x] = Math.max(src[y * w + x]!, (1 - d) * 0.35);
+        }
+      }
+    }
+    const size = fs.length ? Math.max(...fs.map((f) => Math.max(f.x1 - f.x0, f.y1 - f.y0))) : 0;
+    const l = blur(src, w, h, Math.round(Math.min(260 * unit, Math.max(110 * unit, size * 2))));
+    let top = 0;
+    for (const v of l) top = Math.max(top, v);
+    return l.map((v) => v / (top || 1));
+  };
+  const light = lightOf(fires.slice(0, 1), big);
+  const others = lightOf(fires.slice(1), rest);
   const sx = ROOM_SIZE.width / w;
   const sy = ROOM_SIZE.height / h;
   const scaled = fires.map((f) => ({
@@ -236,7 +380,12 @@ export async function findLights(rgb: Uint8Array, w: number, h: number): Promise
     y1: f.y1 * sy,
     area: f.area,
   }));
-  const big = scaled[0];
+  const first = scaled[0];
+  const orbs = orbsFound.map((o) => ({
+    at: [+(o.at[0] * sx).toFixed(1), +(o.at[1] * sy).toFixed(1)] as [number, number],
+    r: +(o.r * sx).toFixed(1),
+    colour: o.colour,
+  }));
   return {
     flame: await shrink(flame, w, h),
     coal: await shrink(coal, w, h),
@@ -245,9 +394,10 @@ export async function findLights(rgb: Uint8Array, w: number, h: number): Promise
     fires: scaled,
     // Sparks rise only off a bed of coals, not off a lamp's wick.
     sparks:
-      big && coalBed >= big.area * 0.5
-        ? [+big.x0.toFixed(1), +big.x1.toFixed(1), +big.y1.toFixed(1)]
+      first && coalBed >= fires[0]!.area * 0.5
+        ? [+first.x0.toFixed(1), +first.x1.toFixed(1), +first.y1.toFixed(1)]
         : null,
+    orbs,
   };
 }
 
@@ -274,7 +424,7 @@ export async function cutRoom(path: string, top?: number): Promise<CutRoom> {
   const y0 =
     top !== undefined
       ? Math.max(0, Math.min(H - band, top))
-      : chooseBand(H, band, findFires(full, W, H, Math.max(40, Math.round(W * H * 1.2e-4))).fires);
+      : chooseBand(H, band, findFires(full, W, H, minFireArea(W, H)).fires);
   const rgb = new Uint8Array(full.buffer, full.byteOffset + y0 * W * 3, W * band * 3);
   const lights = await findLights(rgb, W, band);
   const picture = await sharp(Buffer.from(rgb), { raw: { width: W, height: band, channels: 3 } })

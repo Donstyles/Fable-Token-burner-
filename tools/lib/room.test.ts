@@ -30,7 +30,7 @@ describe('room lights', () => {
     const h = 185;
     const rgb = paint(w, h, [
       [60, 100, 100, 130, ...YELLOW], // the forge's left tongues
-      [106, 104, 140, 130, ...YELLOW], // its right tongues, past a log
+      [104, 104, 140, 130, ...YELLOW], // its right tongues, past a log
       [300, 20, 312, 34, ...YELLOW], // a lamp's flame
       [380, 150, 382, 152, ...YELLOW], // a glint on a helmet
     ]);
