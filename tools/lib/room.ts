@@ -510,6 +510,8 @@ export type Box = [number, number, number, number];
 export type Circle = [number, number, number, number];
 
 export interface RoomMarks {
+  /** Another room's picture to cut (a second room from one picture, its marks its own). */
+  from?: string;
   /** The band's top row by hand, when the fires and the marks would put it wrong. */
   top?: number;
   /** Clouds floating in the room: each bobs and churns where it hangs. */
@@ -548,12 +550,20 @@ export interface RoomMarks {
   beams?: Box[];
   /** A hearth whose fire is small (a cottage's low fire on its bed of coals). */
   hearths?: Box[];
+  /** Paint where nothing is read as fire and nothing moves (a floor's painted reflections). */
+  still?: Box[];
+  /** Hanging cloth stirring in a draught, hung from its top. */
+  drapes?: Box[];
+  /** Night sky: stars twinkling on its dark paint. */
+  stars?: Box[];
+  /** Smoke rising thin from the foot of the box (a censer, a bowl of incense). */
+  incense?: Box[];
 }
 
 /** The kinds of mark that are circles, not boxes. */
 const CIRCLES = new Set(['rings', 'discs']);
 /** The kinds the band need not hold: a floor runs off the picture's foot, a beam off its head. */
-const LOOSE = new Set(['top', 'shines', 'glass', 'beams', 'hearths']);
+const LOOSE = new Set(['from', 'top', 'shines', 'still', 'glass', 'beams', 'hearths', 'stars']);
 
 export interface CutRoom {
   /** The picture at ROOM_SIZE, RGB bytes. */
@@ -579,7 +589,7 @@ export async function cutRoom(path: string, top?: number, marks: RoomMarks = {})
   const full = new Uint8Array(await src.clone().raw().toBuffer());
   // Every mark as a box in the picture's pixels.
   const boxesOf = (kind: string, list: unknown): Box[] =>
-    kind === 'top'
+    kind === 'top' || kind === 'from'
       ? []
       : CIRCLES.has(kind)
         ? (list as Circle[]).map(([x, y, , r]) => [x - r, y - r, x + r, y + r] as Box)
@@ -603,6 +613,7 @@ export async function cutRoom(path: string, top?: number, marks: RoomMarks = {})
   };
   const notFlame = [
     'shines',
+    'still',
     'rings',
     'discs',
     'glints',
@@ -663,7 +674,7 @@ export async function cutRoom(path: string, top?: number, marks: RoomMarks = {})
   ];
   const scaled: RoomMarks = Object.fromEntries(
     Object.entries(marks)
-      .filter(([kind]) => kind !== 'top' && kind !== 'hearths')
+      .filter(([kind]) => kind !== 'top' && kind !== 'hearths' && kind !== 'from')
       .map(([kind, list]) => [
         kind,
         CIRCLES.has(kind) ? (list as Circle[]).map(scaleCircle) : (list as Box[]).map(scale),

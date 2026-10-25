@@ -33,10 +33,11 @@ async function main(): Promise<void> {
   if (!id || !isValidId(id) || (top !== undefined && !Number.isInteger(top))) {
     fail('room <house id> [--top <px>]');
   }
-  const from = join(INBOX, `${id}.png`);
   const marked = existsSync(MARKS)
     ? (JSON.parse(await readFile(MARKS, 'utf8')) as Record<string, RoomMarks>)
     : {};
+  // A room can be cut from another's picture, with marks of its own.
+  const from = join(INBOX, `${marked[id]?.from ?? id}.png`);
   const room = await cutRoom(from, top, marked[id] ?? {});
   await mkdir(OUT, { recursive: true });
   await mkdir(WORK, { recursive: true });

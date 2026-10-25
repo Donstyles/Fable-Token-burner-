@@ -200,6 +200,10 @@ describe('a room cut from a picture', () => {
     });
     expect(room.top).toBe(200);
     expect(room.lights.fires).toHaveLength(1);
+    // A still area reads no flame either, and is not passed on to be moved.
+    const still = await cutRoom(file, 200, { still: [[0, 650, w, h]] });
+    expect(still.lights.fires).toHaveLength(1);
+    expect(await cutRoom(file, 200)).toMatchObject({ lights: { fires: [{}, {}] } });
     const s = ROOM_SIZE.width / w;
     const [x, y, r0, r1] = room.marks.rings![0]!;
     expect(x).toBeCloseTo(700 * s, 0);
