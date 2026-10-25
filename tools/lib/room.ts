@@ -104,8 +104,21 @@ function blur(src: Float32Array, w: number, h: number, rad: number): Float32Arra
 /**
  * The band of a `height`-tall picture, `band` rows high, to keep: every fire inside with a
  * margin if it can be, else the fires' middle; the picture's middle when it has no fire.
+ * The things marked by hand (`must`) come first: the band holds them, as near as it can to
+ * where the fires alone would put it (a polished floor's reflections of the lamps count as
+ * fires too).
  */
-export function chooseBand(height: number, band: number, fires: Fire[]): number {
+export function chooseBand(height: number, band: number, fires: Fire[], must: Fire[] = []): number {
+  if (must.length) {
+    const want = chooseBand(height, band, fires);
+    const top = Math.min(...must.map((f) => f.y0));
+    const bottom = Math.max(...must.map((f) => f.y1));
+    const margin = Math.min(Math.round(band * 0.15), Math.floor((band - (bottom - top)) / 2));
+    if (margin < 0) return chooseBand(height, band, must);
+    const lo = Math.max(0, bottom + margin - band);
+    const hi = Math.min(height - band, top - margin);
+    return Math.min(hi, Math.max(lo, want));
+  }
   const mid = Math.round((height - band) / 2);
   if (!fires.length || band >= height) return Math.max(0, mid);
   const top = Math.min(...fires.map((f) => f.y0));
@@ -181,9 +194,30 @@ export function findFires(
     }
     pieces.push(f);
   }
-  let fires = pieces.filter((f) => f.area >= minArea);
-  // Pieces within a few pixels of each other are one fire.
   const near = Math.round(Math.max(w, h) * 0.015);
+  // Firelit floor before a hearth, painted as bright as its flames, is no flame: a wide patch
+  // lying wholly below a much bigger flame, further under it than the flame is tall (its
+  // embers, under its logs, lie nearer). It neither licks nor glows as embers (owner, of the
+  // inn's: "a small Pool of Lava on the floor in Front of the Inns Hearth").
+  const lit = new Set(
+    pieces
+      .filter(
+        (q) =>
+          q.x1 - q.x0 >= (q.y1 - q.y0) * 1.3 &&
+          pieces.some(
+            (p) =>
+              p.area >= q.area * 3 &&
+              q.y0 - p.y1 > p.y1 - p.y0 &&
+              q.y0 - p.y1 <= near * 8 &&
+              q.x0 <= p.x1 &&
+              q.x1 >= p.x0,
+          ),
+      )
+      .map((q) => q.n),
+  );
+  if (lit.size) for (let k = 0; k < w * h; k++) if (lit.has(label[k]!)) label[k] = 0;
+  let fires = pieces.filter((f) => f.area >= minArea && !lit.has(f.n));
+  // Pieces within a few pixels of each other are one fire.
   for (let merged = true; merged;) {
     merged = false;
     outer: for (let i = 0; i < fires.length; i++) {
@@ -285,6 +319,25 @@ export function findOrbs(rgb: Uint8Array, w: number, h: number, minArea: number)
       }
     }
     if (area < minArea || white < Math.max(4, area * 0.02)) continue;
+    // A glow is round and shines out of a darker room: a pane of sky in a window, blue
+    // beside more blue, is not one, nor is a sparkle on pale marble.
+    const bw = x1 - x0 + 1;
+    const bh = y1 - y0 + 1;
+    if (bw / bh > 1.8 || bh / bw > 1.8 || area < bw * bh * 0.35) continue;
+    const lum = (sum[0] + sum[1] + sum[2]) / (3 * area);
+    const ring = Math.max(bw, bh) * 0.9;
+    let round = 0;
+    let n = 0;
+    for (let k = 0; k < 32; k++) {
+      const a = (k / 32) * Math.PI * 2;
+      const x = Math.round((x0 + x1) / 2 + Math.cos(a) * ring);
+      const y = Math.round((y0 + y1) / 2 + Math.sin(a) * ring);
+      if (x < 0 || y < 0 || x >= w || y >= h) continue;
+      const q = (y * w + x) * 3;
+      round += (rgb[q]! + rgb[q + 1]! + rgb[q + 2]!) / 3;
+      n++;
+    }
+    if (!n || round / n > lum * 0.6) continue;
     orbs.push({
       at: [(x0 + x1) / 2, (y0 + y1) / 2],
       r: Math.max(x1 - x0, y1 - y0) / 2,
@@ -327,18 +380,47 @@ export async function findLights(rgb: Uint8Array, w: number, h: number): Promise
     flameAll[k] = 1;
     (i === 0 ? big : rest)[k] = 1;
   }
-  // The coals: red-orange paint in a band from each fire's middle to under its foot.
+  // The coals: red-orange paint in a band from a hearth's or a brazier's middle to under its
+  // foot, joined to its flames: a candle or a lamp has none, and firelit floor across the
+  // hearth's lip, however red, is no ember (owner, 2026-10-25, of the inn's: "a small Pool of
+  // Lava on the floor in Front of the Inns Hearth").
   let coalBed = 0;
+  const near = 2;
   fires.forEach((f, i) => {
+    if (Math.max(f.x1 - f.x0, f.y1 - f.y0) < w * 0.03) return;
     const bx0 = Math.max(0, f.x0 - Math.round(40 * unit));
     const bx1 = Math.min(w, f.x1 + Math.round(40 * unit));
+    const by0 = Math.round((f.y0 + f.y1) / 2);
     const by1 = Math.min(h, f.y1 + Math.round(50 * unit));
-    for (let y = Math.round((f.y0 + f.y1) / 2); y < by1; y++) {
-      for (let x = bx0; x < bx1; x++) {
+    const inBand = (x: number, y: number) => x >= bx0 && x < bx1 && y >= by0 && y < by1;
+    // Grown out from the fire's own flame through ember paint, a pixel or two at a time.
+    const queue: number[] = [];
+    const seen = new Uint8Array(w * h);
+    for (let y = Math.max(0, f.y0); y <= Math.min(h - 1, f.y1); y++) {
+      for (let x = Math.max(0, f.x0); x <= Math.min(w - 1, f.x1); x++) {
         const k = y * w + x;
-        if (!label[k] && isCoal(rgb[k * 3]!, rgb[k * 3 + 1]!, rgb[k * 3 + 2]!)) {
-          if (!coalAll[k] && i === 0) coalBed++;
-          coalAll[k] = 1;
+        if (label[k] === f.n) {
+          seen[k] = 1;
+          queue.push(k);
+        }
+      }
+    }
+    for (let head = 0; head < queue.length; head++) {
+      const k = queue[head]!;
+      const x = k % w;
+      const y = (k - x) / w;
+      for (let dy = -near; dy <= near; dy++) {
+        for (let dx = -near; dx <= near; dx++) {
+          const xx = x + dx;
+          const yy = y + dy;
+          if (!inBand(xx, yy)) continue;
+          const q = yy * w + xx;
+          if (seen[q] || label[q]) continue;
+          if (!isCoal(rgb[q * 3]!, rgb[q * 3 + 1]!, rgb[q * 3 + 2]!)) continue;
+          seen[q] = 1;
+          queue.push(q);
+          if (!coalAll[q] && i === 0) coalBed++;
+          coalAll[q] = 1;
         }
       }
     }
@@ -392,46 +474,80 @@ export async function findLights(rgb: Uint8Array, w: number, h: number): Promise
     light: await shrink(light, w, h),
     others: await shrink(others, w, h),
     fires: scaled,
-    // Sparks rise only off a bed of coals, not off a lamp's wick.
+    // Sparks rise only off a bed of coals, not off a lamp's wick, nor off a lamp's bronze bowl:
+    // the fire must be a hearth's or a brazier's size.
     sparks:
-      first && coalBed >= fires[0]!.area * 0.5
+      first &&
+      coalBed >= fires[0]!.area * 0.25 &&
+      Math.max(fires[0]!.x1 - fires[0]!.x0, fires[0]!.y1 - fires[0]!.y0) >= w * 0.03
         ? [+first.x0.toFixed(1), +first.x1.toFixed(1), +first.y1.toFixed(1)]
         : null,
     orbs,
   };
 }
 
+/** A box, x from, y from, x to, y to. */
+export type Box = [number, number, number, number];
+
+/**
+ * What moves in a room that is not fire, marked by hand on the owner's picture
+ * (pipeline/rooms.json, its pixels): the game cannot find a cloud or a vapour on paint.
+ */
+export interface RoomMarks {
+  /** Clouds floating in the room: each bobs and churns where it hangs. */
+  clouds?: Box[];
+  /** Where wisps of mist drift through. */
+  mists?: Box[];
+  /** Columns of vapour, each twisting upward with sparks rising in it. */
+  vapours?: Box[];
+}
+
 export interface CutRoom {
   /** The picture at ROOM_SIZE, RGB bytes. */
   picture: Buffer;
   lights: RoomLights;
+  /** The marks in ROOM_SIZE pixels. */
+  marks: RoomMarks;
   /** The band's top row in the source picture, and its height. */
   top: number;
   band: number;
 }
 
 /**
- * Cut the picture at `path` to the view box's shape, the band keeping its fires (or from
- * `top` when given), and find its lights.
+ * Cut the picture at `path` to the view box's shape, the band keeping its fires and its
+ * `marks` (or from `top` when given), and find its lights.
  */
-export async function cutRoom(path: string, top?: number): Promise<CutRoom> {
+export async function cutRoom(path: string, top?: number, marks: RoomMarks = {}): Promise<CutRoom> {
   const src = sharp(path).removeAlpha();
   const meta = await src.metadata();
   const W = meta.width ?? 0;
   const H = meta.height ?? 0;
   const band = Math.min(H, Math.round((W * ROOM_SIZE.height) / ROOM_SIZE.width));
   const full = new Uint8Array(await src.clone().raw().toBuffer());
+  const boxes = Object.values(marks).flat() as Box[];
+  const kept = boxes.map(([x0, by0, x1, by1]) => ({ x0, x1, y0: by0, y1: by1, area: 0 }));
   const y0 =
     top !== undefined
       ? Math.max(0, Math.min(H - band, top))
-      : chooseBand(H, band, findFires(full, W, H, minFireArea(W, H)).fires);
+      : chooseBand(H, band, findFires(full, W, H, minFireArea(W, H)).fires, kept);
   const rgb = new Uint8Array(full.buffer, full.byteOffset + y0 * W * 3, W * band * 3);
   const lights = await findLights(rgb, W, band);
   const picture = await sharp(Buffer.from(rgb), { raw: { width: W, height: band, channels: 3 } })
     .resize(ROOM_SIZE.width, ROOM_SIZE.height, { fit: 'fill', kernel: 'lanczos3' })
     .png()
     .toBuffer();
-  return { picture, lights, top: y0, band };
+  const sx = ROOM_SIZE.width / W;
+  const sy = ROOM_SIZE.height / band;
+  const scale = (b: Box): Box => [
+    +(b[0] * sx).toFixed(1),
+    +Math.max(0, (b[1] - y0) * sy).toFixed(1),
+    +(b[2] * sx).toFixed(1),
+    +Math.min(ROOM_SIZE.height, (b[3] - y0) * sy).toFixed(1),
+  ];
+  const scaled: RoomMarks = Object.fromEntries(
+    Object.entries(marks).map(([kind, list]) => [kind, (list as Box[]).map(scale)]),
+  );
+  return { picture, lights, marks: scaled, top: y0, band };
 }
 
 /** The four masks as one RGBA PNG. */

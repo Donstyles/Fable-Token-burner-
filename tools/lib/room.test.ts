@@ -1,6 +1,15 @@
 import sharp from 'sharp';
 import { describe, expect, it } from 'vitest';
-import { ROOM_SIZE, chooseBand, cutRoom, findFires, findLights, isCoal, isFlame } from './room';
+import {
+  ROOM_SIZE,
+  chooseBand,
+  cutRoom,
+  findFires,
+  findLights,
+  findOrbs,
+  isCoal,
+  isFlame,
+} from './room';
 
 /** A dark room `w` × `h` with painted boxes: [x0, y0, x1, y1, r, g, b]. */
 function paint(w: number, h: number, boxes: number[][]): Uint8Array {
@@ -62,10 +71,65 @@ describe('room lights', () => {
     expect(l.sparks).toEqual([100, 179, 189]);
   });
 
+  it('takes firelit floor before a hearth for neither flame nor embers', async () => {
+    // The inn's (owner: "a small Pool of Lava on the floor in Front of the Inns Hearth"): the
+    // flames, their embers under the logs, the hearth's lip, then floor as bright as flame.
+    const w = 640;
+    const h = 296;
+    const rgb = paint(w, h, [
+      [100, 100, 160, 150, ...YELLOW], // the flames
+      [105, 155, 155, 165, ...YELLOW], // burning logs under them
+      [95, 165, 165, 172, ...EMBER], // embers
+      [110, 210, 190, 222, ...YELLOW], // firelit floor past the lip
+      [100, 222, 200, 232, ...EMBER], // and red floor under it
+    ]);
+    const l = await findLights(rgb, w, h);
+    const at = (m: Uint8Array, x: number, y: number) => m[y * ROOM_SIZE.width + x]!;
+    expect(l.fires).toHaveLength(1);
+    expect(at(l.flame, 130, 120)).toBeGreaterThan(200);
+    expect(at(l.flame, 150, 216)).toBe(0);
+    expect(at(l.coal, 130, 168)).toBeGreaterThan(150);
+    expect(at(l.coal, 150, 227)).toBe(0);
+  });
+
   it('a lamp alone throws no sparks', async () => {
     const l = await findLights(paint(640, 296, [[500, 30, 516, 46, ...YELLOW]]), 640, 296);
     expect(l.fires).toHaveLength(1);
     expect(l.sparks).toBeNull();
+  });
+});
+
+describe('magic glows', () => {
+  /** A blue disc with a white heart at (cx, cy), radius r, painted into `rgb`. */
+  const orb = (rgb: Uint8Array, w: number, cx: number, cy: number, r: number) => {
+    for (let y = cy - r; y <= cy + r; y++) {
+      for (let x = cx - r; x <= cx + r; x++) {
+        const d = Math.hypot(x - cx, y - cy);
+        if (d <= r) rgb.set(d < r * 0.35 ? [240, 240, 250] : [120, 140, 245], (y * w + x) * 3);
+      }
+    }
+  };
+
+  it('finds an orb glowing in a dark room', () => {
+    const w = 400;
+    const h = 200;
+    const rgb = paint(w, h, []);
+    orb(rgb, w, 300, 100, 12);
+    const orbs = findOrbs(rgb, w, h, 40);
+    expect(orbs).toHaveLength(1);
+    expect(orbs[0]!.at).toEqual([300, 100]);
+  });
+
+  it('takes no pane of sky for one: blue beside more blue, its clouds white', () => {
+    const w = 400;
+    const h = 200;
+    // A window of sky (the air guild's), panes of blue with white clouds, lead between them.
+    const rgb = paint(w, h, [[100, 20, 300, 180, 90, 150, 235]]);
+    for (let y = 20; y < 180; y += 12)
+      for (let x = 100; x < 300; x++) rgb.set([60, 60, 70], (y * w + x) * 3);
+    orb(rgb, w, 200, 100, 12);
+    orb(rgb, w, 150, 60, 8);
+    expect(findOrbs(rgb, w, h, 40)).toHaveLength(0);
   });
 });
 
@@ -83,6 +147,14 @@ describe('the band kept', () => {
 
   it('centres on the fires when they cannot all fit with room', () => {
     expect(chooseBand(1000, 300, [fire(100, 120), fire(800, 820)])).toBe(310);
+  });
+
+  it('holds what was marked by hand first, as near the fires as it can', () => {
+    // Clouds high up, the lamps' reflections low on a polished floor: the clouds are kept.
+    const clouds = [fire(182, 478)];
+    const top = chooseBand(1086, 670, [fire(260, 440), fire(800, 1000)], clouds);
+    expect(top).toBeLessThanOrEqual(182 - 100);
+    expect(top + 670).toBeGreaterThanOrEqual(478 + 100);
   });
 });
 
@@ -106,5 +178,22 @@ describe('a room cut from a picture', () => {
     expect([meta.width, meta.height]).toEqual([ROOM_SIZE.width, ROOM_SIZE.height]);
     expect(room.lights.fires).toHaveLength(2);
     expect((await cutRoom(file, 300)).top).toBe(300);
+  });
+
+  it('keeps the marks in the band and gives them in its pixels', async () => {
+    const w = 1448;
+    const h = 1086;
+    const file = `${process.env.TMPDIR ?? '/tmp'}/room-marks-test.png`;
+    await sharp(Buffer.from(paint(w, h, [])), { raw: { width: w, height: h, channels: 3 } })
+      .png()
+      .toFile(file);
+    const room = await cutRoom(file, undefined, { vapours: [[100, 150, 250, 625]] });
+    expect(room.top).toBeLessThanOrEqual(150);
+    const [x0, y0, x1, y1] = room.marks.vapours![0]!;
+    const s = ROOM_SIZE.width / w;
+    expect(x0).toBeCloseTo(100 * s, 0);
+    expect(x1).toBeCloseTo(250 * s, 0);
+    expect(y0).toBeCloseTo((150 - room.top) * s, 0);
+    expect(y1).toBeCloseTo((625 - room.top) * s, 0);
   });
 });

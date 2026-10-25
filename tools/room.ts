@@ -2,17 +2,21 @@
  * Cut a house's room (DESIGN.md 17.8): the owner's picture at pipeline/inbox/rooms/<id>.png,
  * named for the house it belongs to (src/game/content.ts), cut to the view box with the lights
  * the game animates found on its paint, into assets/rooms/, and recorded in the manifest. The
- * review sheet, the cut picture over its masks, goes to pipeline/work/rooms/.
+ * review sheet, the cut picture over its masks, goes to pipeline/work/rooms/. What moves that
+ * is not fire (a cloud, a column of vapour) is marked by hand in pipeline/rooms.json.
  *
  *   npm run room -- <house id> [--top <px>]
  */
-import { mkdir, writeFile } from 'node:fs/promises';
+import { existsSync } from 'node:fs';
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import sharp from 'sharp';
 import { isValidId, readManifest, upsertAsset, writeManifest } from './lib/manifest';
-import { ROOM_SIZE, cutRoom, lightsPng } from './lib/room';
+import { type RoomMarks, ROOM_SIZE, cutRoom, lightsPng } from './lib/room';
 
 const INBOX = 'pipeline/inbox/rooms';
+/** What moves that is not fire, marked by hand on each picture (tools/lib/room.ts RoomMarks). */
+const MARKS = 'pipeline/rooms.json';
 const OUT = 'assets/rooms';
 const WORK = 'pipeline/work/rooms';
 
@@ -30,7 +34,10 @@ async function main(): Promise<void> {
     fail('room <house id> [--top <px>]');
   }
   const from = join(INBOX, `${id}.png`);
-  const room = await cutRoom(from, top);
+  const marked = existsSync(MARKS)
+    ? (JSON.parse(await readFile(MARKS, 'utf8')) as Record<string, RoomMarks>)
+    : {};
+  const room = await cutRoom(from, top, marked[id] ?? {});
   await mkdir(OUT, { recursive: true });
   await mkdir(WORK, { recursive: true });
   const files = {
@@ -50,6 +57,7 @@ async function main(): Promise<void> {
       tenth(Math.max(f.x1 - f.x0, f.y1 - f.y0, 1)),
     ]),
     orbs: room.lights.orbs,
+    ...room.marks,
   };
   await writeFile(files.data, `${JSON.stringify(data, null, 2)}\n`);
 
@@ -66,6 +74,16 @@ async function main(): Promise<void> {
     masks[i * 3 + 1] = Math.min(255, dim + l.coal[i]! + grey);
     masks[i * 3 + 2] = Math.min(255, dim + l.light[i]! + grey);
   }
+  // The marks, outlined in cyan on the masks.
+  for (const box of Object.values(room.marks).flat()) {
+    const [x0, y0, x1, y1] = box.map(Math.round) as [number, number, number, number];
+    for (let x = x0; x <= x1; x++) {
+      for (const y of [y0, y1]) if (x < w && y < h) masks.set([0, 255, 255], (y * w + x) * 3);
+    }
+    for (let y = y0; y <= y1; y++) {
+      for (const x of [x0, x1]) if (x < w && y < h) masks.set([0, 255, 255], (y * w + x) * 3);
+    }
+  }
   const sheet = join(WORK, `${id}.review.png`);
   await sharp(Buffer.concat([base, masks]), { raw: { width: w, height: h * 2, channels: 3 } })
     .resize(w * 2, h * 4, { kernel: 'nearest' })
@@ -81,7 +99,11 @@ async function main(): Promise<void> {
       "The owner's ChatGPT image (OpenAI's terms: the output is the user's): owner holds full rights",
     files: [files.picture, files.lights, files.data],
     date: new Date().toISOString().slice(0, 10),
-    notes: `${l.fires.length} fire(s), ${l.orbs.length} magic glow(s), ${l.sparks ? 'sparks off the biggest' : 'no sparks'}`,
+    notes: `${l.fires.length} fire(s), ${l.orbs.length} magic glow(s), ${l.sparks ? 'sparks off the biggest' : 'no sparks'}${Object.entries(
+      room.marks,
+    )
+      .map(([kind, list]) => `, ${list.length} ${kind} marked`)
+      .join('')}`,
   });
   await writeManifest(manifest);
   console.info(
