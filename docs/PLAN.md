@@ -634,8 +634,12 @@ view's box, its fires moving, the keeper's portrait on the board (DESIGN 17.8).
    away from their fires.
 3. Done 2026-10-25: the guild, the townhouse beside the inn (the Initiate Guild of Air), its
    orb throbbing in its own colour with motes and crackles.
-4. MM6-style guild rooms (DESIGN 17.8), each with an effect for its centrepiece over a marked
-   region: cloud drifting, water falling, a ring turning, vapour rising with sparks.
+4. MM6-style guild rooms (DESIGN 17.8), each with an effect for its centrepiece over a region
+   marked in pipeline/rooms.json. Done 2026-10-25: the air guild (Gullhaven's), its clouds
+   bobbing and churning with mist drifting by, and the light guild (`?room=guild-light`), its
+   vapour climbing with sparks. Next: the fire, water, earth, spirit and dark guilds and the
+   homes from the owner's pictures (a pillar of fire, falling water with spray and ripples,
+   floating rocks, a turning ring, smoke with bright sparks).
 5. The keeper's portrait and "Converse with" on the board.
 6. Later: the homes, the stock on its shelf for Buy, the cave's "Enter?" picture.
 

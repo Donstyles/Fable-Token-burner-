@@ -2794,13 +2794,26 @@ some lighting?"; of the smithy running: "That's kinda neat"):
   - the **flames** are its brightest white-yellow paint (`isFlame`), in pieces joined where a
     log parts a fire's tongues, a glint on a helmet too small to count; a candle's white-hot
     core counts where orange paint rings it, so a candle on a shelf burns as a hearth does;
-  - the **magic glows** (`findOrbs`) are first: blue-violet paint round a white core, up to
-    four, each taken out of the fire search so an orb's heart is not read as a flame;
-  - the **coals** are the deep red-orange paint from a flame's middle down (`isCoal`), so
-    firelit wood above a hearth does not shimmer as embers;
+  - the **magic glows** (`findOrbs`) are first: blue-violet paint round a white core, round
+    and shining out of a darker room, up to four, each taken out of the fire search so an
+    orb's heart is not read as a flame (a pane of sky in a window, blue beside more blue, is
+    no glow, nor a sparkle on pale marble);
+  - firelit floor before a hearth, painted as bright as its flames, is no flame: a wide patch
+    lying wholly below a much bigger flame, further under it than the flame is tall (its
+    embers lie nearer) (owner, 2026-10-25, of the inn's: "a small Pool of Lava on the floor
+    in Front of the Inns Hearth");
+  - the **coals** are the deep red-orange paint (`isCoal`) grown out from a hearth's or a
+    brazier's own flames, from their middle down: a candle or a lamp has none, firelit wood
+    above a hearth does not shimmer as embers, nor red floor across the hearth's lip;
   - each fire's **light** is a wide soft field round it, wider for a bigger fire, with a pool
     of it on the floor in front, the biggest fire's in one channel and the others' in another;
-  - **sparks** rise only off a fire with a bed of coals under it, not off a lamp's wick.
+  - **sparks** rise only off a hearth's or a brazier's bed of coals, not off a lamp's wick
+    nor its bronze bowl.
+  - what moves that is not fire, a cloud or a column of vapour, is **marked by hand** in
+    pipeline/rooms.json, boxes on the owner's picture (`clouds`, `mists`, `vapours`): the
+    band is chosen to hold them first, then as near the fires as it can (a polished floor's
+    reflections of the lamps count as fires), and they are written with the room in its
+    pixels.
 
   It writes assets/rooms/<house>.png, the four masks as assets/rooms/<house>.lights.png (red
   flames, green coals, blue the biggest fire's light, alpha the others'), the fires, sparks
@@ -2842,12 +2855,30 @@ some lighting?"; of the smithy running: "That's kinda neat"):
 **Checked**: unit tests on painted rooms (tools/lib/room.test.ts) and an end-to-end test that
 taps the smithy's door, finds the room up and drawn, its forge bright and red, its frames
 differing a few steps apart and no frame of the world drawn meanwhile, and the street back at
-the door.
+the door; another opens `?room=guild-light`, finds its big column climbing and the hall
+bright, and a tap taking it down.
+
+- **Clouds and vapour** (owner, 2026-10-25: "Air Guild will need moving clouds, and light
+  Guild will need the ray pillars to be moving"):
+  - a marked cloud bobs where it hangs and its billows churn, the paint round it pulled
+    along and the pull fading out past its box, so nothing tears; wisps of mist drift through
+    a marked mist (rain under the clouds was tried and taken out: "the Raining below the
+    clouds Meddles the air/water association");
+  - a marked column of vapour climbs: its paint is drawn from lower down and swaying, two
+    layers half a climb apart, each fading out as it starts over, so a twist turns as a helix
+    does and never jumps; sparks spiral up it, twinkling, pale blue and pink;
+  - a room without fires (the light guild) is not darkened away from them, and a lamp's
+    flicker hardly moves bright paint beside it, a window's daylight or a white robe; when a
+    room's biggest fire is only a lamp, it flickers close round itself as candles do.
 
 **The rooms in** (2026-10-25): the smithy, the inn, the trader's store, the temple, the
-training hall and the guild, each the owner's picture; Gullhaven's guild is the townhouse
-beside the inn, the Initiate Guild of Air (src/game/content.ts), and a unit test holds every
-house to a room and every room to a house.
+training hall and the guild of air, each the owner's picture; Gullhaven's guild is the
+townhouse beside the inn, the Initiate Guild of Air (src/game/content.ts), its room the
+owner's MM6-style air guild (the candlelit library it first had is kept in the inbox as
+library.png for a house later). The light guild's room is made ahead of a house, until the
+game has light magic: the dev build shows any room by itself with `?room=<id>`, a tap taking
+it down. A unit test holds every house to a room and every room to a house, but those made
+ahead.
 
 **How MM6's guilds looked** (the owner, 2026-10-25: "The magic Shops looked very distinct in
 mm6"; looked at in screenshots of MM6, which stay out of this repository). Not shops or
@@ -2867,16 +2898,25 @@ the middle, with one big thing moving:
   of vapour twisting up it, white with pale sparks for light, smoke with green and violet ones
   for dark; nobody in it.
 
-Gullhaven's guild picture is a candlelit library, which is not that; the owner has prompts for
-an MM6-style air guild. Its cloud, a waterfall, a turning ring or the vapour columns are not
-paint the fire search can find: each wants an effect of its own over a region marked for it
-when its picture comes (drift, fall, spin, rise and twinkle).
+The owner made the air and the light guilds' pictures to these prompts (above), and then the
+fire, water, earth, spirit and dark guilds' and three homes' (poor, middling, rich).
 
-**Next**: the MM6-style guild pictures and their effects; the keeper's portrait and "Converse
+**Next**: the fire, water, earth, spirit and dark guilds' effects (a pillar of fire, falling
+water, its spray and ripples, floating rocks, a turning ring of crystals, smoke with bright
+sparks) and the homes; the keeper's portrait and "Converse
 with" on the board; the homes; the stock on its shelf for Buy once items have pictures; the
 cave's "Enter?" picture once a dungeon lies behind it.
 
 ## 13. Decision log
+
+- 2026-10-25 – The owner's MM6-style air and light guilds (17.8): the air guild is
+  Gullhaven's guild's room, its clouds bobbing and churning with mist drifting by; the light
+  guild's vapour columns climb as turning helices with sparks in them, shown in the dev build
+  with `?room=guild-light` until a house can have it. What moves that is not fire is marked
+  by hand (pipeline/rooms.json). Firelight lies steady and flickers only close round each
+  flame ("Looks Like psychedelic Waves coming from the candles"); the inn's firelit floor is
+  neither flame nor embers ("a small Pool of Lava"); no rain under the clouds ("Meddles the
+  air/water association").
 
 - 2026-10-25 – Five more rooms and a guild (owner's pictures of the inn, the store, the temple,
   the training hall and a spell guild; 17.8). Candles burn, fires light the floor in front of
