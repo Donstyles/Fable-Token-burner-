@@ -57,6 +57,7 @@ async function main(): Promise<void> {
       tenth(Math.max(f.x1 - f.x0, f.y1 - f.y0, 1)),
     ]),
     orbs: room.lights.orbs,
+    hearth: room.lights.hearth,
     ...room.marks,
   };
   await writeFile(files.data, `${JSON.stringify(data, null, 2)}\n`);
@@ -74,14 +75,25 @@ async function main(): Promise<void> {
     masks[i * 3 + 1] = Math.min(255, dim + l.coal[i]! + grey);
     masks[i * 3 + 2] = Math.min(255, dim + l.light[i]! + grey);
   }
-  // The marks, outlined in cyan on the masks.
-  for (const box of Object.values(room.marks).flat()) {
-    const [x0, y0, x1, y1] = box.map(Math.round) as [number, number, number, number];
-    for (let x = x0; x <= x1; x++) {
-      for (const y of [y0, y1]) if (x < w && y < h) masks.set([0, 255, 255], (y * w + x) * 3);
-    }
-    for (let y = y0; y <= y1; y++) {
-      for (const x of [x0, x1]) if (x < w && y < h) masks.set([0, 255, 255], (y * w + x) * 3);
+  // The marks, outlined in cyan on the masks (a circle by its square).
+  for (const [kind, list] of Object.entries(room.marks)) {
+    for (const mark of list as number[][]) {
+      const box =
+        kind === 'rings' || kind === 'discs'
+          ? [mark[0]! - mark[3]!, mark[1]! - mark[3]!, mark[0]! + mark[3]!, mark[1]! + mark[3]!]
+          : mark;
+      const [x0, y0, x1, y1] = box.map((v) => Math.max(0, Math.round(v))) as [
+        number,
+        number,
+        number,
+        number,
+      ];
+      for (let x = x0; x <= x1; x++) {
+        for (const y of [y0, y1]) if (x < w && y < h) masks.set([0, 255, 255], (y * w + x) * 3);
+      }
+      for (let y = y0; y <= y1; y++) {
+        for (const x of [x0, x1]) if (x < w && y < h) masks.set([0, 255, 255], (y * w + x) * 3);
+      }
     }
   }
   const sheet = join(WORK, `${id}.review.png`);

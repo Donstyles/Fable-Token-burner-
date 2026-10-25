@@ -180,6 +180,34 @@ describe('a room cut from a picture', () => {
     expect((await cutRoom(file, 300)).top).toBe(300);
   });
 
+  it('takes a hand-set top, a ring by its middle, and reads no flame in a polished floor', async () => {
+    const w = 1448;
+    const h = 1086;
+    // A hearth, and its reflection on a polished floor below it, as bright as its flames.
+    const rgb = paint(w, h, [
+      [250, 400, 400, 470, ...YELLOW],
+      [240, 470, 410, 490, ...EMBER],
+      [260, 700, 390, 740, ...YELLOW],
+    ]);
+    const file = `${process.env.TMPDIR ?? '/tmp'}/room-shine-test.png`;
+    await sharp(Buffer.from(rgb), { raw: { width: w, height: h, channels: 3 } })
+      .png()
+      .toFile(file);
+    const room = await cutRoom(file, undefined, {
+      top: 200,
+      shines: [[0, 650, w, h]],
+      rings: [[700, 500, 40, 80]],
+    });
+    expect(room.top).toBe(200);
+    expect(room.lights.fires).toHaveLength(1);
+    const s = ROOM_SIZE.width / w;
+    const [x, y, r0, r1] = room.marks.rings![0]!;
+    expect(x).toBeCloseTo(700 * s, 0);
+    expect(y).toBeCloseTo((500 - 200) * s, 0);
+    expect(r0).toBeCloseTo(40 * s, 0);
+    expect(r1).toBeCloseTo(80 * s, 0);
+  });
+
   it('keeps the marks in the band and gives them in its pixels', async () => {
     const w = 1448;
     const h = 1086;

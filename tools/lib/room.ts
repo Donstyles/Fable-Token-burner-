@@ -34,6 +34,8 @@ export interface RoomLights {
   sparks: [number, number, number] | null;
   /** The magic glows, in ROOM_SIZE pixels. */
   orbs: Orb[];
+  /** Whether the biggest fire is a hearth's or a brazier's, whose light flickers wide. */
+  hearth: boolean;
 }
 
 /** A flame's core: white-yellow paint, brighter and yellower than the firelit stone round it. */
@@ -117,7 +119,7 @@ export function chooseBand(height: number, band: number, fires: Fire[], must: Fi
     if (margin < 0) return chooseBand(height, band, must);
     const lo = Math.max(0, bottom + margin - band);
     const hi = Math.min(height - band, top - margin);
-    return Math.min(hi, Math.max(lo, want));
+    return Math.max(0, Math.min(height - band, Math.min(hi, Math.max(lo, want))));
   }
   const mid = Math.round((height - band) / 2);
   if (!fires.length || band >= height) return Math.max(0, mid);
@@ -354,12 +356,21 @@ export function findOrbs(rgb: Uint8Array, w: number, h: number, minArea: number)
  * as masks at ROOM_SIZE. Each fire lights the wall round it and throws a pool on the floor
  * in front of and under it, as a hearth does.
  */
-export async function findLights(rgb: Uint8Array, w: number, h: number): Promise<RoomLights> {
+export async function findLights(
+  rgb: Uint8Array,
+  w: number,
+  h: number,
+  /**
+   * Pixels that are no flame (a polished floor's reflections, crystals) and no coal, and where
+   * a small fire is a hearth all the same (a cottage's low fire on its bed of coals).
+   */
+  not: { flame?: Uint8Array; coal?: Uint8Array; hearth?: Uint8Array } = {},
+): Promise<RoomLights> {
   const unit = Math.max(w, h) / 1448;
   const minArea = minFireArea(w, h);
   // An orb's white heart is no candle: the orbs take their pixels first.
   const orbsFound = findOrbs(rgb, w, h, minArea * 4);
-  const orbPixels = new Uint8Array(w * h);
+  const orbPixels = not.flame ? Uint8Array.from(not.flame) : new Uint8Array(w * h);
   for (const o of orbsFound) {
     const r = o.r * 1.4;
     for (let y = Math.max(0, Math.floor(o.at[1] - r)); y < Math.min(h, o.at[1] + r); y++) {
@@ -385,9 +396,12 @@ export async function findLights(rgb: Uint8Array, w: number, h: number): Promise
   // hearth's lip, however red, is no ember (owner, 2026-10-25, of the inn's: "a small Pool of
   // Lava on the floor in Front of the Inns Hearth").
   let coalBed = 0;
+  const isHearth = (f: Fire): boolean =>
+    Math.max(f.x1 - f.x0, f.y1 - f.y0) >= w * 0.03 ||
+    !!not.hearth?.[Math.round((f.y0 + f.y1) / 2) * w + Math.round((f.x0 + f.x1) / 2)];
   const near = 2;
   fires.forEach((f, i) => {
-    if (Math.max(f.x1 - f.x0, f.y1 - f.y0) < w * 0.03) return;
+    if (!isHearth(f)) return;
     const bx0 = Math.max(0, f.x0 - Math.round(40 * unit));
     const bx1 = Math.min(w, f.x1 + Math.round(40 * unit));
     const by0 = Math.round((f.y0 + f.y1) / 2);
@@ -416,7 +430,7 @@ export async function findLights(rgb: Uint8Array, w: number, h: number): Promise
           if (!inBand(xx, yy)) continue;
           const q = yy * w + xx;
           if (seen[q] || label[q]) continue;
-          if (!isCoal(rgb[q * 3]!, rgb[q * 3 + 1]!, rgb[q * 3 + 2]!)) continue;
+          if (not.coal?.[q] || !isCoal(rgb[q * 3]!, rgb[q * 3 + 1]!, rgb[q * 3 + 2]!)) continue;
           seen[q] = 1;
           queue.push(q);
           if (!coalAll[q] && i === 0) coalBed++;
@@ -477,12 +491,11 @@ export async function findLights(rgb: Uint8Array, w: number, h: number): Promise
     // Sparks rise only off a bed of coals, not off a lamp's wick, nor off a lamp's bronze bowl:
     // the fire must be a hearth's or a brazier's size.
     sparks:
-      first &&
-      coalBed >= fires[0]!.area * 0.25 &&
-      Math.max(fires[0]!.x1 - fires[0]!.x0, fires[0]!.y1 - fires[0]!.y0) >= w * 0.03
+      first && coalBed >= fires[0]!.area * 0.25 && isHearth(fires[0]!)
         ? [+first.x0.toFixed(1), +first.x1.toFixed(1), +first.y1.toFixed(1)]
         : null,
     orbs,
+    hearth: !!fires[0] && isHearth(fires[0]),
   };
 }
 
@@ -493,14 +506,54 @@ export type Box = [number, number, number, number];
  * What moves in a room that is not fire, marked by hand on the owner's picture
  * (pipeline/rooms.json, its pixels): the game cannot find a cloud or a vapour on paint.
  */
+/** A circle, middle x and y, inner and outer radius (a disc's inner is 0). */
+export type Circle = [number, number, number, number];
+
 export interface RoomMarks {
+  /** The band's top row by hand, when the fires and the marks would put it wrong. */
+  top?: number;
   /** Clouds floating in the room: each bobs and churns where it hangs. */
   clouds?: Box[];
   /** Where wisps of mist drift through. */
   mists?: Box[];
   /** Columns of vapour, each twisting upward with sparks rising in it. */
   vapours?: Box[];
+  /** Columns of dark smoke, the same with sparks of every colour. */
+  smokes?: Box[];
+  /** A pillar of fire: its flames climb and its embers fly; no coals are read in it. */
+  pillars?: Box[];
+  /** Panes of coloured glass lit from behind, glowing with the fire or with water's light. */
+  glass?: Box[];
+  /** A polished floor or table: its reflections shimmer, and no flame is read in them. */
+  shines?: Box[];
+  /** Water falling in a sheet or a column. */
+  falls?: Box[];
+  /** Spray and mist thrown up where water lands. */
+  sprays?: Box[];
+  /** A still water's face, rings spreading on it from the middle. */
+  ripples?: Box[];
+  /** A fountain's jet, rising. */
+  jets?: Box[];
+  /** Water flowing in a channel toward the viewer. */
+  waters?: Box[];
+  /** Rocks floating in the air: each bobs and tilts where it hangs. */
+  rocks?: Box[];
+  /** A ring of crystals turning round its middle; no flame is read in it. */
+  rings?: Circle[];
+  /** A disc turning (a sign on a wall). */
+  discs?: Circle[];
+  /** Bright paint that twinkles: crystals, a polished orb's highlight. */
+  glints?: Box[];
+  /** A shaft of light with dust drifting in it. */
+  beams?: Box[];
+  /** A hearth whose fire is small (a cottage's low fire on its bed of coals). */
+  hearths?: Box[];
 }
+
+/** The kinds of mark that are circles, not boxes. */
+const CIRCLES = new Set(['rings', 'discs']);
+/** The kinds the band need not hold: a floor runs off the picture's foot, a beam off its head. */
+const LOOSE = new Set(['top', 'shines', 'glass', 'beams', 'hearths']);
 
 export interface CutRoom {
   /** The picture at ROOM_SIZE, RGB bytes. */
@@ -524,28 +577,97 @@ export async function cutRoom(path: string, top?: number, marks: RoomMarks = {})
   const H = meta.height ?? 0;
   const band = Math.min(H, Math.round((W * ROOM_SIZE.height) / ROOM_SIZE.width));
   const full = new Uint8Array(await src.clone().raw().toBuffer());
-  const boxes = Object.values(marks).flat() as Box[];
-  const kept = boxes.map(([x0, by0, x1, by1]) => ({ x0, x1, y0: by0, y1: by1, area: 0 }));
+  // Every mark as a box in the picture's pixels.
+  const boxesOf = (kind: string, list: unknown): Box[] =>
+    kind === 'top'
+      ? []
+      : CIRCLES.has(kind)
+        ? (list as Circle[]).map(([x, y, , r]) => [x - r, y - r, x + r, y + r] as Box)
+        : (list as Box[]);
+  const kept = Object.entries(marks)
+    .filter(([kind]) => !LOOSE.has(kind))
+    .flatMap(([kind, list]) => boxesOf(kind, list))
+    .map(([x0, by0, x1, by1]) => ({ x0, x1, y0: by0, y1: by1, area: 0 }));
+  // No flame is read in a polished floor, a ring of crystals or a twinkle, nor coal in a
+  // pillar of fire.
+  const maskOf = (kinds: string[], w: number, h: number, dy: number): Uint8Array => {
+    const m = new Uint8Array(w * h);
+    for (const kind of kinds) {
+      for (const [x0, by0, x1, by1] of boxesOf(kind, marks[kind as keyof RoomMarks] ?? [])) {
+        for (let y = Math.max(0, Math.floor(by0 - dy)); y < Math.min(h, Math.ceil(by1 - dy)); y++)
+          for (let x = Math.max(0, Math.floor(x0)); x < Math.min(w, Math.ceil(x1)); x++)
+            m[y * w + x] = 1;
+      }
+    }
+    return m;
+  };
+  const notFlame = [
+    'shines',
+    'rings',
+    'discs',
+    'glints',
+    'waters',
+    'falls',
+    'jets',
+    'ripples',
+    'sprays',
+  ];
+  const start = top ?? marks.top;
   const y0 =
-    top !== undefined
-      ? Math.max(0, Math.min(H - band, top))
-      : chooseBand(H, band, findFires(full, W, H, minFireArea(W, H)).fires, kept);
+    start !== undefined
+      ? Math.max(0, Math.min(H - band, start))
+      : chooseBand(
+          H,
+          band,
+          findFires(full, W, H, minFireArea(W, H), maskOf(notFlame, W, H, 0)).fires,
+          kept,
+        );
   const rgb = new Uint8Array(full.buffer, full.byteOffset + y0 * W * 3, W * band * 3);
-  const lights = await findLights(rgb, W, band);
+  const lights = await findLights(rgb, W, band, {
+    flame: maskOf(notFlame, W, band, y0),
+    coal: maskOf(['pillars'], W, band, y0),
+    hearth: maskOf(['hearths'], W, band, y0),
+  });
+  // A pillar of fire throws its own embers, not sparks off coals.
+  const pillarBoxes = boxesOf('pillars', marks.pillars ?? []);
+  const sx = ROOM_SIZE.width / W;
+  const sy = ROOM_SIZE.height / band;
+  const first = lights.fires[0];
+  if (
+    first &&
+    pillarBoxes.some(
+      ([x0, by0, x1, by1]) =>
+        (first.x0 + first.x1) / 2 / sx > x0 &&
+        (first.x0 + first.x1) / 2 / sx < x1 &&
+        (first.y0 + first.y1) / 2 / sy + y0 > by0 &&
+        (first.y0 + first.y1) / 2 / sy + y0 < by1,
+    )
+  )
+    lights.sparks = null;
   const picture = await sharp(Buffer.from(rgb), { raw: { width: W, height: band, channels: 3 } })
     .resize(ROOM_SIZE.width, ROOM_SIZE.height, { fit: 'fill', kernel: 'lanczos3' })
     .png()
     .toBuffer();
-  const sx = ROOM_SIZE.width / W;
-  const sy = ROOM_SIZE.height / band;
+  const tenth = (v: number) => +v.toFixed(1);
   const scale = (b: Box): Box => [
-    +(b[0] * sx).toFixed(1),
-    +Math.max(0, (b[1] - y0) * sy).toFixed(1),
-    +(b[2] * sx).toFixed(1),
-    +Math.min(ROOM_SIZE.height, (b[3] - y0) * sy).toFixed(1),
+    tenth(b[0] * sx),
+    tenth(Math.max(0, (b[1] - y0) * sy)),
+    tenth(b[2] * sx),
+    tenth(Math.min(ROOM_SIZE.height, (b[3] - y0) * sy)),
+  ];
+  const scaleCircle = ([x, y, r0, r1]: Circle): Circle => [
+    tenth(x * sx),
+    tenth((y - y0) * sy),
+    tenth(r0 * sx),
+    tenth(r1 * sx),
   ];
   const scaled: RoomMarks = Object.fromEntries(
-    Object.entries(marks).map(([kind, list]) => [kind, (list as Box[]).map(scale)]),
+    Object.entries(marks)
+      .filter(([kind]) => kind !== 'top' && kind !== 'hearths')
+      .map(([kind, list]) => [
+        kind,
+        CIRCLES.has(kind) ? (list as Circle[]).map(scaleCircle) : (list as Box[]).map(scale),
+      ]),
   );
   return { picture, lights, marks: scaled, top: y0, band };
 }
