@@ -16,7 +16,8 @@ import type { ViewBox } from '../app/view-box';
 interface RoomData {
   /** Where sparks rise from, picture pixels: x from, x to, y; null for none. */
   sparks: [number, number, number] | null;
-  fires: number;
+  /** The fires, biggest first: middle and size in picture pixels. */
+  fires: [number, number, number][];
   /** The magic glows: middle and radius in picture pixels, colour in bytes. */
   orbs?: { at: [number, number]; r: number; colour: [number, number, number] }[];
 }
@@ -47,6 +48,8 @@ uniform float t;
 uniform vec4 box;         // the view's box in render pixels: left, bottom, right, top
 uniform vec2 res;
 uniform vec3 sparks;      // x from, x to, y, x from below zero for none
+uniform vec4 fires[16];   // the small fires: middle and size, picture pixels
+uniform float fireCount;
 uniform vec4 orbs[4];     // a magic glow's middle and radius, picture pixels
 uniform vec4 orbColours[4];
 uniform float orbCount;
@@ -97,15 +100,25 @@ void main() {
   // Coals breathe, each on its own.
   float glow = m.g * 0.6 * (noise(px / 2.5 + vec2(t * 0.8, -t * 0.5)) - 0.45);
   c = glow > 0.0 ? c + fire * glow * 0.6 : c * max(vec3(0.0), 1.0 + glow * cool);
-  // The room is dim away from its fires, and each fire's light, on the wall round it and in
-  // a pool on the floor before it, rises and falls with its own flicker. The small fires
-  // (candles, torches) each keep a rhythm of their own, from where they stand.
-  float fb = flick(t, 0.0);
-  float fo = flick(t * 1.3, 3.0 + noise(px / 70.0) * 9.0);
+  // The room is dim away from its fires, and each fire's light lies steady on the wall round
+  // it and in a pool on the floor before it. What flickers is the light close round a flame,
+  // the whole of it as one: light flickering far out, or out of step across a fire's glow,
+  // slides the frame's colour steps over the room in rings (owner, 2026-10-25: "Looks Like
+  // psychedelic Waves coming from the candles"). The biggest fire flickers where its light is
+  // strongest; each small fire (a candle, a torch) on a rhythm of its own, felt only near it.
   float lit = clamp(m.b + m.a, 0.0, 1.0);
   c *= 0.74 + 0.26 * lit;
-  c += fire * (m.b * (0.11 + 0.07 * fb) + m.a * (0.07 + 0.05 * fo)) * (0.4 + c);
-  float room = m.b * 0.3 * fb + m.a * 0.28 * fo;
+  c += fire * (m.b * 0.11 + m.a * 0.07) * (0.4 + c);
+  float big = m.b * m.b * flick(t, 0.0);
+  float near = 0.0;
+  for (int i = 0; i < 16; i++) {
+    if (float(i) >= fireCount) break;
+    float dd = length(px - fires[i].xy) / (fires[i].z * 1.5 + 2.0);
+    near += flick(t * 1.3, float(i) * 2.17 + 0.5) / (1.0 + dd * dd);
+  }
+  near = clamp(near, -1.0, 1.0) * min(1.0, m.a * 3.0);
+  c += fire * (big * 0.07 + near * 0.05) * (0.4 + c);
+  float room = big * 0.3 + near * 0.2;
   c *= room > 0.0 ? 1.0 + room * vec3(1.0, 0.75, 0.5) : 1.0 + room * vec3(0.7, 1.0, 1.1);
   // Sparks off the coals, a few at a time, rising and dying.
   if (sparks.x >= 0.0) {
@@ -272,6 +285,10 @@ export class RoomView {
       height - b.top * scale,
     ];
     const sparks = room.data.sparks ?? [-1, -1, -1];
+    // The small fires, after the biggest, whose light has a channel of its own.
+    const small = room.data.fires.slice(1, 17);
+    const fireAt = new Array<number>(64).fill(0);
+    small.forEach((f, i) => fireAt.splice(i * 4, 4, f[0], f[1], f[2], 0));
     const orbs = (room.data.orbs ?? []).slice(0, 4);
     const orbAt = new Array<number>(16).fill(0);
     const orbColour = new Array<number>(16).fill(0);
@@ -287,6 +304,8 @@ export class RoomView {
       e.setFloat4('box', box[0]!, box[1]!, box[2]!, box[3]!);
       e.setFloat2('res', RES[0], RES[1]);
       e.setFloat3('sparks', sparks[0], sparks[1], sparks[2]);
+      e.setArray4('fires', fireAt);
+      e.setFloat('fireCount', small.length);
       e.setArray4('orbs', orbAt);
       e.setArray4('orbColours', orbColour);
       e.setFloat('orbCount', orbs.length);
@@ -304,7 +323,17 @@ export class RoomView {
       engine,
       name: 'room',
       fragmentShader: FRAGMENT,
-      uniformNames: ['t', 'box', 'res', 'sparks', 'orbs', 'orbColours', 'orbCount'],
+      uniformNames: [
+        't',
+        'box',
+        'res',
+        'sparks',
+        'fires',
+        'fireCount',
+        'orbs',
+        'orbColours',
+        'orbCount',
+      ],
       samplerNames: ['picture', 'lights'],
     });
   }

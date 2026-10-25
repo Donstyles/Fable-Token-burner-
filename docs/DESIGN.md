@@ -2803,8 +2803,8 @@ some lighting?"; of the smithy running: "That's kinda neat"):
   - **sparks** rise only off a fire with a bed of coals under it, not off a lamp's wick.
 
   It writes assets/rooms/<house>.png, the four masks as assets/rooms/<house>.lights.png (red
-  flames, green coals, blue the biggest fire's light, alpha the others'), their numbers as
-  <house>.json, records the room in the manifest as the owner's ChatGPT image, and draws a
+  flames, green coals, blue the biggest fire's light, alpha the others'), the fires, sparks
+  and glows as <house>.json, records the room in the manifest as the owner's ChatGPT image, and draws a
   review sheet, the picture over its masks, in pipeline/work/rooms/.
 
 - **Moving, a little** (src/world/room.ts, one shader drawn by Babylon's EffectRenderer):
@@ -2813,11 +2813,15 @@ some lighting?"; of the smithy running: "That's kinda neat"):
   - firelight brightens by adding warm light and dims by losing its yellow first, as a flame
     cools to orange: a yellow scaled evenly goes green up and olive down;
   - the coals breathe, each patch on its own slow rhythm;
-  - each fire's light rises and falls over the room with its own flicker, three rhythms out of
-    step, the forge and the lamp never together; the rest of the room is held a quarter
-    darker, so the floor in front of a hearth is lit and the corners are not (owner,
-    2026-10-25: "make the fireplaces also cast Fire light on the floor on Front of them? I
-    want it really moody");
+  - each fire's light lies steady on the wall round it and in a pool on the floor before it,
+    and the rest of the room is held a quarter darker, so the floor in front of a hearth is
+    lit and the corners are not (owner, 2026-10-25: "make the fireplaces also cast Fire light
+    on the floor on Front of them? I want it really moody"); what flickers is the light close
+    round a flame, the whole of it as one, the biggest fire where its light is strongest and
+    each small fire on a rhythm of its own (`fires` in <house>.json gives each one's middle
+    and size). A flicker spread wide over the room, or out of step across one fire's glow,
+    slides the frame's colour steps out from the fire in rings: the first cut did, and the
+    owner turned it down ("Looks Like psychedelic Waves coming from the candles");
   - a few sparks drift up off the coals and die;
   - a magic glow throbs and washes the room in its own colour; inside it the paint swirls
     with moving veins, round it a halo breathes, seven motes circle it on tilted orbits with

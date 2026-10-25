@@ -40,9 +40,15 @@ async function main(): Promise<void> {
   };
   await writeFile(files.picture, room.picture);
   await writeFile(files.lights, await lightsPng(room.lights));
+  // Each fire's middle and size, biggest first: the game flickers each fire's light as one.
+  const tenth = (v: number): number => Math.round(v * 10) / 10;
   const data = {
     sparks: room.lights.sparks,
-    fires: room.lights.fires.length,
+    fires: room.lights.fires.map((f) => [
+      tenth((f.x0 + f.x1) / 2),
+      tenth((f.y0 + f.y1) / 2),
+      tenth(Math.max(f.x1 - f.x0, f.y1 - f.y0, 1)),
+    ]),
     orbs: room.lights.orbs,
   };
   await writeFile(files.data, `${JSON.stringify(data, null, 2)}\n`);
