@@ -1,9 +1,11 @@
 /**
  * A house's room (DESIGN.md 17.8): its picture in the view's box in place of the world, as
  * MM6 played its room films there, with the lights on it moving at MM6's ten steps a second.
- * The flames lick upward and waver, the coals breathe, each fire's light rises and falls
- * over the room with its own flicker, and sparks drift up off a bed of coals. The masks come
- * from the picture's own paint (tools/lib/room.ts, `npm run room`).
+ * The flames lick upward and waver, the coals breathe, each fire's light flickers close round
+ * it, and sparks drift up off a bed of coals; a magic glow throbs with motes round it, and
+ * what was marked by hand moves too: clouds bob and churn with mist drifting by them, and
+ * columns of vapour climb with sparks in them. The masks come from the picture's own paint
+ * (tools/lib/room.ts, `npm run room`), the marks from pipeline/rooms.json.
  *
  * Babylon's EffectRenderer draws it as one full-screen pass on the world's engine; while it
  * is up the world's scene is not drawn at all.
@@ -20,6 +22,10 @@ interface RoomData {
   fires: [number, number, number][];
   /** The magic glows: middle and radius in picture pixels, colour in bytes. */
   orbs?: { at: [number, number]; r: number; colour: [number, number, number] }[];
+  /** Marked by hand (pipeline/rooms.json), boxes in picture pixels: x from, y from, x to, y to. */
+  clouds?: [number, number, number, number][];
+  mists?: [number, number, number, number][];
+  vapours?: [number, number, number, number][];
 }
 
 const PICTURES = import.meta.glob('../../assets/rooms/*.png', {
@@ -50,9 +56,16 @@ uniform vec2 res;
 uniform vec3 sparks;      // x from, x to, y, x from below zero for none
 uniform vec4 fires[16];   // the small fires: middle and size, picture pixels
 uniform float fireCount;
+uniform float hearth;     // 1 when the biggest fire is a hearth's or a brazier's size
+uniform float moody;      // how much darker the room is away from its fires: none without one
 uniform vec4 orbs[4];     // a magic glow's middle and radius, picture pixels
 uniform vec4 orbColours[4];
 uniform float orbCount;
+uniform vec4 clouds[4];   // floating clouds: boxes, picture pixels
+uniform float cloudCount;
+uniform vec4 mist;        // where wisps drift, x from below zero for none
+uniform vec4 vapours[8];  // columns of vapour
+uniform float vapourCount;
 
 float hash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
 float noise(vec2 p) {
@@ -71,6 +84,50 @@ float flick(float s, float k) {
   return 0.5 * sin(s * 7.3 + k) + 0.3 * sin(s * 16.1 + k * 2.3) + 0.2 * sin(s * 29.7 + k * 4.1);
 }
 vec2 uvAt(vec2 px) { return vec2(px.x / res.x, 1.0 - px.y / res.y); }
+// Where a box of the picture is and how far in, softly: 0 outside, 1 well inside.
+float within(vec2 uv, vec2 edge) {
+  return smoothstep(0.0, edge.x, uv.x) * smoothstep(1.0, 1.0 - edge.x, uv.x)
+    * smoothstep(0.0, edge.y, uv.y) * smoothstep(1.0, 1.0 - edge.y, uv.y);
+}
+// A floating cloud bobs where it hangs and its billows churn: the paint round it is pulled
+// along, the pull fading out past its box so nothing tears.
+vec2 cloudShift(vec2 p) {
+  vec2 d = vec2(0.0);
+  for (int i = 0; i < 4; i++) {
+    if (float(i) >= cloudCount) break;
+    vec4 b = clouds[i];
+    vec2 size = b.zw - b.xy;
+    vec2 uv = (p - b.xy + size * 0.2) / (size * 1.4);
+    if (uv.x < 0.0 || uv.x > 1.0 || uv.y < 0.0 || uv.y > 1.0) continue;
+    float fi = float(i);
+    vec2 bob = vec2(sin(t * 0.55 + fi * 2.1) * 2.2, sin(t * 0.8 + fi * 1.3) * 1.3);
+    vec2 churn = vec2(fbm(p / 7.0 + vec2(t * 0.35, fi)), fbm(p / 7.0 + vec2(fi * 3.0, t * 0.3)));
+    d += (bob + (churn - 0.5) * 2.4) * within(uv, vec2(0.25, 0.3));
+  }
+  return d;
+}
+// The paint at p. In a column of vapour it is drawn from lower down and swaying, so the
+// twist climbs, as a turning helix does: two layers half a climb apart, each fading out as it
+// starts over, so the climb never jumps.
+vec3 paint(vec2 p) {
+  for (int i = 0; i < 8; i++) {
+    if (float(i) >= vapourCount) break;
+    vec4 b = vapours[i];
+    if (p.x < b.x || p.x > b.z || p.y < b.y || p.y > b.w) continue;
+    vec2 uv = (p - b.xy) / (b.zw - b.xy);
+    float w = within(uv, vec2(0.2, 0.25));
+    float fi = float(i);
+    float run = t / 3.2 + fi * 0.37;
+    float p1 = fract(run);
+    float p2 = fract(run + 0.5);
+    float climb = (b.w - b.y) * 0.15 * w;
+    float sway = sin(uv.y * 9.0 - t * 2.0 + fi) * (b.z - b.x) * 0.03 * w;
+    vec3 a1 = texture2D(picture, uvAt(vec2(p.x + sway, min(b.w, p.y + p1 * climb)))).rgb;
+    vec3 a2 = texture2D(picture, uvAt(vec2(p.x + sway, min(b.w, p.y + p2 * climb)))).rgb;
+    return mix(a1, a2, abs(2.0 * p1 - 1.0));
+  }
+  return texture2D(picture, uvAt(p)).rgb;
+}
 
 void main() {
   vec2 frag = gl_FragCoord.xy;
@@ -90,7 +147,7 @@ void main() {
   float lick = fbm(vec2(px.x / 4.0, px.y / 3.0 + t * 7.0));
   float sway = noise(vec2(px.y / 3.0, t * 6.0)) - 0.5;
   vec2 d = vec2(sway * 1.6, (lick - 0.25) * 3.2) * m.r;
-  vec3 c = texture2D(picture, uvAt(px + d)).rgb;
+  vec3 c = paint(px + d - cloudShift(px));
   // Firelight brightens by adding warm light and dims by losing its yellow first, as a flame
   // cools to orange: a yellow scaled up evenly goes green, scaled down evenly olive.
   vec3 fire = vec3(1.0, 0.5, 0.12);
@@ -100,16 +157,16 @@ void main() {
   // Coals breathe, each on its own.
   float glow = m.g * 0.6 * (noise(px / 2.5 + vec2(t * 0.8, -t * 0.5)) - 0.45);
   c = glow > 0.0 ? c + fire * glow * 0.6 : c * max(vec3(0.0), 1.0 + glow * cool);
-  // The room is dim away from its fires, and each fire's light lies steady on the wall round
+  // A room with fires is dim away from them, and each fire's light lies steady on the wall round
   // it and in a pool on the floor before it. What flickers is the light close round a flame,
   // the whole of it as one: light flickering far out, or out of step across a fire's glow,
   // slides the frame's colour steps over the room in rings (owner, 2026-10-25: "Looks Like
   // psychedelic Waves coming from the candles"). The biggest fire flickers where its light is
-  // strongest; each small fire (a candle, a torch) on a rhythm of its own, felt only near it.
+  // strongest, each small fire (a candle, a torch) on a rhythm of its own, felt only near it.
   float lit = clamp(m.b + m.a, 0.0, 1.0);
-  c *= 0.74 + 0.26 * lit;
+  c *= 1.0 - moody * (1.0 - lit);
   c += fire * (m.b * 0.11 + m.a * 0.07) * (0.4 + c);
-  float big = m.b * m.b * flick(t, 0.0);
+  float big = hearth * m.b * m.b * flick(t, 0.0);
   float near = 0.0;
   for (int i = 0; i < 16; i++) {
     if (float(i) >= fireCount) break;
@@ -117,6 +174,10 @@ void main() {
     near += flick(t * 1.3, float(i) * 2.17 + 0.5) / (1.0 + dd * dd);
   }
   near = clamp(near, -1.0, 1.0) * min(1.0, m.a * 3.0);
+  // Bright paint, a window's daylight or a white robe, is hardly moved by a lamp beside it.
+  float pale = 1.0 - 0.8 * smoothstep(0.5, 0.85, dot(c, vec3(0.3, 0.55, 0.15)));
+  big *= pale;
+  near *= pale;
   c += fire * (big * 0.07 + near * 0.05) * (0.4 + c);
   float room = big * 0.3 + near * 0.2;
   c *= room > 0.0 ? 1.0 + room * vec3(1.0, 0.75, 0.5) : 1.0 + room * vec3(0.7, 1.0, 1.1);
@@ -133,6 +194,31 @@ void main() {
       vec2 p = p0 + vec2(sin(ph * 5.0 + n) * 2.5, -ph * (28.0 + 22.0 * hash(vec2(n, 3.0))));
       float near = 1.0 - smoothstep(0.4, 1.3, length(px - p));
       c += vec3(1.0, 0.62, 0.22) * near * (1.0 - ph) * 1.4;
+    }
+  }
+  // Wisps of mist drift through between the clouds.
+  if (mist.x >= 0.0 && px.x > mist.x && px.x < mist.z && px.y > mist.y && px.y < mist.w) {
+    vec2 uv = (px - mist.xy) / (mist.zw - mist.xy);
+    float wisp = fbm(vec2(px.x / 26.0 - t * 0.22, px.y / 5.0 + sin(px.x / 40.0 + t * 0.3) * 0.6));
+    c = mix(c, vec3(0.82, 0.86, 0.95), smoothstep(0.52, 0.78, wisp) * within(uv, vec2(0.18, 0.1)) * 0.32);
+  }
+  // Sparks climb each column of vapour on its twist, twinkling, pale blue and pink.
+  for (int i = 0; i < 8; i++) {
+    if (float(i) >= vapourCount) break;
+    vec4 b = vapours[i];
+    if (px.x < b.x - 2.0 || px.x > b.z + 2.0 || px.y < b.y || px.y > b.w) continue;
+    float wd = b.z - b.x;
+    float hg = b.w - b.y;
+    for (int k = 0; k < 10; k++) {
+      float n = float(k) + float(i) * 10.0;
+      float ph = fract(t / (2.5 + hash(vec2(n, 1.0)) * 2.0) + hash(vec2(n, 2.0)));
+      float turn = ph * 9.4 + hash(vec2(n, 3.0)) * 6.283;
+      if (cos(turn) < -0.4) continue;
+      vec2 p = vec2(b.x + wd * (0.5 + 0.36 * sin(turn)), b.w - ph * hg);
+      float near = 1.0 - smoothstep(0.3, 1.1, length(px - p));
+      float tw = (0.55 + 0.45 * sin(t * 11.0 + n * 1.7)) * sin(ph * 3.1416);
+      vec3 hue = hash(vec2(n, 4.0)) > 0.5 ? vec3(0.55, 0.78, 1.0) : vec3(1.0, 0.62, 0.88);
+      c = mix(c, hue * 1.15, near * tw);
     }
   }
   // Magic glows: an orb's insides swirl and its heart throbs, its halo breathes out and its
@@ -285,10 +371,22 @@ export class RoomView {
       height - b.top * scale,
     ];
     const sparks = room.data.sparks ?? [-1, -1, -1];
-    // The small fires, after the biggest, whose light has a channel of its own.
-    const small = room.data.fires.slice(1, 17);
+    // The small fires, after the biggest, whose light has a channel of its own. When the
+    // biggest is only a lamp (the air guild's), it flickers close round itself as they do.
+    const first = room.data.fires[0];
+    const hearth = first !== undefined && first[2] >= RES[0] * 0.03;
+    const small = room.data.fires.slice(hearth ? 1 : 0, hearth ? 17 : 16);
     const fireAt = new Array<number>(64).fill(0);
     small.forEach((f, i) => fireAt.splice(i * 4, 4, f[0], f[1], f[2], 0));
+    // What was marked by hand: boxes as vec4s.
+    const boxes = (list: [number, number, number, number][] | undefined, most: number) => {
+      const out = new Array<number>(most * 4).fill(0);
+      (list ?? []).slice(0, most).forEach((b, i) => out.splice(i * 4, 4, ...b));
+      return { at: out, count: Math.min(most, list?.length ?? 0) };
+    };
+    const clouds = boxes(room.data.clouds, 4);
+    const vapours = boxes(room.data.vapours, 8);
+    const mist = room.data.mists?.[0] ?? [-1, -1, -1, -1];
     const orbs = (room.data.orbs ?? []).slice(0, 4);
     const orbAt = new Array<number>(16).fill(0);
     const orbColour = new Array<number>(16).fill(0);
@@ -306,9 +404,16 @@ export class RoomView {
       e.setFloat3('sparks', sparks[0], sparks[1], sparks[2]);
       e.setArray4('fires', fireAt);
       e.setFloat('fireCount', small.length);
+      e.setFloat('hearth', hearth ? 1 : 0);
+      e.setFloat('moody', room.data.fires.length ? 0.26 : 0);
       e.setArray4('orbs', orbAt);
       e.setArray4('orbColours', orbColour);
       e.setFloat('orbCount', orbs.length);
+      e.setArray4('clouds', clouds.at);
+      e.setFloat('cloudCount', clouds.count);
+      e.setFloat4('mist', mist[0], mist[1], mist[2], mist[3]);
+      e.setArray4('vapours', vapours.at);
+      e.setFloat('vapourCount', vapours.count);
     });
     this.renderer.render(wrapper);
     wrapper.onApplyObservable.remove(apply);
@@ -330,9 +435,16 @@ export class RoomView {
         'sparks',
         'fires',
         'fireCount',
+        'hearth',
+        'moody',
         'orbs',
         'orbColours',
         'orbCount',
+        'clouds',
+        'cloudCount',
+        'mist',
+        'vapours',
+        'vapourCount',
       ],
       samplerNames: ['picture', 'lights'],
     });
