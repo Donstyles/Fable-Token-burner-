@@ -2528,8 +2528,8 @@ map sheet is drawn the way the minimap is.
   on a dead-level pad, sunk by its wall base (`kernel/terrain/plots.ts`); a named
   point on the apron before each door. A building carries its name (its model's without
   `building-` unless the plot gives one) into the level and onto its copy at runtime, and the
-  houses' services go by it (`src/game/content.ts`): one townhouse is the training hall, its
-  twins along the street are only houses.
+  houses' services go by it (`src/game/content.ts`): one townhouse is the training hall and
+  one the guild, their twins along the street are only houses.
 - **The cave**: its threshold and the heading it faces, down the slope; the floor is
   dug in, the ground round the mouth drawn again finer with an apron and a brow, the
   rock face, the dark tunnel and Meshy's rocks about it, and the portal at its back
@@ -2567,8 +2567,8 @@ packed and hand crafted"): the first town had thirteen buildings along 220 m of 
 open meadow to the hills, a lone tree every fourteen metres.
 
 - **The town** (150 by 60 m): a square 26 by 18 m with the well, three stalls, a cart and
-  lanterns, the inn on its north side with the training hall at its shoulder, the trader
-  across. The high street runs east and west from it, built up house to house on both sides,
+  lanterns, the inn on its north side with the training hall at one shoulder and the guild of
+  air at the other, the trader across. The high street runs east and west from it, built up house to house on both sides,
   two to three metres apart, 28 houses in four rows (cottages 1, 2 and 3 in turn, a script
   helper laying each by its own width), the stables at the west gate, the smithy and its yard
   at the east. Behind the rows, yards and gardens: wood against the back walls, hay by the
@@ -2596,7 +2596,7 @@ open meadow to the hills, a lone tree every fourteen metres.
   on the slope toward the road and at the stones; bandits at their camp and further west.
 - Tests (`kernel/terrain/region.test.ts`): no two buildings overlapping or on a road, every
   door facing its street, the high street's four rows of at least six houses never more than a
-  yard's width apart, one each of the inn, temple, trader, smithy and training hall, the cave
+  yard's width apart, one each of the inn, temple, trader, smithy, training hall and guild, the cave
   facing its road, the start within twenty metres of the square.
 
 ### 17.3 Not yet
@@ -2792,10 +2792,14 @@ some lighting?"; of the smithy running: "That's kinda neat"):
   - the picture is cut to the phone's view box, 640 by 296 at one UI pixel, the band of rows
     kept chosen to hold every fire with room round it (`--top` sets it by hand);
   - the **flames** are its brightest white-yellow paint (`isFlame`), in pieces joined where a
-    log parts a fire's tongues, a glint on a helmet too small to count;
-  - the **coals** are the red-orange paint under and round the flames (`isCoal`);
-  - each fire's **light** is a wide soft field round it, wider for a bigger fire, the biggest
-    fire's in one channel and the others' in another;
+    log parts a fire's tongues, a glint on a helmet too small to count; a candle's white-hot
+    core counts where orange paint rings it, so a candle on a shelf burns as a hearth does;
+  - the **magic glows** (`findOrbs`) are first: blue-violet paint round a white core, up to
+    four, each taken out of the fire search so an orb's heart is not read as a flame;
+  - the **coals** are the deep red-orange paint from a flame's middle down (`isCoal`), so
+    firelit wood above a hearth does not shimmer as embers;
+  - each fire's **light** is a wide soft field round it, wider for a bigger fire, with a pool
+    of it on the floor in front, the biggest fire's in one channel and the others' in another;
   - **sparks** rise only off a fire with a bed of coals under it, not off a lamp's wick.
 
   It writes assets/rooms/<house>.png, the four masks as assets/rooms/<house>.lights.png (red
@@ -2810,8 +2814,16 @@ some lighting?"; of the smithy running: "That's kinda neat"):
     cools to orange: a yellow scaled evenly goes green up and olive down;
   - the coals breathe, each patch on its own slow rhythm;
   - each fire's light rises and falls over the room with its own flicker, three rhythms out of
-    step, the forge and the lamp never together;
+    step, the forge and the lamp never together; the rest of the room is held a quarter
+    darker, so the floor in front of a hearth is lit and the corners are not (owner,
+    2026-10-25: "make the fireplaces also cast Fire light on the floor on Front of them? I
+    want it really moody");
   - a few sparks drift up off the coals and die;
+  - a magic glow throbs and washes the room in its own colour; inside it the paint swirls
+    with moving veins, round it a halo breathes, seven motes circle it on tilted orbits with
+    short trails, passing behind it, and now and then a thin arc of light crackles off it
+    (owner: "Magic Orbs also strong Animation", "Perhaps some dancing lights or tiny crackles
+    around it");
   - all at MM6's ten steps a second, in the world's sixteen-bit frame; a step is drawn only
     when it changes, the canvas keeping the last, so a room costs ten small draws a second.
 - **Taps** on the room do nothing (the street is not behind it), and a drag on it is not a turn
@@ -2828,13 +2840,48 @@ taps the smithy's door, finds the room up and drawn, its forge bright and red, i
 differing a few steps apart and no frame of the world drawn meanwhile, and the street back at
 the door.
 
-**Next**: the inn, the store, the temple and the training hall from the owner's pictures; a
-guild's room, whose magic glows (an orb's blue, a rune's violet) want a pulse of their own
-colour beside the fire's; the keeper's portrait and "Converse with" on the board; the homes;
-the stock on its shelf for Buy once items have pictures; the cave's "Enter?" picture once a
-dungeon lies behind it.
+**The rooms in** (2026-10-25): the smithy, the inn, the trader's store, the temple, the
+training hall and the guild, each the owner's picture; Gullhaven's guild is the townhouse
+beside the inn, the Initiate Guild of Air (src/game/content.ts), and a unit test holds every
+house to a room and every room to a house.
+
+**How MM6's guilds looked** (the owner, 2026-10-25: "The magic Shops looked very distinct in
+mm6"; looked at in screenshots of MM6, which stay out of this repository). Not shops or
+libraries but chambers, one per family, each in its school's colour, symmetrical, seen down
+the middle, with one big thing moving:
+
+- the elements (fire, air, water, earth, and the four together): a dark octagonal hall of
+  wooden columns and lamps, tall glass-mosaic panels in the school's colour, a stepped dais,
+  over it a column of flame, drifting bands of cloud, a falling sheet of water or floating
+  stones, and the master sitting cross-legged in front with his school's creatures and things
+  (the air's falcon and macaws, the water's lobster and shells, the earth's fruit and flowers);
+- the self (spirit, mind, body, and the three together): a pale marble hall, dozens of
+  candles on the floor, a fountain in a channel down the middle, knotwork hangings, and on
+  the far wall the school's sign, the spirit's a ring of crystal points turning round it;
+  nobody in it (the master is the portrait on the board);
+- light and dark: a stark stone hall with a shaft of light down its middle, two great columns
+  of vapour twisting up it, white with pale sparks for light, smoke with green and violet ones
+  for dark; nobody in it.
+
+Gullhaven's guild picture is a candlelit library, which is not that; the owner has prompts for
+an MM6-style air guild. Its cloud, a waterfall, a turning ring or the vapour columns are not
+paint the fire search can find: each wants an effect of its own over a region marked for it
+when its picture comes (drift, fall, spin, rise and twinkle).
+
+**Next**: the MM6-style guild pictures and their effects; the keeper's portrait and "Converse
+with" on the board; the homes; the stock on its shelf for Buy once items have pictures; the
+cave's "Enter?" picture once a dungeon lies behind it.
 
 ## 13. Decision log
+
+- 2026-10-25 – Five more rooms and a guild (owner's pictures of the inn, the store, the temple,
+  the training hall and a spell guild; 17.8). Candles burn, fires light the floor in front of
+  them and the rest of each room is darker ("I want it really moody"), and a magic glow throbs,
+  swirls and has motes circling it and arcs crackling off it ("Perhaps some dancing lights or
+  tiny crackles around it"). Gullhaven's townhouse beside the inn becomes its Initiate Guild of
+  Air. MM6's guilds were chambers in their school's colour, not libraries ("The magic Shops
+  looked very distinct in mm6"): the owner has prompts for one, and its moving centrepiece will
+  want an effect of its own.
 
 - 2026-10-25 – The smithy's room in the game, from the owner's ChatGPT picture (owner: "Can't
   we rig something with a chatgpt image and some filters and some lighting?"; 17.8). One

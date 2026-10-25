@@ -602,7 +602,9 @@ Then trees that stop the party at their drawn trunks (DESIGN 17.7), and the
 test dungeon scrapped (owner): the showcase level and its portal are gone,
 the cave's tunnel ends in rock, and its tests run in Gullhaven. Then the
 smithy's room from the owner's ChatGPT picture, its forge, coals and lamp
-burning at MM6's step (Phase 6a, DESIGN 17.8).
+burning at MM6's step (Phase 6a, DESIGN 17.8), then the inn, the store,
+the temple, the training hall and a guild of air beside the inn, lit
+moodily, the guild's orb alive.
 
 **Status, night of 2026-10-16 (owner asleep, best judgement):** steps 1 to 6
 are in: the valley (village, road, pass, gorge with eight cascades, cave
@@ -626,12 +628,16 @@ view's box, its fires moving, the keeper's portrait on the board (DESIGN 17.8).
 
 1. Done 2026-10-25: the room view (src/world/room.ts), `npm run room` (tools/room.ts), and the
    smithy from the owner's picture, with an end-to-end test at its door.
-2. The inn, the store, the temple and the training hall, each from the owner's picture: drop
-   it in pipeline/inbox/rooms/<house>.png and run `npm run room -- <house>`.
-3. A guild's room (a townhouse on the square could be one), with a pulse for magic glows of
-   their own colour beside the fire's.
-4. The keeper's portrait and "Converse with" on the board.
-5. Later: the homes, the stock on its shelf for Buy, the cave's "Enter?" picture.
+2. Done 2026-10-25: the inn, the store, the temple and the training hall, each from the
+   owner's picture (drop it in pipeline/inbox/rooms/<house>.png and run
+   `npm run room -- <house>`); candles, firelight pooled on the floor and the rooms darker
+   away from their fires.
+3. Done 2026-10-25: the guild, the townhouse beside the inn (the Initiate Guild of Air), its
+   orb throbbing in its own colour with motes and crackles.
+4. MM6-style guild rooms (DESIGN 17.8), each with an effect for its centrepiece over a marked
+   region: cloud drifting, water falling, a ring turning, vapour rising with sparks.
+5. The keeper's portrait and "Converse with" on the board.
+6. Later: the homes, the stock on its shelf for Buy, the cave's "Enter?" picture.
 
 **Credits:** none; the pictures are the owner's.
 
