@@ -2751,13 +2751,22 @@ radius, centred a metre out, so the party walked deep into it before a thin post
   and the radius of a disc of its area (`trunk`). A fir whose boughs sweep the ground measures
   as its boughs, as the party meets them. `npm run asset -- trunk <id>...` prints both for the
   props table; every tree in `kernel/terrain/props.ts` carries the measured values.
+- **The roots** (owner, 2026-10-25: "Can still Walk through the Roots of this big tree"):
+  the same tool draws the model between 15 and 90 cm (a party's shins and knees), takes off
+  spurs thinner than 20 cm (a root stepped over), and covers the piece holding the trunk with
+  up to six discs past the trunk's own, the widest that fits where it is not yet covered
+  first, none under 40 cm across, until 85 per cent of it is under one (`rootsOf`,
+  `roots` in the props table, printed by the same command). The big oak's roots reach four
+  metres from its middle.
 - **The collider** is a 4 m cylinder of that radius at that point, turned and scaled with its
-  copy (the same instance matrix the tree is drawn with), built in the lazy 200 m cells.
-- **The navmesh** gets the same trunk, from the same model the region's hash picks for each
-  tree (`pickModel`, now in the kernel), for every tree within 60 m of a road, so a villager
-  walks round the oak the party bumps into.
-- **Checked** by an end-to-end test that casts rays at a big oak from ten metres round: the
-  party's collider and the drawn trunk meet within a metre on every side the ray hits.
+  copy (the same instance matrix the tree is drawn with), and a cylinder 1.3 m high on each
+  root's disc, built in the lazy 200 m cells.
+- **The navmesh** gets the same trunk and roots, from the same model the region's hash picks
+  for each tree (`pickModel`, now in the kernel), for every tree within 60 m of a road, so a
+  villager walks round the oak the party bumps into.
+- **Checked** by an end-to-end test that casts rays at a big oak from ten metres round, at
+  chest and at shin height: the party's collider and the drawn trunk and roots meet within a
+  metre on every side the ray hits (without the roots' discs a shin-high ray went 1.6 m in).
 
 ### 17.8 A room behind every door (owner, 2026-10-24 and 25)
 
@@ -2908,6 +2917,9 @@ with" on the board; the homes; the stock on its shelf for Buy once items have pi
 cave's "Enter?" picture once a dungeon lies behind it.
 
 ## 13. Decision log
+
+- 2026-10-25 – Trees' roots collide (owner: "Can still Walk through the Roots of this big
+  tree"; 17.7): measured off each model at shin height and covered by a few short cylinders.
 
 - 2026-10-25 – The owner's MM6-style air and light guilds (17.8): the air guild is
   Gullhaven's guild's room, its clouds bobbing and churning with mist drifting by; the light

@@ -484,8 +484,9 @@ async function windows(args: string[]): Promise<void> {
 }
 
 async function trunk(args: string[]): Promise<void> {
-  // `trunk <id>...`: each tree's trunk read off its model (tools/lib/trunk.ts), printed as the
-  // props table's `trunk` and `trunkAt`, which the collider and the navmesh stand on.
+  // `trunk <id>...`: each tree's trunk and roots read off its model (tools/lib/trunk.ts),
+  // printed as the props table's `trunk`, `trunkAt` and `roots`, which the colliders and the
+  // navmesh stand on.
   if (!args.length) fail('trunk <tree id>...');
   try {
     for (const id of args) {
@@ -493,7 +494,10 @@ async function trunk(args: string[]): Promise<void> {
       if (spec?.kind !== 'tree') fail(`${id}: not a tree in the props table`);
       const t = await findTrunk(`assets/props/${id}/${id}.glb`, spec.height);
       if (!t) fail(`${id}: nothing stands solid between ${TRUNK.band.join(' and ')} m`);
-      console.info(`${id.padEnd(24)} trunk: ${t.radius}, trunkAt: [${t.at.join(', ')}]`);
+      const roots = t.roots.length
+        ? `, roots: [${t.roots.map((d) => `[${d.join(', ')}]`).join(', ')}]`
+        : '';
+      console.info(`${id.padEnd(24)} trunk: ${t.radius}, trunkAt: [${t.at.join(', ')}]${roots}`);
     }
   } catch (e) {
     fail(`asset trunk: ${e instanceof Error ? e.message : String(e)}`);

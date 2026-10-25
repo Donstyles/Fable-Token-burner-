@@ -29,8 +29,22 @@ export interface Trunk {
   radius: number;
 }
 
-/** The trunk of a tree's triangles, or null if nothing stands solid in the band. */
-export function trunkOf(t: Triangles, o = TRUNK): Trunk | null {
+/** The solid ground plan of a tree's triangles between `band` metres, seen from above. */
+interface Plan {
+  solid: Uint8Array;
+  n: number;
+  /** The grid's corner, metres. */
+  x0: number;
+  z0: number;
+  /** The model's middle, metres. */
+  cx: number;
+  cz: number;
+}
+
+function planOf(
+  t: Triangles,
+  o: { cell: number; band: readonly [number, number]; reach: number; spur: number },
+): Plan {
   let x0 = Infinity;
   let x1 = -Infinity;
   let z0 = Infinity;
@@ -118,37 +132,57 @@ export function trunkOf(t: Triangles, o = TRUNK): Trunk | null {
   const r = Math.max(1, Math.round(o.spur / o.cell));
   for (let i = 0; i < r; i++) solid = step(solid, false);
   for (let i = 0; i < r; i++) solid = step(solid, true);
-  // The solid pieces; the trunk is the one nearest the middle, the larger if two are as near.
-  const label = new Int32Array(n * n).fill(-1);
-  let best: { at: [number, number]; area: number; d: number } | null = null;
+  return { solid, n, x0: cx - o.reach, z0: cz - o.reach, cx, cz };
+}
+
+/** The solid pieces of a plan: each one's cells, middle and area, metres. */
+function piecesOf(
+  plan: Plan,
+  cell: number,
+): { cells: number[]; at: [number, number]; area: number }[] {
+  const { solid, n } = plan;
+  const seen = new Uint8Array(n * n);
+  const out: { cells: number[]; at: [number, number]; area: number }[] = [];
+  const stack: number[] = [];
   for (let s = 0; s < n * n; s++) {
-    if (!solid[s] || label[s]! >= 0) continue;
-    let count = 0;
+    if (!solid[s] || seen[s]) continue;
+    const cells: number[] = [];
     let sx = 0;
     let sz = 0;
-    label[s] = s;
+    seen[s] = 1;
     stack.push(s);
     while (stack.length) {
       const k = stack.pop()!;
       const x = k % n;
       const y = (k - x) / n;
-      count++;
-      sx += cx - o.reach + (x + 0.5) * o.cell;
-      sz += cz - o.reach + (y + 0.5) * o.cell;
+      cells.push(k);
+      sx += plan.x0 + (x + 0.5) * cell;
+      sz += plan.z0 + (y + 0.5) * cell;
       for (const q of [x > 0 ? k - 1 : -1, x < n - 1 ? k + 1 : -1, k - n, k + n]) {
-        if (q < 0 || q >= n * n || !solid[q] || label[q]! >= 0) continue;
-        label[q] = s;
+        if (q < 0 || q >= n * n || !solid[q] || seen[q]) continue;
+        seen[q] = 1;
         stack.push(q);
       }
     }
-    const piece = {
-      at: [sx / count, sz / count] as [number, number],
-      area: count * o.cell * o.cell,
-      d: Math.hypot(sx / count - cx, sz / count - cz),
-    };
+    out.push({
+      cells,
+      at: [sx / cells.length, sz / cells.length],
+      area: cells.length * cell * cell,
+    });
+  }
+  return out;
+}
+
+/** The trunk of a tree's triangles, or null if nothing stands solid in the band. */
+export function trunkOf(t: Triangles, o = TRUNK): Trunk | null {
+  const plan = planOf(t, o);
+  // The trunk is the piece nearest the middle, the larger if two are as near.
+  let best: { at: [number, number]; area: number; d: number } | null = null;
+  for (const piece of piecesOf(plan, o.cell)) {
     if (piece.area < 0.01) continue;
-    if (!best || piece.d < best.d - 0.25 || (piece.d < best.d + 0.25 && piece.area > best.area))
-      best = piece;
+    const d = Math.hypot(piece.at[0] - plan.cx, piece.at[1] - plan.cz);
+    if (!best || d < best.d - 0.25 || (d < best.d + 0.25 && piece.area > best.area))
+      best = { at: piece.at, area: piece.area, d };
   }
   if (!best) return null;
   return {
@@ -157,8 +191,109 @@ export function trunkOf(t: Triangles, o = TRUNK): Trunk | null {
   };
 }
 
-/** The trunk of the tree model at `path`, standing `height` metres tall. */
-export async function findTrunk(path: string, height: number): Promise<Trunk | null> {
+export const ROOTS = {
+  cell: 0.05,
+  /** The heights the roots are read between: what a party's shins and knees meet. */
+  band: [0.15, 0.9],
+  reach: 6,
+  /** Spurs thinner than twice this are taken off: a root thinner than 20 cm is stepped over. */
+  spur: 0.1,
+  /** At most this many discs, none thinner than `least` metres across. */
+  most: 6,
+  least: 0.4,
+  /** Covered once this share of the roots' plan lies under a disc. */
+  cover: 0.85,
+} as const;
+
+/**
+ * A tree's roots (owner, 2026-10-25: "Can still Walk through the Roots of this big tree"): the
+ * solid ground plan at shin height that holds the trunk, covered by a few discs (x, z,
+ * radius), widest first, each the widest that fits where the roots are not yet covered. The
+ * collider stands a short cylinder on each. Empty where the roots are no wider than the trunk.
+ */
+export function rootsOf(t: Triangles, trunk: Trunk, o = ROOTS): [number, number, number][] {
+  const plan = planOf(t, o);
+  const { n } = plan;
+  // The piece under the trunk, or nearest it.
+  const pieces = piecesOf(plan, o.cell);
+  let piece: (typeof pieces)[number] | undefined;
+  let near = Infinity;
+  for (const p of pieces) {
+    const d = Math.min(
+      ...p.cells.map((k) => {
+        const x = plan.x0 + ((k % n) + 0.5) * o.cell;
+        const z = plan.z0 + (Math.floor(k / n) + 0.5) * o.cell;
+        return Math.hypot(x - trunk.at[0], z - trunk.at[1]);
+      }),
+    );
+    if (d < near) {
+      near = d;
+      piece = p;
+    }
+  }
+  if (!piece || near > trunk.radius + 0.5) return [];
+  const mine = new Uint8Array(n * n);
+  for (const k of piece.cells) mine[k] = 1;
+  // Each cell's distance to the outside of the piece, in cells (two passes, chamfer).
+  const far = new Float32Array(n * n);
+  for (let k = 0; k < n * n; k++) far[k] = mine[k] ? 1e9 : 0;
+  for (let y = 0; y < n; y++) {
+    for (let x = 0; x < n; x++) {
+      const k = y * n + x;
+      if (!far[k]) continue;
+      const a = x > 0 ? far[k - 1]! + 1 : 1;
+      const b = y > 0 ? far[k - n]! + 1 : 1;
+      const c = x > 0 && y > 0 ? far[k - n - 1]! + 1.414 : 1.414;
+      const d = x < n - 1 && y > 0 ? far[k - n + 1]! + 1.414 : 1.414;
+      far[k] = Math.min(far[k]!, a, b, c, d);
+    }
+  }
+  for (let y = n - 1; y >= 0; y--) {
+    for (let x = n - 1; x >= 0; x--) {
+      const k = y * n + x;
+      if (!far[k]) continue;
+      const a = x < n - 1 ? far[k + 1]! + 1 : 1;
+      const b = y < n - 1 ? far[k + n]! + 1 : 1;
+      const c = x < n - 1 && y < n - 1 ? far[k + n + 1]! + 1.414 : 1.414;
+      const d = x > 0 && y < n - 1 ? far[k + n - 1]! + 1.414 : 1.414;
+      far[k] = Math.min(far[k]!, a, b, c, d);
+    }
+  }
+  // The trunk's own disc first, then the widest disc where the roots are not yet covered.
+  const covered = new Uint8Array(n * n);
+  const discs: [number, number, number][] = [];
+  const lay = (x: number, z: number, r: number): void => {
+    discs.push([+x.toFixed(2), +z.toFixed(2), +r.toFixed(2)]);
+    for (const k of piece!.cells) {
+      const cx = plan.x0 + ((k % n) + 0.5) * o.cell;
+      const cz = plan.z0 + (Math.floor(k / n) + 0.5) * o.cell;
+      if (Math.hypot(cx - x, cz - z) <= r + o.cell) covered[k] = 1;
+    }
+  };
+  lay(trunk.at[0], trunk.at[1], trunk.radius);
+  while (discs.length < o.most + 1) {
+    let left = 0;
+    let best = -1;
+    for (const k of piece.cells) {
+      if (covered[k]) continue;
+      left++;
+      if (best < 0 || far[k]! > far[best]!) best = k;
+    }
+    if (left <= piece.cells.length * (1 - o.cover) || best < 0) break;
+    const r = far[best]! * o.cell;
+    if (r * 2 < o.least) break;
+    lay(plan.x0 + ((best % n) + 0.5) * o.cell, plan.z0 + (Math.floor(best / n) + 0.5) * o.cell, r);
+  }
+  return discs.slice(1);
+}
+
+/** The trunk of the tree model at `path`, standing `height` metres tall, and its roots. */
+export async function findTrunk(
+  path: string,
+  height: number,
+): Promise<(Trunk & { roots: [number, number, number][] }) | null> {
   const doc = await new NodeIO().registerExtensions(ALL_EXTENSIONS).read(path);
-  return trunkOf(trianglesOf(doc, height));
+  const t = trianglesOf(doc, height);
+  const trunk = trunkOf(t);
+  return trunk && { ...trunk, roots: rootsOf(t, trunk) };
 }

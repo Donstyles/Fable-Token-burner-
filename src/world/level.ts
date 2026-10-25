@@ -516,6 +516,21 @@ export async function loadLevel(
       );
       const trunk = (spec?.trunk ?? 0.3) * scale;
       addCollider(at.x, at.z, { kind: 'cylinder', x: at.x, y: ky, z: at.z, r: trunk, h: 4 });
+      // Its roots, a short cylinder each, as high as a party's knees (DESIGN.md 17.7).
+      for (const [rx, rz, rr] of spec?.roots ?? []) {
+        const p = Vector3.TransformCoordinates(
+          new Vector3(-rx, 0, rz),
+          instanceMatrix(kx, ky, kz, yaw, scale),
+        );
+        addCollider(p.x, p.z, {
+          kind: 'cylinder',
+          x: p.x,
+          y: ky - 0.3,
+          z: p.z,
+          r: rr * scale,
+          h: 1.3,
+        });
+      }
     }
     const propModels = sidecar.propModels ?? [];
     for (const [k, [mi, kx, ky, kz, yaw, scale]] of (sidecar.props ?? []).entries()) {

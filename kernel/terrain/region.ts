@@ -568,8 +568,8 @@ export function buildRegion(s: RegionScript): TerrainLevel {
 
   // The navmesh: terrain, footprint boxes, the cave and its rocks' boxes, trunks near the roads
   // where monsters walk, each the trunk of the model the runtime draws there, where it draws it
-  // and as thick (kernel/terrain/props.ts `trunk`), so a monster paths round a big oak's roots
-  // as the party is stopped by them.
+  // and as thick (kernel/terrain/props.ts `trunk`), with its roots (`roots`), so a monster
+  // paths round a big oak's roots as the party is stopped by them.
   const navTrunks = nb();
   for (const t of trees) {
     if (!roads.some((r) => r.ground.nearest(t.x, t.z).distance < 60)) continue;
@@ -581,6 +581,12 @@ export function buildRegion(s: RegionScript): TerrainLevel {
     const x = t.x + (ax * cos - az * sin) * t.scale;
     const z = t.z + (ax * sin + az * cos) * t.scale;
     box(navTrunks, [x - r, t.y - 0.5, z - r], [x + r, t.y + 4, z + r], ROLE.collider);
+    for (const [rx, rz, rr] of spec?.roots ?? []) {
+      const px = t.x + (rx * cos - rz * sin) * t.scale;
+      const pz = t.z + (rx * sin + rz * cos) * t.scale;
+      const q = rr * t.scale;
+      box(navTrunks, [px - q, t.y - 0.5, pz - q], [px + q, t.y + 1, pz + q], ROLE.collider);
+    }
   }
   const collider = terrainMesh({ height: hf, splat });
   appendMesh(collider, navTrunks);

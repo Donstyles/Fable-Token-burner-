@@ -224,10 +224,14 @@ test.describe('Gullhaven', () => {
     expect(r.wallWithout).toBe(0);
   });
 
-  test('a big oak stops the party at its drawn trunk, not inside it', async ({ page }) => {
+  test('a big oak stops the party at its drawn trunk and roots, not inside them', async ({
+    page,
+  }) => {
     // Owner, 2026-10-24: "The very large trees have no collision". Their colliders had been a
     // hand-set 0.45 m at the model's middle, inside a trunk and roots five metres across. Rays
-    // at chest height from all round must meet the collider within a step of the bark.
+    // at chest height from all round must meet the collider within a step of the bark, and
+    // at shin height within a step of the roots (2026-10-25: "Can still Walk through the
+    // Roots of this big tree").
     const r = await page.evaluate(async () => {
       type Vec = { x: number; y: number; z: number; add(v: Vec): Vec; scale(s: number): Vec };
       type VecClass = (new (x: number, y: number, z: number) => Vec) & {
@@ -270,9 +274,9 @@ test.describe('Gullhaven', () => {
       const engine = scene.getPhysicsEngine();
       const gaps: number[] = [];
       const R = 10;
-      for (let k = 0; k < 12; k++) {
-        const a = (k / 12) * Math.PI * 2;
-        const o = new V(c.x + Math.sin(a) * R, c.y + 1.3, c.z + Math.cos(a) * R);
+      for (let k = 0; k < 24; k++) {
+        const a = ((k % 12) / 12) * Math.PI * 2;
+        const o = new V(c.x + Math.sin(a) * R, c.y + (k < 12 ? 1.3 : 0.5), c.z + Math.cos(a) * R);
         const dir = new V(-Math.sin(a), 0, -Math.cos(a));
         const seen = scene.pickWithRay(new Ray(o, dir, R), (m) => m === oak);
         const felt = engine.raycast(o, o.add(dir.scale(R)));
@@ -283,7 +287,7 @@ test.describe('Gullhaven', () => {
       return gaps;
     });
     expect(r).not.toBeNull();
-    expect(r!.length).toBeGreaterThanOrEqual(8);
+    expect(r!.length).toBeGreaterThanOrEqual(16);
     // A disc of the trunk's area sits inside its flared roots and outside its hollows: within a
     // step of the bark either way, nowhere deep inside it.
     for (const gap of r!) expect(gap).toBeLessThan(1);

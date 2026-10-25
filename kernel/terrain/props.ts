@@ -20,6 +20,13 @@ export interface PropSpec {
    */
   trunk?: number;
   trunkAt?: readonly [number, number];
+  /**
+   * Trees: the roots the party meets at its shins, read off the model under the trunk's band
+   * (tools/lib/trunk.ts `rootsOf`): discs (x, z, radius) in metres in the model's own frame, as
+   * `trunkAt`, each a short cylinder in the collider (owner, 2026-10-25: "Can still Walk
+   * through the Roots of this big tree").
+   */
+  roots?: readonly (readonly [number, number, number])[];
   /** Trees: the forest classes this model stands in for (kernel/terrain/trees.ts). */
   classes?: readonly ('pine' | 'broadleaf' | 'spruce' | 'oak' | 'palm')[];
   /**
@@ -77,6 +84,11 @@ export const PROPS: Record<string, PropSpec> = {
     height: 20,
     trunk: 0.62,
     trunkAt: [0.02, -0.2],
+    roots: [
+      [-0.16, -0.88, 0.35],
+      [-0.66, -0.33, 0.31],
+      [0.09, 0.47, 0.27],
+    ],
     classes: ['spruce'],
   },
   'tree-fir-01': {
@@ -84,6 +96,10 @@ export const PROPS: Record<string, PropSpec> = {
     height: 24,
     trunk: 1.74,
     trunkAt: [0.06, -0.04],
+    roots: [
+      [0.37, 1.73, 0.71],
+      [-1.73, -0.27, 0.55],
+    ],
     classes: ['spruce', 'pine'],
   },
   'tree-pine-01': {
@@ -105,6 +121,12 @@ export const PROPS: Record<string, PropSpec> = {
     height: 18,
     trunk: 0.51,
     trunkAt: [0.01, -0.02],
+    roots: [
+      [0.11, -0.6, 0.24],
+      [0.56, -0.15, 0.22],
+      [0.06, 0.55, 0.21],
+      [-0.54, -0.15, 0.21],
+    ],
     classes: ['pine'],
   },
   'tree-oak-01': {
@@ -112,14 +134,41 @@ export const PROPS: Record<string, PropSpec> = {
     height: 16,
     trunk: 2.67,
     trunkAt: [-0.04, 1.04],
+    roots: [
+      [2.08, -0.67, 0.76],
+      [2.68, 1.28, 0.7],
+      [1.28, 4.13, 0.69],
+      [-2.12, 2.88, 0.69],
+      [-0.42, -1.67, 0.65],
+      [-2.77, 0.93, 0.6],
+    ],
     classes: ['oak'],
   },
-  'tree-oak-02': { kind: 'tree', height: 14, trunk: 0.72, trunkAt: [0.07, 0.11], classes: ['oak'] },
+  'tree-oak-02': {
+    kind: 'tree',
+    height: 14,
+    trunk: 0.72,
+    trunkAt: [0.07, 0.11],
+    roots: [
+      [0.09, 0.91, 0.4],
+      [0.04, -0.69, 0.35],
+      [-0.66, 0.51, 0.3],
+      [0.79, 0.51, 0.3],
+    ],
+    classes: ['oak'],
+  },
   'tree-beech-01': {
     kind: 'tree',
     height: 18,
     trunk: 0.75,
     trunkAt: [-0.13, -0.14],
+    roots: [
+      [0.56, 0.27, 0.49],
+      [-0.84, 0.27, 0.47],
+      [-0.04, 0.67, 0.45],
+      [0.66, -0.38, 0.4],
+      [-0.09, -0.98, 0.35],
+    ],
     classes: ['broadleaf'],
   },
   'tree-birch-01': {
@@ -134,6 +183,13 @@ export const PROPS: Record<string, PropSpec> = {
     height: 13,
     trunk: 0.85,
     trunkAt: [0.19, 0.36],
+    roots: [
+      [-0.34, -0.38, 0.47],
+      [-0.74, 0.27, 0.47],
+      [0.76, 1.07, 0.45],
+      [-0.24, 1.17, 0.42],
+      [1.11, 0.47, 0.42],
+    ],
     classes: ['broadleaf'],
   },
   'tree-linden-01': {
@@ -141,6 +197,12 @@ export const PROPS: Record<string, PropSpec> = {
     height: 15,
     trunk: 0.57,
     trunkAt: [-0.03, 0.14],
+    roots: [
+      [-0.52, 0.54, 0.35],
+      [0.48, -0.21, 0.31],
+      [-0.62, -0.16, 0.31],
+      [0.28, 0.69, 0.3],
+    ],
     classes: ['broadleaf'],
   },
   'tree-willow-01': {
@@ -148,15 +210,50 @@ export const PROPS: Record<string, PropSpec> = {
     height: 10,
     trunk: 1.07,
     trunkAt: [-0.02, 0.13],
+    roots: [
+      [-0.29, 1.24, 0.56],
+      [0.76, 0.94, 0.54],
+      [-0.19, -1.01, 0.54],
+      [0.96, -0.51, 0.52],
+      [-1.09, -0.31, 0.51],
+      [-1.14, 0.44, 0.47],
+    ],
     classes: ['broadleaf'],
   },
-  'tree-dead-01': { kind: 'tree', height: 9, trunk: 1.03, trunkAt: [0.21, 0.1] },
-  'tree-dead-02': { kind: 'tree', height: 7, trunk: 0.52, trunkAt: [-0.02, 0.04] },
+  'tree-dead-01': {
+    kind: 'tree',
+    height: 9,
+    trunk: 1.03,
+    trunkAt: [0.21, 0.1],
+    roots: [
+      [1.29, 0.49, 0.4],
+      [0.29, -1.06, 0.37],
+      [-0.26, 1.09, 0.35],
+      [-0.46, -0.76, 0.35],
+      [0.49, 1.14, 0.35],
+      [-0.81, 0.49, 0.33],
+    ],
+  },
+  'tree-dead-02': {
+    kind: 'tree',
+    height: 7,
+    trunk: 0.52,
+    trunkAt: [-0.02, 0.04],
+    roots: [
+      [0.23, -0.49, 0.28],
+      [-0.42, -0.39, 0.25],
+      [0.53, 0.21, 0.25],
+    ],
+  },
   'tree-palm-01': {
     kind: 'tree',
     height: 9,
     trunk: 0.51,
     trunkAt: [0.15, 0.63],
+    roots: [
+      [-0.2, 0.19, 0.31],
+      [-0.45, 0.49, 0.2],
+    ],
     classes: ['palm'],
   },
   'tree-palm-02': {
