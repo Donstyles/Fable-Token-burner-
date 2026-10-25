@@ -2759,7 +2759,7 @@ radius, centred a metre out, so the party walked deep into it before a thin post
 - **Checked** by an end-to-end test that casts rays at a big oak from ten metres round: the
   party's collider and the drawn trunk meet within a metre on every side the ray hits.
 
-### 17.8 A room behind every door (owner, 2026-10-24)
+### 17.8 A room behind every door (owner, 2026-10-24 and 25)
 
 "Make a plan how we implement the cool animated interior views of shops or houses." The first
 plan drew each room live, the keeper a rigged model in it; the owner turned it down ("Your
@@ -2779,55 +2779,69 @@ MM7's tables, which run on the same engine):
 - Buying showed a still picture instead, a weapon table, an armour wall, a magic shelf or a
   guild's bookshelf, with the stock's item pictures laid on it.
 
-**Here:**
+**Here** (owner, 2026-10-25: "Can't we rig something with a chatgpt image and some filters and
+some lighting?"; of the smithy running: "That's kinda neat"):
 
-- **A picture, not a film.** Each kind of house has one picture of its room, the keeper behind
-  their counter painted into it, filling the view's box. The world stops drawing while it is up
-  (no frame of the street is spent behind it), and the clock stops, as now.
-- **Barely moving, as the owner asked.** A room has two or three things that move, no more:
-  - **Pulsing light**: a hearth, a forge, a candle, a lamp. Its light is a mask on the picture,
-    found on the picture's own warm, bright paint (`isGlow` in `tools/lib/glow.ts`, which finds
-    the smithy's coals on its model) and softened; it brightens and dims over the picture in a
-    flicker of two or three rhythms out of step, a candle quicker than a hearth.
-  - **A swinging lamp** or a hanging pot: cut out of the picture as its own layer, the hole
-    behind it filled, swinging a few degrees about its hook on a slow pendulum, its pool of
-    light swinging with it.
-  - Each moves at MM6's step (ten frames a second, as the models' clips), not smoothly.
-- **Drawn by the page.** The picture and its layers are images in the view's box, moved by CSS
-  (opacity for the light, a rotation for the lamp); there is nothing to build that Babylon or
-  the browser does not already do.
-- **The board** stays MM6's (16.34): the keeper's portrait with "Converse with" and their name,
-  the choices under it. One room serves every house of its kind in a town; the keeper's name
-  and portrait are the house's own.
-- **The look**: the room is drawn as MM6's were, a pre-rendered 3D Studio interior of 1998,
-  warm, dim, cluttered with the trade's things, the keeper at work behind the counter. The
-  picture is cut to the view's box (about 2.2 wide to 1 high on the phone, its middle kept on
-  other screens) at one UI pixel, about 640 by 290, and put through the palette the world's
-  filter uses, so it sits in the frame like the street.
+- **The owner's picture, not a film.** Each house has one picture of its room, made by the
+  owner in ChatGPT, the keeper behind the counter painted in (pipeline/inbox/rooms/<house>.png,
+  the house's id from src/game/content.ts). It fills the view's box while the house's board is
+  up, and the world is not drawn behind it: the scene's frame, where the world steps, is not
+  run at all, so the clock stands still as it does under any screen.
+- **Cut and lit by one command**, `npm run room -- <house> [--top <px>]` (tools/room.ts,
+  tools/lib/room.ts), with no hand-made mask:
+  - the picture is cut to the phone's view box, 640 by 296 at one UI pixel, the band of rows
+    kept chosen to hold every fire with room round it (`--top` sets it by hand);
+  - the **flames** are its brightest white-yellow paint (`isFlame`), in pieces joined where a
+    log parts a fire's tongues, a glint on a helmet too small to count;
+  - the **coals** are the red-orange paint under and round the flames (`isCoal`);
+  - each fire's **light** is a wide soft field round it, wider for a bigger fire, the biggest
+    fire's in one channel and the others' in another;
+  - **sparks** rise only off a fire with a bed of coals under it, not off a lamp's wick.
 
-**How a room is made** (the usual rules hold):
+  It writes assets/rooms/<house>.png, the four masks as assets/rooms/<house>.lights.png (red
+  flames, green coals, blue the biggest fire's light, alpha the others'), their numbers as
+  <house>.json, records the room in the manifest as the owner's ChatGPT image, and draws a
+  review sheet, the picture over its masks, in pipeline/work/rooms/.
 
-- **A card per room** (`pipeline/cards/room-<kind>.md`): what is in it, where the keeper
-  stands, what glows and what swings. The owner reads the cards first.
-- **One text-to-image picture per room**, as the spell icons were: a numbered batch, approved
-  by the owner before it runs, a few candidates each, the owner choosing. The owner's own
-  pictures can stand in for any of them, dropped in `pipeline/inbox/rooms/`.
-- **The keeper's portrait** is a picture of its own, in the band portraits' style, cut to the
-  board's oval.
-- **The swinging lamp** is drawn alone on fuchsia in the same style and keyed out (`asset
-inbox`), so nothing has to be cut from the room.
-- **A review sheet** per room: the cut picture, its light mask and the lamp's pivot marked, and
-  a strip of frames as it moves; looked at before it goes in.
+- **Moving, a little** (src/world/room.ts, one shader drawn by Babylon's EffectRenderer):
+  - licks of light rise through the painted flames, and the paint is drawn from a pixel or two
+    below, wavering, so the tongues climb and sway rather than blink;
+  - firelight brightens by adding warm light and dims by losing its yellow first, as a flame
+    cools to orange: a yellow scaled evenly goes green up and olive down;
+  - the coals breathe, each patch on its own slow rhythm;
+  - each fire's light rises and falls over the room with its own flicker, three rhythms out of
+    step, the forge and the lamp never together;
+  - a few sparks drift up off the coals and die;
+  - all at MM6's ten steps a second, in the world's sixteen-bit frame; a step is drawn only
+    when it changes, the canvas keeping the last, so a room costs ten small draws a second.
+- **Taps** on the room do nothing (the street is not behind it), and a drag on it is not a turn
+  of the party's head when the board closes.
+- **The board** stays MM6's (16.34) over the panel. One room serves its house; a second smithy
+  in another town would want a picture of its own or this one.
+- **For a new room**, the owner's prompt asks for the widest picture ChatGPT makes, a
+  pre-rendered 1998 RPG interior (the smithy's prompt is the pattern), and at least one real
+  flame, a hearth, candles, a lamp or a brazier: that is what moves. The keeper and the fires
+  stay out of the top and bottom fifth, which the phone's wide box cuts away.
 
-**Cost**: a picture is 3 credits (nano-banana-2-lite) or 6 (nano-banana-2). Four candidates a
-room, a portrait and a lamp make about 20 credits a room, about 100 for Gullhaven's five
-(inn, temple, store, smithy, training hall).
+**Checked**: unit tests on painted rooms (tools/lib/room.test.ts) and an end-to-end test that
+taps the smithy's door, finds the room up and drawn, its forge bright and red, its frames
+differing a few steps apart and no frame of the world drawn meanwhile, and the street back at
+the door.
 
-**Later**: the homes (poor, medium and rich, their residents' portraits on the board), the
-stock on its shelf for Buy once items have pictures, the cave's "Enter?" picture once a
-dungeon lies behind it, and the keeper's greeting.
+**Next**: the inn, the store, the temple and the training hall from the owner's pictures; a
+guild's room, whose magic glows (an orb's blue, a rune's violet) want a pulse of their own
+colour beside the fire's; the keeper's portrait and "Converse with" on the board; the homes;
+the stock on its shelf for Buy once items have pictures; the cave's "Enter?" picture once a
+dungeon lies behind it.
 
 ## 13. Decision log
+
+- 2026-10-25 – The smithy's room in the game, from the owner's ChatGPT picture (owner: "Can't
+  we rig something with a chatgpt image and some filters and some lighting?"; 17.8). One
+  command cuts a room's picture to the view box and finds its flames, coals and firelight on
+  its own paint; one shader animates them at MM6's step while the house is open, and the world
+  is not drawn behind it. No Meshy credits; a room is the owner's picture and a minute's work.
+  The batch of text-to-image rooms planned the day before is not needed.
 
 - 2026-10-24 – Rooms as pictures (owner: "Pictures with minimal animations. Just some pulsing
   lighting on some hearths or a swinging lamp or something"; 17.8). A house shows one picture of

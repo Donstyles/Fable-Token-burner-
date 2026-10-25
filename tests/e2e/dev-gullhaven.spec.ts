@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
 
 /**
  * Gullhaven, the starting region (docs/ROADMAP.md): a hand-designed 640 m map with terrain
@@ -24,6 +24,7 @@ type Dev = {
   teleport(x: number, y: number, z: number, yaw: number): void;
   screenDoorOf(model: string): { x: number; y: number } | null;
   screens: { current(): string | null; close(): void };
+  room: { id: string | null; draws: number };
   monsters: { state: string; position: { x: number; y: number; z: number } }[];
   portals: {
     portals: { name: string; target: { level: string; entry: string } }[];
@@ -31,6 +32,45 @@ type Dev = {
   };
 };
 type W = Window & { ftb?: { dev?: Dev } };
+
+/** Stand three metres back from the place before `house`'s door (its plot), facing it. */
+async function standBefore(page: Page, house: string, model: string): Promise<void> {
+  await page.evaluate(
+    ([house, model]) => {
+      const d = (window as unknown as W).ftb!.dev!;
+      const p = d.pointOf(house)!;
+      const scene = (
+        window as unknown as {
+          ftb: {
+            scene: {
+              meshes: { name: string; thinInstanceGetWorldMatrices(): { m: number[] }[] }[];
+            };
+          };
+        }
+      ).ftb.scene;
+      // The copy of the model nearest the place.
+      const mesh = scene.meshes.find(
+        (m) => m.name.startsWith(`props:${model}:`) && !m.name.endsWith(':far'),
+      )!;
+      const at = mesh
+        .thinInstanceGetWorldMatrices()
+        .map((x) => x.m)
+        .sort(
+          (a, b) => Math.hypot(a[12]! - p.x, a[14]! - p.z) - Math.hypot(b[12]! - p.x, b[14]! - p.z),
+        )[0]!;
+      const dx = at[12]! - p.x;
+      const dz = at[14]! - p.z;
+      const l = Math.hypot(dx, dz);
+      d.teleport(
+        p.x - (dx / l) * 3,
+        p.y + 0.3,
+        p.z - (dz / l) * 3,
+        (Math.atan2(dx, dz) * 180) / Math.PI,
+      );
+    },
+    [house, model] as const,
+  );
+}
 
 test.describe('Gullhaven', () => {
   test.beforeEach(async ({ page }) => {
@@ -399,5 +439,58 @@ test.describe('Gullhaven', () => {
         timeout: 15_000,
       })
       .toBe('tavern');
+  });
+
+  test("the smithy's door opens its room, its fire moving, the street not drawn behind it", async ({
+    page,
+  }) => {
+    // Owner, 2026-10-25: rooms as pictures, "pulsing lighting on some hearths" (DESIGN 17.8).
+    test.setTimeout(240_000);
+    await standBefore(page, 'smithy', 'building-smithy');
+    await page.waitForTimeout(1500);
+    const door = await page.evaluate(() =>
+      (window as unknown as W).ftb!.dev!.screenDoorOf('building-smithy'),
+    );
+    expect(door).not.toBeNull();
+    await page.mouse.click(door!.x, door!.y);
+    await expect
+      .poll(() => page.evaluate(() => (window as unknown as W).ftb!.dev!.room.id), {
+        timeout: 15_000,
+      })
+      .toBe('smithy');
+    expect(await page.evaluate(() => (window as unknown as W).ftb!.dev!.screens.current())).toBe(
+      'shop',
+    );
+    type Scene = { getRenderId(): number };
+    const sample = () =>
+      page.evaluate(() => ({
+        draws: (window as unknown as W).ftb!.dev!.room.draws,
+        world: (window as unknown as { ftb: { scene: Scene } }).ftb.scene.getRenderId(),
+      }));
+    await expect.poll(async () => (await sample()).draws, { timeout: 30_000 }).toBeGreaterThan(2);
+    const a = await sample();
+    // The forge in the view's box: the room is drawn (not black), and its fire moves.
+    const forge = { x: 180, y: 145, width: 80, height: 85 };
+    const one = await page.screenshot({ clip: forge });
+    await expect
+      .poll(async () => (await sample()).draws, { timeout: 30_000 })
+      .toBeGreaterThan(a.draws + 3);
+    const two = await page.screenshot({ clip: forge });
+    const b = await sample();
+    // The world drew no frame of the street meanwhile.
+    expect(b.world).toBe(a.world);
+    expect(one.equals(two)).toBe(false);
+    const { default: sharp } = await import('sharp');
+    const stats = await sharp(one).stats();
+    // The forge's mouth is bright and red: firelight, not the street's daylight or black.
+    expect(stats.channels[0]!.mean).toBeGreaterThan(90);
+    expect(stats.channels[0]!.mean).toBeGreaterThan(stats.channels[2]!.mean * 1.5);
+    await page.screenshot({ path: `test-results/room-smithy-${test.info().project.name}.png` });
+    // Out of the door: the room comes down and the street is drawn again.
+    await page.evaluate(() => (window as unknown as W).ftb!.dev!.screens.close());
+    expect(await page.evaluate(() => (window as unknown as W).ftb!.dev!.room.id)).toBeNull();
+    await expect
+      .poll(async () => (await sample()).world, { timeout: 30_000 })
+      .toBeGreaterThan(b.world);
   });
 });

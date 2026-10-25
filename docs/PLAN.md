@@ -600,9 +600,9 @@ camps and ruin a minute apart, woods between; and the regions the right
 way round (DESIGN 17.1), east on the screen's right and the sun rising there.
 Then trees that stop the party at their drawn trunks (DESIGN 17.7), and the
 test dungeon scrapped (owner): the showcase level and its portal are gone,
-the cave's tunnel ends in rock, and its tests run in Gullhaven. Planned
-next: interiors, a picture of each room with a pulsing hearth or a swinging
-lamp (Phase 6a, DESIGN 17.8).
+the cave's tunnel ends in rock, and its tests run in Gullhaven. Then the
+smithy's room from the owner's ChatGPT picture, its forge, coals and lamp
+burning at MM6's step (Phase 6a, DESIGN 17.8).
 
 **Status, night of 2026-10-16 (owner asleep, best judgement):** steps 1 to 6
 are in: the valley (village, road, pass, gorge with eight cascades, cave
@@ -619,29 +619,24 @@ unattended risked another broken rig).
 
 ## Phase 6a – Interiors (added 2026-10-24)
 
-**Goal:** a room behind every door, as MM6's houses: a picture of the room in the view's box
-with a pulsing hearth or a swinging lamp, the keeper's portrait on the board (DESIGN 17.8).
+**Goal:** a room behind every door, as MM6's houses: the owner's picture of the room in the
+view's box, its fires moving, the keeper's portrait on the board (DESIGN 17.8).
 
-**Steps** (each Meshy step a numbered batch, run only on the owner's approval of that number)
+**Steps**
 
-1. The room view: a house shows its room's picture and layers in the view's box, the world
-   stops drawing while it is up and starts again at the door. End-to-end tests: the inn's
-   door opens its picture inside the view's box, the world draws no frame behind it, the light
-   layer pulses and the lamp swings.
-2. The tooling: a `rooms` batch kind (text-to-image only, a few candidates a room), the cut to
-   the view's box and the palette, the light mask from the picture's warm paint, the lamp's
-   pivot, and the room's review sheet.
-3. The cards for Gullhaven's five rooms (inn, temple, store, smithy, training hall), read by
-   the owner.
-4. The smithy end to end: its batch (about 20 credits), the owner's pick, the review sheet,
-   then judged on the phone.
-5. The inn, store, temple and training hall the same way.
-6. Later: the homes, the stock on its shelf for Buy, the cave's "Enter?" picture.
+1. Done 2026-10-25: the room view (src/world/room.ts), `npm run room` (tools/room.ts), and the
+   smithy from the owner's picture, with an end-to-end test at its door.
+2. The inn, the store, the temple and the training hall, each from the owner's picture: drop
+   it in pipeline/inbox/rooms/<house>.png and run `npm run room -- <house>`.
+3. A guild's room (a townhouse on the square could be one), with a pulse for magic glows of
+   their own colour beside the fire's.
+4. The keeper's portrait and "Converse with" on the board.
+5. Later: the homes, the stock on its shelf for Buy, the cave's "Enter?" picture.
 
-**Credits:** about 100 for the five rooms (DESIGN 17.8).
+**Credits:** none; the pictures are the owner's.
 
-**Acceptance:** on the owner's phone every house with a service opens its room at once, the
-light pulses and the lamp swings, and leaving puts the party back at the door.
+**Acceptance:** on the owner's phone every house with a service opens its room at once, its
+fires moving, and leaving puts the party back at the door.
 
 ---
 

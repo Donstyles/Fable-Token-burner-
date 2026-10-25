@@ -29,6 +29,12 @@ export interface App {
   setGrade(next: Partial<GradeSettings>): void;
   setUpscale(mode: UpscaleMode): void;
   setEnvironmentPreset(preset: EnvironmentPreset): void;
+  /**
+   * Draw `frame` instead of the world's scene each frame (a house's room, src/world/room.ts),
+   * or the scene again for null. The scene's frame is where the world steps, so it stands
+   * still meanwhile.
+   */
+  setFrame(frame: (() => void) | null): void;
   dispose(): void;
 }
 
@@ -116,8 +122,10 @@ export function boot(canvas: HTMLCanvasElement, uiLayer: HTMLElement): App {
   observer?.observe(canvas);
   applyResolution();
 
+  let frame: (() => void) | null = null;
   engine.runRenderLoop(() => {
-    scene.render();
+    if (frame) frame();
+    else scene.render();
   });
 
   return {
@@ -153,6 +161,9 @@ export function boot(canvas: HTMLCanvasElement, uiLayer: HTMLElement): App {
     setEnvironmentPreset(preset) {
       materials.setEnvironment(ENVIRONMENTS[preset]);
       sky.apply(materials.env);
+    },
+    setFrame(next) {
+      frame = next;
     },
     dispose() {
       window.removeEventListener('resize', onResize);

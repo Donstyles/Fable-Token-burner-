@@ -64,6 +64,7 @@ const characterUrl = (id: string): string => {
 };
 import { Braziers, ChimneySmoke, FogBySpace, Torch } from '../world/atmosphere';
 import { Halos } from '../world/halos';
+import { RoomView } from '../world/room';
 import { CATALOGUE, doorPoint, loadPropModels, onDoor, propLabel } from '../world/props';
 import { createStatusLine } from '../ui/status';
 import { Npc } from '../world/npc';
@@ -155,6 +156,8 @@ export interface DevHandle {
   cast(spell: SpellId): string | null;
   /** Talk to a villager by id, as a tap would; false when there is no such villager. */
   talkTo(id: string): boolean;
+  /** The room of the house the party is in, drawn in the view's box (DESIGN.md 17.8). */
+  room: RoomView;
 }
 
 const DEG = Math.PI / 180;
@@ -399,6 +402,8 @@ export async function startDev(app: App): Promise<DevHandle> {
   // The book shelf (DESIGN 14.5): sheet, items, spells, rest, quests, map. An open screen
   // pauses the world, as MM6's books did. Spell effects beyond healing are reported for now.
   let mapPicture: { picture: HTMLImageElement; size: number } | null = null;
+  // Set once the view's box is known, below: a house's room comes down with its board.
+  let leaveRoom = (): void => {};
   const screens: Screens = installScreens(uiLayer, state, {
     now: () => simTime,
     questDefs: QUESTS,
@@ -421,7 +426,10 @@ export async function startDev(app: App): Promise<DevHandle> {
       },
       quit: () => location.replace(location.pathname),
     },
-    onClose: () => save(),
+    onClose: () => {
+      leaveRoom();
+      save();
+    },
     onRest: (kind) => {
       status.say(
         kind === 'dawn'
@@ -657,6 +665,19 @@ export async function startDev(app: App): Promise<DevHandle> {
       bottom: band.offsetTop,
     };
   };
+  // A house with a room shows it in the view's box while its board is up, and the world is
+  // not drawn behind it (DESIGN.md 17.8).
+  const room = new RoomView(scene, canvas, viewBox);
+  const enterRoom = (id: string): void => {
+    if (room.show(id)) app.setFrame(() => room.draw());
+  };
+  leaveRoom = () => {
+    if (!room.id) return;
+    room.hide();
+    app.setFrame(null);
+    // A drag on the room's picture is not a turn of the party's head.
+    zones.consume();
+  };
   const lens = installLensShift(camera, viewBox, () => ({
     width: canvas.clientWidth,
     height: canvas.clientHeight,
@@ -795,6 +816,7 @@ export async function startDev(app: App): Promise<DevHandle> {
       talkTo(npc);
       return true;
     },
+    room,
   };
 
   void startCombat();
@@ -838,8 +860,9 @@ export async function startDev(app: App): Promise<DevHandle> {
   // Tap feedback: outline the tapped mesh briefly.
   const flashing = new Map<Mesh, number>();
   const handleTap = (x: number, y: number): void => {
-    // While a villager talks the view takes no taps; the panel's own buttons do.
-    if (dialogue.isOpen()) return;
+    // While a villager talks the view takes no taps; the panel's own buttons do. Nor in a
+    // house's room: the street is not behind it.
+    if (dialogue.isOpen() || room.id) return;
     const pick = scene.pick(x, y, (m) => m.isPickable && m.isVisible);
     const mesh = pick?.pickedMesh as Mesh | null;
     if (!mesh) return;
@@ -900,6 +923,7 @@ export async function startDev(app: App): Promise<DevHandle> {
         );
       if (house && door && d <= DOOR_REACH) {
         screens.openService(house.kind, house.house);
+        enterRoom(house.house.id);
         return;
       }
       const label = propLabel(model, house?.house.name);
