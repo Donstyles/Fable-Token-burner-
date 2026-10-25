@@ -239,12 +239,12 @@ float pillarAt(vec2 p, float flame) {
   }
   return w;
 }
-// The paint at p, moved where a marked thing moves it, but on what stands before it.
+// The paint at p, moved where a marked thing moves it, but on what stands before it. Both are
+// read everywhere: a pixel leaving early while its neighbours read on spoils their reads of
+// the picture at the front's outline, black specks (a mage's crown, 2026-10-25).
 vec3 moved(vec2 p, float flame);
 vec3 paint(vec2 p, float flame) {
-  float fr = frontAt(p);
-  if (fr > 0.99) return pic(p);
-  return mix(moved(p, flame), pic(p), fr);
+  return mix(moved(p, flame), pic(p), frontAt(p));
 }
 vec3 moved(vec2 p, float flame) {
   // A disc turning on the wall: its paint turned round its middle.
