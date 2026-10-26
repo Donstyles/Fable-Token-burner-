@@ -29,6 +29,7 @@
     "asset:validate": "tsx tools/asset.ts validate",
     "portrait": "tsx tools/portrait.ts",
     "room": "tsx tools/room.ts",
+    "vista": "tsx tools/vista.ts",
     "props:catalogue": "tsx tools/props-catalogue.ts",
     "fonts": "tsx tools/fonts.ts"
   },

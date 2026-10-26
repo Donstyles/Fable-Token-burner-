@@ -2121,6 +2121,15 @@
       "files": ["assets/characters/villager-woman/villager-woman.glb"],
       "date": "2026-10-17",
       "notes": "batch 005; 4265 triangles, 3 clips"
+    },
+    {
+      "id": "vista-mountains",
+      "kind": "image",
+      "source": "The owner's ChatGPT images pipeline/inbox/vistas/mountains/{sunrise,day,sunset,night}.png, their fuchsia sky keyed out, lined up on the day's skyline and rows 295 to 479 cut to 800 by 96 each (tools/vista.ts)",
+      "licence": "The owner's ChatGPT images (OpenAI's terms: the output is the user's): owner holds full rights",
+      "files": ["assets/vistas/mountains.png", "assets/vistas/mountains.json"],
+      "date": "2026-10-26",
+      "notes": "shifts onto the day: sunrise 0,0 (0.3 px left), sunset 0,0 (0.3 px left), night 0,-1 (0.4 px left)"
     }
   ]
 }

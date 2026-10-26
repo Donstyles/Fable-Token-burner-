@@ -61,14 +61,15 @@ export const EDGE_REACH = 6;
 
 /**
  * Keys an RGBA buffer on a fuchsia ground in place: the ground to clear, the subject opaque,
- * its edge part-covered in the subject's own colour. Throws when the ground is not fuchsia.
+ * its edge part-covered in the subject's own colour. The ground is the border's unless given
+ * (a landscape's fuchsia is its sky, its foot is land). Throws when the ground is not fuchsia.
  */
 export function keyFuchsia(
   data: Buffer,
   width: number,
   height: number,
+  ground: [number, number, number] = groundOf(data, width, height),
 ): { ground: [number, number, number]; opaque: number; edge: number } {
-  const ground = groundOf(data, width, height);
   const groundSpill = spillOf(...ground);
   if (groundSpill < MIN_GROUND_SPILL) {
     throw new Error(

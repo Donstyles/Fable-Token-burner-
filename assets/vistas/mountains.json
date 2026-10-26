@@ -1,0 +1,16 @@
+{
+  "size": [
+    800,
+    96
+  ],
+  "times": [
+    "sunrise",
+    "day",
+    "sunset",
+    "night"
+  ],
+  "skyline": {
+    "top": 37,
+    "mean": 68.2
+  }
+}
