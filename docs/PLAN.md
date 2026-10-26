@@ -643,6 +643,9 @@ view's box, its fires moving, the keeper's portrait on the board (DESIGN 17.8).
 5. The keeper's portrait and "Converse with" on the board.
 6. Later: the homes behind the town's houses' doors, the stock on its shelf for Buy, the
    cave's "Enter?" picture.
+7. Done 2026-10-26: the rest screen's vista (DESIGN 16.34): the owner's mountains painted at
+   four times of day under a live sky that follows the game clock, `npm run vista` (tools/
+   vista.ts), and waits that play out on the clock and in the hourglass.
 
 **Credits:** none; the pictures are the owner's.
 

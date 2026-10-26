@@ -45,7 +45,6 @@ import {
   paintArch,
   paintGlass,
   paintHourglass,
-  paintPanorama,
 } from './paint-panel';
 
 /** The one gold of the shell, darkest to lightest. */
@@ -3003,8 +3002,9 @@ function pieceUrl(kind: string, w: number, h: number): string | null {
   else if (kind === 'gold') c = paintCartouche(w, h, false);
   else if (kind.startsWith('oval-')) c = paintCartouche(w, h, false, kind.slice(5) as OvalGlyph);
   else if (kind === 'arch') c = paintArch(w, h, s.marble);
-  else if (kind === 'panorama') c = paintPanorama(w, h);
   else if (kind === 'hourglass') c = paintHourglass(w, h);
+  // `hourglass:<k>`: its sand run k eighths, while the party rests.
+  else if (kind.startsWith('hourglass:')) c = paintHourglass(w, h, Number(kind.slice(10)) / 8);
   else if (kind.startsWith('glass')) c = paintGlass(w, h, Number(kind.slice(6)) || 1);
   else if (kind === 'frame') c = paintFrame(w, h);
   else if (kind === 'tile') c = paintTile(w, h);

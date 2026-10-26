@@ -1095,7 +1095,14 @@ button.member-line {
 .rest-picture {
   flex: none;
   height: 92px;
-  background: var(--paint) center / 100% 100% no-repeat;
+  box-sizing: border-box;
+  /* The dark line MM6 drew round its picture. */
+  border: 1px solid rgb(16, 12, 10);
+}
+.rest-vista {
+  display: block;
+  width: 100%;
+  height: 100%;
   image-rendering: pixelated;
 }
 .rest-lower {

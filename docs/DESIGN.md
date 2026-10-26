@@ -1131,7 +1131,7 @@ set), a village man and woman (civilian set), 223 credits estimated.
 ### 16.3 Day and night
 
 The game clock runs while the party walks, a game minute per real second
-(a day in 24 minutes; the rest screen jumps it). `src/world/daylight.ts`
+(a day in 24 minutes; the rest screen plays the hours out fast, 16.34). `src/world/daylight.ts`
 turns the minute of the day into the sun's place (east at dawn, high in
 the south at noon, west at dusk; dawn 5:00 and dusk 21:00 from the rules
 layer) and a blend of three keyframes for light, ambient, fog and sky: the
@@ -2469,10 +2469,31 @@ MM6's share of the height, the view taking the extra width.
   bar); the Calendar lays the month out in four weeks, today ringed and the moon's quarters on
   their days; the Map shows the walked land in the region's picture, north up as the minimap
   (it had been drawn south up, a mirror).
-- **Rest** (reference mm6-rest): the mountains across the top (painted, `paintPanorama`), Rest
-  & Heal 8 Hours with the food beside it, the box of waits without healing (until dawn, an hour,
-  five minutes; the last two are new), the hourglass with the hour, day, month and year, and
-  Exit Rest. A choice applies at once and the screen stays, as MM6's.
+- **Rest** (reference mm6-rest): the vista across the top, Rest & Heal 8 Hours with the food
+  beside it, the box of waits without healing (until dawn, an hour, five minutes; the last two
+  are new), the hourglass with the hour, day, month and year, and Exit Rest. A choice applies to
+  the state at once and then plays out, as MM6's did: the hours run on the clock, the sand runs
+  in the hourglass and the sun and moon cross the vista, half a second an hour (no less than 0.6
+  s nor more than 6), the buttons resting until it is done; then what passed is said on the
+  message bar and the screen stays. Closed mid-wait, the wait is over at once.
+- **The vista** (owner, 2026-10-26: "The mm6 Rest and wait menu has a sky Vista that cycles
+  depending on time of day or wait in real time"): the owner's ChatGPT mountains, painted four
+  times, at sunrise, in the day, at sunset and at night, each on a flat fuchsia sky, under a
+  live sky at the hour of the game clock (`src/ui/vista.ts`, `vista-model.ts`).
+  `npm run vista` (tools/vista.ts) keys the fuchsia out, checks the four line up on the day's
+  skyline (a shift of a few pixels is taken out; a picture redrawn instead of relit is refused, to be
+  generated again: ChatGPT redrew the coast set's sunrise and night, 40 pixels off), and cuts
+  one strip from each at 800 by 96, about eight to one as the phone's box is, into one atlas
+  (`assets/vistas/`); its first row is marked by hand in `pipeline/vistas.json` (owner: "Slightly
+  more sky, less mountains"). The sky is the world's (16.3): MM6's rest blue paling to the far
+  range's haze by day, a warm dusk, a blue night, a glow on the horizon round a low sun; the
+  sun crosses the box from the left (east; the view looks south) to the right, setting behind
+  the peaks; the moon rises and sets in its phase, the calendar's (new on the 1st, full on the
+  15th, a half day up, lit from the right as it waxes); stars twinkle as the night comes;
+  streaks of cloud in the sky's light drift with the hours, racing while the party rests. The
+  land's four lights take turns as the sun goes: sunrise and sunset as it touches the horizon,
+  the day above, the night below. A 2D canvas at the box's own pixels, on RGB565 as the painted
+  panels, a frame a tenth of a second.
 - **Houses** (`src/ui/services.ts`; references mm6-smith-menu, mm6-tavern-talk): the house's
   wooden board over the panel, its name at the head, its choices down it, the door oval at the
   foot; the view shows the house's room (17.8) until a choice opens a list there (the stock,
@@ -2990,6 +3011,12 @@ town's houses' doors; the stock on its shelf for Buy once items have pictures; t
 "Enter?" picture once a dungeon lies behind it.
 
 ## 13. Decision log
+
+- 2026-10-26 – The rest screen's vista (16.34): the owner's mountains, painted at four times of
+  day on a fuchsia sky, under a live sky that follows the game clock, and waits that play out
+  instead of jumping, the hours running on the clock and in the hourglass. ChatGPT relights a
+  picture only sometimes (the coast set's sunrise and night came back redrawn), so the cutter
+  measures the four against each other and refuses one that does not line up.
 
 - 2026-10-26 – Every splash in a room is soft (17.8): the water guild's wide splash took the
   bright white drops and mist kept for a near torrent, which the owner found "a bit harsh

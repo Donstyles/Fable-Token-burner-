@@ -62,8 +62,8 @@ export function memberLine(c: Character): MemberLine {
   };
 }
 
-export function restView(state: GameState): RestView {
-  const minutes = state.clock.minutes;
+/** The rest screen's view; `minutes` is the clock it shows, ahead of the state's while a wait plays. */
+export function restView(state: GameState, minutes = state.clock.minutes): RestView {
   const d = gameDate(minutes);
   const h12 = d.hour % 12 === 0 ? 12 : d.hour % 12;
   return {

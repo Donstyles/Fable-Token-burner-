@@ -635,96 +635,12 @@ export function buttonGlyph(kind: ButtonGlyph, w: number, h: number): Uint8Array
 }
 
 /**
- * The rest screen's picture, MM6's mountain panorama (reference mm6-rest): a deep blue sky
- * paling to the horizon under long streaks of cloud, a far range in blue-grey with snow on its
- * crests, a nearer one darker and snowier, lit from the left; on RGB565.
- */
-export function paintPanorama(w: number, h: number): HTMLCanvasElement {
-  const [c, g] = canvas(w, h);
-  const img = g.createImageData(w, h);
-  const d = img.data;
-  const r = die(w * 17 + h);
-  // Ridges as sums of peaked waves: sharp crests, rounded hollows, as a range against the sky.
-  const waves = (seed: number, n: number, base: number): ((x: number) => number) => {
-    const rr = die(seed);
-    const k = Array.from({ length: n }, (_, i) => ({
-      f: (base * 1.9 ** i * (0.8 + 0.4 * rr())) / w,
-      p: rr() * Math.PI * 2,
-      a: 0.55 ** i,
-    }));
-    const sum = k.reduce((t, q) => t + q.a, 0);
-    return (x) =>
-      k.reduce((t, q) => t + q.a * (1 - Math.abs(Math.sin(x * q.f + q.p))) ** 1.6, 0) / sum;
-  };
-  const far = waves(41, 5, 9);
-  const near = waves(47, 4, 5);
-  const snowline = waves(53, 3, 20);
-  const horizon = Math.round(h * 0.78);
-  const farTop = (x: number): number => horizon - h * (0.12 + 0.5 * far(x));
-  const nearTop = (x: number): number => h * 1.02 - h * (0.12 + 0.36 * near(x));
-  for (let x = 0; x < w; x++) {
-    const ft = farTop(x);
-    const nt = nearTop(x);
-    // Lit from the left: a slope falling to the right is in the light, by how steeply over a
-    // few pixels, so the light turns with the slope and not column by column.
-    const fl = Math.max(0, Math.min(1, 0.5 + (farTop(x + 4) - farTop(x - 4)) * 0.12));
-    const nl = Math.max(0, Math.min(1, 0.5 + (nearTop(x + 4) - nearTop(x - 4)) * 0.12));
-    const fSnow = h * (0.05 + 0.12 * snowline(x)) * (0.8 + 0.6 * fl);
-    const nSnow = h * (0.02 + 0.08 * snowline(x + 300)) * (0.7 + 0.9 * nl);
-    for (let y = 0; y < h; y++) {
-      const i = y * w + x;
-      let col: Rgb;
-      if (y >= nt) {
-        // The nearer range: dark rock, snow on its crests, lighter where the sun falls.
-        const below = y - nt;
-        const snow = below < nSnow;
-        col = snow
-          ? mix([150, 162, 190], [222, 228, 242], nl)
-          : mix([46, 54, 78], [70, 82, 112], nl);
-        col = mix(col, [32, 38, 56], Math.min(0.75, (below / h) * 2));
-      } else if (y >= ft) {
-        // The far range: blue-grey under its snow, hazed toward its foot.
-        const below = y - ft;
-        const snow = below < fSnow;
-        col = snow
-          ? mix([178, 190, 216], [236, 240, 248], fl)
-          : mix([100, 112, 146], [126, 140, 172], fl);
-        col = mix(col, [156, 172, 204], Math.min(0.6, (below / h) * 1.4));
-      } else {
-        const t = y / horizon;
-        col = mix([26, 56, 148], [152, 182, 224], Math.min(1, t * t));
-        // Long streaks of cloud lying along the sky, thicker toward the horizon.
-        const streak =
-          Math.sin(x * 0.011 + y * 0.21 + 1.3) * 0.5 +
-          Math.sin(x * 0.027 - y * 0.13 + 4.1) * 0.3 +
-          Math.sin(x * 0.0043 + 2.2) * 0.4;
-        const a = Math.max(0, streak - 0.35) * (0.4 + t) * 1.4;
-        col = mix(col, [238, 242, 250], Math.min(0.75, a));
-      }
-      const n = (r() - 0.5) * 5;
-      d[i * 4] = clamp(col[0] + n);
-      d[i * 4 + 1] = clamp(col[1] + n);
-      d[i * 4 + 2] = clamp(col[2] + n);
-      d[i * 4 + 3] = 255;
-    }
-  }
-  g.putImageData(img, 0, 0);
-  // The frame MM6 drew round it: a dark line.
-  g.fillStyle = 'rgb(16,12,10)';
-  g.fillRect(0, 0, w, 1);
-  g.fillRect(0, 0, 1, h);
-  g.fillRect(0, h - 1, w, 1);
-  g.fillRect(w - 1, 0, 1, h);
-  quantise565(g, w, h);
-  return c;
-}
-
-/**
  * MM6's hourglass on the rest screen (reference mm6-rest): two glass bulbs meeting at a waist
  * between turned wooden ends and three posts, the sand mostly run into the lower bulb, a thread
- * of it falling; lit from the left.
+ * of it falling; lit from the left. `run`, while the party rests, is how far its sand has run,
+ * 0 to 1, the upper bulb emptying into the lower.
  */
-export function paintHourglass(w: number, h: number): HTMLCanvasElement {
+export function paintHourglass(w: number, h: number, run?: number): HTMLCanvasElement {
   const [c, g] = canvas(w, h);
   const img = g.createImageData(w, h);
   const d = img.data;
@@ -747,8 +663,11 @@ export function paintHourglass(w: number, h: number): HTMLCanvasElement {
       const dx = x + 0.5 - w / 2;
       if (Math.abs(dx) > bw) continue;
       const lower = y > mid;
-      const lowerFill = lower && y > mid + (h - cap - mid) * 0.35;
-      const upperFill = !lower && y > cap + (mid - cap) * 0.6;
+      // The share of each bulb the sand fills, from its end at the waist side.
+      const upperShare = run === undefined ? 0.4 : 0.75 - 0.7 * run;
+      const lowerShare = run === undefined ? 0.65 : 0.25 + 0.65 * run;
+      const lowerFill = lower && y > h - cap - (h - cap - mid) * lowerShare;
+      const upperFill = !lower && y > mid - (mid - cap) * upperShare;
       const thread = Math.abs(dx) < 0.6 && lower && !lowerFill;
       let col: Rgb = [178, 200, 210];
       if (lowerFill || upperFill || thread) col = [222, 196, 140];

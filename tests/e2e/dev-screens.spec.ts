@@ -5,7 +5,12 @@ type Dev = {
   ready: boolean;
   simTime(): number;
   screens: { open(name: string): void; close(): void; current(): string | null };
-  state: { party: { name: string; hp: number }[]; gold: number; food: number };
+  state: {
+    party: { name: string; hp: number }[];
+    gold: number;
+    food: number;
+    clock: { minutes: number };
+  };
 };
 type W = Window & { ftb?: { dev?: Dev } };
 
@@ -70,6 +75,44 @@ test.describe('screens', () => {
     );
     const t2 = await page.evaluate(() => (window as unknown as W).ftb!.dev!.simTime());
     expect(t2).toBeGreaterThan(t1);
+  });
+
+  test('the rest screen shows its vista at the hour, and a wait plays out', async ({ page }) => {
+    // DESIGN.md 16.34: the owner's mountains under a live sky; a wait runs on the clock.
+    test.setTimeout(300_000);
+    await page.goto('dev/?dev&lite&level=gullhaven&seed=3');
+    await page.waitForFunction(() => (window as unknown as W).ftb?.dev?.ready === true, null, {
+      timeout: 120_000,
+    });
+    const noon = 2 * 24 * 60 + 13 * 60;
+    await page.evaluate((m) => {
+      const dev = (window as unknown as W).ftb!.dev!;
+      dev.state.clock.minutes = m;
+      dev.screens.open('rest');
+    }, noon);
+    await expect(page.locator('.rest-time')).toHaveText('1:00 pm');
+    // The vista drawn: the noon sky blue above the range, the land under it.
+    await page.waitForFunction(
+      () => {
+        const c = document.querySelector<HTMLCanvasElement>('canvas.rest-vista');
+        if (!c?.width) return false;
+        const g = c.getContext('2d')!;
+        const sky = g.getImageData(Math.floor(c.width / 4), 3, 1, 1).data;
+        const land = g.getImageData(Math.floor(c.width / 2), c.height - 2, 1, 1).data;
+        return sky[2]! > sky[0]! + 60 && land[0]! + land[1]! + land[2]! > 120;
+      },
+      null,
+      { timeout: 60_000 },
+    );
+    await page.getByText('Wait 1 Hour', { exact: true }).click();
+    // The hour plays on the box's clock, and has passed when it is done.
+    await expect(page.locator('.rest-time')).toHaveText('2:00 pm', { timeout: 30_000 });
+    expect(await page.evaluate(() => (window as unknown as W).ftb!.dev!.state.clock.minutes)).toBe(
+      noon + 60,
+    );
+    await page.screenshot({
+      path: `test-results/screen-rest-vista-${test.info().project.name}.png`,
+    });
   });
 
   test('?create shows the creation screen before the world starts', async ({ page }) => {
