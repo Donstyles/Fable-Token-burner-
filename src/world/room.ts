@@ -393,8 +393,9 @@ vec3 moved(vec2 p, float flame) {
   }
   return pic(p);
 }
-// A spray of drops thrown up and out from base, falling back: how much of one is at p.
-float drops(vec2 p, vec2 base, float wd, float hg, float seed) {
+// A spray of drops thrown up and out from base, falling back: how much of one is at p, each
+// drop full to r0 from its middle and gone by r1.
+float drops(vec2 p, vec2 base, float wd, float hg, float seed, float r0, float r1) {
   float a = 0.0;
   for (int k = 0; k < 18; k++) {
     float n = float(k) + seed * 18.0;
@@ -403,7 +404,7 @@ float drops(vec2 p, vec2 base, float wd, float hg, float seed) {
     float ph = fract(clk);
     float side = hash(vec2(n, floor(clk))) * 2.0 - 1.0;
     vec2 at = base + vec2(side * wd * 0.55 * ph, -hg * (0.5 + 0.6 * hash(vec2(n, 3.0))) * ph + hg * 1.3 * ph * ph);
-    a = max(a, (1.0 - smoothstep(0.25, 0.9, length(p - at))) * (1.0 - ph));
+    a = max(a, (1.0 - smoothstep(r0, r1, length(p - at))) * (1.0 - ph));
   }
   return a;
 }
@@ -575,7 +576,11 @@ void main() {
     // A thin far fall's streaks are fainter.
     c += vec3(0.65, 0.82, 1.0) * streak * mix(0.18, 0.35, smoothstep(15.0, 40.0, b.z - b.x)) * w;
   }
-  // Where water lands: mist rolls up and out, and drops leap and fall back.
+  // Where water lands: mist rolls up and out, and drops leap and fall back, all of it soft, a
+  // haze of the light behind it and drops faint blurred dabs tinted by what is behind them,
+  // nothing white or sharp on a soft painting (owner, 2026-10-25: "needs to be soft to blend
+  // into the background"; 2026-10-26: "a bit harsh visually and not fitting the soft image").
+  // A small splash's mist curls finer than a wide one's.
   for (int i = 0; i < 2; i++) {
     if (float(i) >= sprayCount) break;
     vec4 b = sprays[i];
@@ -583,24 +588,23 @@ void main() {
     vec2 uv = (px - b.xy) / (b.zw - b.xy);
     float wd = b.z - b.x;
     float hg = b.w - b.y;
-    // A small far splash is a soft haze of its own light, its drops faint and tinted by what
-    // is behind them (owner, 2026-10-25: "needs to be soft to blend into the background"), a
-    // near torrent's bright and white.
-    float soft = 1.0 - smoothstep(25.0, 70.0, wd);
-    float puff = fbm(vec2(px.x / mix(9.0, 4.0, soft) + sin(t * 0.4 + float(i)), px.y / mix(6.0, 3.0, soft) + t * 0.7));
-    vec3 haze = mix(vec3(0.78, 0.88, 0.97), c * 1.15 + vec3(0.04, 0.05, 0.07), soft);
-    c = mix(c, haze, smoothstep(0.5, 0.82, puff) * within(uv, vec2(0.3, 0.35)) * mix(0.38, 0.5, soft));
-    vec3 drop = mix(vec3(0.85, 0.93, 1.0), c * 1.2 + vec3(0.05, 0.06, 0.08), soft);
-    c = mix(c, drop, drops(px, vec2((b.x + b.z) * 0.5, b.w - hg * 0.25), wd, hg, float(i)) * mix(0.9, 0.25, soft));
+    float small = 1.0 - smoothstep(25.0, 70.0, wd);
+    float puff = fbm(vec2(px.x / mix(9.0, 4.0, small) + sin(t * 0.4 + float(i)), px.y / mix(6.0, 3.0, small) + t * 0.7));
+    vec3 haze = c * 1.15 + vec3(0.04, 0.05, 0.07);
+    c = mix(c, haze, smoothstep(0.42, 0.85, puff) * within(uv, vec2(0.3, 0.35)) * 0.5);
+    vec3 drop = c * 1.2 + vec3(0.05, 0.06, 0.08);
+    c = mix(c, drop, drops(px, vec2((b.x + b.z) * 0.5, b.w - hg * 0.25), wd, hg, float(i), 0.2, 1.7) * 0.28);
   }
-  // A fountain's jet breaks into drops at its top that fall back round it.
+  // A fountain's jet breaks into drops at its top that fall back round it, soft pale dabs
+  // lighter than the water they fall over, as a splash's are.
   for (int i = 0; i < 2; i++) {
     if (float(i) >= jetCount) break;
     vec4 b = jets[i];
     float wd = b.z - b.x;
     float hg = b.w - b.y;
     if (!inside(px, b + vec4(-wd * 1.5, -hg * 0.3, wd * 1.5, 0.0))) continue;
-    c = mix(c, vec3(0.88, 0.95, 1.0), drops(px, vec2((b.x + b.z) * 0.5, b.y + hg * 0.08), wd * 2.5, hg * 0.5, float(i) + 3.0) * 0.85);
+    vec3 drop = c * 1.25 + vec3(0.08, 0.09, 0.1);
+    c = mix(c, drop, drops(px, vec2((b.x + b.z) * 0.5, b.y + hg * 0.08), wd * 2.5, hg * 0.5, float(i) + 3.0, 0.2, 1.6) * 0.4);
   }
   // Glints on flowing water.
   for (int i = 0; i < 2; i++) {

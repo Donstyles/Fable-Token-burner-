@@ -2929,11 +2929,13 @@ Rocks, and very colourful dark magic Sparks"). Each is made ahead of its house
   fire they mirror;
 - **falling water** (`falls`): its sheet drawn from higher up, quivering, bright streaks
   running down it, fainter on a thin far fall; **spray** (`sprays`) where it lands, mist
-  rolling up and drops leaping and falling back, a near torrent's bright and white, a small far
-  splash a soft haze tinted by what is behind it, its drops faint (owner, 2026-10-25: "needs to
-  be soft to blend into the background"); **ripples** (`ripples`) spreading from the middle of
-  a still water;
-- **a fountain's jet** (`jets`) rising and breaking into drops that fall round it; **water
+  rolling up and drops leaping and falling back, all of it soft: the mist a haze of the light
+  behind it, the drops faint blurred dabs tinted by what is behind them, nothing white or sharp
+  on a soft painting (owner, 2026-10-25: "needs to be soft to blend into the background";
+  2026-10-26, of the water guild's: "a bit harsh visually and not fitting the soft image");
+  **ripples** (`ripples`) spreading from the middle of a still water;
+- **a fountain's jet** (`jets`) rising and breaking into drops that fall round it, soft pale
+  dabs as a splash's are; **water
   flowing** down a channel toward the viewer (`waters`), only the water's own blue-green paint
   moving, the marble rims standing, glints running on it;
 - **floating rocks** (`rocks`): each lifted and tilted where it hangs, the wall behind it read
@@ -2988,6 +2990,12 @@ town's houses' doors; the stock on its shelf for Buy once items have pictures; t
 "Enter?" picture once a dungeon lies behind it.
 
 ## 13. Decision log
+
+- 2026-10-26 – Every splash in a room is soft (17.8): the water guild's wide splash took the
+  bright white drops and mist kept for a near torrent, which the owner found "a bit harsh
+  visually and not fitting the soft image"; now its mist is a haze of the light behind it and
+  its drops faint blurred dabs, as the bedchamber's, and the spirit guild's fountain drops are
+  soft too.
 
 - 2026-10-25 – The owner's notes on the bedchamber and the water guild (17.8): what stands
   before what moves is marked (`fronts`) and nothing moving is drawn over it, so no ember
