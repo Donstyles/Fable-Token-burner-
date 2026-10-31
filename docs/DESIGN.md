@@ -1239,7 +1239,30 @@ font: everything needs to be wow."
   pressed into the top left. Items carry hand-drawn line art per kind
   (`src/ui/glyphs.ts`: sword, cuirass, shield, helm, boots, belt, cloak,
   gauntlets, ring, amulet, phial, scroll, pouch) in gold stroke on the leather
-  tile, until an artist paints the pieces; the two-letter marks are gone.
+  tile where no picture exists; the two-letter marks are gone.
+- **Items are photographs of real objects** (owner, 2026-10-31: MM6's "items should
+  also look like photographed amateur but careful and elaborate fan stuff"; its item
+  sprites were photographed props). ChatGPT's images read as renders whatever the
+  prompt, so the pictures come from The Metropolitan Museum of Art's Open Access
+  collection instead: real medieval arms and armour photographed on plain studio
+  backdrops, public domain (CC0). `npm run met` (tools/met.ts, tools/lib/met.ts)
+  fetches an object's photo by id, keys the backdrop out (the key grows from the
+  border through smooth, backdrop-like pixels, so a gradient and a soft shadow are
+  backdrop and the object's edge is not, then clears the holes that show the backdrop,
+  ringed by the object's edge: a ring's middle) and digitises the object to the item's
+  cells at the bag's pitch, 27 pixels a cell: softened as video was, shrunk, a touch of
+  noise, less colour, a palette with dither. `assets/items/<item>.png`, one a game item,
+  credited in the manifest with the museum's record; `sheet` draws candidates on the
+  leather to pick from. The bag draws the picture alone in the item's cells, as MM6's
+  sprites stood, with `image-rendering: pixelated`; the sheet's worn-slot list keeps the
+  kind's glyph, thirteen pixels being too few for a photograph. Fourteen of the
+  seventeen items have one (a 1380 dagger, a cinquedea, a 1450 sword, a flanged mace,
+  a berdiche, a spear head, a Turkish mail shirt, a 1535 painted round shield, a 1490
+  sallet, a 17th-century buff coat for the leather armour, a pair of 1835 boots, a
+  stirrup ring, a glass flask, a composite bow); the staff and the two scrolls keep
+  their glyphs until a public-domain photo of one turns up. A photo the key misjudges
+  takes `--edge`, `--step` and `--reach` (the buff coat's cream leather on its grey
+  backdrop needed `--step 8 --edge 10`).
 - Type: the house italic is a size larger (16 px), and the labels are in a
   yellow of their own beside the brighter values, as MM6's sheet set every
   line in yellow italic rather than cream and gold.
@@ -3011,6 +3034,13 @@ town's houses' doors; the stock on its shelf for Buy once items have pictures; t
 "Enter?" picture once a dungeon lies behind it.
 
 ## 13. Decision log
+
+- 2026-10-31 – Items are photographs of real objects from The Met's Open Access
+  collection (16.8), keyed and digitised to the bag's cells by `npm run met`, after the
+  owner found ChatGPT's item pictures "AI slop" that did not look like MM6's digitised
+  photographs. Digitising (MM6's pitch, a palette, video softness) is the pipeline's
+  job; the source only has to be a real photograph. Fourteen of seventeen items have
+  one; the staff and the scrolls keep their line glyphs.
 
 - 2026-10-26 – The rest screen's vista (16.34): the owner's mountains, painted at four times of
   day on a fuchsia sky, under a live sky that follows the game clock, and waits that play out

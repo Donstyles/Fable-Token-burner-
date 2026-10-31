@@ -53,6 +53,11 @@ anything. Both are the source of truth; update them when a decision changes.
 - `npm run vista -- <id>` – cut the rest screen's vista from the owner's four pictures of one
   view (`pipeline/inbox/vistas/<id>/{sunrise,day,sunset,night}.png`, fuchsia sky): keyed, checked
   to line up, one strip each (first row in `pipeline/vistas.json`) into `assets/vistas/`
+- `npm run met -- sheet <name> <object id>... [--cells WxH]` / `find <query>` / `take <item id> <object id>` –
+  item pictures from The Met's Open Access photos (public domain): a sheet of candidates on
+  the leather to pick from, a search, and an item's picture keyed and digitised into
+  `assets/items/` with the museum's record in the manifest (`--edge/--step/--reach` for a
+  photo the key misjudges)
 - `npm run asset -- <command>` – asset pipeline: `manifest`, `validate`,
   `card <kind> <id> "<subject>"`, `batch new <name> <id>:<height-m>[:civilian]|props|creatures|icons|show|approve|approve-images`, `inbox <id> <picture>` (keys the owner's fuchsia-ground concept picture into `pipeline/inbox/<id>.png`), `review <id>...` (each model's review sheet in `pipeline/work/review/`), `windows <id>... [--accept]` (finds a house's window panes on its skin and draws them lit on the sheet's night row; `--accept` puts the looked-at mask beside the model), `trunk <id>...` (measures a tree's trunk off its model for the props table's collider), `run <nnn> [--dry-run] [--force]` (runs only a batch the owner approved by number; props and creatures stop after their concept pictures until `approve-images`), `import <id> <model.glb>` (a model the owner made in Meshy's web app, packed and gap-checked as a batch's)
 
