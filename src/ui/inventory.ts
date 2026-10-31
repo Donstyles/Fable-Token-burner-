@@ -11,6 +11,7 @@ import { memberCover, memberTabs } from './character';
 import type { ScreenContext } from './context';
 import { button, el } from './dom';
 import { itemGlyph } from './glyphs';
+import { itemImage } from './item-pictures';
 import { bagCell } from './layout-model';
 import {
   actions,
@@ -63,9 +64,16 @@ export function bagGrid(
     if (dim?.(b.index)) block.classList.add('dim');
     block.style.gridArea = `${b.y + 1} / ${b.x + 1} / span ${b.h} / span ${b.w}`;
     block.classList.add(`w${Math.min(b.w, 3)}`);
-    block.appendChild(itemGlyph(b.kind));
-    // One cell holds the glyph alone, as MM6's sprites stood alone; wider pieces carry a name.
-    if (b.w >= 2) block.appendChild(el('span', 'inv-name', b.name));
+    // The item's picture stands alone, as MM6's sprites did; without one, the kind's glyph, and
+    // a name on the wider pieces.
+    const pic = itemImage(b.item);
+    if (pic) {
+      block.classList.add('pictured');
+      block.appendChild(pic);
+    } else {
+      block.appendChild(itemGlyph(b.kind));
+      if (b.w >= 2) block.appendChild(el('span', 'inv-name', b.name));
+    }
     block.title = b.name;
     block.addEventListener('click', () => onTap(b.x, b.y));
     grid.appendChild(block);

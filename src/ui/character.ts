@@ -182,6 +182,7 @@ export function memberCover(
     if (!row.name) s.classList.add('dim');
     s.title = row.name ? `${row.label}: ${row.name}` : row.label;
     s.append(
+      // The kind's glyph, not the picture: at thirteen pixels a sword is a line.
       row.kind ? itemGlyph(row.kind) : el('span', 'inv-glyph'),
       el('span', 'member-slot-name', row.name ?? row.label),
     );

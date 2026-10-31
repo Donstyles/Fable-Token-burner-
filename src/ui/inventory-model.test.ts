@@ -23,6 +23,7 @@ describe('inventory rows', () => {
     expect(blocks).toEqual([
       {
         index: 0,
+        item: 'potion-healing',
         x: 0,
         y: 0,
         w: 1,
@@ -43,6 +44,7 @@ describe('inventory rows', () => {
       name: 'Long Sword',
       glyph: 'Wp',
       kind: 'weapon',
+      item: 'long-sword',
       selected: false,
     });
     expect(rows[3]!.name).toBe('Leather Armor');

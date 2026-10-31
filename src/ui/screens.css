@@ -91,6 +91,17 @@
   width: calc(var(--cell, 27px) + 3px);
   height: calc(var(--cell, 27px) + 3px);
 }
+/* A photographed item fills its cells at the bag's pitch, a pixel a pixel (16.8). */
+.inv-item.pictured {
+  padding: 0;
+}
+.inv-item .inv-pic {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  image-rendering: pixelated;
+}
 .inv-item .inv-name {
   display: block;
   max-width: 100%;

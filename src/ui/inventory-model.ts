@@ -31,7 +31,13 @@ import {
   RING_SLOTS,
   unequip,
 } from '../game/inventory';
-import { isEquippable, type ItemInstance, type ItemKind, itemDef } from '../game/items';
+import {
+  isEquippable,
+  type ItemInstance,
+  type ItemKind,
+  itemDef,
+  type ItemId,
+} from '../game/items';
 import { diceText } from '../game/rng';
 import { SKILL_NAMES } from '../game/skills';
 import { applySpell, type SpellEffect, type SpellId, spellDef } from '../game/spells';
@@ -78,6 +84,7 @@ export const KIND_GLYPHS: Record<ItemKind, string> = {
 
 export interface GridBlock {
   index: number;
+  item: ItemId;
   x: number;
   y: number;
   w: number;
@@ -95,6 +102,7 @@ export interface SlotRow {
   name: string | null;
   glyph: string | null;
   kind: ItemKind | null;
+  item: ItemId | null;
   selected: boolean;
 }
 
@@ -125,6 +133,7 @@ export function gridBlocks(c: Character, sel: InvSelection): GridBlock[] {
     const def = itemDef(p.item);
     return {
       index,
+      item: def.id,
       x: p.x,
       y: p.y,
       w: def.w,
@@ -155,6 +164,7 @@ export function slotRows(c: Character, sel: InvSelection): SlotRow[] {
       name: item ? itemName(item) : null,
       glyph: item ? KIND_GLYPHS[itemDef(item).kind] : null,
       kind: item ? itemDef(item).kind : null,
+      item: item ? itemDef(item).id : null,
       selected: sel?.kind === 'slot' && sel.slot === slot,
     });
   }
