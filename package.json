@@ -30,6 +30,7 @@
     "portrait": "tsx tools/portrait.ts",
     "room": "tsx tools/room.ts",
     "vista": "tsx tools/vista.ts",
+    "met": "tsx tools/met.ts",
     "props:catalogue": "tsx tools/props-catalogue.ts",
     "fonts": "tsx tools/fonts.ts"
   },
