@@ -486,11 +486,11 @@
     {
       "id": "item-axe",
       "kind": "image",
-      "source": "The Metropolitan Museum of Art, object 24417: Ax (Berdiche or Balta) (ca. 1500, Syrian or Egyptian), https://www.metmuseum.org/art/collection/search/24417; its backdrop keyed out and the object digitised to 2 by 3 cells (tools/met.ts)",
-      "licence": "CC0 1.0, The Met Open Access (public domain; credit line: Bequest of George C. Stone, 1935)",
+      "source": "The Metropolitan Museum of Art, object 24857: Ax (ca. 1450–1500, Syrian), https://www.metmuseum.org/art/collection/search/24857; its backdrop keyed out and the object digitised to 2 by 3 cells (tools/met.ts)",
+      "licence": "CC0 1.0, The Met Open Access (public domain; credit line: Purchase, Bashford Dean Bequest, 1969)",
       "files": ["assets/items/axe.png"],
-      "date": "2026-10-31",
-      "notes": "Axe; the object covered 15.9% of its photo"
+      "date": "2026-11-01",
+      "notes": "Axe; 72.3 cm at 1.25 cm a pixel; the object covered 27.3% of its photo"
     },
     {
       "id": "item-boots",
@@ -498,8 +498,8 @@
       "source": "The Metropolitan Museum of Art, object 769182: Boots (ca. 1835, French), https://www.metmuseum.org/art/collection/search/769182; its backdrop keyed out and the object digitised to 2 by 2 cells (tools/met.ts)",
       "licence": "CC0 1.0, The Met Open Access (public domain; credit line: Alfred Z. Solomon-Janet A. Sloane Endowment Fund, 2017)",
       "files": ["assets/items/boots.png"],
-      "date": "2026-10-31",
-      "notes": "Boots; the object covered 16.5% of its photo"
+      "date": "2026-11-01",
+      "notes": "Boots; filling its cells; the object covered 16.5% of its photo"
     },
     {
       "id": "item-bow",
@@ -507,8 +507,8 @@
       "source": "The Metropolitan Museum of Art, object 32139: Composite Bow with Forty Arrows (A.H. 1132/ 1719–20 CE, Turkish), https://www.metmuseum.org/art/collection/search/32139; its backdrop keyed out and the object digitised to 2 by 4 cells (tools/met.ts)",
       "licence": "CC0 1.0, The Met Open Access (public domain; credit line: Rogers Fund, 1935)",
       "files": ["assets/items/bow.png"],
-      "date": "2026-10-31",
-      "notes": "Long Bow; the object covered 4.5% of its photo"
+      "date": "2026-11-01",
+      "notes": "Long Bow; 64.8 cm at 1.25 cm a pixel; the object covered 4.5% of its photo"
     },
     {
       "id": "item-chain-mail",
@@ -516,8 +516,8 @@
       "source": "The Metropolitan Museum of Art, object 22415: Mail Shirt (probably early 16th century, Syrian or Turkish), https://www.metmuseum.org/art/collection/search/22415; its backdrop keyed out and the object digitised to 2 by 4 cells (tools/met.ts)",
       "licence": "CC0 1.0, The Met Open Access (public domain; credit line: Bequest of Frederick Townsend Martin, 1914)",
       "files": ["assets/items/chain-mail.png"],
-      "date": "2026-10-31",
-      "notes": "Chain Mail; the object covered 33.3% of its photo"
+      "date": "2026-11-01",
+      "notes": "Chain Mail; 84 cm at 1.25 cm a pixel; the object covered 33.3% of its photo"
     },
     {
       "id": "item-copper-ring",
@@ -525,8 +525,8 @@
       "source": "The Metropolitan Museum of Art, object 852383: Stirrup Ring (1200–1300, British), https://www.metmuseum.org/art/collection/search/852383; its backdrop keyed out and the object digitised to 1 by 1 cells (tools/met.ts)",
       "licence": "CC0 1.0, The Met Open Access (public domain; credit line: Purchase, Brandt and Lewis Family Gift, in loving memory of Diane Carol Brandt, 2021)",
       "files": ["assets/items/copper-ring.png"],
-      "date": "2026-10-31",
-      "notes": "Copper Ring; the object covered 6.8% of its photo"
+      "date": "2026-11-01",
+      "notes": "Copper Ring; filling its cells; the object covered 6.8% of its photo"
     },
     {
       "id": "item-dagger",
@@ -534,8 +534,8 @@
       "source": "The Metropolitan Museum of Art, object 32786: Dagger (1380–1400, British), https://www.metmuseum.org/art/collection/search/32786; its backdrop keyed out and the object digitised to 1 by 2 cells (tools/met.ts)",
       "licence": "CC0 1.0, The Met Open Access (public domain; credit line: Gift of George D. Pratt, 1925)",
       "files": ["assets/items/dagger.png"],
-      "date": "2026-10-31",
-      "notes": "Dagger; the object covered 8.2% of its photo"
+      "date": "2026-11-01",
+      "notes": "Dagger; 41.3 cm at 1.25 cm a pixel; the object covered 8.2% of its photo"
     },
     {
       "id": "item-helmet",
@@ -543,8 +543,8 @@
       "source": "The Metropolitan Museum of Art, object 23091: Sallet (ca. 1490, German, Landshut), https://www.metmuseum.org/art/collection/search/23091; its backdrop keyed out and the object digitised to 2 by 2 cells (tools/met.ts)",
       "licence": "CC0 1.0, The Met Open Access (public domain; credit line: Bashford Dean Memorial Collection, Bequest of Bashford Dean, 1928)",
       "files": ["assets/items/helmet.png"],
-      "date": "2026-10-31",
-      "notes": "Helmet; the object covered 39.6% of its photo"
+      "date": "2026-11-01",
+      "notes": "Helmet; 24.8 cm at 1.25 cm a pixel; the object covered 39.6% of its photo"
     },
     {
       "id": "item-leather-armor",
@@ -552,8 +552,8 @@
       "source": "The Metropolitan Museum of Art, object 23347: Buff Coat (17th century, European), https://www.metmuseum.org/art/collection/search/23347; its backdrop keyed out and the object digitised to 2 by 3 cells (tools/met.ts)",
       "licence": "CC0 1.0, The Met Open Access (public domain; credit line: Bashford Dean Memorial Collection, Funds from various donors, 1929)",
       "files": ["assets/items/leather-armor.png"],
-      "date": "2026-10-31",
-      "notes": "Leather Armor; the object covered 43.6% of its photo"
+      "date": "2026-11-01",
+      "notes": "Leather Armor; 88.9 cm at 1.25 cm a pixel; the object covered 43.7% of its photo"
     },
     {
       "id": "item-long-sword",
@@ -561,8 +561,8 @@
       "source": "The Metropolitan Museum of Art, object 27458: Sword (ca. 1450, Western European (possibly Italian)), https://www.metmuseum.org/art/collection/search/27458; its backdrop keyed out and the object digitised to 1 by 4 cells (tools/met.ts)",
       "licence": "CC0 1.0, The Met Open Access (public domain; credit line: Gift of William H. Riggs, 1913)",
       "files": ["assets/items/long-sword.png"],
-      "date": "2026-10-31",
-      "notes": "Long Sword; the object covered 4.3% of its photo"
+      "date": "2026-11-01",
+      "notes": "Long Sword; 94.3 cm at 1.25 cm a pixel; the object covered 6.9% of its photo"
     },
     {
       "id": "item-mace",
@@ -570,8 +570,8 @@
       "source": "The Metropolitan Museum of Art, object 32223: Mace (ca. 1575 to 1600, Italian), https://www.metmuseum.org/art/collection/search/32223; its backdrop keyed out and the object digitised to 1 by 3 cells (tools/met.ts)",
       "licence": "CC0 1.0, The Met Open Access (public domain; credit line: The Collection of Giovanni P. Morosini, presented by his daughter Giulia, 1932)",
       "files": ["assets/items/mace.png"],
-      "date": "2026-10-31",
-      "notes": "Mace; the object covered 9.7% of its photo"
+      "date": "2026-11-01",
+      "notes": "Mace; 58.6 cm at 1.25 cm a pixel; the object covered 9.7% of its photo"
     },
     {
       "id": "item-potion-healing",
@@ -579,8 +579,8 @@
       "source": "The Metropolitan Museum of Art, object 444498: Bottle (late 17th century, Islamic Art), https://www.metmuseum.org/art/collection/search/444498; its backdrop keyed out and the object digitised to 1 by 1 cells (tools/met.ts)",
       "licence": "CC0 1.0, The Met Open Access (public domain; credit line: Edward C. Moore Collection, Bequest of Edward C. Moore, 1891)",
       "files": ["assets/items/potion-healing.png"],
-      "date": "2026-10-31",
-      "notes": "Potion of Healing; the object covered 22.7% of its photo"
+      "date": "2026-11-01",
+      "notes": "Potion of Healing; filling its cells; the object covered 22.7% of its photo"
     },
     {
       "id": "item-shield",
@@ -588,26 +588,26 @@
       "source": "The Metropolitan Museum of Art, object 24693: Shield (ca. 1535, Italian, probably Bologna), https://www.metmuseum.org/art/collection/search/24693; its backdrop keyed out and the object digitised to 2 by 2 cells (tools/met.ts)",
       "licence": "CC0 1.0, The Met Open Access (public domain; credit line: Gift of Stephen V. Grancsay, 1942)",
       "files": ["assets/items/shield.png"],
-      "date": "2026-10-31",
-      "notes": "Shield; the object covered 69.7% of its photo"
+      "date": "2026-11-01",
+      "notes": "Shield; 62.53 cm at 1.25 cm a pixel, shrunk to 100% to fit; the object covered 69.7% of its photo"
     },
     {
       "id": "item-short-sword",
       "kind": "image",
-      "source": "The Metropolitan Museum of Art, object 22373: Cinquedea (ca. 1500, Italian), https://www.metmuseum.org/art/collection/search/22373; its backdrop keyed out and the object digitised to 1 by 3 cells (tools/met.ts)",
+      "source": "The Metropolitan Museum of Art, object 22374: Cinquedea (ca. 1500, Italian, possibly Emilia), https://www.metmuseum.org/art/collection/search/22374; its backdrop keyed out and the object digitised to 1 by 3 cells (tools/met.ts)",
       "licence": "CC0 1.0, The Met Open Access (public domain; credit line: Gift of William H. Riggs, 1913)",
       "files": ["assets/items/short-sword.png"],
-      "date": "2026-10-31",
-      "notes": "Short Sword; the object covered 11.8% of its photo"
+      "date": "2026-11-01",
+      "notes": "Short Sword; 58.42 cm at 1.25 cm a pixel; the object covered 16.6% of its photo"
     },
     {
       "id": "item-spear",
       "kind": "image",
-      "source": "The Metropolitan Museum of Art, object 26796: Spear (15th century, Western European), https://www.metmuseum.org/art/collection/search/26796; its backdrop keyed out and the object digitised to 1 by 4 cells (tools/met.ts)",
-      "licence": "CC0 1.0, The Met Open Access (public domain; credit line: Gift of William H. Riggs, 1913)",
+      "source": "The Metropolitan Museum of Art, object 32276: Spear (17th century, North Indian), https://www.metmuseum.org/art/collection/search/32276; its backdrop keyed out and the object digitised to 1 by 5 cells (tools/met.ts)",
+      "licence": "CC0 1.0, The Met Open Access (public domain; credit line: The Collection of Giovanni P. Morosini, presented by his daughter Giulia, 1932)",
       "files": ["assets/items/spear.png"],
-      "date": "2026-10-31",
-      "notes": "Spear; the object covered 8.9% of its photo"
+      "date": "2026-11-01",
+      "notes": "Spear; 160.7 cm at 1.25 cm a pixel; the object covered 5.7% of its photo"
     },
     {
       "id": "nomad-raider",
