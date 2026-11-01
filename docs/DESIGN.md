@@ -1249,20 +1249,27 @@ font: everything needs to be wow."
   fetches an object's photo by id, keys the backdrop out (the key grows from the
   border through smooth, backdrop-like pixels, so a gradient and a soft shadow are
   backdrop and the object's edge is not, then clears the holes that show the backdrop,
-  ringed by the object's edge: a ring's middle) and digitises the object to the item's
-  cells at the bag's pitch, 27 pixels a cell: softened as video was, shrunk, a touch of
-  noise, less colour, a palette with dither. `assets/items/<item>.png`, one a game item,
+  ringed by the object's edge: a ring's middle; a photo's frame line is cleared with the
+  band out to it) and digitises the object to the item's cells at the bag's pitch, 27
+  pixels a cell: softened as video was, shrunk, a touch of noise, less colour, a palette
+  with dither. **True to size** (owner, 2026-11-01: "only icons in real proportional length
+  and size to each other"): the museum record's overall length sets the scale, 1.25 cm a
+  pixel, a cell about 34 cm, the coarsest at which a mail shirt or a round shield still
+  fits two cells across; a 41 cm dagger stands small beside a 94 cm sword, a 161 cm spear
+  takes five cells (`src/game/items.ts`). The small things, a ring, a phial, a scroll, fill
+  their cells instead, larger than life as MM6 drew them. `assets/items/<item>.png`, one a game item,
   credited in the manifest with the museum's record; `sheet` draws candidates on the
   leather to pick from. The bag draws the picture alone in the item's cells, as MM6's
   sprites stood, with `image-rendering: pixelated`; the sheet's worn-slot list keeps the
   kind's glyph, thirteen pixels being too few for a photograph. Fourteen of the
-  seventeen items have one (a 1380 dagger, a cinquedea, a 1450 sword, a flanged mace,
-  a berdiche, a spear head, a Turkish mail shirt, a 1535 painted round shield, a 1490
-  sallet, a 17th-century buff coat for the leather armour, a pair of 1835 boots, a
-  stirrup ring, a glass flask, a composite bow); the staff and the two scrolls keep
+  seventeen items have one (a 1380 dagger, a 58 cm cinquedea, a 1450 sword, a flanged
+  mace, a Syrian axe of about 1475 with its whole haft, a 17th-century Indian spear, a
+  Turkish mail shirt, a 1535 painted round shield, a 1490 sallet, a 17th-century buff coat
+  for the leather armour, a pair of 1835 boots, a stirrup ring, a late-17th-century glass
+  bottle, a composite bow); the staff and the two scrolls keep
   their glyphs until a public-domain photo of one turns up. A photo the key misjudges
   takes `--edge`, `--step` and `--reach` (the buff coat's cream leather on its grey
-  backdrop needed `--step 8 --edge 10`).
+  backdrop, and pale steel blades on pale backdrops, need `--step 8 --edge 10`).
 - Type: the house italic is a size larger (16 px), and the labels are in a
   yellow of their own beside the brighter values, as MM6's sheet set every
   line in yellow italic rather than cream and gold.
@@ -3034,6 +3041,12 @@ town's houses' doors; the stock on its shelf for Buy once items have pictures; t
 "Enter?" picture once a dungeon lies behind it.
 
 ## 13. Decision log
+
+- 2026-11-01 – Items true to size (16.8; owner: "Only icons in real proportional length
+  and size to each other", after the first cut stretched each to fill its cells): the
+  museum record's length sets the scale, 1.25 cm a pixel, so a dagger is a dagger's size
+  beside a sword; the spear takes five cells. The pale blades and the buff coat are keyed
+  with tighter thresholds, and a photo's frame line is cleared.
 
 - 2026-10-31 – Items are photographs of real objects from The Met's Open Access
   collection (16.8), keyed and digitised to the bag's cells by `npm run met`, after the

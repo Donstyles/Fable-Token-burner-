@@ -647,8 +647,9 @@ view's box, its fires moving, the keeper's portrait on the board (DESIGN 17.8).
    four times of day under a live sky that follows the game clock, `npm run vista` (tools/
    vista.ts), and waits that play out on the clock and in the hourglass.
 8. Done 2026-10-31: item pictures from The Met's public-domain photographs of real arms and
-   armour, keyed and digitised to the bag's cells (`npm run met`, DESIGN 16.8); fourteen of
-   the seventeen items. Next: the Buy screens' stock on the owner's shop pictures.
+   armour, keyed and digitised to the bag's cells true to size (`npm run met`, DESIGN
+   16.8); fourteen of the seventeen items. Next: the Buy screens' stock on the owner's shop
+   pictures.
 
 **Credits:** none; the pictures are the owner's.
 
