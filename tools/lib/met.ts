@@ -27,6 +27,14 @@ export interface MetObject {
   objectURL: string;
   creditLine: string;
   department: string;
+  /** "L. 37 1/8 in. (94.3 cm); L. of blade ..." */
+  dimensions: string;
+}
+
+/** The object's overall length in centimetres, read off its record's dimensions. */
+export function lengthOf(record: Pick<MetObject, 'dimensions'>): number | null {
+  const m = /\((\d+(?:\.\d+)?)\s*cm\)/.exec(record.dimensions ?? '');
+  return m ? Number(m[1]) : null;
 }
 
 export async function metObject(id: number): Promise<MetObject> {
@@ -135,16 +143,31 @@ export function keyPhoto(r: Raster, o: KeyOptions = {}): { cover: number } {
   const reach = o.reach ?? 250;
   const n = w * h;
   const e = edges(r);
-  // The backdrop's own colour: the border's median.
+  // The backdrop's own colour: the median of a ring a little in from the edge, past the thin
+  // frame line some photos carry.
+  const inset = Math.max(3, Math.round(Math.min(w, h) * 0.02));
   const ring: number[][] = [[], [], []];
-  for (let y = 0; y < h; y++) {
-    for (let x = 0; x < w; x++) {
-      if (x > 1 && x < w - 2 && y > 1 && y < h - 2) continue;
+  for (let y = inset; y < h - inset; y++) {
+    for (let x = inset; x < w - inset; x++) {
+      if (x > inset + 1 && x < w - inset - 2 && y > inset + 1 && y < h - inset - 2) continue;
       const i = (y * w + x) * 4;
       for (let c = 0; c < 3; c++) ring[c]!.push(data[i + c]!);
     }
   }
   const bg = ring.map((v) => v.sort((a, b) => a - b)[v.length >> 1]!);
+  // A frame line: the outermost pixels far from the ring's colour. The whole band out to the
+  // ring is cleared, lest an object reaching the picture's edge carry the frame with it.
+  const edgeRing: number[][] = [[], [], []];
+  for (let x = 0; x < w; x++) {
+    for (const y of [0, h - 1]) {
+      const i = (y * w + x) * 4;
+      for (let c = 0; c < 3; c++) edgeRing[c]!.push(data[i + c]!);
+    }
+  }
+  const edgeBg = edgeRing.map((v) => v.sort((a, b) => a - b)[v.length >> 1]!);
+  const framed =
+    Math.abs(edgeBg[0]! - bg[0]!) + Math.abs(edgeBg[1]! - bg[1]!) + Math.abs(edgeBg[2]! - bg[2]!) >
+    60;
   const far = (p: number): number =>
     Math.abs(data[p * 4]! - bg[0]!) +
     Math.abs(data[p * 4 + 1]! - bg[1]!) +
@@ -163,13 +186,17 @@ export function keyPhoto(r: Raster, o: KeyOptions = {}): { cover: number } {
       queue[tail++] = p;
     }
   };
-  for (let x = 0; x < w; x++) {
-    seed(x);
-    seed((h - 1) * w + x);
-  }
-  for (let y = 0; y < h; y++) {
-    seed(y * w);
-    seed(y * w + w - 1);
+  // Seeds along the edge and along the ring: a frame line between them is not backdrop and
+  // stays, a thin piece of its own that the largest-piece rule drops.
+  for (const d of [0, inset]) {
+    for (let x = d; x < w - d; x++) {
+      seed(d * w + x);
+      seed((h - 1 - d) * w + x);
+    }
+    for (let y = d; y < h - d; y++) {
+      seed(y * w + d);
+      seed(y * w + w - 1 - d);
+    }
   }
   while (head < tail) {
     const p = queue[head++]!;
@@ -186,6 +213,13 @@ export function keyPhoto(r: Raster, o: KeyOptions = {}): { cover: number } {
       if (e[q]! > edge || diff(p, q) > step || far(q) > reach) continue;
       back[q] = 1;
       queue[tail++] = q;
+    }
+  }
+  if (framed) {
+    for (let y = 0; y < h; y++) {
+      for (let x = 0; x < w; x++) {
+        if (x < inset || y < inset || x >= w - inset || y >= h - inset) back[y * w + x] = 1;
+      }
     }
   }
   if (o.pockets !== false) clearPockets(r, back, e, far, edge);
@@ -322,6 +356,24 @@ export interface DigitiseOptions {
   upright?: boolean;
   /** Palette size. */
   colours?: number;
+  /**
+   * The object's real length along its long side, centimetres: drawn at CM_PER_PIXEL so the
+   * items stand in true proportion to each other (owner, 2026-11-01: "only icons in real
+   * proportional length and size to each other"). Without it the object
+   * fills its cells, as a ring or a phial does, drawn larger than life as MM6's were.
+   */
+  lengthCm?: number;
+}
+
+/**
+ * The bag's scale for things drawn true to size: 1.25 cm a pixel, a cell about 34 cm, the
+ * coarsest at which a mail shirt or a round shield still fits its two cells across.
+ */
+export const CM_PER_PIXEL = 1.25;
+
+export interface Digitised extends Raster {
+  /** How much the object had to shrink to fit its cells, 1 when it did not. */
+  shrunk: number;
 }
 
 /**
@@ -334,7 +386,7 @@ export async function digitise(
   cw: number,
   ch: number,
   o: DigitiseOptions = {},
-): Promise<Raster> {
+): Promise<Digitised> {
   // The object's box.
   let x0 = r.width;
   let y0 = r.height;
@@ -369,7 +421,11 @@ export async function digitise(
   }
   const boxW = cw * CELL - MARGIN * 2;
   const boxH = ch * CELL - MARGIN * 2;
-  const s = Math.min(boxW / bw, boxH / bh);
+  const fit = Math.min(boxW / bw, boxH / bh);
+  // True to size when the length is known, as long as it fits.
+  const real = o.lengthCm ? o.lengthCm / CM_PER_PIXEL / Math.max(bw, bh) : fit;
+  const s = Math.min(fit, real);
+  const shrunk = real > fit ? fit / real : 1;
   const w = Math.max(1, Math.round(bw * s));
   const h = Math.max(1, Math.round(bh * s));
   // Video softness before the shrink: a blur in the photo's pixels scaled to the shrink, in a
@@ -415,7 +471,7 @@ export async function digitise(
     .ensureAlpha()
     .raw()
     .toBuffer();
-  return { data: fitted, width: cw * CELL, height: ch * CELL };
+  return { data: fitted, width: cw * CELL, height: ch * CELL, shrunk };
 }
 
 /** A keyed raster as a PNG. */

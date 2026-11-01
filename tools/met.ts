@@ -1,7 +1,7 @@
 /**
  * Item pictures from The Metropolitan Museum of Art's open-access photographs (DESIGN.md 16.8).
  *
- *   npm run met -- sheet <name> <object id>... [--cells WxH] [--rotate <deg>]
+ *   npm run met -- sheet <name> <object id>... [--cells WxH] [--rotate <deg>] [--fill]
  *       Keys and digitises each object to the cells and draws them on a leather sheet with
  *       their ids, pipeline/work/met/<name>.sheet.png, to pick from.
  *   npm run met -- find <query> [--dept <id>] [--from <year> --to <year>] [--limit <n>]
@@ -21,11 +21,13 @@ import { ITEM_IDS, ITEMS, type ItemId } from '../src/game/items';
 import { readManifest, upsertAsset, writeManifest } from './lib/manifest';
 import {
   CELL,
+  CM_PER_PIXEL,
   decode,
   digitise,
   fetchBytes,
   type KeyOptions,
   keyPhoto,
+  lengthOf,
   metObject,
   metSearch,
   type Raster,
@@ -33,6 +35,8 @@ import {
 } from './lib/met';
 
 const WORK = 'pipeline/work/met';
+/** Kinds drawn to fill their cells rather than true to size: too small to see otherwise. */
+const FILLED = new Set(['ring', 'amulet', 'potion', 'scroll', 'misc']);
 const OUT = 'assets/items';
 
 function fail(message: string): never {
@@ -90,9 +94,12 @@ async function sheet(args: string[]): Promise<void> {
     try {
       const { raster, record } = await photo(id);
       keyPhoto(raster, keyFlags(args));
-      const d = await digitise(raster, cells[0], cells[1], { rotate });
+      const lengthCm = args.includes('--fill') ? undefined : (lengthOf(record) ?? undefined);
+      const d = await digitise(raster, cells[0], cells[1], { rotate, lengthCm });
       tiles.push({ id, png: await toPng(d), title: `${record.title}, ${record.objectDate}` });
-      console.info(`${id}: ${record.title} (${record.objectDate}, ${record.culture})`);
+      console.info(
+        `${id}: ${record.title} (${record.objectDate}, ${record.culture}), ${lengthOf(record) ?? '?'} cm${d.shrunk < 1 ? `, shrunk to ${Math.round(d.shrunk * 100)}% to fit` : ''}`,
+      );
     } catch (e) {
       console.warn(`${id}: ${(e as Error).message}`);
     }
@@ -172,7 +179,17 @@ async function take(args: string[]): Promise<void> {
     ...keyFlags(args),
     pockets: !args.includes('--no-pockets'),
   });
-  const d = await digitise(raster, def.w, def.h, { rotate: Number(flag(args, '--rotate') ?? 0) });
+  // True to size, but for the small things drawn larger than life (a ring, a phial, a scroll).
+  const lengthCm = FILLED.has(def.kind) ? undefined : (lengthOf(record) ?? undefined);
+  const d = await digitise(raster, def.w, def.h, {
+    rotate: Number(flag(args, '--rotate') ?? 0),
+    lengthCm,
+  });
+  if (d.shrunk < 1) {
+    console.warn(
+      `${def.name} is ${lengthCm} cm, longer than its ${def.w} by ${def.h} cells (${Math.round(def.h * CELL * CM_PER_PIXEL)} cm): drawn at ${Math.round(d.shrunk * 100)}%`,
+    );
+  }
   await mkdir(OUT, { recursive: true });
   const file = join(OUT, `${item}.png`);
   await writeFile(file, await toPng(d));
@@ -184,7 +201,7 @@ async function take(args: string[]): Promise<void> {
     licence: `CC0 1.0, The Met Open Access (public domain; credit line: ${record.creditLine})`,
     files: [file],
     date: new Date().toISOString().slice(0, 10),
-    notes: `${def.name}; the object covered ${(cover * 100).toFixed(1)}% of its photo`,
+    notes: `${def.name}; ${lengthCm ? `${lengthCm} cm at ${CM_PER_PIXEL} cm a pixel${d.shrunk < 1 ? `, shrunk to ${Math.round(d.shrunk * 100)}% to fit` : ''}` : 'filling its cells'}; the object covered ${(cover * 100).toFixed(1)}% of its photo`,
   });
   await writeManifest(manifest);
   console.info(`${file}: ${record.title} (${record.objectDate}), object ${id}`);

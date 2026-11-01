@@ -129,8 +129,9 @@ export const ITEMS: Record<ItemId, ItemDef> = {
     id: 'spear',
     name: 'Spear',
     kind: 'weapon',
+    // Five cells for a spear's length at the bag's scale (DESIGN 16.8: a cell is 34 cm).
     w: 1,
-    h: 4,
+    h: 5,
     value: 50,
     skill: 'spear',
     damage: { count: 1, sides: 9 },
