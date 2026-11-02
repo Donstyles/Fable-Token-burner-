@@ -49,6 +49,15 @@ interface RoomData {
   stars?: Quad[];
   incense?: Quad[];
   fronts?: Quad[];
+  bolts?: Quad[];
+  crows?: Quad[];
+  bats?: Quad[];
+  drips?: Quad[];
+  eyes?: Quad[];
+  seas?: Quad[];
+  winds?: Quad[];
+  drifts?: Quad[];
+  swings?: Quad[];
 }
 
 type Quad = [number, number, number, number];
@@ -86,6 +95,14 @@ const COUNTS: Record<string, string> = {
   stars: 'starCount',
   incense: 'incenseCount',
   fronts: 'frontCount',
+  bolts: 'boltCount',
+  crows: 'crowCount',
+  bats: 'batCount',
+  drips: 'dripCount',
+  eyes: 'eyeCount',
+  seas: 'seaCount',
+  winds: 'windCount',
+  drifts: 'driftCount',
 };
 
 // Babylon's shader processor breaks the source at every semicolon, those in comments too:
@@ -147,6 +164,24 @@ uniform vec4 incense[2];
 uniform float incenseCount;
 uniform vec4 fronts[4];   // things standing before what moves: nothing moving is drawn over them
 uniform float frontCount;
+// An entrance's weather and creatures (DESIGN 17.9).
+uniform vec4 bolts[2];
+uniform float boltCount;
+uniform vec4 crows[2];
+uniform float crowCount;
+uniform vec4 bats[2];
+uniform float batCount;
+uniform vec4 drips[8];
+uniform float dripCount;
+uniform vec4 eyes[2];
+uniform float eyeCount;
+uniform vec4 seas[2];
+uniform float seaCount;
+uniform vec4 winds[4];
+uniform float windCount;
+uniform vec4 drifts[2];
+uniform float driftCount;
+uniform vec4 swing;       // a lantern's pivot and reach, x below zero for none
 
 float hash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
 float noise(vec2 p) {
@@ -169,6 +204,25 @@ vec3 pic(vec2 p) { return texture2D(picture, uvAt(p)).rgb; }
 float luma(vec3 c) { return dot(c, vec3(0.3, 0.55, 0.15)); }
 vec2 rot(vec2 v, float a) { float c = cos(a), s = sin(a); return vec2(c * v.x - s * v.y, s * v.x + c * v.y); }
 bool inside(vec2 p, vec4 b) { return p.x >= b.x && p.x <= b.z && p.y >= b.y && p.y <= b.w; }
+// How far p is from the segment a to b.
+float segDist(vec2 p, vec2 a, vec2 b) {
+  vec2 ab = b - a;
+  float h = clamp(dot(p - a, ab) / max(dot(ab, ab), 0.0001), 0.0, 1.0);
+  return length(p - a - ab * h);
+}
+// A jagged line: hashes joined straight, so it kinks where noise would round off.
+float jag(float v, float seed) {
+  float k = floor(v);
+  return mix(hash(vec2(k, seed)), hash(vec2(k + 1.0, seed)), fract(v)) - 0.5;
+}
+// A bird at a point, its wings out to each side of the tip direction scaled by size: how much p is on it.
+float bird(vec2 p, vec2 at, vec2 tip, float size) {
+  vec2 d = p - at;
+  float dl = segDist(d, vec2(0.0), vec2(-tip.x, tip.y) * size);
+  float dr = segDist(d, vec2(0.0), tip * size);
+  float thick = 0.2 + size * 0.07;
+  return 1.0 - smoothstep(thick, thick + 0.8, min(min(dl, dr), length(d) - size * 0.15));
+}
 // How much p is on something standing before what moves (a sofa before the hearth, a mage
 // before his waterfall): inside a front's box, softly at its edges, where the paint is not
 // water's blue, so the water between a crown's points still falls.
@@ -303,6 +357,47 @@ vec3 moved(vec2 p, float flame) {
     vec3 moved = mix(wall, src, rock);
     float inner = within((p - e.xy) / (e.zw - e.xy), vec2(4.0 / (e.z - e.x), 4.0 / (e.w - e.y)));
     return mix(pic(p), moved, inner);
+  }
+  // A sky's clouds drift across, slowly, what stands before them (a moon, a tower) held still
+  // by its front.
+  for (int i = 0; i < 2; i++) {
+    if (float(i) >= driftCount) break;
+    vec4 b = drifts[i];
+    if (!inside(p, b)) continue;
+    float w = within((p - b.xy) / (b.zw - b.xy), vec2(0.02, 0.15));
+    return flow(p, vec2((b.z - b.x) * 0.06 * w, 0.0), 14.0, float(i) * 0.5, b);
+  }
+  // The sea heaves: its paint drawn from a little further out, its rows swaying.
+  for (int i = 0; i < 2; i++) {
+    if (float(i) >= seaCount) break;
+    vec4 b = seas[i];
+    if (!inside(p, b)) continue;
+    vec2 uv = (p - b.xy) / (b.zw - b.xy);
+    float w = within(uv, vec2(0.05, 0.12));
+    float sway = sin(p.y / 5.0 + t * 1.4 + float(i)) * 0.8 * w;
+    return flow(vec2(p.x + sway, p.y), vec2(0.0, (b.w - b.y) * 0.08 * w), 3.5, float(i) * 0.47, b);
+  }
+  // Grass and scrub in the wind: bent sideways in gusts, more toward the tops.
+  for (int i = 0; i < 4; i++) {
+    if (float(i) >= windCount) break;
+    vec4 b = winds[i];
+    if (!inside(p, b)) continue;
+    vec2 uv = (p - b.xy) / (b.zw - b.xy);
+    float w = within(uv, vec2(0.08, 0.1));
+    float gust = 0.55 + 0.45 * sin(t * 0.37 + float(i) * 1.3);
+    float wave = sin(t * 1.9 + p.x * 0.045 + float(i)) * 0.7 + (fbm(vec2(p.x / 25.0 - t * 0.8, p.y / 30.0)) - 0.5) * 1.2;
+    float dx = wave * gust * 2.6 * (1.0 - uv.y * 0.7) * w;
+    return pic(vec2(p.x - dx, p.y));
+  }
+  // A lantern swings on its bracket: the paint below the pivot turned about it.
+  if (swing.x >= 0.0) {
+    vec2 d = p - swing.xy;
+    float r = length(d);
+    if (r < swing.w) {
+      float a = 0.22 * sin(t * 1.7) + 0.05 * sin(t * 3.1);
+      float below = smoothstep(-2.0, 6.0, d.y);
+      return mix(pic(p), pic(swing.xy + rot(d, -a * below)), smoothstep(swing.w, swing.w - 4.0, r));
+    }
   }
   // A pillar of fire: its flames climb fast and wrestle, and round them the air shimmers.
   for (int i = 0; i < 2; i++) {
@@ -547,6 +642,139 @@ void main() {
       c += vec3(1.0, 0.62, 0.22) * near * (1.0 - ph) * 1.4;
     }
   }
+  // Lightning: now and then a bolt strikes down its box, jagged, a branch off it, the whole
+  // picture lit by the flash, twice, as a strike flickers.
+  float flash = 0.0;
+  for (int i = 0; i < 2; i++) {
+    if (float(i) >= boltCount) break;
+    vec4 b = bolts[i];
+    float fi = float(i);
+    float per = 9.0 + 6.0 * hash(vec2(fi, 3.0));
+    float cyc = t / per + hash(vec2(fi, 4.0));
+    float k = floor(cyc);
+    float ph = fract(cyc) * per;
+    float on = (ph < 0.15 ? 1.0 : 0.0) + (ph > 0.22 && ph < 0.3 ? 0.6 : 0.0);
+    if (on <= 0.0) continue;
+    flash = max(flash, on);
+    float wd = b.z - b.x;
+    float hg = b.w - b.y;
+    if (!inside(px, b + vec4(-wd * 0.3, 0.0, wd * 0.3, hg * 0.6))) continue;
+    float v = (px.y - b.y) / hg;
+    float x0 = mix(b.x, b.z, 0.35 + 0.3 * hash(vec2(k, fi)));
+    float x1 = mix(b.x, b.z, 0.3 + 0.4 * hash(vec2(k + 1.0, fi)));
+    // Its way down: a lean, big jogs, small kinks.
+    float xAt = mix(x0, x1, min(v, 1.0)) + jag(min(v, 1.0) * 6.0, k * 5.0 + fi) * wd * 0.4 + jag(min(v, 1.0) * 30.0, k * 3.0 + fi) * wd * 0.12;
+    float dist = abs(px.x - xAt);
+    float bv = (v - 0.3) / 0.45;
+    float side = hash(vec2(k, 9.0)) > 0.5 ? 1.0 : -1.0;
+    float xb = xAt + bv * wd * 0.3 * side + jag(bv * 12.0, k + 20.0) * wd * 0.1;
+    float distB = bv > 0.0 && bv < 1.0 ? abs(px.x - xb) : 1000.0;
+    float core = max(1.0 - smoothstep(0.0, 1.3, dist), (1.0 - smoothstep(0.0, 0.9, distB)) * 0.7);
+    float glow = exp(-min(dist, distB) / 7.0) * 0.5;
+    float along = smoothstep(0.0, 0.05, v) * (1.0 - smoothstep(0.96, 1.0, v));
+    c += vec3(0.9, 0.85, 1.0) * (core * 1.4 + glow) * on * along;
+    // Its light on the water below the box, a column fading down, broken by the waves.
+    float below = (px.y - b.w) / (hg * 0.6);
+    if (below > 0.0) {
+      float foot = abs(px.x - x1);
+      float sea = exp(-foot / (6.0 + 14.0 * below)) * (1.0 - smoothstep(0.0, 1.0, below)) * (0.6 + 0.4 * noise(vec2(px.x * 0.5, px.y * 1.5)));
+      c += vec3(0.8, 0.75, 0.95) * sea * on * 0.45;
+    }
+  }
+  // Crows wheel over a ruin: each on its own loop, flapping in bouts, gliding between.
+  for (int i = 0; i < 2; i++) {
+    if (float(i) >= crowCount) break;
+    vec4 b = crows[i];
+    if (!inside(px, b)) continue;
+    vec2 size = b.zw - b.xy;
+    for (int k = 0; k < 3; k++) {
+      float n = float(k) + float(i) * 3.0;
+      float ang = t * (0.12 + 0.05 * hash(vec2(n, 1.0))) + n * 2.1;
+      vec2 mid = b.xy + size * vec2(0.3 + 0.4 * hash(vec2(n, 2.0)), 0.25 + 0.4 * hash(vec2(n, 3.0)));
+      vec2 at = mid + vec2(cos(ang) * size.x * 0.22, sin(ang) * size.y * 0.12);
+      float glide = smoothstep(0.3, 0.6, sin(t * 0.5 + n));
+      float flap = mix(0.15, sin(t * 7.0 + n * 3.0) * 0.5, glide);
+      float size1 = 6.0 + 6.0 * hash(vec2(n, 4.0));
+      c = mix(c, vec3(0.04, 0.03, 0.05), bird(px, at, vec2(1.0, -0.15 - flap), size1));
+    }
+  }
+  // Bats flit out of the dark now and then, a few at a time, each on its own jittering way.
+  for (int i = 0; i < 2; i++) {
+    if (float(i) >= batCount) break;
+    vec4 b = bats[i];
+    vec2 size = b.zw - b.xy;
+    for (int k = 0; k < 3; k++) {
+      float n = float(k) + float(i) * 3.0;
+      float per = 9.0 + 5.0 * hash(vec2(n, 1.0));
+      float cyc = t / per + hash(vec2(n, 2.0));
+      float ph = fract(cyc);
+      if (ph > 0.3) continue;
+      float lot = floor(cyc);
+      float f = ph / 0.3;
+      vec2 start = b.xy + size * vec2(0.3 + 0.4 * hash(vec2(lot, n)), 0.3 + 0.4 * hash(vec2(lot, n + 7.0)));
+      vec2 goal = vec2(hash(vec2(lot, n + 3.0)) > 0.5 ? b.z + size.x * 0.5 : b.x - size.x * 0.5, b.y - size.y * 0.7);
+      vec2 at = mix(start, goal, f) + vec2(sin(t * 13.0 + n) * 2.0, sin(t * 17.0 + n * 2.0) * 3.0);
+      float flap = sin(t * 31.0 + n * 5.0) * 0.7;
+      float fade = smoothstep(0.0, 0.1, f) * (1.0 - smoothstep(0.8, 1.0, f));
+      c = mix(c, vec3(0.05, 0.04, 0.05), bird(px, at, vec2(1.0, -0.2 - flap), 3.5 + hash(vec2(n, 8.0))) * fade);
+    }
+  }
+  // Water drips: a drop gathers at the box's top and falls its height, faster as it goes, a
+  // ring spreading where it lands.
+  for (int i = 0; i < 8; i++) {
+    if (float(i) >= dripCount) break;
+    vec4 b = drips[i];
+    if (!inside(px, b + vec4(-10.0, -2.0, 10.0, 6.0))) continue;
+    float fi = float(i);
+    float per = 1.6 + 2.2 * hash(vec2(fi, 1.0));
+    float ph = fract(t / per + hash(vec2(fi, 2.0)));
+    float x = (b.x + b.z) * 0.5;
+    float hg = b.w - b.y;
+    float fall = smoothstep(0.55, 1.0, ph);
+    float y = b.y + fall * fall * hg;
+    float drop = 1.0 - smoothstep(0.4, 1.2, length(px - vec2(x, y)));
+    float streak = 1.0 - smoothstep(0.3, 0.9, segDist(px, vec2(x, y - 6.0 * fall), vec2(x, y)));
+    c += vec3(0.75, 0.85, 1.0) * max(drop * 0.9, streak * 0.45) * mix(0.6, 1.0, step(0.001, fall));
+    float age = ph / 0.25;
+    if (age < 1.0) {
+      float rr = age * 9.0;
+      float ringAt = 1.0 - smoothstep(0.0, 1.2, abs(length((px - vec2(x, b.w)) * vec2(1.0, 2.5)) - rr));
+      c += vec3(0.7, 0.8, 0.95) * ringAt * (1.0 - age) * 0.5;
+    }
+  }
+  // Eyes in the dark glow a little, and blink.
+  for (int i = 0; i < 2; i++) {
+    if (float(i) >= eyeCount) break;
+    vec4 b = eyes[i];
+    if (!inside(px, b)) continue;
+    float fi = float(i);
+    float per = 3.0 + 3.0 * hash(vec2(fi, 1.0));
+    float ph = fract(t / per + hash(vec2(fi, 2.0)));
+    float shut = ph > 0.92 ? 1.0 : 0.0;
+    float w = within((px - b.xy) / (b.zw - b.xy), vec2(0.2, 0.25));
+    float bright = smoothstep(0.15, 0.4, luma(pic(px)));
+    float halo = 0.0;
+    for (int k = 0; k < 8; k++) {
+      float a = float(k) * 0.785;
+      halo += smoothstep(0.15, 0.4, luma(pic(px + vec2(cos(a), sin(a)) * 2.5)));
+      halo += smoothstep(0.15, 0.4, luma(pic(px + vec2(cos(a + 0.4), sin(a + 0.4)) * 5.0))) * 0.5;
+    }
+    halo = min(halo / 6.0, 1.0);
+    float pulse = 0.8 + 0.2 * sin(t * 2.5 + fi);
+    float open = 1.0 - shut;
+    c *= 1.0 + 0.3 * (pulse - 0.8) * bright * w;
+    c += vec3(0.55, 0.6, 0.12) * halo * pulse * w * 0.35 * open;
+    c = mix(c, c * 0.15, shut * bright * w);
+  }
+  // The sea's crests glint.
+  for (int i = 0; i < 2; i++) {
+    if (float(i) >= seaCount) break;
+    vec4 b = seas[i];
+    if (!inside(px, b)) continue;
+    float crest = smoothstep(0.35, 0.6, luma(pic(px)));
+    float g = smoothstep(0.9, 1.0, noise(vec2(px.x * 0.9 + t * 2.0, px.y * 1.4 + float(i))));
+    c += vec3(0.5, 0.55, 0.6) * g * crest * 0.35;
+  }
   // Embers fly up out of a pillar of fire and off its sides, yellow cooling to red.
   for (int i = 0; i < 2; i++) {
     if (float(i) >= pillarCount) break;
@@ -579,7 +807,7 @@ void main() {
   // Where water lands: mist rolls up and out, and drops leap and fall back, all of it soft, a
   // haze of the light behind it and drops faint blurred dabs tinted by what is behind them,
   // nothing white or sharp on a soft painting (owner, 2026-10-25: "needs to be soft to blend
-  // into the background"; 2026-10-26: "a bit harsh visually and not fitting the soft image").
+  // into the background" and 2026-10-26: "a bit harsh visually and not fitting the soft image").
   // A small splash's mist curls finer than a wide one's.
   for (int i = 0; i < 2; i++) {
     if (float(i) >= sprayCount) break;
@@ -696,6 +924,7 @@ void main() {
   }
   // What stands before the room's moving things hides them.
   c = mix(c, before, fr);
+  if (flash > 0.0) c = c * (1.0 + 0.4 * flash) + vec3(0.1, 0.09, 0.14) * flash;
   // Glints: a star twinkles now and then on the brightest paint of a box, a crystal's face or
   // a polished orb's highlight.
   for (int i = 0; i < 8; i++) {
@@ -902,11 +1131,20 @@ export class RoomView {
       stars: boxes(d.stars, 2),
       incense: boxes(d.incense, 2),
       fronts: boxes(d.fronts, 4),
+      bolts: boxes(d.bolts, 2),
+      crows: boxes(d.crows, 2),
+      bats: boxes(d.bats, 2),
+      drips: boxes(d.drips, 8),
+      eyes: boxes(d.eyes, 2),
+      seas: boxes(d.seas, 2),
+      winds: boxes(d.winds, 4),
+      drifts: boxes(d.drifts, 2),
     };
     const none: Quad = [-1, -1, -1, -1];
     const mist = d.mists?.[0] ?? none;
     const ring = d.rings?.[0] ?? none;
     const disc = d.discs?.[0] ?? none;
+    const swing = d.swings?.[0] ?? none;
     // Glass lit by water's light where water falls, else by the fire.
     const glassStyle = d.falls?.length && !d.pillars?.length ? 1 : 0;
     const orbs = (room.data.orbs ?? []).slice(0, 4);
@@ -938,6 +1176,7 @@ export class RoomView {
       e.setFloat4('mist', mist[0], mist[1], mist[2], mist[3]);
       e.setFloat4('ring', ring[0], ring[1], ring[2], ring[3]);
       e.setFloat4('disc', disc[0], disc[1], disc[2], disc[3]);
+      e.setFloat4('swing', swing[0], swing[1], swing[2], swing[3]);
       e.setFloat('smoky', d.smokes?.length ? 1 : 0);
       e.setFloat('glassStyle', glassStyle);
     });
@@ -970,6 +1209,7 @@ export class RoomView {
         'mist',
         'ring',
         'disc',
+        'swing',
         'smoky',
         'glassStyle',
       ],
