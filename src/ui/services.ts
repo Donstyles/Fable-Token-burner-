@@ -27,6 +27,7 @@ import {
 } from './services-model';
 import { buy, identify, repair, sell, shopView } from './shop-model';
 import type { Character } from '../game/character';
+import type { EntranceDef } from '../game/content';
 import { gridBlocks } from './inventory-model';
 import { bagGrid } from './inventory';
 import { bagCell } from './layout-model';
@@ -409,6 +410,23 @@ function renderShop(ctx: ScreenContext, def: ServiceDefs['shop']): void {
         pack: pack('repair'),
       },
     },
+  );
+}
+
+/**
+ * A place's "Enter?" board (DESIGN.md 17.9): its name over the panel with Enter and Stay, the
+ * picture of its door in the view. Enter answers what stands behind the door, or that nothing
+ * is built there yet; Stay takes the board down.
+ */
+export function renderEntrance(ctx: ScreenContext, def: EntranceDef): void {
+  const h: House = house(
+    ctx,
+    def.name,
+    () => [
+      { label: 'Enter', go: () => h.say(def.blocked) },
+      { label: 'Stay', go: () => ctx.close() },
+    ],
+    {},
   );
 }
 

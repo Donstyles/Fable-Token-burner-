@@ -24,7 +24,7 @@ import { AnimationStepper } from '../render/animation-step';
 import { DEFAULT_CHARACTER_FILL, loadCharacter, type Character } from '../world/character';
 import { Navigation } from '../world/navigation';
 import { CombatFeedback } from '../world/combat-feedback';
-import { PortalWatcher, portalUrl, travel, type Portal } from '../world/portals';
+import { PortalWatcher, portalUrl, travel, type Portal, type Trigger } from '../world/portals';
 import { Monster } from '../world/monster';
 import { MONSTERS, NPCS } from '../game/monsters';
 import { Party } from '../game/party';
@@ -76,7 +76,7 @@ import { createTitleScreen } from '../ui/title';
 import { handleQuestEvent } from '../game/quests';
 import { shareExperience } from '../game/experience';
 import { Soundscape } from '../world/soundscape';
-import { DOOR_REACH, VILLAGE_HOUSES } from '../game/content';
+import { DOOR_REACH, ENTRANCES, VILLAGE_HOUSES, type EntranceDef } from '../game/content';
 import { clearSave, loadGame, saveGame } from '../app/autosave';
 import { daylightAt, environmentAt, MINUTES_PER_REAL_SECOND } from '../world/daylight';
 import { advanceClock, minuteOfDay } from '../game/time';
@@ -131,6 +131,8 @@ export interface DevHandle {
   simTime(): number;
   feedback: CombatFeedback;
   portals: PortalWatcher;
+  /** The places with a picture at their door (DESIGN.md 17.9), for tests. */
+  entrances: PortalWatcher<Trigger & { def: EntranceDef }>;
   screens: Screens;
   state: GameState;
   pickAt(x: number, y: number): string | null;
@@ -404,6 +406,8 @@ export async function startDev(app: App): Promise<DevHandle> {
   let mapPicture: { picture: HTMLImageElement; size: number } | null = null;
   // Set once the view's box is known, below: a house's room comes down with its board.
   let leaveRoom = (): void => {};
+  // Set once the level is loaded: an entrance's disc is armed again when its board comes down.
+  let resetEntrances = (): void => {};
   const screens: Screens = installScreens(uiLayer, state, {
     now: () => simTime,
     questDefs: QUESTS,
@@ -428,6 +432,7 @@ export async function startDev(app: App): Promise<DevHandle> {
     },
     onClose: () => {
       leaveRoom();
+      resetEntrances();
       save();
     },
     onRest: (kind) => {
@@ -716,6 +721,21 @@ export async function startDev(app: App): Promise<DevHandle> {
       portalUrl(location.href, p),
     );
   });
+  // A place with a picture at its door (DESIGN.md 17.9): the party walks into its disc and
+  // the picture comes up in the view with its board; Stay takes both down, and the disc arms
+  // again once the party has stepped clear of it.
+  const entrances = new PortalWatcher(
+    Object.values(ENTRANCES).flatMap((def) => {
+      const at = level.points.get(def.point);
+      return at ? [{ name: def.point, position: at, radius: def.reach, def }] : [];
+    }),
+    (e) => {
+      diag(`at the door of ${e.def.name}`);
+      screens.openEntrance(e.def);
+      enterRoom(e.def.room);
+    },
+  );
+  resetEntrances = () => entrances.reset();
 
   const handle: DevHandle = {
     ready: false,
@@ -790,6 +810,7 @@ export async function startDev(app: App): Promise<DevHandle> {
     simTime: () => simTime,
     feedback,
     portals,
+    entrances,
     screens,
     state,
     npcs,
@@ -1143,7 +1164,10 @@ export async function startDev(app: App): Promise<DevHandle> {
       }
     }
     level.update(camera.globalPosition);
-    if (!fly) portals.update(party.position);
+    if (!fly) {
+      portals.update(party.position);
+      entrances.update(party.position);
+    }
     strip.panel.setParty(party.position.x, party.position.z, (party.yaw * 180) / Math.PI);
     saveTimer += dt;
     if (saveTimer > 60) {
