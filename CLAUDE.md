@@ -46,10 +46,11 @@ anything. Both are the source of truth; update them when a decision changes.
 - `npm run portrait -- <appearance> [<expression>...]` – cut the owner's
   portraits in `pipeline/inbox/portraits/<appearance>/` to the band's oval
   (head box in `pipeline/portraits.json`)
-- `npm run room -- <house> [--top <px>]` – cut the owner's picture of a house's room
-  (`pipeline/inbox/rooms/<house>.png`) to the view box and find its flames, coals and
-  firelight, into `assets/rooms/`; what moves that is not fire (clouds, vapour) is marked by
-  hand in `pipeline/rooms.json`; the dev build shows a room alone with `?room=<id>`
+- `npm run room -- <house> [--top <px>]` – cut the owner's picture of a house's room or a
+  place's entrance (`pipeline/inbox/rooms/<id>.png`) to the view box and find its flames,
+  coals and firelight, into `assets/rooms/`; what moves that is not fire (clouds, vapour, sea,
+  wind, crows, bats) is marked by hand in `pipeline/rooms.json`, and painted things the game
+  draws moving are erased there (`erase`); the dev build shows a room alone with `?room=<id>`
 - `npm run vista -- <id>` – cut the rest screen's vista from the owner's four pictures of one
   view (`pipeline/inbox/vistas/<id>/{sunrise,day,sunset,night}.png`, fuchsia sky): keyed, checked
   to line up, one strip each (first row in `pipeline/vistas.json`) into `assets/vistas/`
