@@ -16,7 +16,7 @@ import { isSpellId } from './spells';
 import { STATS } from './stats';
 import type { GameState } from './state';
 
-export const SAVE_VERSION = 1;
+export const SAVE_VERSION = 2;
 
 export interface SaveFile {
   version: number;
@@ -37,10 +37,12 @@ export function toJson(state: GameState, savedAt = 0): string {
   return JSON.stringify(serialize(state, savedAt));
 }
 
-/** Bring an older save up to the current version; nothing to do yet. */
+/** Bring an older save up to the current version: version 1 had no map state. */
 export function migrate(file: SaveFile): SaveFile {
   if (file.version >= SAVE_VERSION) return file;
-  return { ...file, version: SAVE_VERSION };
+  const state = { ...file.state };
+  if (file.version < 2 && isRecord(state) && !isRecord(state.maps)) state.maps = {};
+  return { ...file, version: SAVE_VERSION, state };
 }
 
 export function deserialize(raw: unknown): LoadResult {
@@ -231,5 +233,18 @@ export function validateState(v: unknown): string | null {
     ),
     check(Array.isArray(s.memberships) && s.memberships.every(isString), 'memberships'),
     check(isRecord(s.flags) && Object.values(s.flags).every(isFiniteNumber), 'flags'),
+    validateMaps(s.maps),
   );
+}
+
+function validateMaps(m: unknown): string | null {
+  if (!isRecord(m)) return 'maps: missing';
+  for (const [id, map] of Object.entries(m)) {
+    if (!isRecord(map)) return `maps: ${id}`;
+    for (const key of ['doors', 'taken'] as const) {
+      const list = map[key];
+      if (!Array.isArray(list) || !list.every(isString)) return `maps: ${id} ${key}`;
+    }
+  }
+  return null;
 }

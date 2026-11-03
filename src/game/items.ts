@@ -71,6 +71,7 @@ export const ITEM_IDS = [
   'potion-healing',
   'scroll-torch-light',
   'scroll-fire-bolt',
+  'iron-key',
 ] as const;
 export type ItemId = (typeof ITEM_IDS)[number];
 
@@ -241,6 +242,14 @@ export const ITEMS: Record<ItemId, ItemDef> = {
     h: 1,
     value: 200,
     use: { kind: 'spell', spell: 'fire-bolt', skill: 4 },
+  },
+  'iron-key': {
+    id: 'iron-key',
+    name: 'Iron Key',
+    kind: 'misc',
+    w: 1,
+    h: 2,
+    value: 0,
   },
 };
 

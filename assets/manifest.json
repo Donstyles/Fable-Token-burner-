@@ -547,6 +547,15 @@
       "notes": "Helmet; 24.8 cm at 1.25 cm a pixel; the object covered 39.6% of its photo"
     },
     {
+      "id": "item-iron-key",
+      "kind": "image",
+      "source": "The Metropolitan Museum of Art, object 463340: Key (15th century, German), https://www.metmuseum.org/art/collection/search/463340; its backdrop keyed out and the object digitised to 1 by 2 cells (tools/met.ts)",
+      "licence": "CC0 1.0, The Met Open Access (public domain; credit line: Rogers Fund, 1910)",
+      "files": ["assets/items/iron-key.png"],
+      "date": "2026-11-03",
+      "notes": "Iron Key; filling its cells; the object covered 26.7% of its photo"
+    },
+    {
       "id": "item-leather-armor",
       "kind": "image",
       "source": "The Metropolitan Museum of Art, object 23347: Buff Coat (17th century, European), https://www.metmuseum.org/art/collection/search/23347; its backdrop keyed out and the object digitised to 2 by 3 cells (tools/met.ts)",

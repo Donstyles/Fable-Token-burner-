@@ -216,8 +216,11 @@ describe('Gullhaven', () => {
     expect(level.height.width).toBe(640);
     expect(buildings.length).toBeGreaterThanOrEqual(10);
     // The cave's tunnel ends in rock: no level behind it yet, so no portal.
-    expect(level.portals).toEqual([]);
-    expect(level.points.find((p) => p.name === 'cave')?.kind).toBe('poi');
+    // The cave's tunnel ends in the door into the Old Halls (DESIGN 17.10).
+    expect(level.portals.map((p) => `${p.name}>${p.target.level}:${p.target.entry}`)).toEqual([
+      'cave>old-halls:cave-mouth',
+    ]);
+    expect(level.points.find((p) => p.name === 'cave')?.kind).toBe('door');
     expect(level.water.map((w) => w.name)).toEqual(['sea']);
     expect(level.trees.length).toBeGreaterThan(500);
   });

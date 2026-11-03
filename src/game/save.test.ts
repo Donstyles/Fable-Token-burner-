@@ -73,6 +73,25 @@ describe('save round trip', () => {
     expect(deserialize({ ...file, version: SAVE_VERSION + 1 }).ok).toBe(false);
   });
 
+  it('gives a version-1 save empty map state and refuses a broken one', () => {
+    const file = serialize(playedState());
+    const v1 = JSON.parse(JSON.stringify(file)) as typeof file;
+    v1.version = 1;
+    delete (v1.state as Partial<typeof v1.state>).maps;
+    const loaded = deserialize(v1);
+    expect(loaded.ok && loaded.migrated && loaded.state.maps).toEqual({});
+    const kept = serialize(playedState());
+    kept.state.maps['old-halls'] = { doors: ['warden-door'], taken: ['ossuary-key'] };
+    const again = deserialize(JSON.parse(JSON.stringify(kept)));
+    expect(again.ok && again.state.maps['old-halls']).toEqual({
+      doors: ['warden-door'],
+      taken: ['ossuary-key'],
+    });
+    const bad = JSON.parse(JSON.stringify(kept)) as typeof kept;
+    (bad.state.maps['old-halls'] as unknown as { doors: unknown }).doors = 'all';
+    expect(deserialize(bad)).toEqual({ ok: false, error: 'maps: old-halls doors' });
+  });
+
   it('rejects malformed input as values', () => {
     expect(fromJson('{')).toEqual({ ok: false, error: 'save: not valid JSON' });
     expect(deserialize(null)).toEqual({ ok: false, error: 'save: not an object' });

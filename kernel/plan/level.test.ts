@@ -249,6 +249,35 @@ describe('level planner', () => {
     expect(out.lights[0]!.kind).toBe('glow');
   });
 
+  it('records a door in the middle of its wall, facing out, and leaves the doorway open', async () => {
+    const plan = new LevelBuilder('doors');
+    const hall = plan.hall({
+      name: 'hall',
+      at: [10, 0, 0],
+      size: [8, 6],
+      height: 4,
+      openings: [{ side: 'north', at: 4, width: 2, height: 3, kind: 'square' }],
+    });
+    const door = plan.door({
+      name: 'gate',
+      space: hall,
+      side: 'north',
+      at: 4,
+      width: 2,
+      height: 3,
+      key: 'iron-key',
+    });
+    const out = await plan.build();
+    // The inner face is at z = 3; the wall is 0.6 thick, so the leaf's centre is 0.3 out.
+    expect(door.position.map((v) => Math.round(v * 100) / 100)).toEqual([10, 0, 3.3]);
+    expect(door.outward).toEqual([0, 0, 1]);
+    expect(door.key).toBe('iron-key');
+    expect(out.doors).toEqual([door]);
+    // The leaf is the runtime's: nothing of it in the collider, so the doorway is open to the
+    // navmesh. A ray through the doorway's middle meets nothing.
+    expect(firstHit(out.collider, [10, 1.5, 2], [10, 1.5, 4.5])).toBeNull();
+  });
+
   it('records spaces, rivers and waterfalls for the runtime', async () => {
     const plan = new LevelBuilder('atmos');
     plan.hall({

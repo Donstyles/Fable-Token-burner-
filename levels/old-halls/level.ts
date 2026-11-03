@@ -1,4 +1,4 @@
-import type { LevelBuilder, PortalRecord, SpawnRecord } from '../../kernel/plan/level';
+import type { ItemRecord, LevelBuilder, PortalRecord, SpawnRecord } from '../../kernel/plan/level';
 import { ROLE } from '../../kernel/elements/roles';
 
 /**
@@ -25,6 +25,11 @@ export const portals: PortalRecord[] = [
 ];
 
 const LOW = -5;
+
+/** The warden's door is locked; its key lies among the bones in the ossuary (DESIGN 17.11). */
+export const items: ItemRecord[] = [
+  { name: 'ossuary-key', item: 'iron-key', position: [62.5, LOW, 9.2] },
+];
 
 /** The goblins at the mouth, the dead below: seven for Old Tobin's five. */
 export const spawns: SpawnRecord[] = [
@@ -143,7 +148,7 @@ export default function oldHalls(plan: LevelBuilder): void {
     fog: dark,
     openings: [
       { side: 'west', at: 6, width: 2.2, height: 3.2 }, // from the corridor
-      { side: 'north', at: 7, width: 2, height: 3, kind: 'pointed' }, // to the warden's hall
+      { side: 'north', at: 7, width: 2, height: 3, kind: 'square' }, // to the warden's hall
       { side: 'east', at: 6, width: 1.8, height: 2.8 }, // to the ossuary
     ],
   });
@@ -155,6 +160,16 @@ export default function oldHalls(plan: LevelBuilder): void {
     plan.lantern({ at: [x, LOW + 3, 1.8], facing: [0, 0, 1], color: pale, range: 10 });
   }
   plan.point('crypt', [47.6, LOW, 7.7], 'poi');
+  // The warden's door, locked: the iron key from the ossuary opens it.
+  plan.door({
+    name: 'warden-door',
+    space: crypt,
+    side: 'north',
+    at: 7,
+    width: 2,
+    height: 3,
+    key: 'iron-key',
+  });
 
   // ── The ossuary: a side chamber off the crypt ─────────────────────────────────────────
   plan.corridor({

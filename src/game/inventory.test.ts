@@ -39,7 +39,9 @@ describe('item table', () => {
       expect(def.id).toBe(id);
       expect(def.w).toBeGreaterThan(0);
       expect(def.h).toBeGreaterThan(0);
-      expect(def.value).toBeGreaterThan(0);
+      // A key is worth nothing to a shop; everything else has a price.
+      if (def.kind === 'misc') expect(def.value).toBeGreaterThanOrEqual(0);
+      else expect(def.value).toBeGreaterThan(0);
       if (def.kind === 'weapon') {
         expect(def.damage).toBeDefined();
         expect(def.skill).toBeDefined();

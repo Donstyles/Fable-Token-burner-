@@ -25,6 +25,8 @@ import { DEFAULT_CHARACTER_FILL, loadCharacter, type Character } from '../world/
 import { Navigation } from '../world/navigation';
 import { CombatFeedback } from '../world/combat-feedback';
 import { PortalWatcher, portalUrl, travel, type Portal } from '../world/portals';
+import { Doors } from '../world/doors';
+import { GroundItems } from '../world/ground-items';
 import { Monster } from '../world/monster';
 import { MONSTERS, NPCS } from '../game/monsters';
 import { Party } from '../game/party';
@@ -36,7 +38,9 @@ import {
   type Character as CharacterSheet,
 } from '../game/character';
 import { testCharacters } from '../game/fixtures';
-import { newGame, type GameState } from '../game/state';
+import { mapState, newGame, type GameState } from '../game/state';
+import { addItem, gridHas } from '../game/inventory';
+import type { ItemId } from '../game/items';
 import { automapLevel, revealAt } from '../game/automap';
 import { createCreationScreen } from '../ui/creation';
 import { installScreens, type MapMark, type Screens } from '../ui/screens';
@@ -158,6 +162,11 @@ export interface DevHandle {
   talkTo(id: string): boolean;
   /** The room of the house the party is in, drawn in the view's box (DESIGN.md 17.8). */
   room: RoomView;
+  /** The level's doors and the things on its floor (DESIGN.md 17.11), for tests. */
+  doors: Doors;
+  groundItems: GroundItems;
+  /** Write the autosave now, as the game does on a door, a travel and every minute. */
+  save(): boolean;
 }
 
 const DEG = Math.PI / 180;
@@ -718,6 +727,23 @@ export async function startDev(app: App): Promise<DevHandle> {
     );
   });
 
+  // Doors and things on the floor (DESIGN.md 17.11), as the party left them in this map.
+  const map = mapState(state, LEVEL);
+  const hasItem = (id: string): boolean =>
+    state.party.some((c) => gridHas(c.grid, id as ItemId) >= 0);
+  const doors = new Doors(scene, level, map.doors, hasItem, () => party.position);
+  const groundItems = new GroundItems(scene, app.materials, level, map.taken, (id) => {
+    // The chosen member first, then anyone with room.
+    const order = [...state.party.keys()].sort((a, b) =>
+      a === state.selected ? -1 : b === state.selected ? 1 : a - b,
+    );
+    for (const i of order) {
+      const c = state.party[i]!;
+      if (addItem(c.grid, { id, identified: true, broken: false })) return c.name;
+    }
+    return null;
+  });
+
   const handle: DevHandle = {
     ready: false,
     party,
@@ -791,6 +817,9 @@ export async function startDev(app: App): Promise<DevHandle> {
     simTime: () => simTime,
     feedback,
     portals,
+    doors,
+    groundItems,
+    save,
     screens,
     state,
     npcs,
@@ -896,6 +925,18 @@ export async function startDev(app: App): Promise<DevHandle> {
       } else {
         status.say(monster.alive ? attackMonster(monster, d) : search(monster, d));
       }
+      return;
+    }
+    // A door opens at a tap from near enough, a locked one for the party with its key; a thing
+    // on the floor goes into a pack (DESIGN.md 17.11).
+    const door = doors.doorOf(mesh.name);
+    if (door) {
+      status.say(doors.tap(door, d).message);
+      return;
+    }
+    const lying = groundItems.itemOf(mesh.name);
+    if (lying) {
+      status.say(groundItems.take(lying, d).message);
       return;
     }
     // A house opens its service only when its door is tapped from near enough (owner,

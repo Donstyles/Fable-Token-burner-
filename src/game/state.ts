@@ -44,6 +44,19 @@ export interface GameState {
   memberships: string[];
   /** Named flags set by scripts and dialogue. */
   flags: Record<string, number>;
+  /** What the party changed in each map, by level id (DESIGN.md 17.11). */
+  maps: Record<string, MapState>;
+}
+
+/** A map as the party left it: the doors it opened, the things it took off the floor. */
+export interface MapState {
+  doors: string[];
+  taken: string[];
+}
+
+/** The map's state, made on first use. */
+export function mapState(state: GameState, level: string): MapState {
+  return (state.maps[level] ??= { doors: [], taken: [] });
 }
 
 export interface NewGameOptions {
@@ -118,6 +131,7 @@ export function newGame(characters: readonly Character[], options: NewGameOption
       level: { ...options.level },
       memberships: [],
       flags: {},
+      maps: {},
     },
   };
 }

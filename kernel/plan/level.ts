@@ -167,6 +167,31 @@ export interface PortalRecord {
   arrive: { position: Vec3; yawDeg: number };
 }
 
+/**
+ * A door (DESIGN.md 17.11): a leaf the runtime builds and moves, never part of the walls, so
+ * the collider and the navmesh are built as if the doorway stood open.
+ */
+export interface DoorRecord {
+  name: string;
+  /** The leaf's centre at floor level, in the middle of the wall. */
+  position: Vec3;
+  /** The wall's outward direction: the leaf's face normal. */
+  outward: Vec3;
+  width: number;
+  height: number;
+  thickness: number;
+  material: number;
+  /** The item that unlocks it; without one it opens at a touch. */
+  key?: string;
+}
+
+/** A thing lying on the floor for the party to pick up (DESIGN.md 17.11). */
+export interface ItemRecord {
+  name: string;
+  item: string;
+  position: Vec3;
+}
+
 export interface LevelOutput {
   name: string;
   /** Everything rendered. */
@@ -178,6 +203,7 @@ export interface LevelOutput {
   lights: LightPlacement[];
   points: NamedPoint[];
   spaces: SpaceRecord[];
+  doors: DoorRecord[];
   spawn: { position: Vec3; yawDeg: number };
   bounds: { min: Vec3; max: Vec3 };
 }
@@ -198,6 +224,7 @@ export class LevelBuilder {
   private readonly lights: LightPlacement[] = [];
   private readonly points: NamedPoint[] = [];
   private readonly spaces: SpaceRecord[] = [];
+  private readonly doors: DoorRecord[] = [];
   private readonly deferred: Deferred[] = [];
   private spawnPoint: { position: Vec3; yawDeg: number } = { position: [0, 0, 0], yawDeg: 0 };
 
@@ -280,6 +307,39 @@ export class LevelBuilder {
   }
 
   /** A flat slab with its top at `at`, centred on x/z. */
+  /**
+   * A door in one of a space's openings: its leaf stands in the middle of the wall, as wide
+   * and tall as the opening it fills. The runtime builds the leaf and slides it up into the
+   * wall when it opens; `key` names the item that unlocks it.
+   */
+  door(o: {
+    name: string;
+    space: Space;
+    side: Side;
+    /** Centre of the opening along the side, as the opening gave it. */
+    at: number;
+    width: number;
+    height: number;
+    thickness?: number;
+    material?: number;
+    key?: string;
+  }): DoorRecord {
+    const inner = o.space.edge(o.side, o.at);
+    const outward = o.space.outward(o.side);
+    const record: DoorRecord = {
+      name: o.name,
+      position: v3.add(inner, v3.scale(outward, WALL_T / 2)),
+      outward,
+      width: o.width,
+      height: o.height,
+      thickness: o.thickness ?? 0.14,
+      material: o.material ?? ROLE.plank,
+      ...(o.key ? { key: o.key } : {}),
+    };
+    this.doors.push(record);
+    return record;
+  }
+
   slab(o: { at: Vec3; size: [number, number]; thickness?: number; material?: number }): void {
     const t = o.thickness ?? 0.4;
     this.solid.append(
@@ -824,6 +884,7 @@ export class LevelBuilder {
       lights: this.lights,
       points: this.points,
       spaces: this.spaces,
+      doors: this.doors,
       spawn: this.spawnPoint,
       bounds: visual.bounds(),
     };

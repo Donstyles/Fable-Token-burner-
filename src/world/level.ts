@@ -71,6 +71,25 @@ export interface SidecarPortal {
   arrive: { position: V3; yawDeg: number };
 }
 
+/** A door's leaf, built and moved by the runtime (DESIGN.md 17.11). */
+export interface SidecarDoor {
+  name: string;
+  position: V3;
+  outward: V3;
+  width: number;
+  height: number;
+  thickness: number;
+  material: number;
+  key?: string;
+}
+
+/** A thing lying on the floor (DESIGN.md 17.11). */
+export interface SidecarItem {
+  name: string;
+  item: string;
+  position: V3;
+}
+
 export interface LevelSidecar {
   name: string;
   /** Outdoor region: sun-lit terrain chunks with detail levels, forests, sky (DESIGN.md 15). */
@@ -101,6 +120,8 @@ export interface LevelSidecar {
   points: { name: string; position: V3; kind: string }[];
   /** Doors to other levels (DESIGN.md 15.3). */
   portals?: SidecarPortal[];
+  doors?: SidecarDoor[];
+  items?: SidecarItem[];
   /** Monsters standing about when the level loads. */
   spawns?: { kind: string; position: V3; yawDeg: number }[];
   lights: {
@@ -157,6 +178,17 @@ export interface LevelLight extends PointLightDesc {
   kind: 'lantern' | 'brazier' | 'glow';
 }
 
+export interface LevelDoor {
+  name: string;
+  position: Vector3;
+  outward: Vector3;
+  width: number;
+  height: number;
+  thickness: number;
+  material: number;
+  key?: string;
+}
+
 export interface LoadedLevel {
   root: TransformNode;
   meshes: Mesh[];
@@ -170,8 +202,14 @@ export interface LoadedLevel {
   points: Map<string, Vector3>;
   portals: Portal[];
   spawns: { kind: string; position: Vector3; yawDeg: number }[];
+  /** The doors' leaves in Babylon space, for src/world/doors.ts to build (DESIGN.md 17.11). */
+  doors: LevelDoor[];
+  /** Things on the floor in Babylon space, for src/world/ground-items.ts (DESIGN.md 17.11). */
+  groundItems: { name: string; item: string; position: Vector3 }[];
   /** The level's static lights in Babylon space; baked into the vertices, not registered. */
   lights: LevelLight[];
+  /** The painted material for a kernel role, lit by baked vertex colour or by the environment. */
+  materialFor(role: number, baked: boolean): ShaderMaterial;
   /** The tops of the chimneys in scene space, where the hearths' smoke rises (17.6). */
   smoke: Vector3[];
   /** Outdoors: the shade painted under the trees, houses and props (DESIGN.md 17.4). */
@@ -779,7 +817,23 @@ export async function loadLevel(
       target: p.target,
       arrive: { position: toBabylon(p.arrive.position), yawDeg: p.arrive.yawDeg },
     })),
+    doors: (sidecar.doors ?? []).map((d) => ({
+      name: d.name,
+      position: toBabylon(d.position),
+      outward: toBabylon(d.outward),
+      width: d.width,
+      height: d.height,
+      thickness: d.thickness,
+      material: d.material,
+      ...(d.key ? { key: d.key } : {}),
+    })),
+    groundItems: (sidecar.items ?? []).map((i) => ({
+      name: i.name,
+      item: i.item,
+      position: toBabylon(i.position),
+    })),
     lights,
+    materialFor,
     smoke: (sidecar.smoke ?? []).map((p) => toBabylon(p)),
     groundShade,
     setBakedMix: (v) => materials.setBakedMix(v),
