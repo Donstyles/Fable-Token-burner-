@@ -30,6 +30,7 @@ import {
   removeItem,
   RING_SLOTS,
   unequip,
+  type InventoryGrid,
 } from '../game/inventory';
 import {
   isEquippable,
@@ -128,7 +129,7 @@ export function itemName(item: ItemInstance): string {
   return item.identified ? def.name : `Unknown ${def.kind}`;
 }
 
-export function gridBlocks(c: Character, sel: InvSelection): GridBlock[] {
+export function gridBlocks(c: { grid: InventoryGrid }, sel: InvSelection): GridBlock[] {
   return c.grid.items.map((p, index) => {
     const def = itemDef(p.item);
     return {

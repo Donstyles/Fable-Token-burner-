@@ -246,6 +246,7 @@ async function buildOne(id: string, validate: boolean): Promise<boolean> {
     portals: mod.portals ?? [],
     spawns: mod.spawns ?? [],
     doors: level.doors,
+    chests: level.chests,
     items: mod.items ?? [],
     spaces: level.spaces,
     water: level.water.map(({ mesh: _mesh, ...body }) => body),

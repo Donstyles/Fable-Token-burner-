@@ -12,12 +12,14 @@ import './screens.css';
 import { mulberry32 } from '../game/rng';
 import type { GameState } from '../game/state';
 import {
+  type BoardName,
   type ScreenContext,
   type ScreenHooks,
   type ScreenName,
   type ServiceDefs,
   type ServiceKind,
 } from './context';
+import { renderChest, type ChestWindow } from './chest';
 import { createFrame, watchScrolls } from './dom';
 import { renderCalendar, renderNotes, renderQuests } from './books';
 import { renderAwards, renderSheet, renderSkills } from './character';
@@ -94,9 +96,11 @@ export interface Screens {
   open(name: ScreenName): void;
   /** Open a town service's screen for the given house record. */
   openService<K extends ServiceKind>(kind: K, house: ServiceDefs[K]): void;
+  /** Put up a chest's window (DESIGN.md 17.12) over its contents. */
+  openChest(chest: ChestWindow): void;
   close(): void;
   /** The open screen, or null. */
-  current(): ScreenName | ServiceKind | null;
+  current(): BoardName | null;
   /** A tap on a portrait in the band: true when the open screen used it (a spell's target). */
   pickMember(index: number): boolean;
   toggleButtonBar(on: boolean): void;
@@ -111,7 +115,7 @@ export function installScreens(
   const rng = hooks.rng ?? mulberry32((state.seed ^ Math.floor(hooks.now() * 1000)) >>> 0 || 1);
   installPressFeel(uiLayer);
 
-  let open_: { name: ScreenName | ServiceKind; root: HTMLElement; stop: () => void } | null = null;
+  let open_: { name: BoardName; root: HTMLElement; stop: () => void } | null = null;
   let portraitClaim: ((index: number) => boolean) | null = null;
 
   function unmount(notify: boolean): void {
@@ -128,11 +132,7 @@ export function installScreens(
     unmount(true);
   }
 
-  function mount(
-    name: ScreenName | ServiceKind,
-    title: string,
-    render: (ctx: ScreenContext) => void,
-  ): void {
+  function mount(name: BoardName, title: string, render: (ctx: ScreenContext) => void): void {
     unmount(false);
     // What a screen says goes to MM6's message bar on the band when the runtime has one.
     const frame = createFrame(title, close, hooks.say);
@@ -177,6 +177,9 @@ export function installScreens(
     openService(kind, house) {
       const ref = { kind, house } as ServiceRef;
       mount(kind, house.name, (ctx) => renderService(ctx, ref));
+    },
+    openChest(chest) {
+      mount('chest', chest.title, (ctx) => renderChest(ctx, chest));
     },
     close,
     current() {

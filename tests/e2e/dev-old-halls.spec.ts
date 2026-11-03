@@ -29,10 +29,21 @@ type Dev = {
     take(name: string, d: number): { kind: string; message: string };
   };
   state: {
-    maps: Record<string, { doors: string[]; taken: string[] }>;
+    gold: number;
+    maps: Record<
+      string,
+      {
+        doors: string[];
+        taken: string[];
+        chests: Record<string, { gold: number; grid: { items: { item: { id: string } }[] } }>;
+      }
+    >;
     party: { grid: { items: { item: { id: string } }[] } }[];
   };
   save(): boolean;
+  chests: { names(): string[]; isOpen(name: string): boolean };
+  openChest(name: string): string | null;
+  screens: { current(): string | null; close(): void };
   portals: {
     portals: { name: string; target: { level: string; entry: string } }[];
     isArmed(name: string): boolean;
@@ -66,10 +77,12 @@ test('the halls load from the cave mouth, every room reachable, the dead in thei
   expect(info.reach.map((r) => r.name)).toEqual([
     'lair',
     'gate-hall',
+    'gate-chest',
     'landing',
     'crypt',
     'ossuary',
     'warden',
+    'warden-chest',
   ]);
   expect(info.spaces).toContain('cavern:lair');
   expect(info.spaces).toContain('hall:crypt');
@@ -165,6 +178,7 @@ test("the warden's door is locked until the iron key is taken off the ossuary fl
   ).toEqual({
     doors: ['warden-door'],
     taken: ['ossuary-key'],
+    chests: {},
   });
   // Saved and continued: the door stands open and the key is gone from the floor.
   expect(await page.evaluate(() => (window as unknown as W).ftb!.dev!.save())).toBe(true);
@@ -183,4 +197,71 @@ test("the warden's door is locked until the iron key is taken off the ossuary fl
     (await page.evaluate(() => (window as unknown as W).ftb!.dev!.doors.tap('warden-door', 3)))
       .kind,
   ).toBe('closed');
+});
+
+test("the gate hall's chest opens to its window, its things go into a pack, and it is kept as left", async ({
+  page,
+}) => {
+  // DESIGN 17.12: a chest rolled on first opening, its window on the leather, its state per map.
+  test.setTimeout(240_000);
+  await page.goto('dev/?dev&lite&level=old-halls&entry=cave-mouth&seed=5');
+  await page.waitForFunction(() => (window as unknown as W).ftb?.dev?.ready === true, null, {
+    timeout: 150_000,
+  });
+  expect(await page.evaluate(() => (window as unknown as W).ftb!.dev!.chests.names())).toEqual([
+    'gate-chest',
+    'warden-chest',
+  ]);
+  expect(
+    await page.evaluate(() => (window as unknown as W).ftb!.dev!.openChest('gate-chest')),
+  ).toBeNull();
+  expect(await page.evaluate(() => (window as unknown as W).ftb!.dev!.screens.current())).toBe(
+    'chest',
+  );
+  await expect(page.locator('.house-pack .inv-grid')).toBeVisible();
+  const before = await page.evaluate(() => {
+    const d = (window as unknown as W).ftb!.dev!;
+    const chest = d.state.maps['old-halls']!.chests['gate-chest']!;
+    return {
+      gold: chest.gold,
+      items: chest.grid.items.length,
+      partyItems: d.state.party.reduce((n, c) => n + c.grid.items.length, 0),
+      partyGold: d.state.gold,
+    };
+  });
+  // Seed 5 rolls this chest the same way every time: gold and two weapons.
+  expect(before.items).toBeGreaterThan(0);
+  expect(before.gold).toBeGreaterThan(0);
+  await page.locator('.house-pack .inv-item').first().click();
+  await expect
+    .poll(() =>
+      page.evaluate(() =>
+        (window as unknown as W).ftb!.dev!.state.party.reduce((n, c) => n + c.grid.items.length, 0),
+      ),
+    )
+    .toBe(before.partyItems + 1);
+  await page.locator('.house-choice', { hasText: 'gold' }).click();
+  await expect
+    .poll(() => page.evaluate(() => (window as unknown as W).ftb!.dev!.state.gold))
+    .toBe(before.partyGold + before.gold);
+  const left = await page.evaluate(() => {
+    const chest = (window as unknown as W).ftb!.dev!.state.maps['old-halls']!.chests['gate-chest']!;
+    return { gold: chest.gold, items: chest.grid.items.length };
+  });
+  expect(left).toEqual({ gold: 0, items: before.items - 1 });
+  // The window closes, the lid comes down, and a Continue finds the chest as it was left.
+  await page.evaluate(() => (window as unknown as W).ftb!.dev!.screens.close());
+  await expect
+    .poll(() => page.evaluate(() => (window as unknown as W).ftb!.dev!.chests.isOpen('gate-chest')))
+    .toBe(false);
+  expect(await page.evaluate(() => (window as unknown as W).ftb!.dev!.save())).toBe(true);
+  await page.goto('dev/?dev&lite&level=old-halls&seed=5&continue');
+  await page.waitForFunction(() => (window as unknown as W).ftb?.dev?.ready === true, null, {
+    timeout: 150_000,
+  });
+  const after = await page.evaluate(() => {
+    const chest = (window as unknown as W).ftb!.dev!.state.maps['old-halls']!.chests['gate-chest']!;
+    return { gold: chest.gold, items: chest.grid.items.length };
+  });
+  expect(after).toEqual(left);
 });

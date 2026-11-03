@@ -11,6 +11,7 @@ import { memberCover, memberTabs } from './character';
 import type { ScreenContext } from './context';
 import { button, el } from './dom';
 import { itemGlyph } from './glyphs';
+import type { InventoryGrid } from '../game/inventory';
 import { itemImage } from './item-pictures';
 import { bagCell } from './layout-model';
 import {
@@ -42,12 +43,15 @@ function selectedName(c: Character | undefined, sel: InvSelection): string | nul
  * shop's identify, its repair).
  */
 export function bagGrid(
-  c: Character,
+  c: { grid: InventoryGrid },
   sel: InvSelection,
   onTap: (x: number, y: number) => void,
   dim?: (index: number) => boolean,
 ): HTMLElement {
   const grid = el('div', 'inv-grid');
+  // A chest's grid is smaller than the bag's fourteen by nine.
+  grid.style.gridTemplateColumns = `repeat(${c.grid.width}, var(--cell, 27px))`;
+  grid.style.gridTemplateRows = `repeat(${c.grid.height}, var(--cell, 27px))`;
   for (let y = 0; y < c.grid.height; y++) {
     for (let x = 0; x < c.grid.width; x++) {
       const cell = el('div', 'inv-cell');

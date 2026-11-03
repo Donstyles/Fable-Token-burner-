@@ -2,6 +2,7 @@
  * Monster records (DESIGN.md 14.3). Numbers are test data for Phase 5; the slice's roster
  * comes with Phase 6 content. Distances in metres, times in seconds.
  */
+import type { ItemKind } from './items';
 import type { Dice } from './rng';
 
 export interface MonsterDef {
@@ -28,6 +29,8 @@ export interface MonsterDef {
   xp: number;
   /** Gold found on the body, least and most (ours; MM6 rolls a treasure level). */
   gold?: [number, number];
+  /** An item on the body: the chance of one (0 to 1), its treasure level and kind (items.md 4.9). */
+  drop?: { chance: number; level: number; kind?: ItemKind };
   /** Character asset id under assets/characters/. */
   character: string;
   heightMetres: number;
@@ -49,6 +52,7 @@ export const MONSTERS: Record<string, MonsterDef> = {
     attackEverySec: 2,
     xp: 20,
     gold: [8, 30],
+    drop: { chance: 0.15, level: 1, kind: 'weapon' },
     character: 'bandit',
     heightMetres: 1.78,
   },
@@ -67,6 +71,7 @@ export const MONSTERS: Record<string, MonsterDef> = {
     attackEverySec: 1.6,
     xp: 10,
     gold: [2, 12],
+    drop: { chance: 0.1, level: 1 },
     character: 'goblin-scout',
     heightMetres: 1.3,
   },
@@ -85,6 +90,7 @@ export const MONSTERS: Record<string, MonsterDef> = {
     attackEverySec: 2.4,
     xp: 35,
     gold: [10, 40],
+    drop: { chance: 0.2, level: 2 },
     character: 'skeleton-warrior',
     heightMetres: 1.75,
   },
@@ -103,6 +109,7 @@ export const MONSTERS: Record<string, MonsterDef> = {
     attackEverySec: 2,
     xp: 30,
     gold: [10, 35],
+    drop: { chance: 0.15, level: 2, kind: 'weapon' },
     character: 'nomad-raider',
     heightMetres: 1.75,
   },

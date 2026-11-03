@@ -7,19 +7,17 @@
  * What the party opened is kept per map (src/game/state.ts `maps`).
  */
 import { Animation } from '@babylonjs/core/Animations/animation';
-import { VertexBuffer } from '@babylonjs/core/Buffers/buffer';
 import { Vector3 } from '@babylonjs/core/Maths/math.vector';
 import type { Mesh } from '@babylonjs/core/Meshes/mesh';
 import { CreateBox } from '@babylonjs/core/Meshes/Builders/boxBuilder';
 import { PhysicsAggregate } from '@babylonjs/core/Physics/v2/physicsAggregate';
 import { PhysicsShapeType } from '@babylonjs/core/Physics/v2/IPhysicsEnginePlugin';
 import type { Scene } from '@babylonjs/core/scene';
-import type { LevelDoor, LevelLight, LoadedLevel } from './level';
+import type { LevelDoor, LoadedLevel } from './level';
+import { bakeVertexColors } from './vertex-light';
 
 /** How far a tap reaches a door, in metres from the eye. */
 export const DOOR_TAP_REACH = 6;
-/** Light reaching every vertex regardless of lights, as the compiler bakes it. */
-const AMBIENT = 0.1;
 /** Seconds the leaf takes to slide. */
 const SLIDE_SECONDS = 0.6;
 
@@ -32,26 +30,6 @@ interface Leaf {
   mesh: Mesh;
   body: PhysicsAggregate | null;
   open: boolean;
-}
-
-/**
- * The light on a vertex from the level's static lights, the compiler's rule without its
- * occlusion: a door's leaf is lit as the wall round it is.
- */
-function bakedColor(p: Vector3, n: Vector3, lights: LevelLight[]): [number, number, number] {
-  const c: [number, number, number] = [AMBIENT, AMBIENT, AMBIENT];
-  for (const l of lights) {
-    const to = l.position.subtract(p);
-    const d = to.length();
-    if (d >= l.range || d < 1e-6) continue;
-    const ndl = Math.max(0, Vector3.Dot(n, to.scale(1 / d)));
-    const falloff = 1 - d / l.range;
-    const att = falloff * falloff * l.intensity * ndl;
-    c[0] += l.color.r * att;
-    c[1] += l.color.g * att;
-    c[2] += l.color.b * att;
-  }
-  return c;
 }
 
 export class Doors {
@@ -78,22 +56,7 @@ export class Doors {
       mesh.parent = level.root;
       mesh.computeWorldMatrix(true);
       // Lit as the compiler lights the walls: a colour per vertex from the level's lights.
-      const positions = mesh.getVerticesData(VertexBuffer.PositionKind) ?? [];
-      const normals = mesh.getVerticesData(VertexBuffer.NormalKind) ?? [];
-      const world = mesh.getWorldMatrix();
-      const colors: number[] = [];
-      for (let i = 0; i < positions.length; i += 3) {
-        const p = Vector3.TransformCoordinates(
-          new Vector3(positions[i], positions[i + 1], positions[i + 2]),
-          world,
-        );
-        const n = Vector3.TransformNormal(
-          new Vector3(normals[i], normals[i + 1], normals[i + 2]),
-          world,
-        ).normalize();
-        colors.push(...bakedColor(p, n, level.lights), 1);
-      }
-      mesh.setVerticesData(VertexBuffer.ColorKind, colors, false, 4);
+      bakeVertexColors(mesh, level.lights);
       mesh.isPickable = true;
       const leaf: Leaf = { door, mesh, body: null, open: false };
       this.leaves.set(door.name, leaf);

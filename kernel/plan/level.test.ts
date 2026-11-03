@@ -278,6 +278,22 @@ describe('level planner', () => {
     expect(firstHit(out.collider, [10, 1.5, 2], [10, 1.5, 4.5])).toBeNull();
   });
 
+  it('records a chest facing the way it was turned, as a loot point for the walk', async () => {
+    const plan = new LevelBuilder('chests');
+    plan.chest({
+      name: 'coffer',
+      at: [4, 0, 6],
+      facing: [3, 0, 0],
+      levels: [1, 2],
+      items: ['dagger'],
+    });
+    const out = await plan.build();
+    expect(out.chests).toEqual([
+      { name: 'coffer', position: [4, 0, 6], facing: [1, 0, 0], levels: [1, 2], items: ['dagger'] },
+    ]);
+    expect(out.points.find((p) => p.name === 'coffer')?.kind).toBe('loot');
+  });
+
   it('records spaces, rivers and waterfalls for the runtime', async () => {
     const plan = new LevelBuilder('atmos');
     plan.hall({

@@ -130,6 +130,8 @@ html.forced-landscape body {
   position: absolute;
   top: calc(var(--sat) + 6px);
   left: calc(var(--sal) + 8px);
+  /* A readout, never in the way of a tap on what it covers (a chest's grid, the world). */
+  pointer-events: none;
   font:
     12px/1.4 ui-monospace,
     Menlo,

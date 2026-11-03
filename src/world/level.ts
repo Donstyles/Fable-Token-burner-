@@ -83,6 +83,15 @@ export interface SidecarDoor {
   key?: string;
 }
 
+/** A chest, built and opened by the runtime (DESIGN.md 17.12). */
+export interface SidecarChest {
+  name: string;
+  position: V3;
+  facing: V3;
+  levels: number[];
+  items: string[];
+}
+
 /** A thing lying on the floor (DESIGN.md 17.11). */
 export interface SidecarItem {
   name: string;
@@ -121,6 +130,7 @@ export interface LevelSidecar {
   /** Doors to other levels (DESIGN.md 15.3). */
   portals?: SidecarPortal[];
   doors?: SidecarDoor[];
+  chests?: SidecarChest[];
   items?: SidecarItem[];
   /** Monsters standing about when the level loads. */
   spawns?: { kind: string; position: V3; yawDeg: number }[];
@@ -189,6 +199,14 @@ export interface LevelDoor {
   key?: string;
 }
 
+export interface LevelChest {
+  name: string;
+  position: Vector3;
+  facing: Vector3;
+  levels: number[];
+  items: string[];
+}
+
 export interface LoadedLevel {
   root: TransformNode;
   meshes: Mesh[];
@@ -206,6 +224,8 @@ export interface LoadedLevel {
   doors: LevelDoor[];
   /** Things on the floor in Babylon space, for src/world/ground-items.ts (DESIGN.md 17.11). */
   groundItems: { name: string; item: string; position: Vector3 }[];
+  /** Chests in Babylon space, for src/world/chests.ts (DESIGN.md 17.12). */
+  chests: LevelChest[];
   /** The level's static lights in Babylon space; baked into the vertices, not registered. */
   lights: LevelLight[];
   /** The painted material for a kernel role, lit by baked vertex colour or by the environment. */
@@ -831,6 +851,13 @@ export async function loadLevel(
       name: i.name,
       item: i.item,
       position: toBabylon(i.position),
+    })),
+    chests: (sidecar.chests ?? []).map((c) => ({
+      name: c.name,
+      position: toBabylon(c.position),
+      facing: toBabylon(c.facing),
+      levels: c.levels,
+      items: c.items,
     })),
     lights,
     materialFor,

@@ -11,7 +11,7 @@ import { type Automap, createAutomap } from './automap';
 import { type Character, isLiving } from './character';
 import { classDef, type ClassId } from './classes';
 import { shareExperience } from './experience';
-import { addItem, equipItem } from './inventory';
+import { addItem, equipItem, type InventoryGrid } from './inventory';
 import { createItem, type ItemId } from './items';
 import { createQuestLog, type QuestLog, type QuestReward } from './quests';
 import type { WeaponSkill } from './skills';
@@ -48,15 +48,25 @@ export interface GameState {
   maps: Record<string, MapState>;
 }
 
-/** A map as the party left it: the doors it opened, the things it took off the floor. */
+/**
+ * A map as the party left it: the doors it opened, the things it took off the floor, and
+ * each chest it opened with what is still in it.
+ */
 export interface MapState {
   doors: string[];
   taken: string[];
+  chests: Record<string, ChestState>;
+}
+
+/** A chest once opened: rolled on first opening, then what the party left in it. */
+export interface ChestState {
+  gold: number;
+  grid: InventoryGrid;
 }
 
 /** The map's state, made on first use. */
 export function mapState(state: GameState, level: string): MapState {
-  return (state.maps[level] ??= { doors: [], taken: [] });
+  return (state.maps[level] ??= { doors: [], taken: [], chests: {} });
 }
 
 export interface NewGameOptions {

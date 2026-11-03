@@ -97,6 +97,8 @@ export default function oldHalls(plan: LevelBuilder): void {
   plan.lantern({ at: [29.9, 3.1, 12], facing: [-1, 0, 0], color: warm, intensity: 2.6 });
   plan.lantern({ at: [21, 3.1, 19.9], facing: [0, 0, -1], color: warm, intensity: 2.6 });
   plan.point('gate-hall', [24, 0, 15], 'poi');
+  // A chest the goblins never dared: a little of the old halls' silver.
+  plan.chest({ name: 'gate-chest', at: [28.8, 0, 19], facing: [-1, 0, -1], levels: [1] });
 
   // ── The stairwell: a switchback down five metres, beside the gate hall's south wall ───
   const well = plan.hall({
@@ -214,5 +216,13 @@ export default function oldHalls(plan: LevelBuilder): void {
   plan.brazier({ at: [51.7, LOW, 30], intensity: 3, range: 15 });
   plan.lantern({ at: [47.6, LOW + 3.6, 32.8], facing: [0, 0, -1], color: pale, range: 12 });
   plan.point('warden', [47.6, LOW, 27], 'loot');
+  // The warden's chest at the far wall: the halls' best, behind the locked door.
+  plan.chest({
+    name: 'warden-chest',
+    at: [47.6, LOW, 32],
+    facing: [0, 0, -1],
+    levels: [2, 2],
+    items: ['potion-healing'],
+  });
   void ROLE;
 }

@@ -81,12 +81,19 @@ describe('save round trip', () => {
     const loaded = deserialize(v1);
     expect(loaded.ok && loaded.migrated && loaded.state.maps).toEqual({});
     const kept = serialize(playedState());
-    kept.state.maps['old-halls'] = { doors: ['warden-door'], taken: ['ossuary-key'] };
+    kept.state.maps['old-halls'] = { doors: ['warden-door'], taken: ['ossuary-key'], chests: {} };
     const again = deserialize(JSON.parse(JSON.stringify(kept)));
     expect(again.ok && again.state.maps['old-halls']).toEqual({
       doors: ['warden-door'],
       taken: ['ossuary-key'],
+      chests: {},
     });
+    // A version-2 map had no chests: it gets an empty set.
+    const v2 = JSON.parse(JSON.stringify(kept)) as typeof kept;
+    v2.version = 2;
+    delete (v2.state.maps['old-halls'] as Partial<(typeof v2.state.maps)[string]>).chests;
+    const fromV2 = deserialize(v2);
+    expect(fromV2.ok && fromV2.state.maps['old-halls']!.chests).toEqual({});
     const bad = JSON.parse(JSON.stringify(kept)) as typeof kept;
     (bad.state.maps['old-halls'] as unknown as { doors: unknown }).doors = 'all';
     expect(deserialize(bad)).toEqual({ ok: false, error: 'maps: old-halls doors' });

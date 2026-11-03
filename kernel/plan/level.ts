@@ -185,6 +185,22 @@ export interface DoorRecord {
   key?: string;
 }
 
+/**
+ * A chest (DESIGN.md 17.12): a box the runtime builds and opens, with what it holds rolled
+ * on first opening from its treasure levels, plus any fixed items.
+ */
+export interface ChestRecord {
+  name: string;
+  /** The chest's centre at floor level. */
+  position: Vec3;
+  /** The way its front faces. */
+  facing: Vec3;
+  /** Treasure levels of its random entries (items.md 4.7): each becomes 1 to 5 draws. */
+  levels: number[];
+  /** Items always in it. */
+  items: string[];
+}
+
 /** A thing lying on the floor for the party to pick up (DESIGN.md 17.11). */
 export interface ItemRecord {
   name: string;
@@ -204,6 +220,7 @@ export interface LevelOutput {
   points: NamedPoint[];
   spaces: SpaceRecord[];
   doors: DoorRecord[];
+  chests: ChestRecord[];
   spawn: { position: Vec3; yawDeg: number };
   bounds: { min: Vec3; max: Vec3 };
 }
@@ -225,6 +242,7 @@ export class LevelBuilder {
   private readonly points: NamedPoint[] = [];
   private readonly spaces: SpaceRecord[] = [];
   private readonly doors: DoorRecord[] = [];
+  private readonly chests: ChestRecord[] = [];
   private readonly deferred: Deferred[] = [];
   private spawnPoint: { position: Vec3; yawDeg: number } = { position: [0, 0, 0], yawDeg: 0 };
 
@@ -338,6 +356,18 @@ export class LevelBuilder {
     };
     this.doors.push(record);
     return record;
+  }
+
+  /** A chest standing at `at`, its front facing `facing`, filled on first opening. */
+  chest(o: { name: string; at: Vec3; facing: Vec3; levels?: number[]; items?: string[] }): void {
+    this.chests.push({
+      name: o.name,
+      position: o.at,
+      facing: v3.normalize([o.facing[0], 0, o.facing[2]]),
+      levels: o.levels ?? [],
+      items: o.items ?? [],
+    });
+    this.points.push({ name: o.name, position: o.at, kind: 'loot' });
   }
 
   slab(o: { at: Vec3; size: [number, number]; thickness?: number; material?: number }): void {
@@ -885,6 +915,7 @@ export class LevelBuilder {
       points: this.points,
       spaces: this.spaces,
       doors: this.doors,
+      chests: this.chests,
       spawn: this.spawnPoint,
       bounds: visual.bounds(),
     };

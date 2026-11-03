@@ -16,7 +16,7 @@ import { isSpellId } from './spells';
 import { STATS } from './stats';
 import type { GameState } from './state';
 
-export const SAVE_VERSION = 2;
+export const SAVE_VERSION = 3;
 
 export interface SaveFile {
   version: number;
@@ -37,11 +37,19 @@ export function toJson(state: GameState, savedAt = 0): string {
   return JSON.stringify(serialize(state, savedAt));
 }
 
-/** Bring an older save up to the current version: version 1 had no map state. */
+/**
+ * Bring an older save up to the current version: version 1 had no map state, version 2's
+ * maps had no chests.
+ */
 export function migrate(file: SaveFile): SaveFile {
   if (file.version >= SAVE_VERSION) return file;
   const state = { ...file.state };
   if (file.version < 2 && isRecord(state) && !isRecord(state.maps)) state.maps = {};
+  if (file.version < 3 && isRecord(state) && isRecord(state.maps)) {
+    for (const map of Object.values(state.maps)) {
+      if (isRecord(map) && !isRecord(map['chests'])) map['chests'] = {};
+    }
+  }
   return { ...file, version: SAVE_VERSION, state };
 }
 
@@ -244,6 +252,14 @@ function validateMaps(m: unknown): string | null {
     for (const key of ['doors', 'taken'] as const) {
       const list = map[key];
       if (!Array.isArray(list) || !list.every(isString)) return `maps: ${id} ${key}`;
+    }
+    if (!isRecord(map['chests'])) return `maps: ${id} chests`;
+    for (const [name, chest] of Object.entries(map['chests'])) {
+      if (!isRecord(chest) || !isFiniteNumber(chest['gold']) || chest['gold'] < 0) {
+        return `maps: ${id} chest ${name}`;
+      }
+      const err = validateGrid(chest['grid'], `maps: ${id} chest ${name}`);
+      if (err) return err;
     }
   }
   return null;

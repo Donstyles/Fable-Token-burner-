@@ -51,6 +51,12 @@ export interface ItemDef {
   ranged?: boolean;
   armor?: number;
   use?: ItemUse;
+  /**
+   * The lowest treasure level the item turns up at (items.md 2.1, "Lvl"); none for a thing
+   * that is never random (a key). The treasure generator weighs it 10 at this level, 7 at the
+   * next and 3 at the one after (DESIGN.md 17.12).
+   */
+  level?: number;
 }
 
 export const ITEM_IDS = [
@@ -85,6 +91,7 @@ export const ITEMS: Record<ItemId, ItemDef> = {
     value: 15,
     skill: 'dagger',
     damage: { count: 2, sides: 2 },
+    level: 1,
   },
   'short-sword': {
     id: 'short-sword',
@@ -95,6 +102,7 @@ export const ITEMS: Record<ItemId, ItemDef> = {
     value: 30,
     skill: 'sword',
     damage: { count: 2, sides: 3 },
+    level: 1,
   },
   'long-sword': {
     id: 'long-sword',
@@ -105,6 +113,7 @@ export const ITEMS: Record<ItemId, ItemDef> = {
     value: 50,
     skill: 'sword',
     damage: { count: 3, sides: 3 },
+    level: 2,
   },
   mace: {
     id: 'mace',
@@ -115,6 +124,7 @@ export const ITEMS: Record<ItemId, ItemDef> = {
     value: 50,
     skill: 'mace',
     damage: { count: 2, sides: 4 },
+    level: 1,
   },
   axe: {
     id: 'axe',
@@ -125,6 +135,7 @@ export const ITEMS: Record<ItemId, ItemDef> = {
     value: 50,
     skill: 'axe',
     damage: { count: 3, sides: 2 },
+    level: 2,
   },
   spear: {
     id: 'spear',
@@ -137,6 +148,7 @@ export const ITEMS: Record<ItemId, ItemDef> = {
     skill: 'spear',
     damage: { count: 1, sides: 9 },
     twoHanded: true,
+    level: 1,
   },
   staff: {
     id: 'staff',
@@ -148,6 +160,7 @@ export const ITEMS: Record<ItemId, ItemDef> = {
     skill: 'staff',
     damage: { count: 2, sides: 4 },
     twoHanded: true,
+    level: 1,
   },
   bow: {
     id: 'bow',
@@ -159,6 +172,7 @@ export const ITEMS: Record<ItemId, ItemDef> = {
     skill: 'bow',
     damage: { count: 3, sides: 3 },
     ranged: true,
+    level: 2,
   },
   'leather-armor': {
     id: 'leather-armor',
@@ -169,6 +183,7 @@ export const ITEMS: Record<ItemId, ItemDef> = {
     value: 30,
     skill: 'leather',
     armor: 4,
+    level: 1,
   },
   'chain-mail': {
     id: 'chain-mail',
@@ -179,6 +194,7 @@ export const ITEMS: Record<ItemId, ItemDef> = {
     value: 150,
     skill: 'chain',
     armor: 8,
+    level: 2,
   },
   shield: {
     id: 'shield',
@@ -189,6 +205,7 @@ export const ITEMS: Record<ItemId, ItemDef> = {
     value: 40,
     skill: 'shield',
     armor: 4,
+    level: 1,
   },
   helmet: {
     id: 'helmet',
@@ -198,6 +215,7 @@ export const ITEMS: Record<ItemId, ItemDef> = {
     h: 2,
     value: 30,
     armor: 2,
+    level: 1,
   },
   boots: {
     id: 'boots',
@@ -207,6 +225,7 @@ export const ITEMS: Record<ItemId, ItemDef> = {
     h: 2,
     value: 20,
     armor: 2,
+    level: 1,
   },
   'copper-ring': {
     id: 'copper-ring',
@@ -215,6 +234,7 @@ export const ITEMS: Record<ItemId, ItemDef> = {
     w: 1,
     h: 1,
     value: 50,
+    level: 1,
   },
   'potion-healing': {
     id: 'potion-healing',
@@ -224,6 +244,7 @@ export const ITEMS: Record<ItemId, ItemDef> = {
     h: 1,
     value: 50,
     use: { kind: 'heal', amount: 10 },
+    level: 1,
   },
   'scroll-torch-light': {
     id: 'scroll-torch-light',
@@ -233,6 +254,7 @@ export const ITEMS: Record<ItemId, ItemDef> = {
     h: 1,
     value: 50,
     use: { kind: 'spell', spell: 'torch-light', skill: 1 },
+    level: 1,
   },
   'scroll-fire-bolt': {
     id: 'scroll-fire-bolt',
@@ -242,6 +264,7 @@ export const ITEMS: Record<ItemId, ItemDef> = {
     h: 1,
     value: 200,
     use: { kind: 'spell', spell: 'fire-bolt', skill: 4 },
+    level: 2,
   },
   'iron-key': {
     id: 'iron-key',

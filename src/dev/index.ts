@@ -27,6 +27,9 @@ import { CombatFeedback } from '../world/combat-feedback';
 import { PortalWatcher, portalUrl, travel, type Portal } from '../world/portals';
 import { Doors } from '../world/doors';
 import { GroundItems } from '../world/ground-items';
+import { Chests } from '../world/chests';
+import { monsterDrop } from '../game/treasure';
+import { itemDef } from '../game/items';
 import { Monster } from '../world/monster';
 import { MONSTERS, NPCS } from '../game/monsters';
 import { Party } from '../game/party';
@@ -162,11 +165,14 @@ export interface DevHandle {
   talkTo(id: string): boolean;
   /** The room of the house the party is in, drawn in the view's box (DESIGN.md 17.8). */
   room: RoomView;
-  /** The level's doors and the things on its floor (DESIGN.md 17.11), for tests. */
+  /** The level's doors, the things on its floor and its chests (DESIGN.md 17.11, 17.12). */
   doors: Doors;
   groundItems: GroundItems;
+  chests: Chests;
   /** Write the autosave now, as the game does on a door, a travel and every minute. */
   save(): boolean;
+  /** Open a chest by name from beside it, as a tap would; the bar's line, or null when up. */
+  openChest(name: string): string | null;
 }
 
 const DEG = Math.PI / 180;
@@ -414,6 +420,8 @@ export async function startDev(app: App): Promise<DevHandle> {
   let mapPicture: { picture: HTMLImageElement; size: number } | null = null;
   // Set once the view's box is known, below: a house's room comes down with its board.
   let leaveRoom = (): void => {};
+  // Set once the level is loaded: a chest's lid comes down with its window.
+  let closeChest = (): void => {};
   const screens: Screens = installScreens(uiLayer, state, {
     now: () => simTime,
     questDefs: QUESTS,
@@ -438,6 +446,7 @@ export async function startDev(app: App): Promise<DevHandle> {
     },
     onClose: () => {
       leaveRoom();
+      closeChest();
       save();
     },
     onRest: (kind) => {
@@ -732,6 +741,12 @@ export async function startDev(app: App): Promise<DevHandle> {
   const hasItem = (id: string): boolean =>
     state.party.some((c) => gridHas(c.grid, id as ItemId) >= 0);
   const doors = new Doors(scene, level, map.doors, hasItem, () => party.position);
+  const chests = new Chests(scene, level, map.chests, rng);
+  let chestUp: string | null = null;
+  closeChest = () => {
+    if (chestUp) chests.close(chestUp);
+    chestUp = null;
+  };
   const groundItems = new GroundItems(scene, app.materials, level, map.taken, (id) => {
     // The chosen member first, then anyone with room.
     const order = [...state.party.keys()].sort((a, b) =>
@@ -819,7 +834,15 @@ export async function startDev(app: App): Promise<DevHandle> {
     portals,
     doors,
     groundItems,
+    chests,
     save,
+    openChest(name) {
+      const got = chests.tap(name, 2);
+      if (got.kind === 'far') return got.message;
+      chestUp = got.name;
+      screens.openChest({ name: got.name, title: 'Chest', state: got.state });
+      return null;
+    },
     screens,
     state,
     npcs,
@@ -880,11 +903,22 @@ export async function startDev(app: App): Promise<DevHandle> {
     if (searched.has(monster.name)) return `Nothing more on the ${monster.def.name}`;
     if (distance > LOOT_REACH) return `A dead ${monster.def.name} (come closer)`;
     searched.add(monster.name);
-    const [lo, hi] = monster.def.gold ?? [0, 0];
-    const gold = lo + Math.floor(rng() * (hi - lo + 1));
-    if (gold <= 0) return `You find nothing on the ${monster.def.name}`;
+    // Its gold to the purse and, by its chance, an item into a pack (DESIGN.md 17.12).
+    const { gold, item } = monsterDrop(monster.def, rng);
     state.gold += gold;
-    return `You find ${gold} gold`;
+    const found: string[] = [];
+    if (gold > 0) found.push(`${gold} gold`);
+    if (item) {
+      const order = [...state.party.keys()].sort((a, b) =>
+        a === state.selected ? -1 : b === state.selected ? 1 : a - b,
+      );
+      const taker = order.map((i) => state.party[i]!).find((c) => addItem(c.grid, item));
+      found.push(
+        taker ? `a ${itemDef(item).name}` : `a ${itemDef(item).name}, but nobody has room`,
+      );
+    }
+    if (!found.length) return `You find nothing on the ${monster.def.name}`;
+    return `You find ${found.join(' and ')}`;
   };
 
   // Tap feedback: outline the tapped mesh briefly.
@@ -937,6 +971,17 @@ export async function startDev(app: App): Promise<DevHandle> {
     const lying = groundItems.itemOf(mesh.name);
     if (lying) {
       status.say(groundItems.take(lying, d).message);
+      return;
+    }
+    // A chest's lid swings open and its window comes up (DESIGN.md 17.12).
+    const chest = chests.chestOf(mesh.name);
+    if (chest) {
+      const got = chests.tap(chest, d);
+      if (got.kind === 'far') status.say(got.message);
+      else {
+        chestUp = got.name;
+        screens.openChest({ name: got.name, title: 'Chest', state: got.state });
+      }
       return;
     }
     // A house opens its service only when its door is tapped from near enough (owner,
