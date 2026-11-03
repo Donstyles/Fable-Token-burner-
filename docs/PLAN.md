@@ -71,8 +71,8 @@ Working list, in order:
        map. Done 2026-11-03 (DESIGN 17.12); gold and items on the ground wait for a reason.
 4. [x] **The quest through the halls**: Old Tobin's quest reshaped to the dungeon (the dead
        put down in the halls, their warden last), its reward, and the end-of-slice score screen. Done 2026-11-03 (DESIGN 17.13).
-5. [ ] **Saves with slots** (ROADMAP M0): IndexedDB, an autosave and ten slots, Save and Load
-       screens from the game menu, the title's Continue from the autosave.
+5. [x] **Saves with slots** (ROADMAP M0): IndexedDB, an autosave and ten slots, Save and Load
+       screens from the game menu, the title's Continue from the autosave. Done 2026-11-03 (DESIGN 17.14); the title's Continue was already the autosave.
 6. [ ] **The shipped app carries the game** (MM6-GAPS 32): the root URL boots the title and
        the game, the dev panel left out; levels precached.
 7. [ ] **Danger** (ROADMAP M2, no new art): monster records as data with tiers as tints,

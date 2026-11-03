@@ -3185,7 +3185,38 @@ talks to Tobin, sees the three hundred gold paid and the score up after Farewell
 **Not yet**: awards on the character screen, a saved copy of the score, the quest's own
 entrance picture.
 
+### 17.14 Save slots (the agentic loop, 2026-11-03)
+
+MM6's game menu had Save Game and Load Game over a list of slots, and an autosave on every
+exit from a level (MM6-GAPS 32; ROADMAP M0 asked for IndexedDB, an autosave and ten slots,
+named per channel).
+
+- **The autosave stays the game in play** (16.6: localStorage, written when a screen closes,
+  after a rest, before a portal, every minute). The **ten slots** (src/app/saves.ts) are
+  copies of it in IndexedDB, in a database named per channel (`ftb-saves-dev` for the dev
+  build, `ftb-saves` for the game at the root), each kept with the wall-clock time it was
+  written and listed with its summary: where the party stood, the game's date and hour, and
+  who was in it with their levels (`saveSummary`, src/game/save.ts). The browser is asked to
+  keep the storage. Without IndexedDB the slots live in memory for the session.
+- **Save Game** (src/ui/saves.ts) lists the ten slots on the slate as a house lists its
+  wares, the board over the panel naming the screen; a tap stamps the party's place into the
+  state and copies the game into the slot, said on the bar, and the row shows the summary.
+  **Load Game** lists the autosave first and every written slot; a tap makes the copy the
+  autosave and the page goes on from it in its own level, as a portal does.
+- The options menu's Save Game opens the slots instead of writing the autosave on the spot.
+
+**Checked**: a unit test on the memory store (slot order, a copy that does not follow the
+game, removal); an end-to-end test saves into slot 2 from the menu, changes the gold, loads
+slot 2 from the menu and finds the gold as saved.
+
+**Not yet**: a name typed for a save, a confirmation before a slot is overwritten, the
+export of a save to a file, saves surviving a deleted icon on the phone.
+
 ## 13. Decision log
+
+- 2026-11-03 – Save slots (17.14): ten copies of the game in IndexedDB per channel, Save and
+  Load screens from the game menu listing where, when and who; the autosave stays the game
+  in play and a load goes on from the copy through the same path as a portal.
 
 - 2026-11-03 – The quest through the halls and the score (17.13): Tobin's quest runs through
   the Old Halls to their warden; the score is ours (experience over days) since MM6's
