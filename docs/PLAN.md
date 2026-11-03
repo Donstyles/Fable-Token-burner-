@@ -69,8 +69,8 @@ Working list, in order:
 3. [x] **Chests and loot** (MM6-GAPS 12.4): kernel-built chests, filled on first opening from
        a treasure table; gold and items dropped by monsters, picked up from the ground; kept per
        map. Done 2026-11-03 (DESIGN 17.12); gold and items on the ground wait for a reason.
-4. [ ] **The quest through the halls**: Old Tobin's quest reshaped to the dungeon (the dead
-       put down in the halls, their warden last), its reward, and the end-of-slice score screen.
+4. [x] **The quest through the halls**: Old Tobin's quest reshaped to the dungeon (the dead
+       put down in the halls, their warden last), its reward, and the end-of-slice score screen. Done 2026-11-03 (DESIGN 17.13).
 5. [ ] **Saves with slots** (ROADMAP M0): IndexedDB, an autosave and ten slots, Save and Load
        screens from the game menu, the title's Continue from the autosave.
 6. [ ] **The shipped app carries the game** (MM6-GAPS 32): the root URL boots the title and

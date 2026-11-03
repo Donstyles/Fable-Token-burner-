@@ -3161,7 +3161,35 @@ hall's chest, takes an item and the gold, closes it, saves and continues to find
 **Not yet**: traps and Disarm Trap, locks on chests, the map's refill after MM6's periods,
 enchantments on what is drawn (item 9), gold and items dropped on the ground.
 
+### 17.13 The quest through the halls and the score (the agentic loop, 2026-11-03)
+
+Old Tobin's quest now runs through the dungeon (src/game/dialogue.ts): put down five of the
+dead, in the old halls or on the headland, then their warden in the deepest hall behind the
+locked door, then tell Tobin at his farm gate; three hundred gold and seven hundred
+experience. The **Warden of the Halls** (src/game/monsters.ts `skeleton-warden`) stands in
+the warden's hall on the skeleton's body a head taller: level 5, seventy hit points, two
+dice of six, a weapon on him three times in five. A monster loads by its record's body now,
+not its name, so a named monster can share a body.
+
+**The score** (src/game/score.ts, src/ui/score.ts): MM6 ended on a congratulations page with
+the party, their levels, the game time and a final score (MM6-GAPS 36), whose formula is not
+published. Ours: the party's experience together, scaled by a hundred over a hundred plus the
+days played, so dawdling costs. When a talk pays the halls' quest, the talk panel tells the
+runtime (`onQuestDone`), and the score comes up on a book's page as the talk closes: a word
+of congratulation, each member with class and level, the days, the gold, the experience and
+the score; the game goes on behind it, as MM6's did after its ending.
+
+**Checked**: a unit test on the scoreboard; an end-to-end test puts the quest at its last step,
+talks to Tobin, sees the three hundred gold paid and the score up after Farewell.
+
+**Not yet**: awards on the character screen, a saved copy of the score, the quest's own
+entrance picture.
+
 ## 13. Decision log
+
+- 2026-11-03 – The quest through the halls and the score (17.13): Tobin's quest runs through
+  the Old Halls to their warden; the score is ours (experience over days) since MM6's
+  formula is not public, and comes up as the talk that pays the last quest closes.
 
 - 2026-11-03 – Chests, treasure and drops (17.12): a chest is a kernel record built by the
   runtime, filled on first opening by MM7's rule with our own item weights (MM6's are not
