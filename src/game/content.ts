@@ -74,32 +74,3 @@ export const VILLAGE_HOUSES: Record<string, HouseRef> = {
 
 /** How close to a door the party must stand to enter, metres. */
 export const DOOR_REACH = 9;
-
-/**
- * A place with a picture at its door (DESIGN.md 17.9): the party walks into the disc at the
- * level's named point and the picture comes up with a board asking whether to go in.
- */
-export interface EntranceDef {
-  /** The level point at its door: a cave's portal disc, 4.5 m before the tunnel's end. */
-  point: string;
-  name: string;
-  /** The picture, a room made by `npm run room` (assets/rooms/<room>.png). */
-  room: string;
-  /** How far from the point the party must come. */
-  reach: number;
-  /** What Enter answers while nothing is built behind the door. */
-  blocked: string;
-}
-
-export const ENTRANCES: Readonly<Record<string, EntranceDef>> = {
-  // The goblins' cave on the slope under the hills (dialogue.ts: old Tobin's grandfather went
-  // down to halls older than the town, and the roof came in). Its picture is the mouth as the
-  // goblins keep it; the halls are the region's first dungeon, not yet built (PLAN 6a).
-  cave: {
-    point: 'cave',
-    name: 'The Old Halls',
-    room: 'enter-cave',
-    reach: 2.4,
-    blocked: 'The roof has come in. Beyond the torches there is nothing but fallen rock.',
-  },
-};

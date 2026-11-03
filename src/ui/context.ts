@@ -37,9 +37,6 @@ export type MemberPage = (typeof MEMBER_PAGES)[number];
 export const SERVICE_KINDS = ['tavern', 'temple', 'guild', 'trainer', 'shop'] as const;
 export type ServiceKind = (typeof SERVICE_KINDS)[number];
 
-/** What may be up over the view: a book, a house's service, or a place's "Enter?" board. */
-export type BoardName = ScreenName | ServiceKind | 'entrance';
-
 /** The service record each kind of house is driven by (`src/game/services.ts`). */
 export interface ServiceDefs {
   tavern: TavernDef;
@@ -88,7 +85,7 @@ export interface ScreenHooks {
   /** A spell was cast: spell points are paid; the runtime performs the effects. */
   onCast?(cast: CastEvent): void;
   /** A screen opened (after any other one closed silently). */
-  onOpen?(name: BoardName): void;
+  onOpen?(name: ScreenName | ServiceKind): void;
   /** Quest definitions for the log, by id; unknown ids show as such. */
   questDefs?: Readonly<Record<string, QuestDef>>;
   /** The die for Cursed casting rolls; seeded from the state and the clock by default. */

@@ -641,12 +641,11 @@ view's box, its fires moving, the keeper's portrait on the board (DESIGN 17.8).
    homes, made ahead of their houses (a pillar of fire, falling water with spray and
    ripples, floating rocks, a turning ring of crystals, smoke with bright sparks).
 5. The keeper's portrait and "Converse with" on the board.
-6. Done 2026-11-02: the cave's "Enter?" picture (DESIGN 17.9), the owner's picture of its
-   mouth with torches, drips, bats and eyes in the dark, up with an Enter and Stay board when
-   the party walks into the tunnel's disc; two more entrances made ahead of their places, the
-   fort's gate (`?room=enter-fort`) and the ruin's tower (`?room=enter-ruin`, lightning on the
-   sea). Later: the homes behind the town's houses' doors, the stock on its shelf for Buy, and
-   Enter travelling once the first dungeon is built.
+6. Later: the homes behind the town's houses' doors, the stock on its shelf for Buy, the
+   cave's "Enter?" picture. A first cut of three entrances (the fort's gate, the ruined tower,
+   the goblins' cave, with drawn crows, bats and lightning) was turned down and taken out on
+   2026-11-03 (DESIGN decision log); the owner's pictures wait in the inbox for a cut agreed
+   first.
 7. Done 2026-10-26: the rest screen's vista (DESIGN 16.34): the owner's mountains painted at
    four times of day under a live sky that follows the game clock, `npm run vista` (tools/
    vista.ts), and waits that play out on the clock and in the hourglass.

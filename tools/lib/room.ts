@@ -563,38 +563,10 @@ export interface RoomMarks {
    * nothing moving is drawn over them, where their paint is not water's blue.
    */
   fronts?: Box[];
-  /**
-   * Paint to take out before anything else, filled with the paint round it mirrored in over
-   * its edges: a painted crow or a painted lightning bolt that the game draws moving instead
-   * (an entrance's sky). A fifth number says which edges it is filled from, added up: 1 the
-   * left, 2 the right, 4 the top, 8 the bottom (3 from beside it, so a box across the horizon
-   * keeps the sea under the sky; 8 from below alone where a tower stands beside it); without
-   * one, from whichever pair of edges agrees. Boxes are taken out in order, so a later box may
-   * read an earlier one.
-   */
-  erase?: (Box | [number, number, number, number, number])[];
-  /** Where lightning strikes, top to bottom, now and then, the whole picture flashing. */
-  bolts?: Box[];
-  /** Sky where crows wheel. */
-  crows?: Box[];
-  /** The dark bats flit out of, now and then. */
-  bats?: Box[];
-  /** A drip's line: a drop gathers at the top and falls to the foot, a ring spreading there. */
-  drips?: Box[];
-  /** Eyes glinting in the dark: they blink. */
-  eyes?: Box[];
-  /** The sea: it heaves, its crests glinting. */
-  seas?: Box[];
-  /** Grass and scrub bent by the wind in gusts. */
-  winds?: Box[];
-  /** Sky whose clouds drift across (what stands before it, a moon, a tower, is a front). */
-  drifts?: Box[];
-  /** A lantern swinging on its bracket: the pivot and how far below it swings. */
-  swings?: Circle[];
 }
 
 /** The kinds of mark that are circles, not boxes. */
-const CIRCLES = new Set(['rings', 'discs', 'swings']);
+const CIRCLES = new Set(['rings', 'discs']);
 /** The kinds the band need not hold: a floor runs off the picture's foot, a beam off its head. */
 const LOOSE = new Set([
   'from',
@@ -606,11 +578,6 @@ const LOOSE = new Set([
   'hearths',
   'stars',
   'fronts',
-  'erase',
-  'drifts',
-  'seas',
-  'winds',
-  'crows',
 ]);
 
 export interface CutRoom {
@@ -670,8 +637,6 @@ export async function cutRoom(path: string, top?: number, marks: RoomMarks = {})
     'jets',
     'ripples',
     'sprays',
-    'eyes',
-    'bolts',
   ];
   const start = top ?? marks.top;
   const y0 =
@@ -705,6 +670,10 @@ export async function cutRoom(path: string, top?: number, marks: RoomMarks = {})
     )
   )
     lights.sparks = null;
+  const picture = await sharp(Buffer.from(rgb), { raw: { width: W, height: band, channels: 3 } })
+    .resize(ROOM_SIZE.width, ROOM_SIZE.height, { fit: 'fill', kernel: 'lanczos3' })
+    .png()
+    .toBuffer();
   const tenth = (v: number) => +v.toFixed(1);
   const scale = (b: Box): Box => [
     tenth(b[0] * sx),
@@ -718,98 +687,15 @@ export async function cutRoom(path: string, top?: number, marks: RoomMarks = {})
     tenth(r0 * sx),
     tenth(r1 * sx),
   ];
-  // The erased boxes are taken out of the picture itself, in its own pixels.
-  const cut = await sharp(Buffer.from(rgb), { raw: { width: W, height: band, channels: 3 } })
-    .resize(ROOM_SIZE.width, ROOM_SIZE.height, { fit: 'fill', kernel: 'lanczos3' })
-    .raw()
-    .toBuffer();
-  for (const box of marks.erase ?? []) {
-    const [x0, y0, x1, y1, from] = box;
-    erase(cut, ROOM_SIZE.width, ROOM_SIZE.height, scale([x0, y0, x1, y1]), from);
-  }
-  const picture = await sharp(cut, {
-    raw: { width: ROOM_SIZE.width, height: ROOM_SIZE.height, channels: 3 },
-  })
-    .png()
-    .toBuffer();
   const scaled: RoomMarks = Object.fromEntries(
     Object.entries(marks)
-      .filter(
-        ([kind]) => kind !== 'top' && kind !== 'hearths' && kind !== 'from' && kind !== 'erase',
-      )
+      .filter(([kind]) => kind !== 'top' && kind !== 'hearths' && kind !== 'from')
       .map(([kind, list]) => [
         kind,
         CIRCLES.has(kind) ? (list as Circle[]).map(scaleCircle) : (list as Box[]).map(scale),
       ]),
   );
   return { picture, lights, marks: scaled, top: y0, band };
-}
-
-/**
- * Paints a box out of an RGB picture with the paint beside it: each pixel a blend of the
- * columns just left and right of the box and the rows just above and below, the rows and
- * columns read from jittered a little so no band shows, and a grain over it, so a crow or a
- * bolt painted on a sky goes without a mark.
- */
-export function erase(rgb: Buffer, w: number, h: number, box: Box, from = 0): void {
-  const x0 = Math.max(1, Math.floor(box[0]));
-  const y0 = Math.max(1, Math.floor(box[1]));
-  const x1 = Math.min(w - 2, Math.ceil(box[2]));
-  const y1 = Math.min(h - 2, Math.ceil(box[3]));
-  if (x1 <= x0 || y1 <= y0) return;
-  // Read from the picture as it was: a box is filled from outside itself, never from its own
-  // half-filled paint.
-  const src = Buffer.from(rgb);
-  const at = (x: number, y: number): number =>
-    (Math.max(0, Math.min(h - 1, y)) * w + Math.max(0, Math.min(w - 1, x))) * 3;
-  const grain = (x: number, y: number): number => {
-    const n = Math.sin(x * 12.9898 + y * 78.233) * 43758.5453;
-    return Math.round((n - Math.floor(n) - 0.5) * 4);
-  };
-  const smooth = (v: number): number => v * v * (3 - 2 * v);
-  const auto = from === 0;
-  const useL = auto || (from & 1) !== 0;
-  const useR = auto || (from & 2) !== 0;
-  const useT = auto || (from & 4) !== 0;
-  const useB = auto || (from & 8) !== 0;
-  // Each edge's paint is mirrored in over the edge, as far as there is paint to mirror and
-  // stretched where the picture's edge comes sooner: over half the box when the facing edge
-  // fills the other half, over all of it when it fills alone.
-  const spanX = (x1 - x0) / (useL && useR ? 2 : 1);
-  const spanY = (y1 - y0) / (useT && useB ? 2 : 1);
-  const reachL = Math.min(x0 - 1, spanX) / spanX;
-  const reachR = Math.min(w - 2 - x1, spanX) / spanX;
-  const reachT = Math.min(y0 - 1, spanY) / spanY;
-  const reachB = Math.min(h - 2 - y1, spanY) / spanY;
-  for (let y = y0; y <= y1; y++) {
-    for (let x = x0; x <= x1; x++) {
-      const u = (x - x0) / (x1 - x0);
-      const v = (y - y0) / (y1 - y0);
-      const l = at(Math.round(x0 - 1 - (x - x0) * reachL), y);
-      const r = at(Math.round(x1 + 1 + (x1 - x) * reachR), y);
-      const tp = at(x, Math.round(y0 - 1 - (y - y0) * reachT));
-      const bt = at(x, Math.round(y1 + 1 + (y1 - y) * reachB));
-      // Facing edges meet softly in the middle. Left to its own, the pair that agrees (sky with
-      // sky across a horizon, not sky with sea) fills more.
-      const wr = !useL ? 1 : !useR ? 0 : smooth(Math.min(1, Math.max(0, (u - 0.3) / 0.4)));
-      const wb = !useT ? 1 : !useB ? 0 : smooth(Math.min(1, Math.max(0, (v - 0.3) / 0.4)));
-      let dh = 0;
-      let dv = 0;
-      for (let c = 0; c < 3; c++) {
-        dh += Math.abs(src[l + c]! - src[r + c]!);
-        dv += Math.abs(src[tp + c]! - src[bt + c]!);
-      }
-      const wh = auto ? 1 / (12 + dh) ** 2 : useL || useR ? 1 : 0;
-      const wv = auto ? 1 / (12 + dv) ** 2 : useT || useB ? 1 : 0;
-      const g = grain(x, y);
-      for (let c = 0; c < 3; c++) {
-        const horiz = src[l + c]! * (1 - wr) + src[r + c]! * wr;
-        const vert = src[tp + c]! * (1 - wb) + src[bt + c]! * wb;
-        const value = (horiz * wh + vert * wv) / (wh + wv) + g;
-        rgb[(y * w + x) * 3 + c] = Math.max(0, Math.min(255, Math.round(value)));
-      }
-    }
-  }
 }
 
 /** The four masks as one RGBA PNG. */

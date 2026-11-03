@@ -4,37 +4,31 @@
  * party straight back) and fires when the party steps within its radius. The transition
  * itself is a fade to black and a fresh load of the page on the target level, with
  * `entry` naming the portal to arrive at: MM6 showed a loading screen between maps too.
- * The watcher serves any trigger disc: an entrance's "Enter?" board (DESIGN.md 17.9) is one
- * that is reset when the board comes down, and arms again once the party has stepped clear.
  */
 import { lowerVeil } from '../app/veil';
 import type { Vector3 } from '@babylonjs/core/Maths/math.vector';
 
-/** A disc on the ground the party walks into. */
-export interface Trigger {
+export interface Portal {
   name: string;
   position: Vector3;
   radius: number;
-}
-
-export interface Portal extends Trigger {
   target: { level: string; entry: string };
   arrive: { position: Vector3; yawDeg: number };
 }
 
-export class PortalWatcher<P extends Trigger = Portal> {
+export class PortalWatcher {
   private readonly armed = new Map<string, boolean>();
   private fired = false;
 
   constructor(
-    readonly portals: readonly P[],
-    private readonly onEnter: (portal: P) => void,
+    readonly portals: readonly Portal[],
+    private readonly onEnter: (portal: Portal) => void,
   ) {
     for (const p of portals) this.armed.set(p.name, false);
   }
 
-  /** Feet position each frame; fires at most once, until `reset`. */
-  update(feet: Vector3): P | null {
+  /** Feet position each frame; fires at most once. */
+  update(feet: Vector3): Portal | null {
     if (this.fired) return null;
     for (const p of this.portals) {
       const d = Math.hypot(feet.x - p.position.x, feet.z - p.position.z);
@@ -55,12 +49,6 @@ export class PortalWatcher<P extends Trigger = Portal> {
 
   isArmed(name: string): boolean {
     return this.armed.get(name) ?? false;
-  }
-
-  /** Ready to fire again, once the party has stood clear of every disc. */
-  reset(): void {
-    this.fired = false;
-    for (const p of this.portals) this.armed.set(p.name, false);
   }
 }
 

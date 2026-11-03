@@ -3040,72 +3040,16 @@ candles.
 town's houses' doors; the stock on its shelf for Buy once items have pictures; the cave's
 "Enter?" picture once a dungeon lies behind it.
 
-### 17.9 A picture at the door (owner, 2026-11-02)
-
-"The animated spell shops were perfect. Can we do some more? Perhaps animated dungeon
-entrances." The owner made three pictures in ChatGPT, a goblin fort's gate at night, a ruined
-tower on a stormy headland and the goblins' cave at dusk ("I'm looking forward to how you will
-animate these"), and each is a room (17.8) made ahead of its place, `?room=enter-fort`,
-`enter-ruin` and `enter-cave`, cut and lit by `npm run room` with its marks in
-pipeline/rooms.json.
-
-**What moves** (src/world/room.ts, the same shader as the rooms'):
-
-- **the sky drifts** (`drifts`): a band of clouds drawn from further along, slowly, the moon
-  and the watchtower held still by their `fronts`;
-- **the sea heaves** (`seas`): its paint drawn from a little further out, its rows swaying, and
-  its crests glinting;
-- **grass and scrub bend in the wind** (`winds`): sideways in gusts, more toward their tops;
-- **a lantern swings** (`swings`, a circle: its pivot and its reach): the paint below the pivot
-  turned about it;
-- **lightning** (`bolts`): now and then a bolt strikes down its box, a lean, big jogs and small
-  kinks joined straight (noise would round them off), a branch off it, lit twice as a strike
-  flickers, its light on the water below it in a column broken by the waves, and the whole
-  picture lit by the flash, what stands before the sky too;
-- **crows** (`crows`): three a box, each wheeling on its own slow loop, flapping in bouts and
-  gliding between, the size of the painted ones; **bats** (`bats`): three a box, each now and
-  then flitting out of the dark up past the torches on a jittering way, fast wingbeats;
-- **drips** (`drips`): a drop gathers at the box's top and falls its height, faster as it goes,
-  a ring spreading where it lands;
-- **eyes in the dark** (`eyes`): the painted specks glow with a halo of their own light,
-  pulsing, and blink;
-- the braziers, the torches, the banners (`drapes`), the smoke (`incense`) and the mist
-  (`mists`) as in any room.
-
-**Painted things taken out** (`erase`): ChatGPT painted the crows and the bolt into the ruin's
-sky, and the game draws them moving, so the painted ones are erased in the picture's own
-pixels before anything else, each box filled with the paint round it mirrored in over its
-edges, as far as there is paint to mirror and stretched where the picture's edge comes
-sooner. A fifth number says which edges fill it (1 the left, 2 the right, 4 the top, 8 the
-bottom, added up): the bolt's box is split at the horizon and each part filled from beside it,
-so the sea stays under the sky and the tower's foot is not mirrored in; without one, the pair
-of edges that agrees fills more. Boxes are taken out in order, so a later box may read an
-earlier one.
-
-**In the game**: a place with a picture at its door (`ENTRANCES`, src/game/content.ts) has a
-disc at one of the level's named points, the cave's at its portal's (15.3, 4.5 m before the
-tunnel's end). The party walks into it and the picture fills the view with the house board
-(16.34) over the panel, the place's name, Enter and Stay: MM7 put its dungeon entrances
-("Enter?") on the same screen as its houses. Stay takes both down, and the disc arms again
-once the party has stepped clear, as a portal does. Enter will travel when a dungeon stands
-behind the door; Gullhaven's cave has none yet, so Enter answers that the roof has come in
-(old Tobin's story, src/game/dialogue.ts). The fort's gate and the ruin's tower wait for their
-places: the headland's ruin is tumbled stones today.
-
-**Checked**: unit tests on the erase (the sea stays under the sky, one edge alone when told)
-and on the trigger disc (it arms once the party has stood clear, fires once, and fires again
-after a reset); an end-to-end test wakes the party on the cave's disc, finds that nothing
-fires until they come to it, then the board named and its picture up, Enter answering with
-the board staying, and Stay taking both down.
-
 ## 13. Decision log
 
-- 2026-11-02 – Animated entrances (17.9): the owner's three pictures of a fort's gate, a
-  ruined tower and the goblins' cave are rooms with weather and creatures (a drifting sky, a
-  heaving sea, wind, a swinging lantern, lightning, crows, bats, drips, eyes in the dark), the
-  crows and the bolt ChatGPT painted into the ruin erased by mirroring the paint round them
-  in. The cave's disc puts up its picture with an Enter and Stay board, the first place with
-  a picture at its door; Enter waits on the first dungeon.
+- 2026-11-03 – The three animated entrances taken out of the build (owner, of the fort's
+  gate, the ruined tower and the goblins' cave as first cut: "these 3 are complete shit").
+  The cut had drawn its own crows, bats and lightning into the owner's pictures, mirrored the
+  sky in to hide the painted ones, and put a board on the cave's tunnel; all of it is reverted,
+  the rooms, the shader's weather and creatures, the erase and the board. The owner's three
+  pictures stay in pipeline/inbox/rooms/ (enter-fort, enter-ruin, enter-cave) for a new cut
+  that is agreed with the owner first, and the way the shop rooms moved (17.8: fire, smoke,
+  mist, one big thing) is the measure.
 
 - 2026-11-01 – Items true to size (16.8; owner: "Only icons in real proportional length
   and size to each other", after the first cut stretched each to fill its cells): the

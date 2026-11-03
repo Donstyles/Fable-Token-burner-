@@ -4,7 +4,6 @@ import {
   ROOM_SIZE,
   chooseBand,
   cutRoom,
-  erase,
   findFires,
   findLights,
   findOrbs,
@@ -228,49 +227,5 @@ describe('a room cut from a picture', () => {
     expect(x1).toBeCloseTo(250 * s, 0);
     expect(y0).toBeCloseTo((150 - room.top) * s, 0);
     expect(y1).toBeCloseTo((625 - room.top) * s, 0);
-  });
-});
-
-describe('erasing painted things (DESIGN 17.9)', () => {
-  /** Sky over sea, a white bolt painted across the horizon. */
-  function seascape(): { rgb: Buffer; w: number; h: number } {
-    const w = 60;
-    const h = 40;
-    const rgb = Buffer.alloc(w * h * 3);
-    for (let y = 0; y < h; y++) {
-      for (let x = 0; x < w; x++) {
-        const i = (y * w + x) * 3;
-        const sky = y < 20;
-        const bolt = x >= 26 && x <= 34 && y >= 8 && y <= 32;
-        const c = bolt ? [255, 255, 255] : sky ? [40, 40, 120] : [20, 60, 40];
-        rgb[i] = c[0]!;
-        rgb[i + 1] = c[1]!;
-        rgb[i + 2] = c[2]!;
-      }
-    }
-    return { rgb, w, h };
-  }
-  const near = (rgb: Buffer, w: number, x: number, y: number, c: number[]): boolean =>
-    [0, 1, 2].every((k) => Math.abs(rgb[(y * w + x) * 3 + k]! - c[k]!) <= 3);
-
-  it('fills a box from beside it so the sea stays under the sky, and leaves no bolt', () => {
-    for (const from of [0, 3]) {
-      const { rgb, w, h } = seascape();
-      erase(rgb, w, h, [20, 5, 40, 35], from);
-      for (let y = 5; y <= 35; y++) {
-        for (let x = 20; x <= 40; x++) {
-          expect(near(rgb, w, x, y, y < 20 ? [40, 40, 120] : [20, 60, 40])).toBe(true);
-        }
-      }
-    }
-  });
-
-  it('fills from one edge alone when told to', () => {
-    const { rgb, w, h } = seascape();
-    // From below only: the box is sea all through, the sky above it untouched.
-    erase(rgb, w, h, [20, 15, 40, 25], 8);
-    expect(near(rgb, w, 30, 16, [20, 60, 40])).toBe(true);
-    expect(near(rgb, w, 22, 14, [40, 40, 120])).toBe(true);
-    expect(near(rgb, w, 30, 14, [255, 255, 255])).toBe(true);
   });
 });

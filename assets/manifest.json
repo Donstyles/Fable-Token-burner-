@@ -1077,45 +1077,6 @@
       "notes": "20 fire(s), 0 magic glow(s), sparks off the biggest, 1 falls marked, 1 sprays marked, 1 ripples marked, 3 drapes marked, 2 stars marked, 1 incense marked, 8 glints marked, 5 still marked, 1 fronts marked"
     },
     {
-      "id": "room-enter-cave",
-      "kind": "image",
-      "source": "The owner's ChatGPT image pipeline/inbox/rooms/enter-cave.png, rows 157 to 867 cut to the view box at 640 by 296, its flames, coals and firelight found on its paint (tools/room.ts)",
-      "licence": "The owner's ChatGPT image (OpenAI's terms: the output is the user's): owner holds full rights",
-      "files": [
-        "assets/rooms/enter-cave.png",
-        "assets/rooms/enter-cave.lights.png",
-        "assets/rooms/enter-cave.json"
-      ],
-      "date": "2026-11-02",
-      "notes": "2 fire(s), 0 magic glow(s), sparks off the biggest, 2 incense marked, 5 drips marked, 1 eyes marked, 1 mists marked, 1 bats marked, 2 winds marked, 2 fronts marked"
-    },
-    {
-      "id": "room-enter-fort",
-      "kind": "image",
-      "source": "The owner's ChatGPT image pipeline/inbox/rooms/enter-fort.png, rows 60 to 770 cut to the view box at 640 by 296, its flames, coals and firelight found on its paint (tools/room.ts)",
-      "licence": "The owner's ChatGPT image (OpenAI's terms: the output is the user's): owner holds full rights",
-      "files": [
-        "assets/rooms/enter-fort.png",
-        "assets/rooms/enter-fort.lights.png",
-        "assets/rooms/enter-fort.json"
-      ],
-      "date": "2026-11-02",
-      "notes": "3 fire(s), 0 magic glow(s), sparks off the biggest, 3 drapes marked, 1 swings marked, 1 drifts marked, 2 fronts marked, 1 mists marked, 2 incense marked"
-    },
-    {
-      "id": "room-enter-ruin",
-      "kind": "image",
-      "source": "The owner's ChatGPT image pipeline/inbox/rooms/enter-ruin.png, rows 157 to 867 cut to the view box at 640 by 296, its flames, coals and firelight found on its paint (tools/room.ts)",
-      "licence": "The owner's ChatGPT image (OpenAI's terms: the output is the user's): owner holds full rights",
-      "files": [
-        "assets/rooms/enter-ruin.png",
-        "assets/rooms/enter-ruin.lights.png",
-        "assets/rooms/enter-ruin.json"
-      ],
-      "date": "2026-11-02",
-      "notes": "0 fire(s), 0 magic glow(s), no sparks, 1 bolts marked, 1 crows marked, 1 fronts marked, 2 seas marked, 2 winds marked"
-    },
-    {
       "id": "room-guild",
       "kind": "image",
       "source": "The owner's ChatGPT image pipeline/inbox/rooms/guild.png, rows 74 to 744 cut to the view box at 640 by 296, its flames, coals and firelight found on its paint (tools/room.ts)",

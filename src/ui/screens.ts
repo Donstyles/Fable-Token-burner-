@@ -12,14 +12,12 @@ import './screens.css';
 import { mulberry32 } from '../game/rng';
 import type { GameState } from '../game/state';
 import {
-  type BoardName,
   type ScreenContext,
   type ScreenHooks,
   type ScreenName,
   type ServiceDefs,
   type ServiceKind,
 } from './context';
-import type { EntranceDef } from '../game/content';
 import { createFrame, watchScrolls } from './dom';
 import { renderCalendar, renderNotes, renderQuests } from './books';
 import { renderAwards, renderSheet, renderSkills } from './character';
@@ -28,7 +26,7 @@ import { renderMap } from './journal';
 import { renderOptions } from './options';
 import { renderReference } from './reference';
 import { renderRest } from './rest';
-import { renderEntrance, renderService, type ServiceRef } from './services';
+import { renderService, type ServiceRef } from './services';
 import { renderSpellbook } from './spellbook';
 import { installPressFeel } from './press';
 
@@ -96,11 +94,9 @@ export interface Screens {
   open(name: ScreenName): void;
   /** Open a town service's screen for the given house record. */
   openService<K extends ServiceKind>(kind: K, house: ServiceDefs[K]): void;
-  /** Put up a place's "Enter?" board (DESIGN.md 17.9), its picture shown by the runtime. */
-  openEntrance(def: EntranceDef): void;
   close(): void;
   /** The open screen, or null. */
-  current(): BoardName | null;
+  current(): ScreenName | ServiceKind | null;
   /** A tap on a portrait in the band: true when the open screen used it (a spell's target). */
   pickMember(index: number): boolean;
   toggleButtonBar(on: boolean): void;
@@ -115,7 +111,7 @@ export function installScreens(
   const rng = hooks.rng ?? mulberry32((state.seed ^ Math.floor(hooks.now() * 1000)) >>> 0 || 1);
   installPressFeel(uiLayer);
 
-  let open_: { name: BoardName; root: HTMLElement; stop: () => void } | null = null;
+  let open_: { name: ScreenName | ServiceKind; root: HTMLElement; stop: () => void } | null = null;
   let portraitClaim: ((index: number) => boolean) | null = null;
 
   function unmount(notify: boolean): void {
@@ -132,7 +128,11 @@ export function installScreens(
     unmount(true);
   }
 
-  function mount(name: BoardName, title: string, render: (ctx: ScreenContext) => void): void {
+  function mount(
+    name: ScreenName | ServiceKind,
+    title: string,
+    render: (ctx: ScreenContext) => void,
+  ): void {
     unmount(false);
     // What a screen says goes to MM6's message bar on the band when the runtime has one.
     const frame = createFrame(title, close, hooks.say);
@@ -177,9 +177,6 @@ export function installScreens(
     openService(kind, house) {
       const ref = { kind, house } as ServiceRef;
       mount(kind, house.name, (ctx) => renderService(ctx, ref));
-    },
-    openEntrance(def) {
-      mount('entrance', def.name, (ctx) => renderEntrance(ctx, def));
     },
     close,
     current() {
