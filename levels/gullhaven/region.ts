@@ -558,9 +558,9 @@ const region: RegionScript = {
     { kind: 'oak', at: [86, -110], scale: 0.9 },
   ],
   plots: [...town, ...farm, ...wilds],
-  // The mouth faces down the slope to the north road's end. Its tunnel ends in rock until the
-  // region's first dungeon is built (the test halls behind it were scrapped, owner, 2026-10-24).
-  cave: { at: CAVE, facing: 225 },
+  // The mouth faces down the slope to the north road's end. Its tunnel leads into the Old
+  // Halls (levels/old-halls), the region's first dungeon, through the portal at its end.
+  cave: { at: CAVE, facing: 225, target: { level: 'old-halls', entry: 'cave-mouth' } },
   // Split rails the kernel builds (owner, 2026-10-23): Tobin's paddock and fields, the
   // stables' paddock at the west gate, the temple's garden.
   fences: [

@@ -3040,7 +3040,59 @@ candles.
 town's houses' doors; the stock on its shelf for Buy once items have pictures; the cave's
 "Enter?" picture once a dungeon lies behind it.
 
+### 17.10 The Old Halls, the first dungeon (the agentic loop, 2026-11-03)
+
+The halls under the goblin hills, where old Tobin's grandfather went down and came back white
+and from which the dead walk up onto the headland (src/game/dialogue.ts). Gullhaven's cave now
+has a target, so its tunnel ends in the portal of 15.3, and the halls are levels/old-halls/
+level.ts on the kernel's planner (11), nothing hand-modelled, built and validated by
+`npm run level:build` like any level: every named room on the walk from the spawn.
+
+**The plan**, in metres, north +Z, the party arriving facing in:
+
+- **the goblins' lair**: rock carved from a block that runs up to the first wall, a tunnel in
+  from the mouth, a chamber with two braziers, a pocket to the west where they sleep, and a
+  passage east that leaves the rock straight into the gate hall's doorway; four goblin scouts
+  hold it and never go below (MM6's first dungeon opened with its weakest monsters at the
+  door);
+- **the gate hall**: the first worked stone, ashlar under a barrel vault, a brazier still lit
+  by no one and lanterns on the walls, one skeleton;
+- **the stairwell**: a switchback down five metres beside the gate hall's south wall, with a
+  slab landing at the top so the flights end short of the north wall and the bottom opens
+  onto floor before the corridor's door (the first cut ended the flights at the wall, and
+  the validator's walk stopped short there);
+- **the crypt corridor and the crypt**: a vaulted corridor with lanterns to a hall of two
+  colonnades under pale lanterns, three of the dead;
+- **the ossuary**: a side chamber off the crypt, one skeleton, its point marked `loot` for the
+  key chest of item 2;
+- **the warden's hall**: north of the crypt through a pointed arch, the largest vault, two
+  braziers, two of the dead, its point marked `loot` for the end of the quest (item 4).
+
+Seven of the dead for Tobin's five. Fog in every space, near black in the halls and brown in
+the lair. The build is 65 k triangles, 2.8 MB of GLB, 860 navmesh triangles, four seconds.
+
+**In the game**: the party walks into the tunnel's end in Gullhaven and the veil says "Into
+the dark…"; it arrives two metres inside the halls' tunnel, and the same tunnel's end is the
+portal back, armed once the party has stepped clear (15.3). The dev build opens the halls
+with `?level=old-halls&entry=cave-mouth`.
+
+**Checked**: the validator's walk at build time (CI builds every level); an end-to-end test
+loads the halls from the cave mouth, finds every room reachable, the eleven monsters idle in
+their places and the warden's hall forty metres from the lair, and another steps clear of
+the tunnel's end, back into it, and arrives in Gullhaven at the cave; the Gullhaven test now
+expects the cave's portal.
+
+**Not yet**: doors, keys and chests (items 2 and 3), the warden himself and the quest's end
+(item 4), a map for the halls below ground (the panel's map is the region's), sounds of the
+dead.
+
 ## 13. Decision log
+
+- 2026-11-03 – The Old Halls, the first dungeon (17.10), built on the kernel's planner
+  with no new art and reached through Gullhaven's cave, which now has a target: the agentic
+  loop's first item, since a dungeon to explore is the biggest step toward MM6's first loop
+  the loop can take alone. The showcase's lessons kept: rock runs up to the first wall, a
+  switchback needs a top landing so its flights end short of the wall.
 
 - 2026-11-03 – The three animated entrances taken out of the build (owner, of the fort's
   gate, the ruined tower and the goblins' cave as first cut: "these 3 are complete shit").

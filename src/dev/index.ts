@@ -167,6 +167,7 @@ const LEVEL = QUERY.get('level') ?? 'gullhaven';
 /** What the veil calls each level while it loads. */
 const PLACE_NAMES: Record<string, string> = {
   gullhaven: 'Gullhaven',
+  'old-halls': 'The Old Halls',
 };
 /** Arriving through a portal: the portal of this level to appear at (DESIGN.md 15.3). */
 const ENTRY = QUERY.get('entry');

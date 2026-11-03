@@ -60,10 +60,10 @@ listed at the end and waited for, never faked.
 
 Working list, in order:
 
-1. [ ] **The Old Halls**, the first dungeon (ROADMAP M1b's den, in our world the halls under
+1. [x] **The Old Halls**, the first dungeon (ROADMAP M1b's den, in our world the halls under
        the goblin hills): levels/old-halls/level.ts on the kernel, entered through Gullhaven's
        cave and left by its own door, lit by braziers and lanterns, the goblins at its mouth and
-       the dead below, every room reached by the validator's walk; an e2e test walks in and out.
+       the dead below, every room reached by the validator's walk; an e2e test walks in and out. Done 2026-11-03 (DESIGN 17.10).
 2. [ ] **Doors and keys** (MM6-GAPS 29): kernel-built doors in the sidecar, opened by a tap
        within reach, locked ones by a key item; what was opened is kept per map in the save.
 3. [ ] **Chests and loot** (MM6-GAPS 12.4): kernel-built chests, filled on first opening from

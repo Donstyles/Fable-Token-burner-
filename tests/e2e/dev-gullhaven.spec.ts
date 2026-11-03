@@ -130,10 +130,10 @@ test.describe('Gullhaven', () => {
       (window as unknown as W).ftb!.dev!.monsters.map((m) => m.state),
     );
     expect(states.every((s) => s === 'idle')).toBe(true);
-    // The cave in the goblin hills is dug, its tunnel ending in rock: no level behind it yet,
-    // so no portal (the test halls were scrapped, owner, 2026-10-24).
+    // The cave in the goblin hills is dug, and its tunnel's end is the door into the Old
+    // Halls, the region's first dungeon (PLAN, the agentic loop's item 1).
     expect(info.cave).not.toBeNull();
-    expect(info.portals).toEqual([]);
+    expect(info.portals).toEqual(['cave>old-halls:cave-mouth']);
     // The party wakes at the foot of the square, between the waterfront and the well.
     expect(Math.hypot(info.square!.x - info.spawn.x, info.square!.z - info.spawn.z)).toBeLessThan(
       20,
