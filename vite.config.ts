@@ -84,8 +84,8 @@ export default defineConfig(({ mode }) => {
           // Babylon and future level data are large; raise the precache limit.
           maximumFileSizeToCacheInBytes: 20 * 1024 * 1024,
           globPatterns: ['**/*.{js,css,html,png,svg,webp,wasm,glb,json,bin,woff2}'],
-          // Compiled levels are only loaded by the development build for now.
-          globIgnores: devBuild ? [] : ['levels/**'],
+          // The compiled levels go with the game in every build (DESIGN.md 17.15).
+          globIgnores: [],
           // The production worker's scope contains /dev/. It must never answer a /dev/
           // navigation with its own cached page, or the dev build is unreachable.
           navigateFallbackDenylist: devBuild ? [] : [/\/dev\//],

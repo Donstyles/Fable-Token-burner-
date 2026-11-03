@@ -102,3 +102,24 @@ test('serves a web app manifest', async ({ page, request }) => {
   const apple = await page.locator('link[rel="apple-touch-icon"]').getAttribute('href');
   expect(apple).toBeTruthy();
 });
+
+test('the root boots the title, and New Game loads the land (DESIGN 17.15)', async ({ page }) => {
+  // Software GL in CI loads Gullhaven slowly: the same allowance as the dev specs.
+  test.setTimeout(240_000);
+  const errors: string[] = [];
+  page.on('pageerror', (e) => errors.push(e.message));
+  await page.goto('/');
+  await expect(page.getByRole('button', { name: 'New Game' })).toBeVisible({ timeout: 60_000 });
+  // No tuning panel at the root, ever; the stats overlay only with ?dev.
+  await expect(page.locator('#dev-overlay')).toHaveCount(0);
+  await page.getByRole('button', { name: 'New Game' }).click();
+  await page.waitForFunction(
+    () => (window as unknown as { ftb?: { dev?: { ready: boolean } } }).ftb?.dev?.ready === true,
+    null,
+    { timeout: 180_000 },
+  );
+  await expect(page.locator('.hud')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Toggle tuning panel' })).toHaveCount(0);
+  await page.screenshot({ path: 'test-results/root-game.png' });
+  expect(errors).toEqual([]);
+});

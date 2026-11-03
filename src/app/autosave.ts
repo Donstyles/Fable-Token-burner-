@@ -8,7 +8,9 @@ import { fromJson, toJson } from '../game/save';
 import type { GameState } from '../game/state';
 import { diag } from './diag';
 
-const KEY = 'ftb-autosave';
+/** Named per channel, so the dev build under /dev/ and the game at the root keep their own. */
+const KEY =
+  import.meta.env.DEV || import.meta.env.MODE === 'devbuild' ? 'ftb-autosave-dev' : 'ftb-autosave';
 
 export function saveGame(state: GameState): boolean {
   try {

@@ -57,12 +57,10 @@ declare global {
 window.ftb = Object.assign(app, { diag: diagText });
 diag('engine ready');
 
-// Development builds (`vite` dev server or `vite build --mode devbuild`) load the dev arena.
-// In production the condition is constant-false and the import is removed from the bundle.
-if (import.meta.env.DEV || import.meta.env.MODE === 'devbuild') {
-  void import('./dev/index').then(({ startDev }) =>
-    startDev(app).then((dev) => {
-      if (window.ftb) window.ftb.dev = dev;
-    }),
-  );
-}
+// The game (DESIGN.md 17.15): the title, Gullhaven and the halls, in every build. The dev
+// server and `vite build --mode devbuild` add the tuning panel; the root build never has it.
+void import('./dev/index').then(({ startGame }) =>
+  startGame(app).then((dev) => {
+    if (window.ftb) window.ftb.dev = dev;
+  }),
+);
