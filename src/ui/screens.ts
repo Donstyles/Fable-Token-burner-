@@ -91,7 +91,7 @@ const RENDERERS: Record<ScreenName, (ctx: ScreenContext) => void> = {
 };
 
 /** The screens MM6 drew as open books (paint.ts `book`). */
-const BOOKS: readonly string[] = ['spells', 'quests', 'notes', 'map', 'calendar'];
+const BOOKS: readonly string[] = ['spells', 'quests', 'notes', 'map', 'calendar', 'score'];
 
 export interface Screens {
   open(name: ScreenName): void;
