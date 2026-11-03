@@ -34,13 +34,65 @@ week-plus. These are effort sizes, not calendar promises.
 
 ## Progress
 
-| Phase | Status                                                                      |
-| ----- | --------------------------------------------------------------------------- |
-| 0     | Accepted 2026-10-14                                                         |
-| 1     | Accepted 2026-10-14 (stair feel to be settled by ramp colliders in Phase 2) |
-| 2     | Accepted 2026-10-15 on device (walking good, mood fine for now)             |
-| 3     | Built 2026-10-15, awaiting on-device frame rate and look sign-off           |
-| 4–7   | Not started                                                                 |
+| Phase | Status                                                                                        |
+| ----- | --------------------------------------------------------------------------------------------- |
+| 0     | Accepted 2026-10-14                                                                           |
+| 1     | Accepted 2026-10-14 (stair feel to be settled by ramp colliders in Phase 2)                   |
+| 2     | Accepted 2026-10-15 on device (walking good, mood fine for now)                               |
+| 3     | Built 2026-10-15, awaiting on-device frame rate and look sign-off                             |
+| 4     | Pipelines built 2026-10-15 to 10-31 (Meshy, rooms, vista, Met items); assets as credits allow |
+| 5     | Rules and every screen built 2026-10-16 to 10-24 (statuses below); MM6's numbers partly       |
+| 5b    | Superseded by DESIGN 17: regions by hand (Gullhaven shipped 2026-10-24)                       |
+| 6a    | Rooms for the shops, homes and guilds 2026-10-25; buy pictures pending the owner              |
+| 6     | Started 2026-11-03 by the agentic loop (below): the first dungeon and the loop's depth        |
+| 7     | Not started                                                                                   |
+
+## Agentic loop (owner, 2026-11-03: "make the game vast, high quality, playable, fun")
+
+The owner set the loop going on 2026-11-03 ("You can plan and work on your own. Your goal:
+full mm6 scope, quality, polish."). Each turn of the loop takes the next unticked item here,
+builds it with tests, keeps the docs true, commits in steps and pushes; the loop reports in
+its last message only. The senate's roadmap (docs/ROADMAP.md) and the gap backlog
+(docs/MM6-GAPS.md, part B first) set the order; the rules of CLAUDE.md hold throughout: no
+Meshy credits and no text-to-3D, nothing placeholder in a shipped build, every decision
+written here or in DESIGN.md. What needs the owner (pictures, credits, music, portraits) is
+listed at the end and waited for, never faked.
+
+Working list, in order:
+
+1. [ ] **The Old Halls**, the first dungeon (ROADMAP M1b's den, in our world the halls under
+       the goblin hills): levels/old-halls/level.ts on the kernel, entered through Gullhaven's
+       cave and left by its own door, lit by braziers and lanterns, the goblins at its mouth and
+       the dead below, every room reached by the validator's walk; an e2e test walks in and out.
+2. [ ] **Doors and keys** (MM6-GAPS 29): kernel-built doors in the sidecar, opened by a tap
+       within reach, locked ones by a key item; what was opened is kept per map in the save.
+3. [ ] **Chests and loot** (MM6-GAPS 12.4): kernel-built chests, filled on first opening from
+       a treasure table; gold and items dropped by monsters, picked up from the ground; kept per
+       map.
+4. [ ] **The quest through the halls**: Old Tobin's quest reshaped to the dungeon (the dead
+       put down in the halls, their warden last), its reward, and the end-of-slice score screen.
+5. [ ] **Saves with slots** (ROADMAP M0): IndexedDB, an autosave and ten slots, Save and Load
+       screens from the game menu, the title's Continue from the autosave.
+6. [ ] **The shipped app carries the game** (MM6-GAPS 32): the root URL boots the title and
+       the game, the dev panel left out; levels precached.
+7. [ ] **Danger** (ROADMAP M2, no new art): monster records as data with tiers as tints,
+       ranged attacks, fleeing, special attacks with saves, the conditions with their cures at
+       the temple, rest refused near monsters, the wipe rule (a week later at the temple, the
+       carried gold lost).
+8. [ ] **Buffs** (MM6-GAPS 7): the buff store on the game clock (Bless, Heroism, Stone Skin,
+       Haste, the Protections, Torch Light), shown in the panel's window.
+9. [ ] **Items and shops** (MM6-GAPS 12 and 15): the catalogue grown toward a hundred base
+       items with the Met's photographs, enchantments, treasure levels, shop stock with
+       restocks and hours, identify and repair by skill.
+10. [ ] **People and quests**: more townsfolk with news, three more quests of every kind
+        (deliver, reach, kill), a well and an obelisk, the Notes book kept.
+11. [ ] **Polish passes** between items: the frame rate on the phone's budget, the faults the
+        owner reports, the e2e suite kept green.
+
+Waiting on the owner: cottage-01 and cottage-03 remade with Meshy's free retries; the shops'
+buy pictures (weapon table, two shelves, mannequins); the hero, keeper and villager
+portraits; music; new entrance pictures from the three prompts of 2026-11-03; any Meshy
+batch (the den kit, animals, more humanoids) by number.
 
 ## Phase overview
 
