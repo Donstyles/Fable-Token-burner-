@@ -3124,7 +3124,49 @@ continues, finds it still open and the floor bare, and closes it.
 **Not yet**: chests and treasure (item 3), levers and plates, traps, secret doors, doors that
 stop monsters, a sound for the leaf.
 
+### 17.12 Chests, treasure and what a body carries (the agentic loop, 2026-11-03)
+
+MM6 filled its chests on first opening from treasure levels, and a searched body gave its
+gold and sometimes an item (items.md 4.5 to 4.9; MM6-GAPS 12.4). Built with no new art:
+
+- **Treasure levels** (src/game/treasure.ts): every item carries the lowest level it turns up
+  at (`level` in src/game/items.ts; a key has none and is never random). A draw weighs an
+  item 10 at its level, 7 at the next and 3 at the one after, potions and scrolls at two
+  fifths of that (MM6's own weights are not public; items.md 4.2 asked for this rule). Arms
+  and armour of level 2 and up start unidentified. A pile of gold is MM7's by level, 50 to 100
+  at level 1 up to 2,000 to 5,000 at level 6.
+- **A chest** is a record the kernel writes (`plan.chest({ at, facing, levels, items })`), a
+  `loot` point for the validator's walk, and in the game a plank box with an iron lid, lit per
+  vertex by the level's lights like a door's leaf and solid to the party
+  (src/world/chests.ts). A tap within six metres swings the lid back and puts up its window
+  (src/ui/chest.ts): its grid of eight by four cells on the leather in the view with the
+  items' pictures, the board over the panel with "Take N gold". Its contents are rolled on the
+  first opening (MM7's rule as OpenEnroth reads it: each random entry becomes 1 to 5 draws, a
+  fifth nothing, two fifths gold of the level, two fifths an item of the level, fixed items
+  first and the dearest placed first as GrayFace's patch does) and kept per map in the save
+  (version 3; a version-2 map gets empty chests). A tap on an item puts it in the chosen
+  member's pack, or anyone's with room; what is left stays in the chest, and closing the
+  window closes the lid.
+- **A searched body** gives its gold and, by its kind's chance, one item of its treasure level
+  and kind straight into a pack (goblin scouts a tenth, skeletons a fifth, bandits and raiders
+  a weapon), said on the bar as "You find 12 gold and a Dagger".
+- **The Old Halls** have a chest in the gate hall (one level-1 entry) and the warden's chest at
+  the far wall behind the locked door (two level-2 entries and a healing potion).
+- **The bag's grid** now draws any grid, a chest's smaller one too.
+
+**Checked**: unit tests on the weights, the draws by kind and level, the gold piles, a chest's
+filling and a body's drop; a planner test on the record; an end-to-end test opens the gate
+hall's chest, takes an item and the gold, closes it, saves and continues to find it as left.
+
+**Not yet**: traps and Disarm Trap, locks on chests, the map's refill after MM6's periods,
+enchantments on what is drawn (item 9), gold and items dropped on the ground.
+
 ## 13. Decision log
+
+- 2026-11-03 – Chests, treasure and drops (17.12): a chest is a kernel record built by the
+  runtime, filled on first opening by MM7's rule with our own item weights (MM6's are not
+  public), its window on the leather; bodies give gold and sometimes an item by their kind's
+  chance. Save version 3 carries the chests.
 
 - 2026-11-03 – Doors, keys and things on the floor (17.11): a door is a record the runtime
   builds and moves, never kernel geometry, so the navmesh stays open; a thing on the floor is

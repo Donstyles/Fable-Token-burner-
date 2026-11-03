@@ -66,9 +66,9 @@ Working list, in order:
        the dead below, every room reached by the validator's walk; an e2e test walks in and out. Done 2026-11-03 (DESIGN 17.10).
 2. [x] **Doors and keys** (MM6-GAPS 29): kernel-built doors in the sidecar, opened by a tap
        within reach, locked ones by a key item; what was opened is kept per map in the save. Done 2026-11-03 (DESIGN 17.11), with things lying on the floor to pick up; chests follow in item 3.
-3. [ ] **Chests and loot** (MM6-GAPS 12.4): kernel-built chests, filled on first opening from
+3. [x] **Chests and loot** (MM6-GAPS 12.4): kernel-built chests, filled on first opening from
        a treasure table; gold and items dropped by monsters, picked up from the ground; kept per
-       map.
+       map. Done 2026-11-03 (DESIGN 17.12); gold and items on the ground wait for a reason.
 4. [ ] **The quest through the halls**: Old Tobin's quest reshaped to the dungeon (the dead
        put down in the halls, their warden last), its reward, and the end-of-slice score screen.
 5. [ ] **Saves with slots** (ROADMAP M0): IndexedDB, an autosave and ten slots, Save and Load
