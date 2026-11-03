@@ -3086,7 +3086,50 @@ expects the cave's portal.
 (item 4), a map for the halls below ground (the panel's map is the region's), sounds of the
 dead.
 
+### 17.11 Doors, keys and things on the floor (the agentic loop, 2026-11-03)
+
+MM6's dungeons had doors that slid open at a click, locked ones that wanted a key found in a
+chest or on a body, and items lying on the floor as sprites (MM6-GAPS 29 and 12.4). The first
+of the event layer, with no new art:
+
+- **A door is the kernel's record, not its geometry.** `plan.door({ space, side, at, width,
+height, key })` puts a leaf's record in the sidecar (its centre in the middle of the wall,
+  the wall's outward direction, its size, its material, the item that unlocks it) and
+  nothing in the walls, so the collider and the navmesh are built as if the doorway stood
+  open and the validator's walk goes through. The runtime (src/world/doors.ts) builds each
+  leaf as a box in the painted plank, lit per vertex by the level's own lights with the
+  compiler's rule (without its occlusion), so it looks part of the wall, and gives it a
+  static collider. A tap within six metres opens it: the leaf slides up into the wall over
+  the opening in six tenths of a second and its collider goes with it; a tap on an open door
+  closes it again unless the party stands in the doorway. A locked door says "Locked" until
+  the party carries its key, and then "The key turns; the door opens". Monsters are not
+  stopped by a closed door yet: they walk the navmesh, which does not know it.
+- **A thing on the floor** is a record in the level script (`export const items`) and a
+  sprite of its picture in the game (src/world/ground-items.ts): the Met's photograph from
+  assets/items, 32 cm a grid cell, standing on its foot and turning to face the party, lit
+  flat with a fill so it shows in a dark hall, as MM6's dropped items did. A tap within six
+  metres puts it in the chosen member's pack, or anyone's with room, and says who took it.
+- **The map remembers** (src/game/state.ts `maps`, by level id): the doors opened and the
+  things taken, in the save (version 2; a version-1 save gets empty maps), restored when the
+  level loads, so a door stands open and the floor stays bare after a Continue.
+- **The Old Halls**: the warden's door between the crypt and the warden's passage is locked;
+  the iron key (src/game/items.ts `iron-key`, a 15th-century German key from the Met, 1 by 2
+  cells, worth nothing to a shop) lies among the bones in the ossuary.
+
+**Checked**: a planner test places a leaf in the middle of its wall facing out with the
+doorway open to a ray; save tests migrate a version-1 file and refuse a broken map state; an
+end-to-end test finds the door too far, then locked, takes the key, opens the door, saves,
+continues, finds it still open and the floor bare, and closes it.
+
+**Not yet**: chests and treasure (item 3), levers and plates, traps, secret doors, doors that
+stop monsters, a sound for the leaf.
+
 ## 13. Decision log
+
+- 2026-11-03 – Doors, keys and things on the floor (17.11): a door is a record the runtime
+  builds and moves, never kernel geometry, so the navmesh stays open; a thing on the floor is
+  a sprite of its Met photograph; both kept per map in save version 2. The warden's door in
+  the Old Halls is locked, its iron key in the ossuary.
 
 - 2026-11-03 – The Old Halls, the first dungeon (17.10), built on the kernel's planner
   with no new art and reached through Gullhaven's cave, which now has a target: the agentic
