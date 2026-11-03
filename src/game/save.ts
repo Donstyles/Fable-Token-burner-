@@ -25,6 +25,21 @@ export interface SaveFile {
   state: GameState;
 }
 
+/** What a slot list shows of a save: where, when on the game clock, and who. */
+export interface SaveSummary {
+  level: string;
+  minutes: number;
+  party: { name: string; level: number }[];
+}
+
+export function saveSummary(state: GameState): SaveSummary {
+  return {
+    level: state.level.id,
+    minutes: state.clock.minutes,
+    party: state.party.map((c) => ({ name: c.name, level: c.level })),
+  };
+}
+
 export type LoadResult =
   { ok: true; state: GameState; migrated: boolean } | { ok: false; error: string };
 

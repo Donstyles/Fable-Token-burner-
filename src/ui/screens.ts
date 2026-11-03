@@ -21,6 +21,7 @@ import {
 } from './context';
 import { renderChest, type ChestWindow } from './chest';
 import { renderScore } from './score';
+import { renderSaves, type SavesMode } from './saves';
 import { createFrame, watchScrolls } from './dom';
 import { renderCalendar, renderNotes, renderQuests } from './books';
 import { renderAwards, renderSheet, renderSkills } from './character';
@@ -101,6 +102,8 @@ export interface Screens {
   openChest(chest: ChestWindow): void;
   /** The end of the slice: the party, its days and its score (DESIGN.md 17.13). */
   openScore(title: string): void;
+  /** The save slots, to save into or to go on from (DESIGN.md 17.14). */
+  openSaves(mode: SavesMode): void;
   close(): void;
   /** The open screen, or null. */
   current(): BoardName | null;
@@ -186,6 +189,13 @@ export function installScreens(
     },
     openScore(title) {
       mount('score', title, (ctx) => renderScore(ctx, title));
+    },
+    openSaves(mode) {
+      const saves = hooks.saves;
+      if (!saves) return;
+      mount(mode, mode === 'save' ? 'Save Game' : 'Load Game', (ctx) =>
+        renderSaves(ctx, mode, saves),
+      );
     },
     close,
     current() {

@@ -7,6 +7,8 @@ import type { Rng } from '../game/rng';
 import type { GuildDef, ShopDef, TavernDef, TempleDef, TrainerDef } from '../game/services';
 import type { SpellEffect, SpellId } from '../game/spells';
 import type { GameState } from '../game/state';
+import type { SlotStore } from '../app/saves';
+import type { SaveSummary } from '../game/save';
 import type { Frame } from './dom';
 
 /**
@@ -37,8 +39,24 @@ export type MemberPage = (typeof MEMBER_PAGES)[number];
 export const SERVICE_KINDS = ['tavern', 'temple', 'guild', 'trainer', 'shop'] as const;
 export type ServiceKind = (typeof SERVICE_KINDS)[number];
 
-/** What may be up over the view: a book, a house's service, a chest's window, or the score. */
-export type BoardName = ScreenName | ServiceKind | 'chest' | 'score';
+/**
+ * What may be up over the view: a book, a house's service, a chest's window, the score, or
+ * the save and load lists.
+ */
+export type BoardName = ScreenName | ServiceKind | 'chest' | 'score' | 'save' | 'load';
+
+/** The save slots (src/app/saves.ts) and what the runtime does with them (DESIGN.md 17.14). */
+export interface SaveHooks {
+  store: SlotStore;
+  /** Put the party's place into the state before a copy is taken. */
+  stamp(): void;
+  /** Go on from a slot, or from 'auto', the autosave. */
+  load(slot: string): void;
+  /** The autosave's summary, or null when there is none. */
+  autosave(): SaveSummary | null;
+  /** What the veil calls a level. */
+  placeName(level: string): string;
+}
 
 /** The service record each kind of house is driven by (`src/game/services.ts`). */
 export interface ServiceDefs {
@@ -120,14 +138,16 @@ export interface ScreenHooks {
   cover?: HTMLElement;
   /** The options' game menu (options.ts): each is offered only when given. */
   menu?: MenuHooks;
+  /** The save slots, for the Save and Load screens (saves.ts). */
+  saves?: SaveHooks;
 }
 
 /** What the options' menu does beyond closing (MM6's Resume, New, Save, Load, Quit). */
 export interface MenuHooks {
   newGame?: () => void;
-  /** Save now; false when it could not be written. */
-  save?: () => boolean;
-  /** Go back to the last save. */
+  /** Open the save slots. */
+  save?: () => void;
+  /** Open the saves to go on from. */
   load?: () => void;
   /** Leave the game for its title. */
   quit?: () => void;

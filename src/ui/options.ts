@@ -41,12 +41,7 @@ export function renderOptions(ctx: ScreenContext): void {
       slab('Controls', showControls),
       slab('New Game', menu.newGame ? showConfirm : undefined),
       slab('Load Game', menu.load),
-      slab(
-        'Save Game',
-        menu.save
-          ? () => frame.message(menu.save!() ? 'Game saved' : 'The game could not be saved')
-          : undefined,
-      ),
+      slab('Save Game', menu.save),
       slab('Quit', menu.quit, 'quit'),
     );
     frame.body.replaceChildren(plaque, grid);

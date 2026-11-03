@@ -28,6 +28,8 @@ import { PortalWatcher, portalUrl, travel, type Portal } from '../world/portals'
 import { Doors } from '../world/doors';
 import { GroundItems } from '../world/ground-items';
 import { Chests } from '../world/chests';
+import { openSlots } from '../app/saves';
+import { saveSummary } from '../game/save';
 import { monsterDrop } from '../game/treasure';
 import { itemDef } from '../game/items';
 import { Monster } from '../world/monster';
@@ -369,11 +371,16 @@ export async function startDev(app: App): Promise<DevHandle> {
   // The party's spot goes into the save with the rest, so Continue stands it where it was
   // (the audit, 2026-10-23: a reload put the party back on the waterfront). A portal writes
   // its own destination instead.
-  const save = (): boolean => {
+  const stampPlace = (): void => {
     const p = party.position;
     state.level = { id: LEVEL, x: p.x, y: p.y, z: p.z, yawDeg: (party.yaw * 180) / Math.PI };
+  };
+  const save = (): boolean => {
+    stampPlace();
     return saveGame(state);
   };
+  // The ten save slots (DESIGN.md 17.14), in the browser's database.
+  const slots = openSlots();
   const roster = new Party(state.party);
   // The HUD band (DESIGN 9): a tap selects a member, a second tap opens their sheet. The
   // status line above it names what is tapped and tells the fight, as MM6's did.
@@ -429,20 +436,45 @@ export async function startDev(app: App): Promise<DevHandle> {
     // (a member's figure, a house's board) into the panel's cover (DESIGN.md 16.34).
     say: (text) => status.say(text, 5000),
     cover: strip.panel.cover,
-    // The options' game menu: a new game starts over, a load goes back to the last save, quit
-    // goes to the title.
+    // The options' game menu: Save and Load open the slots (DESIGN.md 17.14), a new game
+    // starts over, quit goes to the title.
     menu: {
-      save: () => save(),
-      load: () => {
-        const url = new URL(location.href);
-        url.searchParams.set('continue', '');
-        location.replace(url.toString());
-      },
+      save: () => screens.openSaves('save'),
+      load: () => screens.openSaves('load'),
       newGame: () => {
         clearSave();
         location.replace(location.pathname);
       },
       quit: () => location.replace(location.pathname),
+    },
+    saves: {
+      store: slots,
+      stamp: () => stampPlace(),
+      autosave: () => {
+        const auto = loadGame();
+        return auto ? saveSummary(auto) : null;
+      },
+      placeName: (id) => PLACE_NAMES[id] ?? id,
+      // Going on from a copy: it becomes the autosave and the page goes on from it, in its
+      // own level.
+      load: (slot) => {
+        void (
+          slot === 'auto'
+            ? Promise.resolve(loadGame())
+            : slots.read(slot).then((rec) => rec?.file.state ?? null)
+        ).then((loaded) => {
+          if (!loaded) {
+            status.say('Nothing saved there', 5000);
+            return;
+          }
+          saveGame(loaded);
+          const url = new URL(location.href);
+          url.searchParams.set('level', loaded.level.id);
+          url.searchParams.set('continue', '');
+          url.searchParams.delete('entry');
+          location.replace(url.toString());
+        });
+      },
     },
     onClose: () => {
       leaveRoom();
