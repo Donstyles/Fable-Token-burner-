@@ -47,14 +47,21 @@ export const QUESTS: Record<string, QuestDef> = {
     id: 'the-old-halls',
     title: 'The Old Halls',
     text:
-      'The dead come up out of the old halls under the hills and walk on the headland by ' +
-      'night. Old Tobin pays three hundred gold to have five of them put back in the ground.',
+      'The dead come up out of the old halls under the goblin hills, through the cave where ' +
+      'the north road ends, and walk on the headland by night. Old Tobin pays three hundred ' +
+      'gold to have five of them put back in the ground and whatever drives them put down.',
     objectives: [
       {
         kind: 'kill',
         monster: 'skeleton-warrior',
         count: 5,
-        text: 'Put down five of the walking dead on the headland',
+        text: 'Put down five of the walking dead, in the old halls or on the headland',
+      },
+      {
+        kind: 'kill',
+        monster: 'skeleton-warden',
+        count: 1,
+        text: 'Put down their warden in the deepest hall, behind the locked door',
       },
       { kind: 'talk', npc: 'villager-man', text: 'Tell Old Tobin at his farm gate' },
     ],
@@ -142,16 +149,18 @@ export const DIALOGUES: Record<string, DialogueDef> = {
         quest: 'the-old-halls',
         label: 'The old halls',
         offer:
-          'My grandfather went down that cave on the slope once, before the roof came in. He ' +
-          'came back white and would not say what walked there. Now the dead come up onto the ' +
-          'headland by night. Put five of them back in the ground and I will pay three hundred ' +
-          'gold, which is all I have.',
+          'My grandfather went down that cave on the slope once and came back white. He said ' +
+          'there were halls under the hills older than the town, and something in the deepest ' +
+          'of them that would not lie still. Now the dead come up onto the headland by night. ' +
+          'Put five of them back in the ground, and whatever drives them with them, and I will ' +
+          'pay three hundred gold, which is all I have.',
         active:
-          'Five of the dead, up on the headland by the ruin. Go by day if you have any sense; ' +
-          'they walk at night.',
+          'The dead come up through the cave where the north road ends; the goblins hold the ' +
+          'mouth of it. Five of them, and the one that drives them, down in the deepest hall. ' +
+          'Go by day if you have any sense; they walk at night.',
         ready:
-          'Five, and you came back on your own feet. My grandfather would have stood you a ' +
-          'drink. Three hundred gold, as I said, and keep the torch.',
+          'Five, and the one below, and you came back on your own feet. My grandfather would ' +
+          'have stood you a drink. Three hundred gold, as I said, and keep the torch.',
         done: 'The headland is quiet at night now. I can hear the sea again.',
         greetReady: 'You smell of the grave. Did you go up there? Tell me.',
       },

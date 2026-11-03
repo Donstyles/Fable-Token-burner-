@@ -20,8 +20,11 @@ type Dev = {
     text(): string;
   };
   bust: { showing: unknown; layer: { isEnabled: boolean } };
-  screens: { open(name: string): void; close(): void };
-  state: { quests: { entries: { id: string; state: string; step: number }[] } };
+  screens: { open(name: string): void; close(): void; current(): string | null };
+  state: {
+    gold: number;
+    quests: { entries: { id: string; state: string; step: number; progress: number }[] };
+  };
   simTime(): number;
 };
 type W = Window & { ftb?: { dev?: Dev } };
@@ -125,6 +128,50 @@ test.describe('talk', () => {
     // The quest log shows it.
     await page.evaluate(() => (window as unknown as W).ftb!.dev!.screens.open('quests'));
     await expect(page.locator('.quest-objective')).toContainText('Drive three bandits');
+    await page.evaluate(() => (window as unknown as W).ftb!.dev!.screens.close());
+  });
+
+  test('the old halls paid: Tobin pays, and the score comes up after the talk', async ({
+    page,
+  }) => {
+    // DESIGN 17.13: the slice's last quest paid puts up the score once the talk is over.
+    test.setTimeout(420_000);
+    await page.goto('dev/?dev&lite&level=gullhaven&seed=5&hour=10');
+    await page.waitForFunction(() => (window as unknown as W).ftb?.dev?.ready === true, null, {
+      timeout: 120_000,
+    });
+    await page.waitForFunction(() => (window as unknown as W).ftb!.dev!.npcs.length >= 2, null, {
+      timeout: 300_000,
+    });
+    // The dead put down and their warden with them: the quest at its last step, as the
+    // kills leave it.
+    await page.evaluate(() => {
+      (window as unknown as W).ftb!.dev!.state.quests.entries.push({
+        id: 'the-old-halls',
+        state: 'active',
+        step: 2,
+        progress: 0,
+      });
+    });
+    const gold = await page.evaluate(() => (window as unknown as W).ftb!.dev!.state.gold);
+    expect(
+      await page.evaluate(() => (window as unknown as W).ftb!.dev!.talkTo('villager-man')),
+    ).toBe(true);
+    await expect(page.locator('.dlg')).toBeVisible();
+    await page.locator('.dlg-topic', { hasText: 'The old halls' }).click();
+    expect(await page.evaluate(() => (window as unknown as W).ftb!.dev!.dialogue.text())).toMatch(
+      /Three hundred gold/,
+    );
+    expect(await page.evaluate(() => (window as unknown as W).ftb!.dev!.state.gold)).toBe(
+      gold + 300,
+    );
+    await page.locator('[title="Farewell"]').click();
+    await expect
+      .poll(() => page.evaluate(() => (window as unknown as W).ftb!.dev!.screens.current()))
+      .toBe('score');
+    await expect(page.locator('.score-page')).toContainText('Score:');
+    await expect(page.locator('.score-page')).toContainText('Days:');
+    await page.screenshot({ path: `test-results/score-${test.info().project.name}.png` });
     await page.evaluate(() => (window as unknown as W).ftb!.dev!.screens.close());
   });
 });

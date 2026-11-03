@@ -20,6 +20,7 @@ import {
   type ServiceKind,
 } from './context';
 import { renderChest, type ChestWindow } from './chest';
+import { renderScore } from './score';
 import { createFrame, watchScrolls } from './dom';
 import { renderCalendar, renderNotes, renderQuests } from './books';
 import { renderAwards, renderSheet, renderSkills } from './character';
@@ -98,6 +99,8 @@ export interface Screens {
   openService<K extends ServiceKind>(kind: K, house: ServiceDefs[K]): void;
   /** Put up a chest's window (DESIGN.md 17.12) over its contents. */
   openChest(chest: ChestWindow): void;
+  /** The end of the slice: the party, its days and its score (DESIGN.md 17.13). */
+  openScore(title: string): void;
   close(): void;
   /** The open screen, or null. */
   current(): BoardName | null;
@@ -180,6 +183,9 @@ export function installScreens(
     },
     openChest(chest) {
       mount('chest', chest.title, (ctx) => renderChest(ctx, chest));
+    },
+    openScore(title) {
+      mount('score', title, (ctx) => renderScore(ctx, title));
     },
     close,
     current() {

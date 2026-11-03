@@ -31,7 +31,7 @@ export const items: ItemRecord[] = [
   { name: 'ossuary-key', item: 'iron-key', position: [62.5, LOW, 9.2] },
 ];
 
-/** The goblins at the mouth, the dead below: seven for Old Tobin's five. */
+/** The goblins at the mouth, the dead below: six for Old Tobin's five, and their warden last. */
 export const spawns: SpawnRecord[] = [
   { kind: 'goblin-scout', position: [-3, 0, 13], yawDeg: 180 },
   { kind: 'goblin-scout', position: [3, 0, 17], yawDeg: 180 },
@@ -43,7 +43,7 @@ export const spawns: SpawnRecord[] = [
   { kind: 'skeleton-warrior', position: [52, LOW, 5], yawDeg: 270 },
   { kind: 'skeleton-warrior', position: [61, LOW, 8.5], yawDeg: 270 },
   { kind: 'skeleton-warrior', position: [45, LOW, 24], yawDeg: 180 },
-  { kind: 'skeleton-warrior', position: [47.6, LOW, 28.5], yawDeg: 180 },
+  { kind: 'skeleton-warden', position: [47.6, LOW, 28.5], yawDeg: 180 },
 ];
 
 export default function oldHalls(plan: LevelBuilder): void {

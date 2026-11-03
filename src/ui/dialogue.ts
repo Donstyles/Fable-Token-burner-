@@ -23,6 +23,8 @@ export interface DialogueHooks {
   onWindow(rect: DOMRect): void;
   /** A line for the status bar: a quest taken, a reward paid. */
   notice(text: string): void;
+  /** A quest was completed and its reward paid in this talk (DESIGN.md 17.13). */
+  onQuestDone?(quest: string): void;
   onClose(): void;
   /** The panel's cover (panel.ts) the board stands in; without it the board joins the words. */
   cover?: HTMLElement;
@@ -165,6 +167,9 @@ export function createDialogue(
     if (!outcome) return false;
     say(outcome.text);
     for (const line of outcome.notices) hooks.notice(line);
+    for (const change of outcome.changes ?? []) {
+      if (change.kind === 'quest-done') hooks.onQuestDone?.(change.quest);
+    }
     for (const b of open_.topics.children)
       b.classList.toggle('said', (b as HTMLElement).dataset['topic'] === id);
     return true;

@@ -503,18 +503,27 @@ export async function startDev(app: App): Promise<DevHandle> {
   // their line in the status bar.
   const bust = new Bust(scene, canvas, app.materials);
   let talking: Npc | null = null;
+  // The slice's last quest paid: the score comes up once the talk is over (DESIGN.md 17.13).
+  let scoreDue: string | null = null;
   const dialogue: Dialogue = createDialogue(uiLayer, state, QUESTS, {
     // The board over the panel, as MM6's (DESIGN.md 16.34).
     cover: strip.panel.cover,
     onSpeak: () => talking?.say(),
     onWindow: (rect) => bust.place(rect),
     notice: (line) => status.say(line, 6000),
+    onQuestDone: (quest) => {
+      if (quest === 'the-old-halls') scoreDue = 'The Old Halls lie quiet';
+    },
     onClose: () => {
       bust.hide();
       talking?.engage(false);
       talking = null;
       screens.toggleButtonBar(true);
       save();
+      if (scoreDue) {
+        screens.openScore(scoreDue);
+        scoreDue = null;
+      }
     },
   });
   const talkTo = (npc: Npc): void => {
@@ -577,11 +586,17 @@ export async function startDev(app: App): Promise<DevHandle> {
           return null;
         }
         try {
-          const c = await loadCharacter(scene, app.materials, stepper, characterUrl(p.kind), {
-            name: p.name,
-            position: p.position,
-            yawDeg: p.yawDeg,
-          });
+          const c = await loadCharacter(
+            scene,
+            app.materials,
+            stepper,
+            characterUrl((def ?? npcDef)?.character ?? p.kind),
+            {
+              name: p.name,
+              position: p.position,
+              yawDeg: p.yawDeg,
+            },
+          );
           return { p, c, def, npcDef };
         } catch (e) {
           diag(`${p.name} failed: ${e instanceof Error ? e.message : String(e)}`);

@@ -37,8 +37,8 @@ export type MemberPage = (typeof MEMBER_PAGES)[number];
 export const SERVICE_KINDS = ['tavern', 'temple', 'guild', 'trainer', 'shop'] as const;
 export type ServiceKind = (typeof SERVICE_KINDS)[number];
 
-/** What may be up over the view: a book, a house's service, or a chest's window. */
-export type BoardName = ScreenName | ServiceKind | 'chest';
+/** What may be up over the view: a book, a house's service, a chest's window, or the score. */
+export type BoardName = ScreenName | ServiceKind | 'chest' | 'score';
 
 /** The service record each kind of house is driven by (`src/game/services.ts`). */
 export interface ServiceDefs {
