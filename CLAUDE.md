@@ -38,7 +38,8 @@ anything. Both are the source of truth; update them when a decision changes.
 
 - `npm run check` – lint, typecheck, unit tests, secrets guard
 - `npm run e2e` – Playwright smoke tests against a production build
-- `npm run dev` – dev server; `?dev` shows the stats overlay
+- `npm run dev` – dev server; `?dev` shows the stats overlay and the tuning panel (the root
+  build carries the game without the panel; the build under `/dev/` has it, DESIGN 17.15)
 - `npm run level:build` – compile `levels/*` to `public/levels/` (run before
   `build`, `build:dev` or `dev`; CI and Pages do)
 - `npm run textures` – fetch the CC0 role textures listed in

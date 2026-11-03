@@ -73,8 +73,8 @@ Working list, in order:
        put down in the halls, their warden last), its reward, and the end-of-slice score screen. Done 2026-11-03 (DESIGN 17.13).
 5. [x] **Saves with slots** (ROADMAP M0): IndexedDB, an autosave and ten slots, Save and Load
        screens from the game menu, the title's Continue from the autosave. Done 2026-11-03 (DESIGN 17.14); the title's Continue was already the autosave.
-6. [ ] **The shipped app carries the game** (MM6-GAPS 32): the root URL boots the title and
-       the game, the dev panel left out; levels precached.
+6. [x] **The shipped app carries the game** (MM6-GAPS 32): the root URL boots the title and
+       the game, the dev panel left out; levels precached. Done 2026-11-03 (DESIGN 17.15).
 7. [ ] **Danger** (ROADMAP M2, no new art): monster records as data with tiers as tints,
        ranged attacks, fleeing, special attacks with saves, the conditions with their cures at
        the temple, rest refused near monsters, the wipe rule (a week later at the temple, the

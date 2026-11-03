@@ -3212,7 +3212,34 @@ slot 2 from the menu and finds the gold as saved.
 **Not yet**: a name typed for a save, a confirmation before a slot is overwritten, the
 export of a save to a file, saves surviving a deleted icon on the phone.
 
+### 17.15 The shipped app carries the game (the agentic loop, 2026-11-03)
+
+Until now the root URL booted an empty scene and the game lived only under /dev/ (MM6-GAPS
+"First"; ROADMAP M0 and M1a wanted the root to be the game). Now every build loads the game:
+the title, Gullhaven and the halls, through the same module (`startGame`, src/dev/index.ts,
+still the one place the runtime is assembled; moving it out of the harness is a later
+refactor, ROADMAP backlog 2). What tells the builds apart:
+
+- **The tuning panel** exists only on the dev server and in the build under /dev/, and shows
+  only with `?dev`; at the root it is never made. The stats overlay still answers `?dev`
+  anywhere.
+- **Storage per channel**: the autosave is `ftb-autosave-dev` under /dev/ and `ftb-autosave`
+  at the root, and the save slots' database is named the same way (17.14), so the two builds
+  on one origin never clobber each other's games.
+- **The levels are precached** in every build (vite.config.ts), so the installed app plays
+  Gullhaven and the halls offline.
+
+The root and /dev/ still build from every push; a release channel built from a tag (ROADMAP
+M1a) waits for a release.
+
+**Checked**: the smoke spec opens the root, finds the title with no tuning panel and no stats
+overlay, starts a new game and finds the land loaded with the band up, with no page error.
+
 ## 13. Decision log
+
+- 2026-11-03 – The shipped app carries the game (17.15): the root boots the title and the
+  game, the tuning panel only ever in the dev build, storage named per channel, levels
+  precached. The runtime stays assembled in src/dev/index.ts for now.
 
 - 2026-11-03 – Save slots (17.14): ten copies of the game in IndexedDB per channel, Save and
   Load screens from the game menu listing where, when and who; the autosave stays the game
