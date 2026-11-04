@@ -107,6 +107,19 @@ describe('save round trip', () => {
     expect(fromV3.ok && fromV3.state.party.every((c) => Object.keys(c.buffs).length === 0)).toBe(
       true,
     );
+    // A version-4 save had no shops: it gets an empty record.
+    const v4 = JSON.parse(JSON.stringify(kept)) as typeof kept;
+    v4.version = 4;
+    delete (v4.state as Partial<typeof v4.state>).shops;
+    const fromV4 = deserialize(v4);
+    expect(fromV4.ok && fromV4.state.shops).toEqual({});
+    const badShop = JSON.parse(JSON.stringify(kept)) as typeof kept;
+    badShop.state.shops['smithy'] = {
+      stock: [{ id: 'flail' } as never],
+      special: [],
+      restockAt: 0,
+    };
+    expect(deserialize(badShop)).toEqual({ ok: false, error: 'shops: smithy: unknown item' });
     const badBuff = JSON.parse(JSON.stringify(kept)) as typeof kept;
     (badBuff.state.party[0]!.buffs as Record<string, unknown>)['flight'] = { until: 1 };
     expect(deserialize(badBuff)).toEqual({ ok: false, error: 'party[0]: buff flight' });

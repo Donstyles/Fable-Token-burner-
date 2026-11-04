@@ -18,7 +18,7 @@ import { isSpellId } from './spells';
 import { STATS } from './stats';
 import type { GameState } from './state';
 
-export const SAVE_VERSION = 4;
+export const SAVE_VERSION = 5;
 
 export interface SaveFile {
   version: number;
@@ -56,7 +56,7 @@ export function toJson(state: GameState, savedAt = 0): string {
 
 /**
  * Bring an older save up to the current version: version 1 had no map state, version 2's
- * maps had no chests, version 3 had no buffs.
+ * maps had no chests, version 3 had no buffs, version 4 no shops.
  */
 export function migrate(file: SaveFile): SaveFile {
   if (file.version >= SAVE_VERSION) return file;
@@ -75,6 +75,7 @@ export function migrate(file: SaveFile): SaveFile {
       }
     }
   }
+  if (file.version < 5 && isRecord(state) && !isRecord(state.shops)) state.shops = {};
   return { ...file, version: SAVE_VERSION, state };
 }
 
@@ -230,6 +231,22 @@ function validateCharacter(v: unknown, index: number): string | null {
   );
 }
 
+function validateShops(v: unknown): string | null {
+  if (!isRecord(v)) return 'shops: missing';
+  for (const [id, shop] of Object.entries(v)) {
+    if (!isRecord(shop) || !isFiniteNumber(shop['restockAt'])) return `shops: ${id}`;
+    for (const list of ['stock', 'special'] as const) {
+      const items = shop[list];
+      if (!Array.isArray(items)) return `shops: ${id} ${list}`;
+      for (const item of items as unknown[]) {
+        const err = validateItem(item, `shops: ${id}`);
+        if (err) return err;
+      }
+    }
+  }
+  return null;
+}
+
 function validateQuests(q: unknown): string | null {
   if (!isRecord(q) || !Array.isArray(q['entries'])) return 'quests: missing';
   for (const e of q['entries'] as Partial<QuestEntry>[]) {
@@ -291,6 +308,7 @@ export function validateState(v: unknown): string | null {
     check(isRecord(s.flags) && Object.values(s.flags).every(isFiniteNumber), 'flags'),
     validateMaps(s.maps),
     validateBuffs(s.partyBuffs, 'partyBuffs', isPartyBuffId),
+    validateShops(s.shops),
   );
 }
 

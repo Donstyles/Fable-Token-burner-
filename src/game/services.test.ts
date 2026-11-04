@@ -2,19 +2,26 @@ import { describe, expect, it } from 'vitest';
 import { maxHp } from './character';
 import { afflict } from './conditions';
 import { freshState } from './fixtures';
+import { itemValue } from './enchant';
 import { createItem, itemDef } from './items';
 import { MINUTES_PER_DAY } from './time';
 import {
   buyFood,
   buyItem,
   buyPrice,
+  buyPriceOf,
   buySpellbook,
   type GuildDef,
   guildSpells,
   identifyItem,
+  identifyPrice,
+  isOpen,
   joinGuild,
+  merchantPercent,
+  onShelf,
   rentRoom,
   repairItem,
+  repairPrice,
   sellItem,
   sellPrice,
   type ShopDef,
@@ -23,9 +30,11 @@ import {
   templeHeal,
   templeMultiplier,
   templePrice,
+  tradesIn,
   train,
   type TrainerDef,
   trainerPrice,
+  visitShop,
 } from './services';
 
 const TAVERN: TavernDef = {
@@ -45,13 +54,25 @@ const GUILD: GuildDef = {
   priceMultiplier: 1,
 };
 const TRAINER: TrainerDef = { id: 'trainer', name: 'Trainer', maxLevel: 5, priceMultiplier: 1 };
+/** MM6's Knife Shoppe (items.md 6.5): any weapon of the first level, daggers on the shelf. */
 const SHOP: ShopDef = {
   id: 'smith',
-  name: 'Smith',
-  stock: ['dagger', 'potion-healing'],
-  priceMultiplier: 1.5,
-  identifyPrice: 20,
-  repairFraction: 0.3,
+  name: 'The Knife Shoppe',
+  kind: 'weapon',
+  val: 1.5,
+  regular: { level: 1, families: ['weapon'], slots: 6 },
+  special: { level: 2, families: ['dagger'], slots: 4 },
+  restockDays: 2,
+  hours: [6, 18],
+};
+const STORE: ShopDef = {
+  id: 'store',
+  name: "Traveler's Supply",
+  kind: 'general',
+  val: 2,
+  regular: { level: 1, families: ['potion', 'scroll', 'ring'], slots: 6 },
+  restockDays: 1,
+  hours: [5, 22],
 };
 
 describe('tavern', () => {
@@ -165,50 +186,124 @@ describe('trainer', () => {
   });
 });
 
-describe('shop', () => {
-  it('prices with the house markup and the Merchant skill', () => {
+describe('shop (DESIGN 17.19, items.md 6)', () => {
+  it('prices by MM7’s formulas from the house’s factor and the Merchant percentage', () => {
     const state = freshState();
     const knight = state.party[0]!;
-    // A mace is worth 50 (MM6's value).
-    const mace = itemDef('mace');
-    const copy = createItem('mace');
-    expect(buyPrice(SHOP, mace, knight)).toBe(75);
-    expect(sellPrice(SHOP, copy, knight)).toBe(25);
-    expect(sellPrice(SHOP, { ...copy, broken: true }, knight)).toBe(13);
-    // An enchanted copy is worth 100 gold a point more (DESIGN 17.18).
-    expect(sellPrice(SHOP, { ...copy, bonus: { kind: 'ac', power: 3 } }, knight)).toBe(175);
-    knight.skills.merchant = { level: 5, rank: 'expert' };
-    expect(buyPrice(SHOP, mace, knight)).toBe(60);
-    expect(sellPrice(SHOP, copy, knight)).toBe(30);
-    knight.skills.merchant = { level: 20, rank: 'master' };
-    expect(buyPrice(SHOP, mace, knight)).toBe(38);
-    expect(sellPrice(SHOP, copy, knight)).toBe(38);
+    // The document's example: a Longsword, value 50, at Val 1.5.
+    const sword = createItem('long-sword');
+    expect(merchantPercent(knight)).toBe(0);
+    expect(buyPrice(SHOP, itemDef('long-sword'), knight)).toBe(75);
+    expect(sellPrice(SHOP, sword, knight)).toBe(14);
+    expect(identifyPrice(SHOP, knight)).toBe(75);
+    expect(repairPrice(SHOP, sword, knight)).toBe(11);
+    knight.skills.merchant = { level: 4, rank: 'expert' };
+    expect(merchantPercent(knight)).toBe(15);
+    expect(buyPrice(SHOP, itemDef('long-sword'), knight)).toBe(63);
+    expect(sellPrice(SHOP, sword, knight)).toBe(21);
+    expect(identifyPrice(SHOP, knight)).toBe(63);
+    expect(repairPrice(SHOP, sword, knight)).toBe(9);
+    knight.skills.merchant = { level: 10, rank: 'master' };
+    expect(merchantPercent(knight)).toBe(37);
+    expect(buyPrice(SHOP, itemDef('long-sword'), knight)).toBe(50);
+    expect(sellPrice(SHOP, sword, knight)).toBe(32);
+    expect(identifyPrice(SHOP, knight)).toBe(47);
+    expect(repairPrice(SHOP, sword, knight)).toBe(6);
+    // Never below the value, and a broken thing fetches 1; a general store pays half.
+    knight.skills.merchant = { level: 30, rank: 'master' };
+    expect(buyPrice(SHOP, itemDef('long-sword'), knight)).toBe(50);
+    expect(sellPrice(SHOP, sword, knight)).toBe(50);
+    expect(sellPrice(SHOP, { ...sword, broken: true }, knight)).toBe(1);
+    expect(sellPrice(STORE, sword, knight)).toBe(25);
+    // An enchanted copy is priced by its worth.
+    const ring = { ...createItem('copper-ring'), bonus: { kind: 'ac' as const, power: 3 } };
+    expect(sellPrice(STORE, ring, knight)).toBe(200);
   });
 
-  it('buys into the grid, sells from it, identifies and repairs', () => {
+  it('fills its shelves on a visit from its families at its level, and again after its period', () => {
     const state = freshState();
-    expect(buyItem(state, SHOP, 'bow', 0)).toEqual({ ok: false, reason: 'not-sold' });
-    // A dagger is worth 8 (MM6): 12 at the house's markup.
-    const bought = buyItem(state, SHOP, 'dagger', 0);
-    expect(bought.ok && bought.price).toBe(12);
-    expect(state.gold).toBe(188);
+    const first = visitShop(state, SHOP);
+    expect(first.stock).toHaveLength(6);
+    expect(first.special).toHaveLength(4);
+    for (const item of first.stock) {
+      expect(itemDef(item).kind).toBe('weapon');
+      expect(itemDef(item).level).toBe(1);
+      expect(item.identified).toBe(true);
+    }
+    for (const item of first.special) {
+      expect(itemDef(item).family).toBe('dagger');
+      expect(itemDef(item).level).toBeLessThanOrEqual(2);
+    }
+    expect(first.restockAt).toBe(state.clock.minutes + 2 * MINUTES_PER_DAY);
+    // Back the next day: the same shelves; after two days, new ones.
+    state.clock.minutes += MINUTES_PER_DAY;
+    expect(visitShop(state, SHOP)).toBe(first);
+    state.clock.minutes += MINUTES_PER_DAY;
+    const again = visitShop(state, SHOP);
+    expect(again).not.toBe(first);
+    expect(again.restockAt).toBe(state.clock.minutes + 2 * MINUTES_PER_DAY);
+    // A general store's goods are its families' first tier; it never has a special shelf.
+    const store = visitShop(state, STORE);
+    expect(store.special).toEqual([]);
+    for (const item of store.stock)
+      expect(['potion', 'scroll', 'ring']).toContain(itemDef(item).kind);
+  });
+
+  it('keeps hours and deals only in its own kind', () => {
+    expect(isOpen(SHOP, 6 * 60)).toBe(true);
+    expect(isOpen(SHOP, 17 * 60 + 59)).toBe(true);
+    expect(isOpen(SHOP, 18 * 60)).toBe(false);
+    expect(isOpen(SHOP, 5 * 60 + 30)).toBe(false);
+    expect(isOpen(STORE, 21 * 60)).toBe(true);
+    expect(tradesIn(SHOP, itemDef('dagger'))).toBe(true);
+    expect(tradesIn(SHOP, itemDef('leather-armor'))).toBe(false);
+    expect(tradesIn(STORE, itemDef('potion-healing'))).toBe(false);
+    const armoury: ShopDef = { ...SHOP, kind: 'armor' };
+    expect(tradesIn(armoury, itemDef('helmet'))).toBe(true);
+    expect(tradesIn(armoury, itemDef('boots'))).toBe(false);
+    const magic: ShopDef = { ...SHOP, kind: 'magic' };
+    expect(tradesIn(magic, itemDef('boots'))).toBe(true);
+    expect(tradesIn(magic, itemDef('copper-ring'))).toBe(true);
+    expect(tradesIn(magic, itemDef('dagger'))).toBe(false);
+    expect(onShelf({ level: 1, families: ['misc'], slots: 1 }, itemDef('scarab-ring'))).toBe(true);
+    expect(onShelf({ level: 1, families: ['misc'], slots: 1 }, itemDef('helmet'))).toBe(false);
+  });
+
+  it('buys off a shelf into the grid, sells its own kind, names and mends', () => {
+    const state = freshState();
+    state.gold = 1000;
+    const shelves = visitShop(state, SHOP);
+    const first = shelves.stock[0]!;
     const knight = state.party[0]!;
-    const index = knight.grid.items.findIndex((p) => p.item.id === 'dagger');
+    const price = buyPriceOf(SHOP, itemValue(first, itemDef(first)), knight);
+    expect(buyItem(state, SHOP, 'stock', 99, 0)).toEqual({ ok: false, reason: 'not-sold' });
+    const bought = buyItem(state, SHOP, 'stock', 0, 0);
+    expect(bought.ok && bought.price).toBe(price);
+    expect(bought.ok && bought.item).toBe(first);
+    expect(state.gold).toBe(1000 - price);
+    expect(shelves.stock).toHaveLength(5);
+    const index = knight.grid.items.findIndex((p) => p.item === first);
     expect(index).toBeGreaterThanOrEqual(0);
     expect(identifyItem(state, SHOP, 0, index)).toEqual({ ok: false, reason: 'needless' });
     knight.grid.items[index]!.item.identified = false;
-    expect(identifyItem(state, SHOP, 0, index)).toEqual({ ok: true, price: 20 });
+    const named = identifyItem(state, SHOP, 0, index);
+    expect(named).toEqual({ ok: true, price: 75 });
     expect(knight.grid.items[index]!.item.identified).toBe(true);
     expect(repairItem(state, SHOP, 0, index)).toEqual({ ok: false, reason: 'needless' });
     knight.grid.items[index]!.item.broken = true;
-    expect(repairItem(state, SHOP, 0, index)).toEqual({ ok: true, price: 2 });
+    const mended = repairItem(state, SHOP, 0, index);
+    expect(mended.ok).toBe(true);
     expect(knight.grid.items[index]!.item.broken).toBe(false);
-    expect(state.gold).toBe(166);
-    expect(sellItem(state, SHOP, 0, index)).toEqual({ ok: true, price: 4, item: 'dagger' });
-    expect(state.gold).toBe(170);
-    expect(knight.grid.items.some((p) => p.item.id === 'dagger')).toBe(false);
+    const sold = sellItem(state, SHOP, 0, index);
+    expect(sold.ok && sold.item).toBe(first);
+    expect(knight.grid.items.some((p) => p.item === first)).toBe(false);
+    // The potion is not a smith's trade, but the store takes it at half.
+    const potion = knight.grid.items.findIndex((p) => p.item.id === 'potion-healing');
+    expect(sellItem(state, SHOP, 0, potion)).toEqual({ ok: false, reason: 'trade' });
+    expect(identifyItem(state, STORE, 0, potion)).toEqual({ ok: false, reason: 'trade' });
+    expect(sellItem(state, STORE, 0, potion)).toMatchObject({ ok: true, price: 5 });
     expect(sellItem(state, SHOP, 0, 99)).toEqual({ ok: false, reason: 'item' });
     state.gold = 1;
-    expect(buyItem(state, SHOP, 'dagger', 0)).toEqual({ ok: false, reason: 'gold' });
+    expect(buyItem(state, SHOP, 'stock', 0, 0)).toEqual({ ok: false, reason: 'gold' });
   });
 });

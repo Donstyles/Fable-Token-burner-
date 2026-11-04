@@ -15,6 +15,7 @@ import { shareExperience } from './experience';
 import { addItem, equipItem, type InventoryGrid } from './inventory';
 import { createItem, type ItemId } from './items';
 import { createQuestLog, type QuestLog, type QuestReward } from './quests';
+import type { ShopState } from './services';
 import type { WeaponSkill } from './skills';
 import { createClock, type GameClock } from './time';
 
@@ -49,6 +50,8 @@ export interface GameState {
   maps: Record<string, MapState>;
   /** Timed spells on the whole party (DESIGN.md 17.17). */
   partyBuffs: PartyBuffs;
+  /** Each shop's shelves as the party last found them, by house id (DESIGN.md 17.19). */
+  shops: Record<string, ShopState>;
 }
 
 /**
@@ -146,6 +149,7 @@ export function newGame(characters: readonly Character[], options: NewGameOption
       flags: {},
       maps: {},
       partyBuffs: {},
+      shops: {},
     },
   };
 }

@@ -8,9 +8,11 @@
  * then spellbooks of its school up to its level, priced by spell level (ours, in MM6's range);
  * buying teaches the member at once (MM6 sells a book to read, a simplification). Trainer: one
  * level when the experience is there, 25 gold per level of the new level (ours), up to the
- * trainer's maximum. Shop: buy at value × house markup, sell at half value, both bettered by the
- * active member's Merchant skill (2 % per point of skill bonus, to 50 %; MM6's exact curve is
- * not agreed); identify and repair for a fee. Gold is the party's.
+ * trainer's maximum. Shop (DESIGN.md 17.19): four kinds that buy, name and mend their own
+ * kind of thing (a general store buys anything at half and does neither), shelves drawn at a
+ * treasure level from the shop's families and renewed on its own period when the party
+ * visits, opening hours, and MM7's prices from the house's factor and the member's Merchant
+ * percentage (items.md 6.3: they reproduce MM6's tavern and fare prices). Gold is the party's.
  */
 import type { Character } from './character';
 import { healCharacter, isLiving, maxHp, restoreSp } from './character';
@@ -18,13 +20,15 @@ import { type Affliction, afflictions, cureAll, worstCondition } from './conditi
 import { canLevelUp, levelUp, type LevelUpResult, trainingCost } from './experience';
 import { addItem, removeItem } from './inventory';
 import { itemValue } from './enchant';
-import { createItem, type ItemDef, type ItemId, type ItemInstance, itemDef } from './items';
+import { type ItemDef, type ItemInstance, type ItemKind, itemDef } from './items';
 import { rest, type RestResult } from './rest';
-import { type MagicSchool, skillBonus } from './skills';
+import { type MagicSchool, RANK_MULTIPLIER } from './skills';
+import { mulberry32, type Rng } from './rng';
+import { randomItemWhere } from './treasure';
 import { canLearnSpell, type LearnResult, learnSpell } from './spellbook';
 import { type SpellDef, type SpellId, spellsOfSchool } from './spells';
 import { type GameState, spendGold } from './state';
-import { gameDate } from './time';
+import { gameDate, MINUTES_PER_DAY } from './time';
 
 type MemberError = { ok: false; reason: 'member' };
 
@@ -206,57 +210,183 @@ export function train(state: GameState, trainer: TrainerDef, index: number): Tra
   return { ok: true, price, result: levelUp(c) };
 }
 
-// Shop
+// Shop (DESIGN.md 17.19; docs/gaps/items.md 6)
+
+/** MM6's four kinds: smiths of arms, smiths of armour, magic shops and general stores. */
+export type ShopKind = 'weapon' | 'armor' | 'magic' | 'general';
+
+/** A shelf: so many slots drawn at a treasure level from the named families or kinds. */
+export interface StockList {
+  level: number;
+  /** Catalogue family ids ('longsword', 'dagger'), item kinds ('potion'), or 'misc' (a magic shop's everything else). */
+  families: readonly string[];
+  slots: number;
+}
 
 export interface ShopDef {
   id: string;
   name: string;
-  stock: readonly ItemId[];
-  /** Markup on value when buying from the shop. */
-  priceMultiplier: number;
-  identifyPrice: number;
-  /** Fraction of value charged to repair. */
-  repairFraction: number;
+  kind: ShopKind;
+  /** The house's factor, Val, 1.5 to 4 (items.md 6.3, 6.5). */
+  val: number;
+  regular: StockList;
+  special?: StockList;
+  /** Days between restocks, counted from a visit (items.md 6.2). */
+  restockDays: number;
+  /** Open from the first hour to the second (items.md 6.5). */
+  hours: readonly [number, number];
+  /** The kinds it buys, identifies and repairs, when not its kind's own (a village smithy's arms and armour). */
+  trades?: readonly ItemKind[];
 }
 
-export const MERCHANT_PER_POINT = 0.02;
-export const MERCHANT_MAX = 0.5;
+/** A shop's shelves as the party last found them, and when they are next renewed. */
+export interface ShopState {
+  stock: ItemInstance[];
+  special: ItemInstance[];
+  /** The game minute from which a visit renews both lists. */
+  restockAt: number;
+}
 
-/** The active member's Merchant advantage, 0 to 0.5. */
-export function merchantFactor(c: Character): number {
-  return Math.min(MERCHANT_MAX, skillBonus(c.skills, 'merchant') * MERCHANT_PER_POINT);
+const ARMOUR_KINDS: readonly ItemKind[] = ['armor', 'shield', 'helmet', 'gauntlets'];
+
+/** Does the shop deal in this kind of thing: buy it, name it, mend it (items.md 6.1)? */
+export function tradesIn(shop: ShopDef, def: ItemDef): boolean {
+  if (shop.trades) return shop.trades.includes(def.kind);
+  switch (shop.kind) {
+    case 'weapon':
+      return def.kind === 'weapon';
+    case 'armor':
+      return ARMOUR_KINDS.includes(def.kind);
+    case 'magic':
+      return def.kind !== 'weapon' && !ARMOUR_KINDS.includes(def.kind);
+    case 'general':
+      return false;
+  }
+}
+
+/** Is a thing one of a shelf's families: by its family, its kind, or 'misc' for a magic shop's. */
+export function onShelf(list: StockList, def: ItemDef): boolean {
+  return list.families.some((f) => {
+    if (f === 'misc') return def.kind !== 'weapon' && !ARMOUR_KINDS.includes(def.kind);
+    return f === def.kind || f === def.family;
+  });
+}
+
+/**
+ * The member's Merchant percentage, M (MM7's rule, items.md 6.3): rank multiplier × skill +
+ * 7 with the skill, 0 without; reputation waits. At most 100.
+ */
+export function merchantPercent(c: Character): number {
+  const m = c.skills.merchant;
+  if (!m) return 0;
+  return Math.min(100, RANK_MULTIPLIER[m.rank] * m.level + 7);
+}
+
+/**
+ * MM7 works its prices in whole gold, cutting the fraction off at each step (OE
+ * `PriceCalculator.cpp`); so do these, which is what makes the document's examples come out.
+ */
+const cut = Math.floor;
+
+/** Buying: value × Val × (100 − M) ÷ 100, never below the value. */
+export function buyPriceOf(shop: ShopDef, value: number, c: Character): number {
+  const base = cut(value * shop.val);
+  return Math.max(value, cut((base * (100 - merchantPercent(c))) / 100));
 }
 
 export function buyPrice(shop: ShopDef, def: ItemDef, c: Character): number {
-  return Math.max(1, Math.round(def.value * shop.priceMultiplier * (1 - merchantFactor(c))));
+  return buyPriceOf(shop, def.value, c);
 }
 
-/** What the shop pays for a copy: its worth with its enchantment, half of it when broken. */
+/**
+ * Selling: value ÷ (Val + 2) + value × M ÷ 100, at least 1 and at most the value; a broken
+ * thing fetches 1. A general store pays half the value for anything.
+ */
 export function sellPrice(shop: ShopDef, item: ItemInstance, c: Character): number {
+  if (item.broken) return 1;
   const value = itemValue(item, itemDef(item));
-  const base = value * 0.5 * (1 + merchantFactor(c));
-  return Math.max(1, Math.round(Math.min(value, base) * (item.broken ? 0.5 : 1)));
+  if (shop.kind === 'general') return Math.max(1, cut(value / 2));
+  const price = cut(value / (shop.val + 2)) + cut((value * merchantPercent(c)) / 100);
+  return Math.max(1, Math.min(value, price));
+}
+
+/** Identifying: 50 × Val × (100 − M) ÷ 100, never below a third of 50 × Val. */
+export function identifyPrice(shop: ShopDef, c: Character): number {
+  const base = cut(50 * shop.val);
+  return Math.max(cut(base / 3), cut((base * (100 - merchantPercent(c))) / 100));
+}
+
+/** Repairing: value ÷ (6 − Val) × (100 − M) ÷ 100, never below a third of value ÷ (6 − Val). */
+export function repairPrice(shop: ShopDef, item: ItemInstance, c: Character): number {
+  const base = cut(itemValue(item, itemDef(item)) / (6 - shop.val));
+  return Math.max(1, Math.max(cut(base / 3), cut((base * (100 - merchantPercent(c))) / 100)));
+}
+
+/** Open at this game minute: from the first hour up to the second. */
+export function isOpen(shop: ShopDef, minutes: number): boolean {
+  const h = gameDate(minutes).hour;
+  return h >= shop.hours[0] && h < shop.hours[1];
+}
+
+/**
+ * The shop's shelves as the party finds them: made afresh when a visit falls past the
+ * restock time (never while unvisited), each slot one thing of the shelf's level from its
+ * families, always identified (items.md 6.2, MM7's rule).
+ */
+export function visitShop(state: GameState, shop: ShopDef, rng?: Rng): ShopState {
+  const now = state.clock.minutes;
+  const kept = state.shops[shop.id];
+  if (kept && now < kept.restockAt) return kept;
+  const r = rng ?? mulberry32((state.seed * 7919 + now) >>> 0);
+  const shelf = (list: StockList | undefined): ItemInstance[] => {
+    if (!list) return [];
+    const out: ItemInstance[] = [];
+    for (let i = 0; i < list.slots; i++) {
+      const item = randomItemWhere(list.level, r, (def) => onShelf(list, def));
+      if (item) out.push({ ...item, identified: true });
+    }
+    return out;
+  };
+  const fresh: ShopState = {
+    stock: shelf(shop.regular),
+    special: shelf(shop.special),
+    restockAt: now + shop.restockDays * MINUTES_PER_DAY,
+  };
+  state.shops[shop.id] = fresh;
+  return fresh;
 }
 
 export type BuyResult =
-  | { ok: true; price: number; at: { x: number; y: number } }
+  | { ok: true; price: number; item: ItemInstance; at: { x: number; y: number } }
   | { ok: false; reason: 'not-sold' | 'gold' | 'room' | 'member' };
 
-export function buyItem(state: GameState, shop: ShopDef, id: ItemId, index: number): BuyResult {
-  if (!shop.stock.includes(id)) return { ok: false, reason: 'not-sold' };
+/** Buy the thing in a shelf's slot into the member's pack; it leaves the shelf. */
+export function buyItem(
+  state: GameState,
+  shop: ShopDef,
+  list: 'stock' | 'special',
+  slot: number,
+  index: number,
+): BuyResult {
+  const shelves = visitShop(state, shop);
+  const item = shelves[list][slot];
+  if (!item) return { ok: false, reason: 'not-sold' };
   const c = member(state, index);
   if (isError(c)) return c;
-  const price = buyPrice(shop, itemDef(id), c);
+  const price = buyPriceOf(shop, itemValue(item, itemDef(item)), c);
   if (state.gold < price) return { ok: false, reason: 'gold' };
-  const at = addItem(c.grid, createItem(id));
+  const at = addItem(c.grid, item);
   if (!at) return { ok: false, reason: 'room' };
   spendGold(state, price);
-  return { ok: true, price, at };
+  shelves[list].splice(slot, 1);
+  return { ok: true, price, item, at };
 }
 
 export type SellResult =
-  { ok: true; price: number; item: ItemId } | { ok: false; reason: 'member' | 'item' };
+  | { ok: true; price: number; item: ItemInstance }
+  | { ok: false; reason: 'member' | 'item' | 'trade' };
 
+/** Sell from the pack: a shop of a kind takes only its own kind; a general store anything. */
 export function sellItem(
   state: GameState,
   shop: ShopDef,
@@ -267,14 +397,18 @@ export function sellItem(
   if (isError(c)) return c;
   const placed = c.grid.items[gridIndex];
   if (!placed) return { ok: false, reason: 'item' };
+  if (shop.kind !== 'general' && !tradesIn(shop, itemDef(placed.item))) {
+    return { ok: false, reason: 'trade' };
+  }
   const price = sellPrice(shop, placed.item, c);
   removeItem(c.grid, gridIndex);
   state.gold += price;
-  return { ok: true, price, item: placed.item.id };
+  return { ok: true, price, item: placed.item };
 }
 
 export type ServiceItemResult =
-  { ok: true; price: number } | { ok: false; reason: 'member' | 'item' | 'gold' | 'needless' };
+  | { ok: true; price: number }
+  | { ok: false; reason: 'member' | 'item' | 'gold' | 'needless' | 'trade' };
 
 export function identifyItem(
   state: GameState,
@@ -286,14 +420,12 @@ export function identifyItem(
   if (isError(c)) return c;
   const placed = c.grid.items[gridIndex];
   if (!placed) return { ok: false, reason: 'item' };
+  if (!tradesIn(shop, itemDef(placed.item))) return { ok: false, reason: 'trade' };
   if (placed.item.identified) return { ok: false, reason: 'needless' };
-  if (!spendGold(state, shop.identifyPrice)) return { ok: false, reason: 'gold' };
+  const price = identifyPrice(shop, c);
+  if (!spendGold(state, price)) return { ok: false, reason: 'gold' };
   placed.item.identified = true;
-  return { ok: true, price: shop.identifyPrice };
-}
-
-export function repairPrice(shop: ShopDef, def: ItemDef): number {
-  return Math.max(1, Math.round(def.value * shop.repairFraction));
+  return { ok: true, price };
 }
 
 export function repairItem(
@@ -306,8 +438,9 @@ export function repairItem(
   if (isError(c)) return c;
   const placed = c.grid.items[gridIndex];
   if (!placed) return { ok: false, reason: 'item' };
+  if (!tradesIn(shop, itemDef(placed.item))) return { ok: false, reason: 'trade' };
   if (!placed.item.broken) return { ok: false, reason: 'needless' };
-  const price = repairPrice(shop, itemDef(placed.item));
+  const price = repairPrice(shop, placed.item, c);
   if (!spendGold(state, price)) return { ok: false, reason: 'gold' };
   placed.item.broken = false;
   return { ok: true, price };

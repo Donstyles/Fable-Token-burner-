@@ -69,6 +69,8 @@ export interface ItemDef {
   picture: ItemId;
   /** What an unidentified one is called. */
   generic: string;
+  /** The catalogue family it belongs to (catalogue.ts), for the shops' shelves. */
+  family?: string;
 }
 
 export const ITEM_IDS = [
@@ -224,6 +226,7 @@ function fromCatalogue(e: (typeof CATALOGUE)[number]): ItemDef {
     difficulty: e.difficulty,
     picture: f.picture,
     generic: f.generic,
+    family: f.id,
   };
   if (f.skill) def.skill = f.skill;
   if (f.twoHanded) def.twoHanded = true;

@@ -7,7 +7,14 @@
  * MM6's standard enchantments (enchant.ts).
  */
 import { itemValue, rollStandardBonus } from './enchant';
-import { ITEM_IDS, ITEMS, type ItemId, type ItemInstance, type ItemKind } from './items';
+import {
+  ITEM_IDS,
+  ITEMS,
+  type ItemDef,
+  type ItemId,
+  type ItemInstance,
+  type ItemKind,
+} from './items';
 import { addItem, createGrid, type InventoryGrid } from './inventory';
 import type { MonsterDef } from './monsters';
 import { rollDice, type Rng } from './rng';
@@ -46,8 +53,17 @@ export function weightAt(id: ItemId, level: number): number {
  * enchantment by the level's chance (enchant.ts).
  */
 export function randomItem(level: number, rng: Rng, kind?: ItemKind): ItemInstance | null {
+  return randomItemWhere(level, rng, (def) => !kind || def.kind === kind);
+}
+
+/** One random item of a treasure level among the kinds `accept` allows; null when none comes. */
+export function randomItemWhere(
+  level: number,
+  rng: Rng,
+  accept: (def: ItemDef) => boolean,
+): ItemInstance | null {
   const lvl = Math.max(1, Math.min(6, Math.round(level)));
-  const choices = ITEM_IDS.filter((id) => !kind || ITEMS[id].kind === kind).map((id) => ({
+  const choices = ITEM_IDS.filter((id) => accept(ITEMS[id])).map((id) => ({
     id,
     weight: weightAt(id, lvl),
   }));
