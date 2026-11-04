@@ -129,14 +129,15 @@ Don't stop until it is done." docs/CAMPAIGN.md is the walk: _The Doors of the Se
 steps through three regions and eight dungeons. The loop builds it in this order and pushes at
 every step:
 
-18. [ ] **The campaign's systems** (CAMPAIGN "What the campaign needs"): a monster that carries a
+18. [x] **The campaign's systems** (CAMPAIGN "What the campaign needs"): a monster that carries a
         named thing; the slain stay slain (uniques for good, the rest a month); the score at the
         thread's end; the campaign test.
-19. [ ] **Thirty-nine monster records**: six more families on the six bodies, each its own tints
+19. [x] **Thirty-nine monster records**: six more families on the six bodies, each its own tints
         and way of fighting (thug, reaver, cultist, drowned, witch, hobgoblin), and the uniques
         the dungeons want (Grik, the Reed Queen, the Abbot, the Sea King).
-20. [ ] **Gullhaven's thread**: Anselm's _The Seal and the Stone_, Maren's _The Goblin King_ and
-        the Goblin Warren (dungeon 4); the headland's cave for the finale.
+20. [x] **Gullhaven's thread**: Anselm's _The Seal and the Stone_, Maren's _The Goblin King_ and
+        the Goblin Warren (dungeon 4); the headland's cave for the finale. Done 2026-11-04
+        (DESIGN 17.24), with items 18 and 19.
 21. [ ] **Harrowmere's thread**: the chart in Orrin's chest and Wyn's _The Chart_; the Barrow
         King's seal; the pass north to the Mire.
 22. [ ] **The Mire**, the third region: Fenwick on its causeways with six working houses, the

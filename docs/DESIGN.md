@@ -3695,8 +3695,65 @@ mound checking the points, the door, the key, the three chests and the eleven de
 **Not yet**: a key of the barrow's own (every lock takes the iron key), the kings' effigies
 (no model), the hoard's artifacts.
 
+### 17.24 The campaign: its systems, its monsters, and Gullhaven's thread (the agentic loop, 2026-11-04)
+
+The owner, 2026-11-04: "Don't stop till everything is superb and content is 20%. It should
+feel like a deliberate and handcrafted campaign that walks the player through all the
+content." docs/CAMPAIGN.md is the sheet: _The Doors of the Sea Kings_, eleven steps through
+three regions and eight dungeons, each pitched at a level and gated on the step before. PLAN
+items 18 to 25 build it. This section records the systems the thread stands on, the monster
+roster, and the first stretch of the walk.
+
+- **A monster may carry a thing** (`MonsterDef.carries`, `TierSpec.carries`): a named item always
+  on the body, found with the gold and the chance drop when the corpse is searched
+  (`monsterDrop` returns it as `carried`). The Warden carries the Seal of the Halls, the Barrow
+  King the Seal of the Barrow, the Warden of the Deep the Seal of the Deep, the Abbot his
+  confession. The seals, the chart and the confession are `misc` things worth nothing (so no
+  shop takes them, 17.20), drawn by the kind's glyph.
+- **The slain stay slain** (`MapState.slain`, src/game/state.ts; save version 6): a map records
+  each kill by the spawn's name with the game minute; on load a spawn still down is left out,
+  a unique (`MonsterDef.unique`, every family's `uniques`) for good and the rest for a month
+  (`REFILL_MINUTES`, as MM6 refilled its maps on a timer). A slain boss does not stand up again
+  when the party comes back for the chest behind him.
+- **The score** comes up when _The First Door_ is paid, the thread's last step, not after the
+  Old Halls as the slice had it; its page says Act One's ending. `dev.slay(name)` lets the
+  tests walk the thread without fighting it.
+- **Thirty-nine monster records** (`LATER_FAMILIES`, src/game/monsters.ts): to the goblins,
+  skeletons, bandits and nomads come thugs (bandit body; a bruiser's blow knocks out), reavers
+  (nomad body; archers, a weakening chief), the cult of the doors (villager body; acolytes'
+  fire bolts, cultists' curses, hierophants both), the drowned (skeleton body in mere green;
+  disease, the lord's paralysis), the Mire's witches (villager-woman body; sparks, sleep,
+  madness) and hobgoblins (goblin body; weakening brutes). Uniques: Grik the Warren-Lord, the
+  Reed Queen, the Abbot, the Warden of the Deep, the Sea King, Gorrak the Gatekeeper, beside
+  the Warden, the Barrow King and Black Orrin. Each tier its own tint, as MM6 recoloured one
+  picture a tier; a new body from Meshy would replace a family's at a stroke.
+- **Gullhaven's thread** (CAMPAIGN steps 3 and 4): _The Seal and the Stone_, Brother Anselm's
+  (a deliver quest: the Warden's seal to him; he keeps it under the altar and sends the party
+  west to Sister Wyn, 200 gold and 500 experience); his topic _The road west_ afterwards.
+  _The Goblin King_, Maren's, once her scouts are driven off: Grik in the warren, 350 gold and
+  900 experience. **The Goblin Warren** (levels/goblin-warren/level.ts, dungeon 4): a tunnel
+  from the mouth on the second hill to the den with its sleeping pocket and the shaman's green
+  fire and chest, a narrowing passage north, the deep cave where two hobgoblins and the goblins'
+  king stand with the key, and a Sea Kings' vault the goblins squat in, Grik on its floor
+  behind a locked door, the warren's chest behind him (levels 2, 2 and 3, a Fire Bolt scroll).
+  Eleven goblins and hobgoblins. The region gains the warren's cave and track up from the
+  goblins' camp with two scouts at the mouth, and the Undercroft's cave under the headland's
+  ruin, its tunnel in rock until the finale (step 11).
+
+**Checked**: the monster test (39 records, the Warden's seal), the treasure test (the carried
+thing always found), the state and save tests (the slain, the migration from version 5), the
+world test, the kernel's Gullhaven test (three portals); `level:build` validates Gullhaven and
+the warren; an end-to-end test boots the warren.
+
+**Not yet**: Harrowmere's and the Mire's stretches of the thread (PLAN 21 to 23), the
+Undercroft (24), a monster's body of its own per family.
+
 ## 13. Decision log
 
+- 2026-11-04 – The campaign (17.24, docs/CAMPAIGN.md): The Doors of the Sea Kings, eleven steps
+  through three regions and eight dungeons; monsters may carry things, the slain stay slain,
+  the score at the thread's end; thirty-nine monster records on six bodies; Gullhaven's
+  stretch: Anselm's seal, Maren's Goblin King and the Goblin Warren (dungeon 4).
 - 2026-11-04 – The Barrow of Kings (17.23): the third dungeon behind Harrowmere's barrow cave,
   its king a second skeleton unique, Sister Wyn's second quest; the log at twelve.
 - 2026-11-04 – Harrowmere peopled (17.22): five townsfolk with talk and news, five quests (the
