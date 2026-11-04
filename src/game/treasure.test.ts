@@ -98,3 +98,14 @@ describe('treasure (DESIGN 17.12)', () => {
     }
   });
 });
+
+describe('what the campaign hangs on a body', () => {
+  it('is always found: the Warden carries the Seal of the Halls, a brigand carries nothing', () => {
+    const rng = mulberry32(3);
+    for (let i = 0; i < 5; i++) {
+      expect(monsterDrop(MONSTERS['skeleton-warden']!, rng).carried?.id).toBe('seal-of-the-halls');
+    }
+    expect(monsterDrop(MONSTERS['brigand']!, rng).carried).toBeNull();
+    expect(monsterDrop(MONSTERS['the-abbot']!, rng).carried?.id).toBe('abbots-confession');
+  });
+});

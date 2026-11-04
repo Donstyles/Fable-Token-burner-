@@ -14,6 +14,7 @@ import {
   type ItemId,
   type ItemInstance,
   type ItemKind,
+  createItem,
 } from './items';
 import { addItem, createGrid, type InventoryGrid } from './inventory';
 import type { MonsterDef } from './monsters';
@@ -129,9 +130,11 @@ export function chestContents(
 export function monsterDrop(
   def: MonsterDef,
   rng: Rng,
-): { gold: number; item: ItemInstance | null } {
+): { gold: number; item: ItemInstance | null; carried: ItemInstance | null } {
   const gold = def.gold ? rollDice(def.gold, rng) : 0;
   const drop = def.drop;
   const item = drop && rng() < drop.chance ? randomItem(drop.level, rng, drop.kind) : null;
-  return { gold, item };
+  // What the campaign hung on the body is always there (docs/CAMPAIGN.md).
+  const carried = def.carries ? createItem(def.carries) : null;
+  return { gold, item, carried };
 }

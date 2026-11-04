@@ -7,11 +7,14 @@ import {
   addGold,
   grantReward,
   livingMembers,
+  mapState,
   newGame,
+  REFILL_MINUTES,
   spendGold,
   starterKit,
   STARTING_FOOD,
   STARTING_GOLD,
+  stillSlain,
   travelTo,
 } from './state';
 
@@ -83,5 +86,21 @@ describe('purse and rewards', () => {
     for (const c of state.party) while (addItem(c.grid, createItem('potion-healing'))) continue;
     const outcome = grantReward(state, { items: ['dagger'] });
     expect(outcome.dropped).toEqual(['dagger']);
+  });
+});
+
+describe('the slain stay slain (docs/CAMPAIGN.md)', () => {
+  it('a unique for good, the rest a month, and the map remembers from first use', () => {
+    const now = 100 * 24 * 60;
+    expect(stillSlain(undefined, now, false)).toBe(false);
+    expect(stillSlain(now - 1, now, false)).toBe(true);
+    expect(stillSlain(now - REFILL_MINUTES + 1, now, false)).toBe(true);
+    expect(stillSlain(now - REFILL_MINUTES, now, false)).toBe(false);
+    expect(stillSlain(now - 10 * REFILL_MINUTES, now, true)).toBe(true);
+    const state = freshState();
+    const map = mapState(state, 'old-halls');
+    expect(map.slain).toEqual({});
+    map.slain['skeleton-warden'] = 5;
+    expect(mapState(state, 'old-halls').slain).toEqual({ 'skeleton-warden': 5 });
   });
 });

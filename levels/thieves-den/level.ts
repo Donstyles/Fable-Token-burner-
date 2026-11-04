@@ -214,6 +214,7 @@ export default function thievesDen(plan: LevelBuilder): void {
     at: [46, LOW, 32],
     facing: [0, 0, -1],
     levels: [2, 3],
-    items: ['potion-healing', 'scroll-fire-bolt'],
+    // The Sea Kings' chart the smugglers took off the Grange (docs/CAMPAIGN.md step 6).
+    items: ['potion-healing', 'scroll-fire-bolt', 'sea-kings-chart'],
   });
 }

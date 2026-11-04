@@ -212,6 +212,11 @@ export const ITEM_IDS = [
   'iron-key',
   'letter',
   'parcel',
+  'seal-of-the-halls',
+  'seal-of-the-barrow',
+  'seal-of-the-deep',
+  'sea-kings-chart',
+  'abbots-confession',
 ] as const;
 export type ItemId = (typeof ITEM_IDS)[number];
 
@@ -314,6 +319,46 @@ const OTHERS: ItemDef[] = [
     picture: 'parcel',
     generic: 'Parcel',
   },
+  // The campaign's things (docs/CAMPAIGN.md): the wardens' seals, the chart, the confession.
+  ...(
+    [
+      [
+        'seal-of-the-halls',
+        'The Seal of the Halls',
+        'A bronze disc the Warden wore, a door cut in it',
+      ],
+      [
+        'seal-of-the-barrow',
+        'The Seal of the Barrow',
+        'An iron disc the Barrow King wore, two doors cut in it',
+      ],
+      [
+        'seal-of-the-deep',
+        'The Seal of the Deep',
+        'A disc of green stone the Drowned Lord wore, three doors cut in it',
+      ],
+      [
+        'sea-kings-chart',
+        'The Sea Kings’ Chart',
+        'A chart on sealskin: the coast, and seven marks counted from the sea',
+      ],
+      [
+        'abbots-confession',
+        'The Abbot’s Confession',
+        'Pages in a cramped hand: what waits behind the First Door',
+      ],
+    ] as const
+  ).map(([id, name, generic]): ItemDef => ({
+    id,
+    name,
+    kind: 'misc',
+    w: 1,
+    h: 1,
+    value: 0,
+    difficulty: 0,
+    picture: id,
+    generic,
+  })),
 ];
 
 export const ITEMS: Record<ItemId, ItemDef> = Object.fromEntries(

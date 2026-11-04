@@ -20,7 +20,8 @@ export function renderScore(ctx: ScreenContext, title: string): void {
     el(
       'p',
       'book-line sub',
-      'The dead lie still under the hills. Gullhaven sleeps, and the road runs on.',
+      'The First Door is shut and the Sea King lies behind it. The dead keep to their halls, ' +
+        'the coast sleeps from Gullhaven to the Mire, and the road runs on.',
     ),
   );
   page.appendChild(el('div', 'book-rule'));

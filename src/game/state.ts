@@ -62,6 +62,21 @@ export interface MapState {
   doors: string[];
   taken: string[];
   chests: Record<string, ChestState>;
+  /**
+   * Whom the party killed here, by the spawn's name, and the game minute it fell: a unique
+   * never comes back, the rest return after REFILL_MINUTES, as MM6's maps refilled on a timer
+   * (docs/CAMPAIGN.md).
+   */
+  slain: Record<string, number>;
+}
+
+/** A month: how long a map's common monsters stay dead (MM6 refilled its maps in months). */
+export const REFILL_MINUTES = 28 * 24 * 60;
+
+/** Whether a spawn slain at `at` is still down at `now`; a unique always is. */
+export function stillSlain(at: number | undefined, now: number, unique: boolean): boolean {
+  if (at === undefined) return false;
+  return unique || now - at < REFILL_MINUTES;
 }
 
 /** A chest once opened: rolled on first opening, then what the party left in it. */
@@ -72,7 +87,9 @@ export interface ChestState {
 
 /** The map's state, made on first use. */
 export function mapState(state: GameState, level: string): MapState {
-  return (state.maps[level] ??= { doors: [], taken: [], chests: {} });
+  const map = (state.maps[level] ??= { doors: [], taken: [], chests: {}, slain: {} });
+  map.slain ??= {};
+  return map;
 }
 
 export interface NewGameOptions {

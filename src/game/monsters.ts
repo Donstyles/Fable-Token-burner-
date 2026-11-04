@@ -11,7 +11,7 @@
  * metres, times in seconds; the speeds are ours (MM6's monsters walked, ours must catch a party
  * on a phone).
  */
-import type { ItemKind } from './items';
+import type { ItemId, ItemKind } from './items';
 import type { Dice } from './rng';
 import type { MagicSchool } from './skills';
 
@@ -95,6 +95,10 @@ export interface MonsterDef {
   gold?: Dice;
   /** An item on the body: the chance of one (0 to 1), its treasure level and kind (items.md 4.9). */
   drop?: { chance: number; level: number; kind?: ItemKind };
+  /** A named thing always on the body, a seal or a chart the campaign turns on (docs/CAMPAIGN.md). */
+  carries?: ItemId;
+  /** A one-off: slain for good, never refilled (state.ts `stillSlain`). */
+  unique?: boolean;
   /** Character asset id under assets/characters/. */
   character: string;
   heightMetres: number;
@@ -129,6 +133,7 @@ export interface TierSpec {
   /** Uniques keep their own hit points and experience. */
   hp?: number;
   xp?: number;
+  carries?: ItemId;
 }
 
 export interface FamilySpec {
@@ -146,7 +151,7 @@ export interface FamilySpec {
   uniques?: (TierSpec & { tier: MonsterTier })[];
 }
 
-function record(f: FamilySpec, t: TierSpec, tier: MonsterTier): MonsterDef {
+function record(f: FamilySpec, t: TierSpec, tier: MonsterTier, unique = false): MonsterDef {
   const tint = tier === 'A' ? undefined : f.tints[tier === 'B' ? 0 : 1];
   const def: MonsterDef = {
     id: t.id,
@@ -172,6 +177,8 @@ function record(f: FamilySpec, t: TierSpec, tier: MonsterTier): MonsterDef {
   if (t.drop) def.drop = t.drop;
   if (t.missile) def.missile = t.missile;
   if (t.special) def.special = t.special;
+  if (t.carries) def.carries = t.carries;
+  if (unique) def.unique = true;
   return def;
 }
 
@@ -180,7 +187,7 @@ export function familyRecords(f: FamilySpec): MonsterDef[] {
   const tiers: MonsterTier[] = ['A', 'B', 'C'];
   return [
     ...f.tiers.map((t, i) => record(f, t, tiers[i]!)),
-    ...(f.uniques ?? []).map((u) => record(f, u, u.tier)),
+    ...(f.uniques ?? []).map((u) => record(f, u, u.tier, true)),
   ];
 }
 
@@ -241,6 +248,24 @@ export const FAMILIES: FamilySpec[] = [
         gold: d(15, 4),
         drop: { chance: 0.1, level: 1 },
         missile: fireBolt(2, 22),
+      },
+    ],
+    uniques: [
+      {
+        // The Goblin Warren's lord (docs/CAMPAIGN.md step 4): a king's numbers, a unique's hit
+        // points, his shaman's fire with him.
+        id: 'goblin-grik',
+        name: 'Grik the Warren-Lord',
+        tier: 'C',
+        level: 11,
+        hp: 95,
+        armorClass: 15,
+        damage: d(2, 8, 3),
+        ai: 'aggressive',
+        recovery: 80,
+        gold: d(16, 6),
+        drop: { chance: 0.8, level: 3 },
+        missile: fireBolt(6, 18),
       },
     ],
   },
@@ -308,6 +333,7 @@ export const FAMILIES: FamilySpec[] = [
         gold: d(10, 6),
         drop: { chance: 0.6, level: 2, kind: 'weapon' },
         special: { kind: 'afraid', multiplier: 1 },
+        carries: 'seal-of-the-halls',
       },
       {
         // The Barrow of Kings' master (DESIGN.md 17.23): a lord's numbers with a unique's hit
@@ -324,6 +350,7 @@ export const FAMILIES: FamilySpec[] = [
         gold: d(30, 6),
         drop: { chance: 0.9, level: 3, kind: 'weapon' },
         special: { kind: 'curse', multiplier: 2 },
+        carries: 'seal-of-the-barrow',
       },
     ],
   },
@@ -448,16 +475,423 @@ export const FAMILIES: FamilySpec[] = [
   },
 ];
 
-export const MONSTERS: Record<string, MonsterDef> = Object.fromEntries(
-  FAMILIES.flatMap(familyRecords).map((m) => [m.id, m]),
-);
-
 /** The share of its hit points under which this monster runs; 0 when it never does. */
 export function fleesAt(def: Pick<MonsterDef, 'ai'>): number {
   return FLEE_AT[def.ai];
 }
 
 /** Townsfolk who stand about, turn to the party and answer a tap; not monsters. */
+/**
+ * The Mire's and the roads' families (docs/CAMPAIGN.md): six more on the same six bodies, each
+ * its own tints and way of fighting, as MM6 recoloured one picture per tier.
+ */
+export const LATER_FAMILIES: FamilySpec[] = [
+  {
+    // Harrowmere's and the Mire's hired muscle, on the bandit's body in darker cloth.
+    id: 'thug',
+    character: 'bandit',
+    heightMetres: 1.85,
+    runSpeed: 3.6,
+    walkSpeed: 1.6,
+    aggroRange: 12,
+    attackRange: 1.5,
+    tints: [
+      [0.7, 0.72, 0.8],
+      [0.6, 0.55, 0.62],
+    ],
+    tiers: [
+      {
+        id: 'thug',
+        name: 'Thug',
+        level: 8,
+        armorClass: 12,
+        damage: d(2, 6, 2),
+        ai: 'normal',
+        recovery: 90,
+        gold: d(8, 6),
+        drop: { chance: 0.2, level: 2, kind: 'weapon' },
+      },
+      {
+        id: 'bruiser',
+        name: 'Bruiser',
+        level: 11,
+        armorClass: 15,
+        damage: d(2, 8, 3),
+        ai: 'aggressive',
+        recovery: 90,
+        gold: d(12, 6),
+        drop: { chance: 0.3, level: 2, kind: 'armor' },
+        special: { kind: 'unconscious', multiplier: 1 },
+      },
+      {
+        id: 'enforcer',
+        name: 'Enforcer',
+        level: 14,
+        armorClass: 18,
+        damage: d(3, 6, 4),
+        ai: 'aggressive',
+        recovery: 80,
+        gold: d(16, 6),
+        drop: { chance: 0.5, level: 3, kind: 'weapon' },
+        special: { kind: 'unconscious', multiplier: 2 },
+      },
+    ],
+  },
+  {
+    // The Mire's reavers, on the nomad's body in reed-green and rust.
+    id: 'reaver',
+    character: 'nomad-raider',
+    heightMetres: 1.8,
+    runSpeed: 3.8,
+    walkSpeed: 1.7,
+    aggroRange: 14,
+    attackRange: 1.5,
+    tints: [
+      [0.78, 0.9, 0.7],
+      [0.95, 0.72, 0.6],
+    ],
+    tiers: [
+      {
+        id: 'reaver',
+        name: 'Marsh Reaver',
+        level: 6,
+        armorClass: 10,
+        damage: d(2, 5, 1),
+        ai: 'normal',
+        recovery: 90,
+        gold: d(6, 6),
+        drop: { chance: 0.15, level: 2, kind: 'weapon' },
+      },
+      {
+        id: 'reaver-archer',
+        name: 'Reaver Archer',
+        level: 9,
+        armorClass: 12,
+        damage: d(2, 6, 1),
+        ai: 'wimp',
+        recovery: 100,
+        gold: d(8, 6),
+        drop: { chance: 0.15, level: 2, kind: 'weapon' },
+        missile: { kind: 'arrow', damage: d(2, 6, 2), range: 26 },
+      },
+      {
+        id: 'reaver-chief',
+        name: 'Reaver Chief',
+        level: 12,
+        armorClass: 16,
+        damage: d(3, 6, 2),
+        ai: 'aggressive',
+        recovery: 80,
+        gold: d(14, 6),
+        drop: { chance: 0.4, level: 3, kind: 'weapon' },
+        special: { kind: 'weak', multiplier: 2 },
+      },
+    ],
+    uniques: [
+      {
+        // The Reed Fort's queen (docs/CAMPAIGN.md step 8).
+        id: 'reed-queen',
+        name: 'The Reed Queen',
+        tier: 'C',
+        level: 13,
+        hp: 120,
+        armorClass: 17,
+        damage: d(3, 6, 3),
+        ai: 'aggressive',
+        recovery: 70,
+        gold: d(30, 6),
+        drop: { chance: 0.9, level: 3 },
+        missile: { kind: 'arrow', damage: d(3, 6, 3), range: 28 },
+        special: { kind: 'poison', multiplier: 2, level: 2 },
+      },
+    ],
+  },
+  {
+    // The cult of the doors, on the villager's body in ash grey and dried blood.
+    id: 'cultist',
+    character: 'villager-man',
+    heightMetres: 1.8,
+    runSpeed: 3.4,
+    walkSpeed: 1.5,
+    aggroRange: 14,
+    attackRange: 1.4,
+    tints: [
+      [0.66, 0.66, 0.7],
+      [0.78, 0.5, 0.48],
+    ],
+    tiers: [
+      {
+        id: 'acolyte',
+        name: 'Acolyte',
+        level: 5,
+        armorClass: 8,
+        damage: d(1, 6, 1),
+        ai: 'wimp',
+        recovery: 100,
+        gold: d(5, 6),
+        drop: { chance: 0.2, level: 1 },
+        missile: fireBolt(3, 16),
+      },
+      {
+        id: 'cultist',
+        name: 'Cultist',
+        level: 9,
+        armorClass: 12,
+        damage: d(2, 6, 1),
+        ai: 'normal',
+        recovery: 90,
+        gold: d(9, 6),
+        drop: { chance: 0.3, level: 2 },
+        special: { kind: 'curse', multiplier: 2 },
+      },
+      {
+        id: 'hierophant',
+        name: 'Hierophant',
+        level: 13,
+        armorClass: 15,
+        damage: d(2, 8, 2),
+        ai: 'aggressive',
+        recovery: 80,
+        gold: d(14, 6),
+        drop: { chance: 0.5, level: 3 },
+        missile: fireBolt(7, 20),
+        special: { kind: 'curse', multiplier: 3 },
+      },
+    ],
+    uniques: [
+      {
+        // The Drowned Abbey's abbot, who woke the doors (docs/CAMPAIGN.md step 9).
+        id: 'the-abbot',
+        name: 'The Abbot',
+        tier: 'C',
+        level: 15,
+        hp: 140,
+        armorClass: 18,
+        damage: d(3, 6, 3),
+        ai: 'aggressive',
+        recovery: 70,
+        gold: d(40, 6),
+        drop: { chance: 1, level: 3 },
+        missile: fireBolt(9, 22),
+        special: { kind: 'insane', multiplier: 2 },
+        carries: 'abbots-confession',
+      },
+    ],
+  },
+  {
+    // The drowned, the Sea Kings' dead on the skeleton's body, green with the mere.
+    id: 'drowned',
+    character: 'skeleton-warrior',
+    heightMetres: 1.85,
+    runSpeed: 2.8,
+    walkSpeed: 1.1,
+    aggroRange: 12,
+    attackRange: 1.5,
+    tints: [
+      [0.62, 0.82, 0.8],
+      [0.5, 0.7, 0.9],
+    ],
+    tiers: [
+      {
+        id: 'drowned',
+        name: 'Drowned',
+        level: 7,
+        armorClass: 10,
+        damage: d(2, 5, 1),
+        ai: 'suicidal',
+        recovery: 100,
+        gold: d(4, 6),
+        drop: { chance: 0.1, level: 2 },
+        special: { kind: 'disease', multiplier: 1, level: 1 },
+      },
+      {
+        id: 'drowned-warrior',
+        name: 'Drowned Warrior',
+        level: 11,
+        armorClass: 15,
+        damage: d(2, 8, 2),
+        ai: 'aggressive',
+        recovery: 90,
+        gold: d(8, 6),
+        drop: { chance: 0.3, level: 2, kind: 'weapon' },
+        special: { kind: 'disease', multiplier: 2, level: 2 },
+      },
+      {
+        id: 'drowned-lord',
+        name: 'Drowned Lord',
+        level: 15,
+        armorClass: 19,
+        damage: d(3, 8, 3),
+        ai: 'aggressive',
+        recovery: 80,
+        gold: d(14, 6),
+        drop: { chance: 0.6, level: 3, kind: 'armor' },
+        special: { kind: 'paralyze', multiplier: 1 },
+      },
+    ],
+    uniques: [
+      {
+        // The Sunken Hall's warden, the third seal's keeper (docs/CAMPAIGN.md step 10).
+        id: 'the-drowned-warden',
+        name: 'Warden of the Deep',
+        tier: 'C',
+        level: 14,
+        hp: 150,
+        armorClass: 19,
+        damage: d(3, 8, 3),
+        ai: 'aggressive',
+        recovery: 80,
+        gold: d(30, 6),
+        drop: { chance: 0.9, level: 3, kind: 'armor' },
+        special: { kind: 'paralyze', multiplier: 2 },
+        carries: 'seal-of-the-deep',
+      },
+      {
+        // Behind the First Door (docs/CAMPAIGN.md step 11): the end of Act One.
+        id: 'the-sea-king',
+        name: 'The Sea King',
+        tier: 'C',
+        level: 16,
+        hp: 220,
+        armorClass: 22,
+        damage: d(4, 8, 4),
+        ai: 'aggressive',
+        recovery: 60,
+        gold: d(60, 6),
+        drop: { chance: 1, level: 3 },
+        missile: { kind: 'water', damage: d(6, 4, 6), range: 22 },
+        special: { kind: 'paralyze', multiplier: 3 },
+      },
+    ],
+  },
+  {
+    // The Mire's witches, on the villager-woman's body in moss and rust.
+    id: 'witch',
+    character: 'villager-woman',
+    heightMetres: 1.7,
+    runSpeed: 3.2,
+    walkSpeed: 1.4,
+    aggroRange: 16,
+    attackRange: 1.4,
+    tints: [
+      [0.7, 0.8, 0.6],
+      [0.82, 0.6, 0.7],
+    ],
+    tiers: [
+      {
+        id: 'hedge-witch',
+        name: 'Hedge Witch',
+        level: 6,
+        armorClass: 9,
+        damage: d(1, 6, 1),
+        ai: 'wimp',
+        recovery: 100,
+        gold: d(6, 6),
+        drop: { chance: 0.3, level: 2, kind: 'potion' },
+        missile: { kind: 'air', damage: d(3, 3, 3), range: 18 },
+      },
+      {
+        id: 'marsh-witch',
+        name: 'Marsh Witch',
+        level: 10,
+        armorClass: 12,
+        damage: d(2, 6, 1),
+        ai: 'wimp',
+        recovery: 90,
+        gold: d(10, 6),
+        drop: { chance: 0.4, level: 2, kind: 'ring' },
+        missile: { kind: 'air', damage: d(5, 3, 5), range: 20 },
+        special: { kind: 'asleep', multiplier: 2 },
+      },
+      {
+        id: 'crone',
+        name: 'Crone of the Reeds',
+        level: 14,
+        armorClass: 15,
+        damage: d(2, 8, 2),
+        ai: 'normal',
+        recovery: 80,
+        gold: d(14, 6),
+        drop: { chance: 0.6, level: 3, kind: 'amulet' },
+        missile: { kind: 'air', damage: d(7, 3, 7), range: 22 },
+        special: { kind: 'insane', multiplier: 2 },
+      },
+    ],
+  },
+  {
+    // Hobgoblins, the goblins' big cousins, on the goblin's body in iron grey and ochre.
+    id: 'hobgoblin',
+    character: 'goblin-scout',
+    heightMetres: 1.75,
+    runSpeed: 3.6,
+    walkSpeed: 1.6,
+    aggroRange: 12,
+    attackRange: 1.4,
+    tints: [
+      [0.7, 0.7, 0.72],
+      [1.1, 0.9, 0.6],
+    ],
+    tiers: [
+      {
+        id: 'hobgoblin',
+        name: 'Hobgoblin',
+        level: 8,
+        armorClass: 12,
+        damage: d(2, 6, 1),
+        ai: 'normal',
+        recovery: 90,
+        gold: d(7, 6),
+        drop: { chance: 0.2, level: 2, kind: 'weapon' },
+      },
+      {
+        id: 'hobgoblin-brute',
+        name: 'Hobgoblin Brute',
+        level: 12,
+        armorClass: 16,
+        damage: d(3, 6, 2),
+        ai: 'aggressive',
+        recovery: 90,
+        gold: d(11, 6),
+        drop: { chance: 0.3, level: 3, kind: 'weapon' },
+        special: { kind: 'weak', multiplier: 2 },
+      },
+      {
+        id: 'hobgoblin-chief',
+        name: 'Hobgoblin Chief',
+        level: 16,
+        armorClass: 20,
+        damage: d(4, 6, 3),
+        ai: 'aggressive',
+        recovery: 80,
+        gold: d(18, 6),
+        drop: { chance: 0.6, level: 3, kind: 'armor' },
+        special: { kind: 'weak', multiplier: 3 },
+      },
+    ],
+    uniques: [
+      {
+        // The Undercroft's gatekeeper (docs/CAMPAIGN.md step 11), the hobgoblins' chief of chiefs.
+        id: 'hobgoblin-gorrak',
+        name: 'Gorrak the Gatekeeper',
+        tier: 'C',
+        level: 15,
+        hp: 160,
+        armorClass: 21,
+        damage: d(4, 6, 4),
+        ai: 'aggressive',
+        recovery: 70,
+        gold: d(40, 6),
+        drop: { chance: 1, level: 3, kind: 'weapon' },
+        special: { kind: 'weak', multiplier: 3 },
+      },
+    ],
+  },
+];
+
+export const MONSTERS: Record<string, MonsterDef> = Object.fromEntries(
+  [...FAMILIES, ...LATER_FAMILIES].flatMap(familyRecords).map((m) => [m.id, m]),
+);
+
 export interface NpcDef {
   id: string;
   name: string;

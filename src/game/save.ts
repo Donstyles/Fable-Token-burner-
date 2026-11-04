@@ -18,7 +18,7 @@ import { isSpellId } from './spells';
 import { STATS } from './stats';
 import type { GameState } from './state';
 
-export const SAVE_VERSION = 5;
+export const SAVE_VERSION = 6;
 
 export interface SaveFile {
   version: number;
@@ -56,7 +56,8 @@ export function toJson(state: GameState, savedAt = 0): string {
 
 /**
  * Bring an older save up to the current version: version 1 had no map state, version 2's
- * maps had no chests, version 3 had no buffs, version 4 no shops.
+ * maps had no chests, version 3 had no buffs, version 4 no shops, version 5 no record of the
+ * slain.
  */
 export function migrate(file: SaveFile): SaveFile {
   if (file.version >= SAVE_VERSION) return file;
@@ -76,6 +77,11 @@ export function migrate(file: SaveFile): SaveFile {
     }
   }
   if (file.version < 5 && isRecord(state) && !isRecord(state.shops)) state.shops = {};
+  if (file.version < 6 && isRecord(state) && isRecord(state.maps)) {
+    for (const map of Object.values(state.maps)) {
+      if (isRecord(map) && !isRecord(map['slain'])) map['slain'] = {};
+    }
+  }
   return { ...file, version: SAVE_VERSION, state };
 }
 
@@ -321,6 +327,9 @@ function validateMaps(m: unknown): string | null {
       if (!Array.isArray(list) || !list.every(isString)) return `maps: ${id} ${key}`;
     }
     if (!isRecord(map['chests'])) return `maps: ${id} chests`;
+    if (!isRecord(map['slain']) || !Object.values(map['slain']).every(isFiniteNumber)) {
+      return `maps: ${id} slain`;
+    }
     for (const [name, chest] of Object.entries(map['chests'])) {
       if (!isRecord(chest) || !isFiniteNumber(chest['gold']) || chest['gold'] < 0) {
         return `maps: ${id} chest ${name}`;

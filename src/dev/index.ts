@@ -44,7 +44,7 @@ import {
   type Character as CharacterSheet,
 } from '../game/character';
 import { testCharacters } from '../game/fixtures';
-import { expireAllBuffs, mapState, newGame, type GameState } from '../game/state';
+import { expireAllBuffs, mapState, newGame, stillSlain, type GameState } from '../game/state';
 import { activeBuffs, applyBuff, BUFF_NAMES, buffPower } from '../game/buffs';
 import { addItem, gridHas } from '../game/inventory';
 import type { ItemId } from '../game/items';
@@ -159,6 +159,8 @@ export interface DevHandle {
   roster: Party;
   /** Attack a monster by name with the ready member, as a tap would; the log line or null. */
   attack(name: string): string | null;
+  /** Kill a monster by name outright, for the tests that walk the campaign; false when unknown. */
+  slay(name: string): boolean;
   /** Townsfolk in the level, for tests. */
   npcs: Npc[];
   dialogue: Dialogue;
@@ -554,7 +556,8 @@ export async function startGame(app: App): Promise<DevHandle> {
     onWindow: (rect) => bust.place(rect),
     notice: (line) => status.say(line, 6000),
     onQuestDone: (quest) => {
-      if (quest === 'the-old-halls') scoreDue = 'The Old Halls lie quiet';
+      // Act One ends when the First Door is shut (docs/CAMPAIGN.md step 11).
+      if (quest === 'the-first-door') scoreDue = 'The First Door is shut';
     },
     onClose: () => {
       bust.hide();
@@ -669,11 +672,17 @@ export async function startGame(app: App): Promise<DevHandle> {
     }
     // The level's spawns, named for tests by kind: the first bandit `bandit`, then `bandit-2`.
     const counts = new Map<string, number>();
-    const placements = level.spawns.map((s) => {
-      const n = (counts.get(s.kind) ?? 0) + 1;
-      counts.set(s.kind, n);
-      return { ...s, name: n === 1 ? s.kind : `${s.kind}-${n}` };
-    });
+    const placements = level.spawns
+      .map((s) => {
+        const n = (counts.get(s.kind) ?? 0) + 1;
+        counts.set(s.kind, n);
+        return { ...s, name: n === 1 ? s.kind : `${s.kind}-${n}` };
+      })
+      // The slain stay slain: a unique for good, the rest a month (docs/CAMPAIGN.md).
+      .filter(
+        (p) =>
+          !stillSlain(map.slain[p.name], state.clock.minutes, MONSTERS[p.kind]?.unique === true),
+      );
     // Everyone loads at once: one after another, each waited frames of its own, and at a
     // frame a second (software GL in CI) eight of them took longer than the tests allow.
     const loaded = await Promise.all(
@@ -902,6 +911,12 @@ export async function startGame(app: App): Promise<DevHandle> {
     monsters: [],
     shots: 0,
     roster,
+    slay(name) {
+      const m = handle.monsters.find((x) => x.name === name);
+      if (!m || !m.alive) return false;
+      m.takeDamage(m.hp);
+      return true;
+    },
     attack(name) {
       const monster = handle.monsters.find((m) => m.name === name);
       return monster ? attackMonster(monster, 0) : null;
@@ -1041,18 +1056,22 @@ export async function startGame(app: App): Promise<DevHandle> {
     if (searched.has(monster.name)) return `Nothing more on the ${monster.def.name}`;
     if (distance > LOOT_REACH) return `A dead ${monster.def.name} (come closer)`;
     searched.add(monster.name);
-    // Its gold to the purse and, by its chance, an item into a pack (DESIGN.md 17.12).
-    const { gold, item } = monsterDrop(monster.def, rng);
+    // Its gold to the purse and, by its chance, an item into a pack (DESIGN.md 17.12); what the
+    // campaign hung on the body too (docs/CAMPAIGN.md).
+    const { gold, item, carried } = monsterDrop(monster.def, rng);
     state.gold += gold;
     const found: string[] = [];
     if (gold > 0) found.push(`${gold} gold`);
-    if (item) {
+    for (const thing of [carried, item]) {
+      if (!thing) continue;
       const order = [...state.party.keys()].sort((a, b) =>
         a === state.selected ? -1 : b === state.selected ? 1 : a - b,
       );
-      const taker = order.map((i) => state.party[i]!).find((c) => addItem(c.grid, item));
+      const taker = order.map((i) => state.party[i]!).find((c) => addItem(c.grid, thing));
       found.push(
-        taker ? `a ${itemDef(item).name}` : `a ${itemDef(item).name}, but nobody has room`,
+        taker
+          ? `${thing === carried ? '' : 'a '}${itemDef(thing).name}`
+          : `${itemDef(thing).name}, but nobody has room`,
       );
     }
     if (!found.length) return `You find nothing on the ${monster.def.name}`;
@@ -1483,7 +1502,9 @@ export async function startGame(app: App): Promise<DevHandle> {
       m.update(dt, partyTarget, simTime);
       for (const ev of m.takeEvents()) {
         if (ev.kind === 'death') {
-          // A kill pays its experience (DESIGN 14.3) and counts for any quest that wants it.
+          // A kill pays its experience (DESIGN 14.3) and counts for any quest that wants it,
+          // and the map remembers it (docs/CAMPAIGN.md).
+          map.slain[m.name] = state.clock.minutes;
           shareExperience(state.party, m.def.xp);
           status.say(`${ev.text}; ${m.def.xp} experience`);
           const kill = { kind: 'kill', monster: m.def.id } as const;

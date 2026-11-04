@@ -120,9 +120,32 @@ The loop takes the world first, a region or a dungeon a turn, and keeps every pu
 16. [ ] **The Barrow of Kings** under Harrowmere's downs (dungeon 5), **the Salt Marsh**, the third
         region, with two dungeons (6 and 7), and an eighth at the owner's choice. The barrow is
         built (2026-11-04, DESIGN 17.23, the third dungeon in all); the marsh waits.
-17. [ ] **Spells to twenty and monsters to forty**: the spell list filled to a fifth with the
-        effects the systems carry; more monster records as tiers and uniques of the six bodies
-        (new bodies need Meshy, the owner's call).
+17. [x] **Spells to twenty**: the table already holds thirty-one (DESIGN 17.17); monsters move
+        to item 19.
+
+The owner, 2026-11-04: "Don't stop till everything is superb and content is 20%. It should
+feel like a deliberate and handcrafted campaign that walks the player through all the content.
+Don't stop until it is done." docs/CAMPAIGN.md is the walk: _The Doors of the Sea Kings_, eleven
+steps through three regions and eight dungeons. The loop builds it in this order and pushes at
+every step:
+
+18. [ ] **The campaign's systems** (CAMPAIGN "What the campaign needs"): a monster that carries a
+        named thing; the slain stay slain (uniques for good, the rest a month); the score at the
+        thread's end; the campaign test.
+19. [ ] **Thirty-nine monster records**: six more families on the six bodies, each its own tints
+        and way of fighting (thug, reaver, cultist, drowned, witch, hobgoblin), and the uniques
+        the dungeons want (Grik, the Reed Queen, the Abbot, the Sea King).
+20. [ ] **Gullhaven's thread**: Anselm's _The Seal and the Stone_, Maren's _The Goblin King_ and
+        the Goblin Warren (dungeon 4); the headland's cave for the finale.
+21. [ ] **Harrowmere's thread**: the chart in Orrin's chest and Wyn's _The Chart_; the Barrow
+        King's seal; the pass north to the Mire.
+22. [ ] **The Mire**, the third region: Fenwick on its causeways with six working houses, the
+        reeds, the mere, the pass south; five people, four quests, three sites.
+23. [ ] **The Mire's dungeons**: the Reed Fort (5), the Drowned Abbey (6), the Sunken Hall (7).
+24. [ ] **The finale**: the Headland Undercroft (8) under Gullhaven's ruin, three doors to three
+        seals, the Sea King, the score; the campaign walked end to end by a test.
+25. [ ] **Superb**: a play-through pass on the built game (pacing, prices, the levels the thread
+        wants against the experience it pays, the words), the faults found fixed, the docs true.
 
 Waiting on the owner: cottage-01 and cottage-03 remade with Meshy's free retries; the shops'
 buy pictures (weapon table, two shelves, mannequins); the hero, keeper and villager
