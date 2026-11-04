@@ -274,9 +274,15 @@ test("a shop's Sell opens the member's bag on its leather, and a second tap on a
   await item.click();
   await expect(page.locator('.house-pack-side .ui-btn')).toBeVisible();
   expect(await count()).toBe(before);
-  // The second sells it.
-  await page.locator('.house-pack .inv-item.selected').click();
-  await expect.poll(count).toBe(before - 1);
+  // The second sells it. Software GL in CI draws a frame a second and has let a tap slip past the
+  // leather unregistered, so the tap is tried again while the item still sits selected.
+  for (let i = 0; i < 4 && (await count()) === before; i++) {
+    const selected = page.locator('.house-pack .inv-item.selected');
+    if ((await selected.count()) === 0) break;
+    await selected.click();
+    await page.waitForTimeout(1500);
+  }
+  await expect.poll(count, { timeout: 20_000 }).toBe(before - 1);
   expect(
     await page.evaluate(() => (window as unknown as { ftb: { dev: Full } }).ftb.dev.state.gold),
   ).toBeGreaterThan(gold);

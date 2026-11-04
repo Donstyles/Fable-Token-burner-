@@ -301,8 +301,14 @@ async function main(): Promise<void> {
   const args = process.argv.slice(2);
   const validate = !args.includes('--no-validate');
   const ids = args.filter((a) => !a.startsWith('--'));
+  // Every folder with a script is a level; `levels/lib` holds what the scripts share.
   const all = (await readdir('levels', { withFileTypes: true }))
-    .filter((d) => d.isDirectory())
+    .filter(
+      (d) =>
+        d.isDirectory() &&
+        (existsSync(resolve('levels', d.name, 'region.ts')) ||
+          existsSync(resolve('levels', d.name, 'level.ts'))),
+    )
     .map((d) => d.name);
   const todo = ids.length ? ids : all;
   let ok = true;
