@@ -166,8 +166,11 @@ test.describe('talk', () => {
       gold + 300,
     );
     await page.locator('[title="Farewell"]').click();
+    // The score comes up on the frame after the talk closes; CI's software GL takes its time.
     await expect
-      .poll(() => page.evaluate(() => (window as unknown as W).ftb!.dev!.screens.current()))
+      .poll(() => page.evaluate(() => (window as unknown as W).ftb!.dev!.screens.current()), {
+        timeout: 60_000,
+      })
       .toBe('score');
     await expect(page.locator('.score-page')).toContainText('Score:');
     await expect(page.locator('.score-page')).toContainText('Days:');

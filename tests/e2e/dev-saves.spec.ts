@@ -22,7 +22,8 @@ test('Save Game copies the game into a slot and Load Game goes on from it', asyn
   const gold = () => page.evaluate(() => (window as unknown as W).ftb!.dev!.state.gold);
   await page.evaluate(() => (window as unknown as W).ftb!.dev!.screens.open('options'));
   await page.locator('.options-slab', { hasText: 'Save Game' }).click();
-  await expect.poll(current).toBe('save');
+  // Software GL on CI draws a frame in seconds; the screens wait on the next one.
+  await expect.poll(current, { timeout: 60_000 }).toBe('save');
   await expect(page.locator('.save-slot')).toHaveCount(10);
   await expect(page.locator('.save-slot').nth(1)).toContainText('Empty');
   await page.evaluate(() => {
@@ -39,7 +40,7 @@ test('Save Game copies the game into a slot and Load Game goes on from it', asyn
   });
   await page.evaluate(() => (window as unknown as W).ftb!.dev!.screens.open('options'));
   await page.locator('.options-slab', { hasText: 'Load Game' }).click();
-  await expect.poll(current).toBe('load');
+  await expect.poll(current, { timeout: 60_000 }).toBe('load');
   // The autosave first, then the slots: slot 1 still empty, slot 2 written.
   await expect(page.locator('.save-slot').first()).toContainText('Autosave');
   await expect(page.locator('.save-slot').nth(1)).toContainText('Empty');
