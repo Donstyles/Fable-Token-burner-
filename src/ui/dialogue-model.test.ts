@@ -3,8 +3,10 @@ import { DIALOGUES, QUESTS } from '../game/dialogue';
 import { freshState } from '../game/fixtures';
 import { NPCS } from '../game/monsters';
 import { handleQuestEvent, questEntry } from '../game/quests';
+import { gridHas } from '../game/inventory';
 import {
   chooseTopic,
+  deliveryTopic,
   dialogueView,
   nextPage,
   questNotice,
@@ -15,6 +17,10 @@ import {
 
 const tobin = DIALOGUES['villager-man']!;
 const maren = DIALOGUES['villager-woman']!;
+const reeve = DIALOGUES['reeve']!;
+const ida = DIALOGUES['ida']!;
+const garrick = DIALOGUES['woodcutter']!;
+const anselm = DIALOGUES['anselm']!;
 
 describe('dialogue view', () => {
   it('names the villager, their role, the greeting and every topic', () => {
@@ -90,6 +96,102 @@ describe('quest topics', () => {
     const paid = chooseTopic(state, maren, QUESTS, 'goblins')!;
     expect(paid.reward?.gold).toBe(80);
   });
+});
+
+describe('what people say changes with what the party has done (DESIGN.md 17.20)', () => {
+  const labels = (state: ReturnType<typeof freshState>, def: typeof reeve) =>
+    dialogueView(state, NPCS[def.npc]!, def, QUESTS).topics.map((t) => t.label);
+
+  it('the reeve sends the party to Tobin, then waits, then has brigands for it', () => {
+    const state = freshState();
+    expect(labels(state, reeve)).toEqual(['The coast road', 'The town', 'Rumours']);
+    expect(chooseTopic(state, reeve, QUESTS, 'road')!.text).toMatch(/Old Tobin/);
+    // A topic not on offer cannot be chosen.
+    expect(chooseTopic(state, reeve, QUESTS, 'brigands')).toBeNull();
+    expect(chooseTopic(state, reeve, QUESTS, 'road-working')).toBeNull();
+    chooseTopic(state, tobin, QUESTS, 'sheep');
+    expect(labels(state, reeve)).toEqual(['The coast road', 'The town', 'Rumours']);
+    expect(chooseTopic(state, reeve, QUESTS, 'road-working')!.text).toMatch(/Tobin’s coin/);
+    for (let i = 0; i < 3; i++)
+      handleQuestEvent(state.quests, QUESTS, { kind: 'kill', monster: 'bandit' });
+    chooseTopic(state, tobin, QUESTS, 'sheep');
+    expect(labels(state, reeve)).toEqual(['The brigands', 'The town', 'Rumours']);
+    const offer = chooseTopic(state, reeve, QUESTS, 'brigands')!;
+    expect(offer.notices).toEqual(["Quest taken: The Brigands' Camp"]);
+    for (let i = 0; i < 3; i++)
+      handleQuestEvent(state.quests, QUESTS, { kind: 'kill', monster: 'brigand' });
+    const gold = state.gold;
+    const paid = chooseTopic(state, reeve, QUESTS, 'brigands')!;
+    expect(paid.reward?.gold).toBe(250);
+    expect(state.gold).toBe(gold + 250);
+  });
+
+  it('Anselm speaks of the dead as the halls quest stands', () => {
+    const state = freshState();
+    expect(chooseTopic(state, anselm, QUESTS, 'dead')!.text).toMatch(/Tobin, I hear, pays/);
+    chooseTopic(state, tobin, QUESTS, 'halls');
+    expect(chooseTopic(state, anselm, QUESTS, 'dead')).toBeNull();
+    expect(chooseTopic(state, anselm, QUESTS, 'dead-working')!.text).toMatch(/carry a light/);
+    expect(labels(state, anselm)).toEqual(['The shrines', 'The old stone', 'The dead', 'Rumours']);
+  });
+});
+
+describe('a thing carried for someone', () => {
+  it('comes with the quest, is offered to the one it is for, and leaves the pack when given', () => {
+    const state = freshState();
+    expect(labels(state, garrick)).toEqual(['The wood', 'Gullhaven', 'Rumours']);
+    const offer = chooseTopic(state, ida, QUESTS, 'letter')!;
+    expect(offer.notices).toEqual(['Quest taken: A Letter for Garrick']);
+    expect(gridHas(state.party[state.selected]!.grid, 'letter')).toBeGreaterThanOrEqual(0);
+    // Garrick now has a topic for it, at the head of his list.
+    const view = dialogueView(state, NPCS['woodcutter']!, garrick, QUESTS);
+    expect(view.topics[0]).toEqual({
+      id: deliveryTopic('a-letter-for-garrick'),
+      label: 'A letter from Ida',
+    });
+    // Ida herself is not offered her own letter.
+    expect(labels(state, ida)[0]).toBe('A letter');
+    const given = chooseTopic(state, garrick, QUESTS, deliveryTopic('a-letter-for-garrick'))!;
+    expect(given.text).toMatch(/come down to the square myself/);
+    expect(given.notices).toEqual([
+      'A Letter for Garrick: Tell Ida at the stalls that Garrick has it',
+    ]);
+    expect(state.party.every((c) => gridHas(c.grid, 'letter') < 0)).toBe(true);
+    expect(labels(state, garrick)).toEqual(['The wood', 'Gullhaven', 'Rumours']);
+    // Given once; a second asking finds nothing to give.
+    expect(chooseTopic(state, garrick, QUESTS, deliveryTopic('a-letter-for-garrick'))).toBeNull();
+    // Ida pays on the party's return.
+    const gold = state.gold;
+    const view2 = dialogueView(state, NPCS['ida']!, ida, QUESTS);
+    expect(view2.greeting).toMatch(/Did he read it/);
+    const paid = chooseTopic(state, ida, QUESTS, 'letter')!;
+    expect(paid.reward?.gold).toBe(60);
+    expect(state.gold).toBe(gold + 60);
+    expect(questEntry(state.quests, 'a-letter-for-garrick')?.state).toBe('done');
+  });
+
+  it('is not taken when no pack has room for it', () => {
+    const state = freshState();
+    for (const c of state.party) {
+      c.grid.items = [];
+      // Fill every cell of every pack.
+      for (let y = 0; y < c.grid.height; y++)
+        for (let x = 0; x < c.grid.width; x++)
+          c.grid.items.push({
+            item: { id: 'potion-healing', identified: true, broken: false },
+            x,
+            y,
+          });
+    }
+    const out = chooseTopic(state, ida, QUESTS, 'letter')!;
+    expect(out.text).toMatch(/no room for it/);
+    expect(out.notices).toEqual([]);
+    expect(questEntry(state.quests, 'a-letter-for-garrick')).toBeUndefined();
+  });
+
+  function labels(state: ReturnType<typeof freshState>, def: typeof garrick): string[] {
+    return dialogueView(state, NPCS[def.npc]!, def, QUESTS).topics.map((t) => t.label);
+  }
 });
 
 describe('talk and rumours', () => {

@@ -170,9 +170,30 @@ export function createDialogue(
     for (const change of outcome.changes ?? []) {
       if (change.kind === 'quest-done') hooks.onQuestDone?.(change.quest);
     }
+    // What is on offer can change with what was said: a letter handed over leaves the list, a
+    // quest taken changes a neighbour's talk (DESIGN.md 17.20). The buttons are remade when it does.
+    const view = dialogueView(state, open_.npc, open_.def, quests);
+    const shown = Array.from(open_.topics.children).map((b) => (b as HTMLElement).dataset['topic']);
+    if (view.topics.map((t) => t.id).join('|') !== shown.join('|'))
+      fillTopics(open_.topics, view.topics);
     for (const b of open_.topics.children)
       b.classList.toggle('said', (b as HTMLElement).dataset['topic'] === id);
     return true;
+  }
+
+  /** The topic buttons, one a row, remade from the view. */
+  function fillTopics(topics: HTMLElement, rows: { id: string; label: string }[]): void {
+    topics.replaceChildren();
+    for (const t of rows) {
+      const b = el('button', 'dlg-topic', t.label);
+      b.type = 'button';
+      b.dataset['topic'] = t.id;
+      b.addEventListener('click', (e) => {
+        e.preventDefault();
+        choose(t.id);
+      });
+      topics.appendChild(b);
+    }
   }
 
   function open(npc: NpcDef, def: DialogueDef): void {
@@ -212,16 +233,7 @@ export function createDialogue(
       if (to !== text.scrollTop) text.scrollTop = to;
     });
     const topics = el('div', 'dlg-topics');
-    for (const t of view.topics) {
-      const b = el('button', 'dlg-topic', t.label);
-      b.type = 'button';
-      b.dataset['topic'] = t.id;
-      b.addEventListener('click', (e) => {
-        e.preventDefault();
-        choose(t.id);
-      });
-      topics.appendChild(b);
-    }
+    fillTopics(topics, view.topics);
     // MM6's way out: the gold oval with the door at the board's foot.
     const foot = el('div', 'dlg-foot');
     const bye = el('button', 'ui-btn dlg-bye');

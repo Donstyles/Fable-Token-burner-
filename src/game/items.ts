@@ -210,6 +210,7 @@ export const ITEM_IDS = [
   'scroll-torch-light',
   'scroll-fire-bolt',
   'iron-key',
+  'letter',
 ] as const;
 export type ItemId = (typeof ITEM_IDS)[number];
 
@@ -288,6 +289,18 @@ const OTHERS: ItemDef[] = [
     difficulty: 0,
     picture: 'iron-key',
     generic: 'Key',
+  },
+  // A thing carried for someone (DESIGN.md 17.20): worth nothing to a shop, drawn by its kind's glyph.
+  {
+    id: 'letter',
+    name: 'A Sealed Letter',
+    kind: 'misc',
+    w: 1,
+    h: 1,
+    value: 0,
+    difficulty: 0,
+    picture: 'letter',
+    generic: 'Letter',
   },
 ];
 

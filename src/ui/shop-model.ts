@@ -29,6 +29,8 @@ import { itemName } from './inventory-model';
 import { type ActionOutcome, NOT_ENOUGH_GOLD } from './services-model';
 
 export const NOT_MY_TRADE = 'Not my trade.';
+/** A key or a letter: worth nothing to a shop, and not sold by mistake. */
+export const WORTHLESS = 'Worth nothing to me.';
 
 export interface BuyRow {
   list: 'stock' | 'special';
@@ -101,7 +103,7 @@ export function shopView(state: GameState, shop: ShopDef, index: number): ShopVi
     return {
       gridIndex,
       name: itemName(p.item),
-      price: sellPrice(shop, p.item, c),
+      price: def.value > 0 ? sellPrice(shop, p.item, c) : 0,
       broken: p.item.broken,
       identified: p.item.identified,
       trade: trade || shop.kind === 'general',
@@ -148,7 +150,9 @@ export function sell(
         ? 'No such item.'
         : r.reason === 'trade'
           ? NOT_MY_TRADE
-          : 'No one to trade.';
+          : r.reason === 'worthless'
+            ? WORTHLESS
+            : 'No one to trade.';
     return { ok: false, message };
   }
   return { ok: true, message: `Sold ${itemName(r.item)} for ${r.price} gold.` };

@@ -5,6 +5,8 @@ import {
   createQuestLog,
   currentObjective,
   handleQuestEvent,
+  pendingDeliveries,
+  pendingReaches,
   type QuestDef,
   questEntry,
   startQuest,
@@ -76,5 +78,29 @@ describe('quest log', () => {
     expect(changes[2]).toEqual({ kind: 'quest-done', quest: 'errand' });
     expect(activeQuests(log).map((e) => e.id)).toEqual(['bandits']);
     expect(completedQuests(log).map((e) => e.id)).toEqual(['errand']);
+  });
+});
+
+describe('what the world watches for', () => {
+  it('names the points to reach and the deliveries wanted of someone, for the current steps only', () => {
+    const log = createQuestLog();
+    expect(pendingReaches(log, QUESTS)).toEqual([]);
+    startQuest(log, QUESTS['bandits']!);
+    // Step one is talk: nothing to watch yet.
+    expect(pendingReaches(log, QUESTS)).toEqual([]);
+    expect(pendingDeliveries(log, QUESTS, 'innkeeper')).toEqual([]);
+    handleQuestEvent(log, QUESTS, { kind: 'talk', npc: 'innkeeper' });
+    for (let i = 0; i < 3; i++) handleQuestEvent(log, QUESTS, { kind: 'kill', monster: 'bandit' });
+    expect(pendingReaches(log, QUESTS)).toEqual(['bandit-camp']);
+    handleQuestEvent(log, QUESTS, { kind: 'reach', point: 'bandit-camp' });
+    expect(pendingReaches(log, QUESTS)).toEqual([]);
+    const wanted = pendingDeliveries(log, QUESTS, 'innkeeper');
+    expect(wanted).toHaveLength(1);
+    expect(wanted[0]!.quest.id).toBe('bandits');
+    expect(wanted[0]!.objective.item).toBe('copper-ring');
+    expect(pendingDeliveries(log, QUESTS, 'smith')).toEqual([]);
+    handleQuestEvent(log, QUESTS, { kind: 'deliver', item: 'copper-ring', npc: 'innkeeper' });
+    expect(pendingDeliveries(log, QUESTS, 'innkeeper')).toEqual([]);
+    expect(questEntry(log, 'bandits')?.state).toBe('done');
   });
 });

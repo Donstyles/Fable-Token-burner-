@@ -1,26 +1,17 @@
 /**
  * The notes and the calendar (DESIGN.md 16.34), MM6's second and fourth books: the notes the
- * party has made as people told it things (a topic's `note`, src/game/dialogue.ts), oldest
- * first; and the month as MM6's calendar laid it out, four weeks of seven days, today marked,
- * the moon's four quarters on their days. Pure; `books.ts` draws them.
+ * party has made as people told it things (a topic's `note`, src/game/dialogue.ts) or read
+ * them off a stone (src/game/sites.ts), oldest first; and the month as MM6's calendar laid it
+ * out, four weeks of seven days, today marked, the moon's four quarters on their days. Pure;
+ * `books.ts` draws them.
  */
 import type { DialogueDef } from '../game/dialogue';
+import { noteOrder } from '../game/notes';
+import { SITES, type SiteDef } from '../game/sites';
 import type { GameState } from '../game/state';
 import { DAYS_PER_MONTH, DAYS_PER_WEEK, gameDate, MONTH_NAMES } from '../game/time';
 
-/** The flag a note sets when it is made, and the one that counts them. */
-export const noteFlag = (npc: string, topic: string): string => `note:${npc}/${topic}`;
-export const NOTE_COUNT = 'notes';
-
-/** Make the note a topic carries, once: true when it is new. */
-export function takeNote(state: GameState, npc: string, topic: string): boolean {
-  const key = noteFlag(npc, topic);
-  if (state.flags[key]) return false;
-  const n = (state.flags[NOTE_COUNT] ?? 0) + 1;
-  state.flags[NOTE_COUNT] = n;
-  state.flags[key] = n;
-  return true;
-}
+export { NOTE_COUNT, noteFlag, takeNote } from '../game/notes';
 
 export interface NoteRow {
   /** Who told the party. */
@@ -28,19 +19,25 @@ export interface NoteRow {
   text: string;
 }
 
-/** The notes made, in the order they were made. */
+/** The notes made, in the order they were made: what people said, what the stones say. */
 export function noteRows(
   state: GameState,
   dialogues: Readonly<Record<string, DialogueDef>>,
   names: Readonly<Record<string, string>> = {},
+  sites: readonly SiteDef[] = SITES,
 ): NoteRow[] {
   const rows: { n: number; row: NoteRow }[] = [];
   for (const def of Object.values(dialogues)) {
     for (const t of def.topics) {
       if (t.kind !== 'say' || !t.note) continue;
-      const n = state.flags[noteFlag(def.npc, t.id)];
+      const n = noteOrder(state, def.npc, t.id);
       if (n) rows.push({ n, row: { from: names[def.npc] ?? def.role, text: t.note } });
     }
+  }
+  for (const site of sites) {
+    if (!site.note) continue;
+    const n = noteOrder(state, 'site', site.id);
+    if (n) rows.push({ n, row: { from: site.name, text: site.note } });
   }
   return rows.sort((a, b) => a.n - b.n).map((r) => r.row);
 }

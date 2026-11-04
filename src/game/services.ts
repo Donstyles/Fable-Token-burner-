@@ -384,7 +384,7 @@ export function buyItem(
 
 export type SellResult =
   | { ok: true; price: number; item: ItemInstance }
-  | { ok: false; reason: 'member' | 'item' | 'trade' };
+  | { ok: false; reason: 'member' | 'item' | 'trade' | 'worthless' };
 
 /** Sell from the pack: a shop of a kind takes only its own kind; a general store anything. */
 export function sellItem(
@@ -400,6 +400,8 @@ export function sellItem(
   if (shop.kind !== 'general' && !tradesIn(shop, itemDef(placed.item))) {
     return { ok: false, reason: 'trade' };
   }
+  // A thing worth nothing (a key, a letter carried for someone) is no shop's to buy.
+  if (itemDef(placed.item).value <= 0) return { ok: false, reason: 'worthless' };
   const price = sellPrice(shop, placed.item, c);
   removeItem(c.grid, gridIndex);
   state.gold += price;

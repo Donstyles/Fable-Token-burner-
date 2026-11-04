@@ -430,6 +430,8 @@ export interface NpcDef {
   character: string;
   /** What they say when tapped, in turn. */
   lines: string[];
+  /** A colouring over the shared villager skin, so six townsfolk are not two (DESIGN.md 17.20). */
+  tint?: [number, number, number];
 }
 
 export const NPCS: Record<string, NpcDef> = {
@@ -452,5 +454,41 @@ export const NPCS: Record<string, NpcDef> = {
       'The coast road runs west to the city, but the bandits hold it now.',
       'My barn has stood through forty winters. Forty-one, if the goblins keep away.',
     ],
+  },
+  // The town's people (DESIGN.md 17.20): the two villager skins, each tinted its own way.
+  reeve: {
+    id: 'reeve',
+    name: 'Reeve Halloran',
+    character: 'villager-man',
+    tint: [0.8, 0.84, 1.12],
+    lines: ['The town has no soldiers and no gold. It has a reeve, for what that is worth.'],
+  },
+  fisher: {
+    id: 'fisher',
+    name: 'Wen',
+    character: 'villager-man',
+    tint: [0.86, 0.96, 1.04],
+    lines: ['Mind the nets.'],
+  },
+  ida: {
+    id: 'ida',
+    name: 'Ida',
+    character: 'villager-woman',
+    tint: [1.16, 0.84, 0.8],
+    lines: ['Eggs, cheese, and whatever the boats bring.'],
+  },
+  anselm: {
+    id: 'anselm',
+    name: 'Brother Anselm',
+    character: 'villager-man',
+    tint: [1.0, 0.88, 0.72],
+    lines: ['Peace to you.'],
+  },
+  woodcutter: {
+    id: 'woodcutter',
+    name: 'Garrick',
+    character: 'villager-man',
+    tint: [0.84, 1.06, 0.78],
+    lines: ['Hold there.'],
   },
 };

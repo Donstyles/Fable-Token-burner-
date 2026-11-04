@@ -25,7 +25,7 @@ import {
   trainMember,
   trainerRows,
 } from './services-model';
-import { buy, identify, NOT_MY_TRADE, repair, sell, shopView } from './shop-model';
+import { buy, identify, NOT_MY_TRADE, repair, sell, shopView, WORTHLESS } from './shop-model';
 import type { Character } from '../game/character';
 import { gridBlocks } from './inventory-model';
 import { bagGrid } from './inventory';
@@ -360,6 +360,7 @@ function renderShop(ctx: ScreenContext, def: ServiceDefs['shop']): void {
       if (!s.trade || (pick !== 'sell' && def.kind === 'general')) {
         return { price: '', reason: NOT_MY_TRADE };
       }
+      if (pick === 'sell' && s.price <= 0) return { price: '', reason: WORTHLESS };
       if (pick === 'identify' && s.identified) return { price: '', reason: 'Already identified.' };
       if (pick === 'repair' && !s.broken) return { price: '', reason: 'Not broken.' };
       return {

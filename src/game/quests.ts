@@ -11,8 +11,13 @@ import type { ItemId } from './items';
 export type QuestObjective =
   | { kind: 'talk'; npc: string; text: string }
   | { kind: 'kill'; monster: string; count: number; text: string }
+  /** Come within REACH_RADIUS of the level's named point. */
   | { kind: 'reach'; point: string; text: string }
-  | { kind: 'deliver'; item: ItemId; npc: string; text: string };
+  /**
+   * Hand the item to someone: their talk panel offers it as a topic (`label`) while the party
+   * carries it, and they answer with `reply` when it is given (src/ui/dialogue-model.ts).
+   */
+  | { kind: 'deliver'; item: ItemId; npc: string; text: string; label?: string; reply?: string };
 
 export interface QuestReward {
   gold?: number;
@@ -26,7 +31,12 @@ export interface QuestDef {
   text: string;
   objectives: readonly QuestObjective[];
   reward?: QuestReward;
+  /** Items handed over with the quest (a letter to carry); without room for them it is not taken. */
+  gives?: readonly ItemId[];
 }
+
+/** How near a party must come to a named point to have reached it, metres. */
+export const REACH_RADIUS = 10;
 
 export type QuestEvent =
   | { kind: 'talk'; npc: string }
@@ -124,6 +134,38 @@ export function handleQuestEvent(
     }
   }
   return changes;
+}
+
+/** The named points some active quest wants reached now, for the runtime to watch. */
+export function pendingReaches(log: QuestLog, defs: Readonly<Record<string, QuestDef>>): string[] {
+  const points: string[] = [];
+  for (const entry of log.entries) {
+    const def = defs[entry.id];
+    const objective = def ? currentObjective(entry, def) : null;
+    if (objective?.kind === 'reach' && !points.includes(objective.point))
+      points.push(objective.point);
+  }
+  return points;
+}
+
+/**
+ * Deliveries wanted of someone now: the active quests whose current objective hands an item
+ * to `npc`, with the objective.
+ */
+export function pendingDeliveries(
+  log: QuestLog,
+  defs: Readonly<Record<string, QuestDef>>,
+  npc: string,
+): { quest: QuestDef; objective: Extract<QuestObjective, { kind: 'deliver' }> }[] {
+  const out: { quest: QuestDef; objective: Extract<QuestObjective, { kind: 'deliver' }> }[] = [];
+  for (const entry of log.entries) {
+    const def = defs[entry.id];
+    const objective = def ? currentObjective(entry, def) : null;
+    if (def && objective?.kind === 'deliver' && objective.npc === npc) {
+      out.push({ quest: def, objective });
+    }
+  }
+  return out;
 }
 
 export function activeQuests(log: QuestLog): QuestEntry[] {

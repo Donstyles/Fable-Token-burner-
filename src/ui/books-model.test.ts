@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { DialogueDef } from '../game/dialogue';
 import { freshState } from '../game/fixtures';
+import { siteAt, useSite } from '../game/sites';
 import { START_MINUTES } from '../game/time';
 import { calendarView, moonOn, noteRows, takeNote } from './books-model';
 
@@ -28,6 +29,16 @@ describe('the notes', () => {
       { from: 'Tobin', text: 'Note Y' },
       { from: 'Tobin', text: 'Note X' },
     ]);
+  });
+
+  it('keep what the stones say beside what people said, in order', () => {
+    const s = freshState();
+    takeNote(s, 'a', 'x');
+    const obelisk = siteAt('gullhaven', 'obelisk')!;
+    useSite(s, obelisk, 0);
+    takeNote(s, 'a', 'y');
+    expect(noteRows(s, DEFS).map((r) => r.from)).toEqual(['Farmer', 'An Obelisk', 'Farmer']);
+    expect(noteRows(s, DEFS)[1]!.text).toMatch(/SEVEN STAND IN LINE/);
   });
 });
 
