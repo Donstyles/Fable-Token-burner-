@@ -110,9 +110,10 @@ The loop takes the world first, a region or a dungeon a turn, and keeps every pu
         armourer and the Guild of Fire among them), the Grange, the downs with the nomads' camp,
         the barrows, the cove and the smugglers' cave into **the Thieves' Den** (dungeon 2).
         Done 2026-11-04 (DESIGN 17.21); the barrow cave's tunnel ends in rock until item 16.
-14. [ ] **Harrowmere's people and quests**: five townsfolk with news, four quests (the nomads'
+14. [x] **Harrowmere's people and quests**: five townsfolk with news, four quests (the nomads'
         camp, the den's captain, a delivery to the Grange, the barrows' dead), the well and the
-        barrows' shrine as sites.
+        barrows' shrine as sites. Done 2026-11-04 (DESIGN 17.22): five quests, the log at eleven;
+        the well, the shrine and a second obelisk.
 15. [ ] **Gullhaven's second and third dungeons**: the undercroft under the headland's ruin (the
         dead's knights and their lord) and the goblins' warren in the hills (their king), each with
         its quest.

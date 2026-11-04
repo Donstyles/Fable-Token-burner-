@@ -3626,8 +3626,55 @@ cave, pictures of Harrow's rooms (they borrow Gullhaven's), monsters that stay d
 visits (every map refills on load; MM6 refilled on a timer), MM6's travel prompt before the
 edge (ours walks through), a coach.
 
+### 17.22 Harrowmere's people, quests and sites (the agentic loop, 2026-11-04)
+
+PLAN item 14, on the heels of 17.21: the second region given its voices, its errands and its
+stones, so a party that crosses the edge finds the shire as alive as the town it left.
+
+- **Five townsfolk talk** (`DIALOGUES`, src/game/dialogue.ts), each on the villager skins under
+  their own tint: Alderman Pell before his emporium (the market is his, the town's chest too),
+  Mother Hesk the armourer (her daughter beats the steel), Tam the Drover at the stables (three
+  days to Gullhaven with a herd), Sister Wyn on the temple lane (she copies the old stones),
+  Goodman Oswy at the Grange gate (the road ends at his ridge). Greetings, plain talk with notes,
+  rumours in turn, and the news that turns with the quests: Pell speaks of the coast road's
+  brigands until Gullhaven's reeve has had them put down, then stands a drink.
+- **Five quests**, one each, so the log holds eleven, a fifth of MM6's 56: _The Nomads' Camp_
+  (kill the chieftain on the common; 300 gold, 800 experience), _Hesk's Parcel_ (carry a parcel,
+  a `misc` thing worth nothing, to Oswy at the Grange; 80 and 150), _Tam's Cart_ (three bandits
+  at their halt on the down road; 120 and 300), _The Barrow Knights_ (the two knights at the
+  mounds; 400 and 1000, the temple's poor box), _Black Orrin_ (the den's captain, DESIGN 17.21;
+  500 and 1200). Dearer than Gullhaven's, as MM6's second region paid more than its first.
+- **Sites** (src/game/sites.ts): the Market Well in Harrow's square, +2 Might once each to 15
+  (hard water off the chalk); the Shrine of the Barrows, an altar in June, +10 Speed to the party
+  the first year and +3 after; an obelisk on the open down west of the down road with the second
+  fragment ("THE LAST STAR IS THE ONE THAT DOES NOT TURN. COUNT THE DOORS FROM THE SEA."). The
+  kernel builds the stone as Gullhaven's (17.20); the region names the halt's point for later.
+- **The world holds together** (src/game/world.test.ts): every quest's monsters, people, things
+  and points exist; every talker is a person who stands in a region; every site stands at a
+  named point of its region; Harrow's seven working houses have their records. A typo in a
+  quest's monster id or a site's point fails the suite, not the owner's evening.
+- **The level build** (tools/level-build.ts) takes only folders with a script for levels; the
+  scripts' shared library (levels/lib) is not a level. CI's build of 17.21 fell over it, and the
+  full build had stopped at Harrowmere's then-unreachable store, so the den had never been
+  compiled; both are mended and all four levels validate.
+- **The Sell test** (tests/e2e/screens-fit.spec.ts) failed twice in CI at the second tap on
+  the leather, never locally; the tap is tried again while the item sits selected and the count
+  given twenty seconds, so a frame lost to software GL does not fail the suite.
+
+**Checked**: the dialogue and quest unit tests as before, the world test above, the den's
+end-to-end boot (its ten points reachable, the door, the key, the three chests, ten spawns with
+the captain and three cutthroats), the two Harrowmere end-to-end tests of 17.21.
+
+**Not yet**: Harrow's quests on the map's marks (the people show as quest marks already), a
+reward in kind (a piece of Hesk's armour), the Barrow of Kings behind the barrow cave, Harrow's
+own room pictures.
+
 ## 13. Decision log
 
+- 2026-11-04 – Harrowmere peopled (17.22): five townsfolk with talk and news, five quests (the
+  log at eleven), the Market Well, the Shrine of the Barrows and a second obelisk fragment; a
+  world test that every quest, talker and site names things that exist; the level build skips
+  the scripts' library and compiles the den.
 - 2026-11-04 – Regions joined (17.21): walked edges on the roads at the rim that take days on
   the clock, several cave mouths a region, one house table across regions; Harrowmere, the
   second region, and the Thieves' Den under its cove. The owner's target of 2026-11-04, a fifth
