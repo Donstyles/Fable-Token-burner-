@@ -3564,8 +3564,74 @@ news that turns with the calendar, more sites (fountains, barrels, pedestals), t
 treasure (one fragment exists), the brigands' camp dressed (they stand on the bare road), a
 prayer drawn as a screen.
 
+### 17.21 Regions joined: walked edges, Harrowmere and the Thieves' Den (the agentic loop, 2026-11-04)
+
+The owner, 2026-11-04: "More regions. I want a full indie game. At least 20% of mm6." A fifth
+of MM6 is three regions, eight dungeons, eleven quests (world.md 1, 2, 3); PLAN items 12 to 17
+lay the road there. This is the first of them: the world's second map and the way between.
+
+- **Walked edges** (`RegionScript.exits`, kernel/terrain/region.ts; `EXIT`): a region names
+  its exits, each a portal disc 5 m across on the road at the map's rim, the heading the party
+  walks out by, the target level and its entry, and the days the crossing takes
+  (`PortalRecord.days`, through the sidecar to `Portal.days`). The party arrives eight strides
+  inside the far side's rim facing in. The runtime puts the days on the clock before the
+  autosave and names them on the veil ("3 days on the road to Harrowmere…"), a long fade; the
+  buffs run out by the clock as they would. MM6's edges took five days; ours three, a map
+  being 640 m. The kernel's point of kind `door` under the exit's name is checked reachable
+  like any other.
+- **Several cave mouths a region** (`RegionScript.caves`): each named for its portal and its
+  point; the one `cave` of the first scripts is the mouth named 'cave'. A mouth without a
+  target is a tunnel into rock, as Gullhaven's was before the Old Halls (17.3).
+- **Houses of every region in one table** (`HOUSES`, src/game/content.ts): a plot's name picks
+  its house across regions, so Harrow's are `harrow-inn`, `harrow-smithy` and so on; a house
+  may borrow a room picture (`room`) until it has one of its own, and shows it by that name.
+- **Harrowmere** (levels/harrowmere/region.ts): the shire three days west along the coast
+  road, on the bay's western shore. The market town of **Harrow** on its low hill above the
+  road: the square on the street with the well, the Drovers' Rest (rooms 15, food 3) with the
+  Hall of Arms (to level 25, ×1.5) at one shoulder and the Initiate Guild of Fire (to spell
+  level 4, 100 to join) at the other, Pell's Emporium (general, Val 2.5, level 2, ten slots)
+  and Hesk & Daughter the armourers (armour, Val 2, level 2 and a level-3 special shelf)
+  across, the Harrow Forge (weapons, Val 2, level 2, a level-3 special) at the east end, four
+  rows of houses, the stables at the west gate, the Temple of Harrow (donation 20) on the
+  Harrow up its lane with a shrine. **The Grange**, a manor farm at the coast road's end under
+  the western ridge, with its orchard, fields and fences. **The downs**: the down road north
+  past a bandits' halt under the beeches to **the barrows**, three mounds, a ring of stones, a
+  wayside shrine and a cave into the oldest mound (its tunnel ends in rock until the Barrow of
+  Kings is built, PLAN 16); east along a track **the nomads' camp** on the open down, raiders,
+  archers and their chieftain. **The cove** south-east under a chalk knoll, the smugglers'
+  carts on the strand, cutthroats and brigands about, and the smugglers' cave in the bank.
+  Brigands on the coast road east; the barrows' dead, knights among them. Five townsfolk stand
+  in their places with a line each (Alderman Pell, Mother Hesk, Tam the Drover, Sister Wyn,
+  Goodman Oswy); their talk and quests are PLAN 14. The square's well and the barrows' shrine
+  are named points for the sites to come. 1,740 trees, 159 props, a 1.3 MB level.
+- **The Thieves' Den** (levels/thieves-den/level.ts), the second dungeon: the sea cave where
+  the smugglers land, a lookouts' nook with the iron key on its hook, the store cut into the
+  chalk with its chest and a locked door, a switchback stair down four metres, the common room
+  under a barrel vault with braziers, a sleeping hole with a chest, and Black Orrin's chamber
+  at the end with the den's chest (levels 2 and 3, a potion and a Fire Bolt scroll) behind
+  him. **Black Orrin** is the bandit family's unique (`bandit-captain`, level 9, 80 hit
+  points, a cutthroat's colouring, poison on his blade). Bandits, brigands and cutthroats,
+  ten in all.
+- **The scripts share their helpers** (levels/lib/plots.ts): rows of houses along a street,
+  things along a line, orchards, rings of stones.
+
+**Checked**: the kernel's tests for the walked edge (its days, the arrival inside the rim facing
+east), Gullhaven's two portals, the small region's cave as before; `level:build` validates all
+three levels (every named point reachable); an end-to-end test boots Harrowmere and checks its
+seven working houses, its points, its two ways out, its five people and twenty-odd monsters, and
+another walks out over the east edge and arrives in Gullhaven at its west road three days later.
+
+**Not yet**: Harrow's people's talk and quests (PLAN 14), the Barrow of Kings behind the barrow
+cave, pictures of Harrow's rooms (they borrow Gullhaven's), monsters that stay dead between
+visits (every map refills on load; MM6 refilled on a timer), MM6's travel prompt before the
+edge (ours walks through), a coach.
+
 ## 13. Decision log
 
+- 2026-11-04 – Regions joined (17.21): walked edges on the roads at the rim that take days on
+  the clock, several cave mouths a region, one house table across regions; Harrowmere, the
+  second region, and the Thieves' Den under its cove. The owner's target of 2026-11-04, a fifth
+  of MM6, is laid out in PLAN items 12 to 17.
 - 2026-11-04 – People and quests (17.20): five more townsfolk under their own tints, talk that
   turns with the quests' state, three quests of the kinds the log lacked (a letter carried, a
   walk, a fight), sites used with a tap (the well's Luck once, the crossroads shrine's January

@@ -98,6 +98,30 @@ Working list, in order:
 11. [ ] **Polish passes** between items: the frame rate on the phone's budget, the faults the
         owner reports, the e2e suite kept green.
 
+The owner raised the bar on 2026-11-04 ("More regions. I want a full indie game. At least 20%
+of mm6"). A fifth of MM6 (world.md's counts) is 3 regions, 8 dungeons, 11 quests, 20 spells,
+114 items and 39 monster records; the items are there (136), the spells and the rest are not.
+The loop takes the world first, a region or a dungeon a turn, and keeps every push playable:
+
+12. [x] **Walked edges** (DESIGN 17.21): a region script names its exits, a portal on the road at
+        the rim that takes days on the clock; several cave mouths a region; the houses of every
+        region in one table with borrowed room pictures. Done 2026-11-04.
+13. [x] **Harrowmere**, the second region: the market town of Harrow (seven working houses, an
+        armourer and the Guild of Fire among them), the Grange, the downs with the nomads' camp,
+        the barrows, the cove and the smugglers' cave into **the Thieves' Den** (dungeon 2).
+        Done 2026-11-04 (DESIGN 17.21); the barrow cave's tunnel ends in rock until item 16.
+14. [ ] **Harrowmere's people and quests**: five townsfolk with news, four quests (the nomads'
+        camp, the den's captain, a delivery to the Grange, the barrows' dead), the well and the
+        barrows' shrine as sites.
+15. [ ] **Gullhaven's second and third dungeons**: the undercroft under the headland's ruin (the
+        dead's knights and their lord) and the goblins' warren in the hills (their king), each with
+        its quest.
+16. [ ] **The Barrow of Kings** under Harrowmere's downs (dungeon 5), **the Salt Marsh**, the third
+        region, with two dungeons (6 and 7), and an eighth at the owner's choice.
+17. [ ] **Spells to twenty and monsters to forty**: the spell list filled to a fifth with the
+        effects the systems carry; more monster records as tiers and uniques of the six bodies
+        (new bodies need Meshy, the owner's call).
+
 Waiting on the owner: cottage-01 and cottage-03 remade with Meshy's free retries; the shops'
 buy pictures (weapon table, two shelves, mannequins); the hero, keeper and villager
 portraits; music; new entrance pictures from the three prompts of 2026-11-03; any Meshy
