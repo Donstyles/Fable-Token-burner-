@@ -363,6 +363,28 @@ describe('Gullhaven', () => {
       expect(s.kind in MONSTERS || s.kind in NPCS, s.kind).toBe(true);
     }
     expect(level.spawns.filter((s) => s.kind === 'skeleton-warrior')).toHaveLength(6);
-    expect(level.spawns.filter((s) => s.kind in NPCS)).toHaveLength(2);
+    // Maren, Old Tobin and the five townsfolk of DESIGN.md 17.20.
+    expect(level.spawns.filter((s) => s.kind in NPCS)).toHaveLength(7);
+    expect(level.spawns.filter((s) => s.kind === 'brigand')).toHaveLength(3);
+  });
+
+  it('stands the obelisk in the stones’ glade and names the sites’ points', () => {
+    const names = level.points.map((p) => p.name);
+    expect(names).toEqual(expect.arrayContaining(['well', 'shrine', 'obelisk', 'stones']));
+    const obelisk = level.points.find((p) => p.name === 'obelisk')!;
+    const stones = level.points.find((p) => p.name === 'stones')!;
+    // In the glade: the stones' point lies 12 m south of the ring, the obelisk off its east edge.
+    expect(
+      Math.hypot(
+        obelisk.position[0] - stones.position[0],
+        obelisk.position[2] - stones.position[2],
+      ),
+    ).toBeLessThan(20);
+    // Its stone stands on the ground there, in dressed stone.
+    expect(obelisk.position[1]).toBeCloseTo(
+      level.height.sample(obelisk.position[0], obelisk.position[2]),
+      3,
+    );
+    expect(level.visual.materials.includes(ROLE.ashlar)).toBe(true);
   });
 });

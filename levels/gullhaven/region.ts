@@ -592,6 +592,14 @@ const region: RegionScript = {
     // Maren by the well; Old Tobin at his farm gate.
     { kind: 'villager-woman', at: [3, -115], face: [5, -140] },
     { kind: 'villager-man', at: [2, -62], face: [8, -62] },
+    // The town's people (DESIGN.md 17.20): the reeve before the inn, Ida behind her stalls on
+    // the square's south side, Wen on the quay with his back to the town, Brother Anselm by
+    // the lane's shrine, Garrick in his glade off the west track.
+    { kind: 'reeve', at: [-8, -112], face: [0, -117] },
+    { kind: 'ida', at: [-6.8, -126], face: [-6.8, -118] },
+    { kind: 'fisher', at: [2, -148], face: [2, -158] },
+    { kind: 'anselm', at: [-35.5, -95], face: [-37.5, -92] },
+    { kind: 'woodcutter', at: [-89, -30], face: [-80, -28] },
   ],
   packs: [
     // Goblins about the cave and down the slope toward the road; two at the stones. A shaman
@@ -603,6 +611,8 @@ const region: RegionScript = {
     // Bandits at their camp on the coast road, and further west.
     { kind: 'bandit', at: [-155, -142], count: 3, spread: 5 },
     { kind: 'bandit', at: [-250, -166], count: 2, spread: 5 },
+    // Their betters at the road's end under the western ridge, the reeve's quest (DESIGN 17.20).
+    { kind: 'brigand', at: [-284, -168], count: 3, spread: 5 },
     // The headland's dead: far too many for a new party.
     { kind: 'skeleton-warrior', at: RUIN, count: 6, spread: 8 },
   ],
@@ -614,7 +624,14 @@ const region: RegionScript = {
     { name: 'stones', at: [STONES[0], STONES[1] - 12] },
     { name: 'headland', at: [RUIN[0] + 10, RUIN[1] - 2] },
     { name: 'road-west', at: [-295, -170] },
+    // The sites the game reads at these points (src/game/sites.ts): the square's well and the
+    // crossroads' shrine; the obelisk's point comes with its stone.
+    { name: 'well', at: [0, -117] },
+    { name: 'shrine', at: [0, -6] },
   ],
+  // The lettered pillar at the stones' glade's east edge, north of the west track's end, off the
+  // way into the ring (DESIGN.md 17.20).
+  obelisks: [{ name: 'obelisk', at: [-100, 26] }],
   // The party wakes at the foot of the square looking up the lane at Maren by the well, the
   // trader at the left and the inn ahead.
   start: { at: [6, -136], face: [3, -116] },

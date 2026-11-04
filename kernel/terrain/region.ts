@@ -26,6 +26,7 @@ import { backdropMesh } from './backdrop';
 import type { RegionEnvironment, TerrainLevel, TerrainTextures } from './build';
 import { CAVE, caveMouth, type CaveResult, type CaveSpec } from './cave';
 import { fenceAlong } from './fence';
+import { obeliskAt } from './obelisk';
 import { terrainChunks } from './chunks';
 import { Heightfield } from './heightfield';
 import { appendMesh, terrainMesh, type ColouredMeshData } from './mesh';
@@ -132,6 +133,8 @@ export interface RegionScript {
   cave?: { at: P2; facing: number; target?: { level: string; entry: string } };
   /** Split-rail fences the kernel builds, each a line of corners (src/kernel/terrain/fence.ts). */
   fences?: P2[][];
+  /** Obelisks the kernel builds (obelisk.ts), each a named point the game reads at (DESIGN.md 17.20). */
+  obelisks?: { name: string; at: P2 }[];
   residents: Resident[];
   packs: Pack[];
   points: { name: string; at: P2 }[];
@@ -169,6 +172,7 @@ export function fromMap(s: RegionScript): RegionScript {
     plots: s.plots.map((p) => ({ ...p, at: kernelPoint(p.at), face: kernelPoint(p.face) })),
     ...(s.cave ? { cave: { ...s.cave, at: kernelPoint(s.cave.at) } } : {}),
     ...(s.fences ? { fences: s.fences.map(pts) } : {}),
+    ...(s.obelisks ? { obelisks: s.obelisks.map((o) => ({ ...o, at: kernelPoint(o.at) })) } : {}),
     residents: s.residents.map((r) => ({ ...r, at: kernelPoint(r.at), face: kernelPoint(r.face) })),
     packs: s.packs.map((p) => ({ ...p, at: kernelPoint(p.at) })),
     points: s.points.map((p) => ({ ...p, at: kernelPoint(p.at) })),
@@ -531,6 +535,11 @@ export function buildRegion(s: RegionScript): TerrainLevel {
   };
   const fences: MeshData = { positions: [], normals: [], uvs: [], indices: [], materials: [] };
   for (const line of s.fences ?? []) fenceAlong(fences, fenceCollider, line, ground);
+  // The obelisks stand with the fences, dressed stone the environment lights.
+  for (const o of s.obelisks ?? []) {
+    obeliskAt(fences, fenceCollider, o.at, ground);
+    points.push({ name: o.name, position: at3(o.at), kind: 'poi' });
+  }
   appendMesh(visual, fences, [1, 1, 1]);
   appendTo(solids, fenceCollider);
   if (caveMesh && s.cave) {
