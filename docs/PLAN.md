@@ -75,10 +75,11 @@ Working list, in order:
        screens from the game menu, the title's Continue from the autosave. Done 2026-11-03 (DESIGN 17.14); the title's Continue was already the autosave.
 6. [x] **The shipped app carries the game** (MM6-GAPS 32): the root URL boots the title and
        the game, the dev panel left out; levels precached. Done 2026-11-03 (DESIGN 17.15).
-7. [ ] **Danger** (ROADMAP M2, no new art): monster records as data with tiers as tints,
+7. [x] **Danger** (ROADMAP M2, no new art): monster records as data with tiers as tints,
        ranged attacks, fleeing, special attacks with saves, the conditions with their cures at
        the temple, rest refused near monsters, the wipe rule (a week later at the temple, the
-       carried gold lost).
+       carried gold lost). Done 2026-11-03 (DESIGN 17.16); resistances, monster spells beyond
+       a bolt, preferred targets and groups are listed there as not yet.
 8. [ ] **Buffs** (MM6-GAPS 7): the buff store on the game clock (Bless, Heroism, Stone Skin,
        Haste, the Protections, Torch Light), shown in the panel's window.
 9. [ ] **Items and shops** (MM6-GAPS 12 and 15): the catalogue grown toward a hundred base

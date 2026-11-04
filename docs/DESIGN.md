@@ -703,7 +703,9 @@ its own: Gullhaven's packs stand about its hills and roads. The dev build
 names them by kind for its tests, the first bandit `bandit`, the next
 `bandit-2`. A
 fallen monster is searched with a tap within 6 m for the gold on it
-(`gold` in `src/game/monsters.ts`), once.
+(`gold` in `src/game/monsters.ts`), once. Since 17.16 the records are tiered families with
+MM6's numbers, monsters flee, shoot and try special attacks, and the test data named above is
+gone.
 
 ### 14.4 Hit feedback (2026-10-16)
 
@@ -3235,7 +3237,104 @@ M1a) waits for a release.
 **Checked**: the smoke spec opens the root, finds the title with no tuning panel and no stats
 overlay, starts a new game and finds the land loaded with the band up, with no page error.
 
+### 17.16 Danger: monsters as data, missiles, flight, special attacks and the conditions (the agentic loop, 2026-11-03)
+
+ROADMAP M2's rules with no new art, built from docs/gaps/monsters.md and characters.md.
+
+**Monster records as data** (src/game/monsters.ts; monsters.md 1, 3). MM6 keeps its monsters in
+families of three tiers on one body, recoloured per tier, and for every tiered type the level
+sets the hit points, ⌊L × (L + 30) / 10⌋, and the experience, L × (L + 10) (3.2). The records
+are built that way: a family names its body, speeds, ranges and the two upper tiers' tints; a
+tier its level, armour class, attack dice, AI type, recovery (MM6's 40 to 100, at 60 a second),
+gold dice, item drop and, where it has them, a missile and a special attack. The goblin and
+the skeleton carry MM6's own numbers (Goblin 4, Shaman 6, King 10; Skeleton 6, Knight 10,
+Lord 14); the bandit (on the Cutpurse line: Bandit 3, Brigand 5, Cutthroat 7) and the nomad
+(Raider 3, Archer 5, Chieftain 8) are ours by the same rules. The Warden of the Halls is a
+unique of the skeleton family in the lord's colouring, level 8 with its own 70 hit points. The
+ids the levels and quests name are the A tiers. **Tints**: the retro material's `tint` colour
+is set per monster (`Character.setTint`), so one skin serves three tiers as MM6's one picture
+did. The old test numbers of 14.3 (bandit level 2, 25 hp) are gone; monsters are no longer
+"test data for Phase 5". Monsters hit harder now (a goblin's 1d9 at level 4) and are worth
+more (56 experience, not 10), MM6's pace.
+
+**Fleeing** (src/world/monster.ts; 2.7). Under its AI type's share of hit points, a Wimp at
+30 %, Normal 20 %, Aggressive 10 %, Suicidal never, a monster runs from the party: the run clip,
+a goal eight metres further from the party snapped to the navmesh, re-aimed every step. It
+never breaks a swing to run. Ours: it stops and stands off once two and a half aggro ranges
+away and runs again if the party comes back; one that gets nowhere for over a second with the
+party close is cornered and fights to the end (MM6 is unverified on both). The log says
+"Goblin Scout flees".
+
+**Missiles** (2.4, 2.12). A monster with a `missile` (the shaman's fire bolt at Normal 1 or 2,
+the archer's arrow) stops within its range, beyond one and a half arm's reaches, when a ray
+from its chest to the party's reaches it unhindered by the level, its props and its doors
+(bodies do not block). It plays the cast clip (an arrow, the first attack clip), and at 40 %
+of the swing rolls the shot as a blow is rolled, by its level against the armour class
+(14.2). The runtime flies it as the party's bolts fly (16.9; an arrow is a dull shaft with a
+faint trail), aimed where the party stood when it left; a party more than 1.2 m from there
+when it comes down has stepped aside and is missed ("the bolt flies past"), else the roll
+decides. In reach it strikes instead. Attack 1's missiles carry the special (the MM7 engine).
+
+**Special attacks** (2.6). After a hit a monster with a `special` tries it with chance level
+× multiplier percent (the knight's Afraid 10 %, the lord's Curse ×2 28 %, the chieftain's
+Weak ×2 16 %, the cutthroat's Dead 7 %), and it lands with chance 30 / (30 + Luck effect +
+X), X the effect of the statistic MM6 names for the kind (Endurance for Weak, Asleep, Drunk,
+Disease, Unconscious and Afraid; Personality for Curse; Intellect for Insane; poison or magic
+resistance, 0 until the sheet carries resistances, for Poison, Paralyze, Dead, Stone and
+Eradicate). Poison and disease come at the attacker's level 1 to 3. The log says "hits Alric
+for 5; Alric is afraid" or "; Alric resists". Breaking, theft, aging and draining wait on
+items that can be picked from and on the sheet's age. Two MM6 rules on sleep hold: the last
+member able to act cannot be put to sleep, and a sleeper wakes when all the others are down.
+
+**The conditions** (src/game/conditions.ts; characters.md 10). The table is MM6's, cell for
+cell: the displayed condition alone sets the statistics (Afraid Might 120 % and wits and
+Accuracy 50 %, Drunk Luck 200 % and Accuracy 10 %, Insane Might 200 %, Poison and Disease at
+three levels down to a tenth); Afraid, Drunk, Insane, the poisons and the diseases act, the
+rest cannot; Weak halves the member's damage and changes nothing else; a rest cures Asleep,
+Afraid, Drunk and Weak and wakes the unconscious, heals a poisoned or diseased member only to
+a half, a third or a quarter and leaves an insane one with no spell points; no condition
+worsens with rest or time, and none runs on a timer unless its cause gave it one (the engine
+keeps none). The sheet's colours (green, yellow, red by gravity) are `conditionTone`. Our
+invented penalties and the worsening per rest are gone. **The temple** (src/game/services.ts;
+10.6) prices as MM6's temples do: a donation X per house (Gullhaven's 10, New Sorpigal's),
+wounds cost X, a condition X times the weekday it began (Monday 1 to Sunday 7), five times
+that for Dead and Stoned, ten for Eradicated, several conditions the dearest; the invented
+price table is gone. **The wipe** (12.2) now comes when no member can act, asleep and
+paralysed counted, not only when all are down; the party still wakes a week later in the
+temple with its carried gold gone (16.6's rule).
+
+**The gems** (src/ui/hud.ts, src/world/alert.ts; 10.5, 14.1). MM6's gem beside each portrait
+is the enemy detector, not a condition light: green with no living monster within 30 m,
+yellow with one some way off, red within 10 m (ours; MM7's 51 m and arm's reach suit a
+monitor, not the phone's view), and dark while the member recovers from a blow or a swing;
+grey for one who is down. A rest is refused unless the gems are green, MM6's own rule, so the
+refusal and the light agree. Conditions show on the sheet and in the log.
+
+**In the levels**: the Old Halls' fourth goblin is now their shaman, standing back from the
+lair's pack and casting over it, and the skeleton before the warden's hall is a knight; five
+warriors remain for Tobin's five. Gullhaven's cave pack has a shaman behind it.
+
+**Checked**: unit tests for the records (the formulas, three tiers a family, the ids kept,
+the flee shares, the pace), the rolls (try and land chances), the party (Weak's half, the
+saves, the sleep rules, the wipe test), the conditions (the table, the levels, the rest
+fractions, the colours), the rest, the temple and the monster (flees when it should and not
+mid-swing, stands off, is cornered, never when suicidal; stops in range with a clear line and
+casts, is dodged, closes in blind, strikes in reach; tries its special and tells the outcome);
+an end-to-end test in the halls finds the shaman casting across the lair from out of reach,
+the gems off green with him near, and him running when hurt.
+
+**Not yet**: resistances on the sheet (characters.md 11), monster spells beyond a bolt,
+preferred targets and blows that hit several members (2.9), groups that wake together and
+peasants turning hostile (2.8), breaking, theft, aging and draining (2.6), the fled monster's
+return, a death picture for the wipe (none without the owner's picture), the condition faces
+(none without the owner's portraits).
+
 ## 13. Decision log
+
+- 2026-11-03 – Danger (17.16): monsters are tiered families with MM6's level formulas and one
+  tinted skin per tier; monsters flee by AI type, shoot or cast from range, and try special
+  attacks the member saves against; the conditions follow MM6's table and the temple MM6's
+  donation model; the gem is the enemy detector; the wipe comes when no one can act.
 
 - 2026-11-03 – The shipped app carries the game (17.15): the root boots the title and the
   game, the tuning panel only ever in the dev build, storage named per channel, levels
