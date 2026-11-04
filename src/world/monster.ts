@@ -86,6 +86,11 @@ const MISSILE_SPEED: Record<'bolt' | 'arrow', number> = { bolt: 16, arrow: 26 };
 const FLEE_STEP = 8;
 /** It flees only while the party is nearer than this many aggro ranges, then stands off. */
 const FLEE_WITHIN = 2.5;
+/**
+ * But never nearer than this: a fled monster standing just inside the enemy detector's
+ * yellow (src/world/alert.ts, 30 m) would keep the party from resting for good.
+ */
+const STAND_OFF_AT_LEAST = 36;
 /** Fleeing but not getting away for this long, with the party close, it turns and fights. */
 const CORNERED_AFTER = 1.2;
 const CORNERED_MOVE = 0.35;
@@ -235,7 +240,7 @@ export class Monster {
     if (this.cornered || this.swingTime >= 0) return false;
     const share = fleesAt(this.def);
     if (share <= 0 || this.hp > this.def.hp * share) return false;
-    return d < this.def.aggroRange * FLEE_WITHIN;
+    return d < Math.max(this.def.aggroRange * FLEE_WITHIN, STAND_OFF_AT_LEAST);
   }
 
   update(dt: number, party: PartyTarget, now: number): void {

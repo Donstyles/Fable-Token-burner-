@@ -187,10 +187,12 @@ describe('fleeing (monsters.md 2.7)', () => {
     run(monster, near, 3);
     expect(monster.position.z).toBeLessThan(-8);
     expect(monster.fleeing).toBe(true);
-    // Beyond two and a half aggro ranges it stops and stands; nearer again, it runs again.
-    run(monster, near, 6);
+    // Beyond two and a half aggro ranges, and past the detector's yellow (36 m at least, so a
+    // fled goblin cannot keep the party from resting), it stops and stands; nearer again, it
+    // runs again.
+    run(monster, near, 9);
     expect(monster.state).toBe('idle');
-    expect(monster.distanceTo(near.position)).toBeGreaterThan(def.aggroRange * 2.5);
+    expect(monster.distanceTo(near.position)).toBeGreaterThan(36);
     const closer: PartyTarget = { ...near, position: monster.position.add(new Vector3(0, 0, 5)) };
     run(monster, closer, 0.2);
     expect(monster.state).toBe('flee');
