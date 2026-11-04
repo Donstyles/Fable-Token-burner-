@@ -5,10 +5,11 @@
  * gives each the MM6-style starting kit (the weapon of the class's fixed weapon skill, leather
  * armour when the class starts with Leather, a healing potion) and MM6's starting purse of 200
  * gold and 7 food (ours where the manual is silent). Rewards and shared experience are applied
- * here because they touch several parts of the state.
+ * here because they touch several parts of the state, as is the running-out of buffs.
  */
 import { type Automap, createAutomap } from './automap';
-import { type Character, isLiving } from './character';
+import { expireBuffs, type MemberBuffId, type PartyBuffId, type PartyBuffs } from './buffs';
+import { type Character, expireCharacterBuffs, isLiving } from './character';
 import { classDef, type ClassId } from './classes';
 import { shareExperience } from './experience';
 import { addItem, equipItem, type InventoryGrid } from './inventory';
@@ -46,6 +47,8 @@ export interface GameState {
   flags: Record<string, number>;
   /** What the party changed in each map, by level id (DESIGN.md 17.11). */
   maps: Record<string, MapState>;
+  /** Timed spells on the whole party (DESIGN.md 17.17). */
+  partyBuffs: PartyBuffs;
 }
 
 /**
@@ -142,8 +145,22 @@ export function newGame(characters: readonly Character[], options: NewGameOption
       memberships: [],
       flags: {},
       maps: {},
+      partyBuffs: {},
     },
   };
+}
+
+export interface EndedBuffs {
+  party: PartyBuffId[];
+  members: { index: number; ended: MemberBuffId[] }[];
+}
+
+/** Drop every buff whose end has come at game minute `now`, the party's and each member's. */
+export function expireAllBuffs(state: GameState, now: number): EndedBuffs {
+  const members = state.party
+    .map((c, index) => ({ index, ended: expireCharacterBuffs(c, now) }))
+    .filter((m) => m.ended.length > 0);
+  return { party: expireBuffs(state.partyBuffs, now), members };
 }
 
 export function addGold(state: GameState, amount: number): void {

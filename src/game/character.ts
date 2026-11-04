@@ -5,13 +5,14 @@
  * DESIGN 14 records: hit points = class base + (level + Endurance bonus) × class factor +
  * Bodybuilding skill × rank multiplier × class factor; spell points likewise from the class's
  * magic statistic(s) and Meditation (MM6-GAPS.md 4, RPGC);
- * attack bonus = Accuracy bonus + weapon skill at every rank; melee damage adds the Might bonus
+ * attack bonus = Accuracy bonus + weapon skill at every rank (+ Bless); melee damage adds the Might bonus
  * and the skill of a Mace from Expert or an Axe or Spear at Master; armour class = Speed bonus +
  * equipment + the skill of a Staff or Spear from Expert (MM6-GAPS.md 4, RPGC). Not built: Master
  * Staff and Mace stun, Master Dagger triple damage, Master Bow's two arrows, a weapon in the left
  * hand (Expert Dagger, Master Sword). Recovery is MM6's sum in its units: the
  * weapon type's base plus worn armour, less the Speed effect and, from Expert in Sword, Axe or
- * Bow, the skill; at least 30 for melee, 0 for bows; a struck member recovers 20 − Endurance
+ * Bow, the skill, and 25 under Haste; at least 30 for melee, 0 for bows; Heroism adds to
+ * damage and Stone Skin to armour class (the buff store, DESIGN.md 17.17); a struck member recovers 20 − Endurance
  * effect (MM6-GAPS.md 8, GF-M). `recoverySec` converts at 60 units a second (ours, DESIGN 14.2).
  * Death as MM6 (MM6-GAPS.md 11, MMW): unconscious below 0 hit points, dead below minus the
  * Endurance score. A monster's special attack is saved against here (docs/gaps/monsters.md 2.6,
@@ -20,6 +21,15 @@
  * (characters.md 11).
  */
 import { baseHp, baseSp, classDef, type ClassId } from './classes';
+import {
+  buffPower,
+  expireBuffs,
+  hasBuff,
+  HASTE_RECOVERY,
+  type MemberBuffId,
+  type MemberBuffs,
+  TEMP_STAT,
+} from './buffs';
 import { specialLandChance } from './combat';
 import {
   afflict,
@@ -72,6 +82,8 @@ export interface Character {
   hp: number;
   sp: number;
   conditions: ConditionSet;
+  /** Timed spells on the member (DESIGN.md 17.17). */
+  buffs: MemberBuffs;
   spells: SpellId[];
   grid: InventoryGrid;
   equipment: Equipment;
@@ -83,9 +95,23 @@ export function isCharacter(value: unknown): value is Character {
   return typeof v['classId'] === 'string' && typeof v['level'] === 'number' && 'skills' in v;
 }
 
-/** Statistics after the character's conditions. */
+/**
+ * Statistics with the temporary ones Meditation and its kin give, then after the character's
+ * conditions (the MM7 engine adds the buff before the condition's share; MM6 unverified).
+ */
 export function currentStats(c: Character): Stats {
-  return effectiveStats(c.stats, c.conditions);
+  const raised = { ...c.stats };
+  for (const [id, stat] of Object.entries(TEMP_STAT) as [MemberBuffId, Stat][]) {
+    raised[stat] += buffPower(c.buffs, id);
+  }
+  return effectiveStats(raised, c.conditions);
+}
+
+/** Drop the member's buffs whose end has come; Haste leaves Weak behind (magic.md F5). */
+export function expireCharacterBuffs(c: Character, now: number): MemberBuffId[] {
+  const ended = expireBuffs(c.buffs, now);
+  if (ended.includes('haste') && isLiving(c)) afflict(c.conditions, 'weak', now);
+  return ended;
 }
 
 /** Body Building adds skill × the class's hit points a level, ×2 Expert, ×3 Master (RPGC). */
@@ -137,8 +163,11 @@ function meleeSkillFrom(c: Character, table: Partial<Record<SkillId, SkillRank>>
   return skill && from && rank && rankAtLeast(rank, from) ? skillLevel(c.skills, skill) : 0;
 }
 
+/** Attack (or Shoot) bonus: Accuracy, the weapon skill, and Bless (melee and missile). */
 export function attackBonus(c: Character, ranged = false): number {
-  return statBonus(currentStats(c).accuracy) + weaponSkillToHit(c, ranged);
+  return (
+    statBonus(currentStats(c).accuracy) + weaponSkillToHit(c, ranged) + buffPower(c.buffs, 'bless')
+  );
 }
 
 /** The member's damage as a fraction of the roll: a half when Weak (MW6; OE). */
@@ -148,21 +177,26 @@ export function damageScale(c: Character): number {
 
 /** Damage dice in hand; melee adds the Might bonus and the weapon skill where its rank does. */
 export function damageDice(c: Character, ranged = false): Dice | null {
+  // Heroism adds to every hit, a blow's or a shot's (magic.md S7).
+  const heroism = buffPower(c.buffs, 'heroism');
   if (ranged) {
     const bow = rangedWeapon(c.equipment);
-    return bow ? bow.damage : null;
+    if (!bow) return null;
+    return heroism ? { ...bow.damage, bonus: (bow.damage.bonus ?? 0) + heroism } : bow.damage;
   }
   const weapon = meleeWeapon(c.equipment);
   const bonus =
     (weapon.damage.bonus ?? 0) +
     statBonus(currentStats(c).might) +
-    meleeSkillFrom(c, SKILL_TO_DAMAGE);
+    meleeSkillFrom(c, SKILL_TO_DAMAGE) +
+    heroism;
   return { count: weapon.damage.count, sides: weapon.damage.sides, bonus };
 }
 
 export function armorClass(c: Character): number {
   const equipment = equipmentArmor(c.equipment, c.skills) + meleeSkillFrom(c, SKILL_TO_ARMOR);
-  return Math.max(0, statBonus(currentStats(c).speed) + equipment);
+  const stoneSkin = buffPower(c.buffs, 'stone-skin');
+  return Math.max(0, statBonus(currentStats(c).speed) + equipment + stoneSkin);
 }
 
 /**
@@ -189,6 +223,8 @@ export function recoveryUnits(c: Character, ranged = false): number {
   if (skill && rank && RECOVERY_SKILLS.has(skill) && rankAtLeast(rank, 'expert')) {
     t -= skillLevel(c.skills, skill);
   }
+  // Haste: 25 units off every attack (GF-M).
+  if (hasBuff(c.buffs, 'haste')) t -= HASTE_RECOVERY;
   return Math.max(ranged ? 0 : MIN_MELEE_RECOVERY, t);
 }
 

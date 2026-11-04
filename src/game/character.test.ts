@@ -5,9 +5,11 @@ import {
   bodyBuildingHp,
   canActNow,
   clampToMax,
+  currentStats,
   damageCharacter,
   damageDice,
   deathThreshold,
+  expireCharacterBuffs,
   healCharacter,
   hitRecovery,
   hitRecoveryUnits,
@@ -17,11 +19,13 @@ import {
   maxHp,
   maxSp,
   meditationSp,
+  MIN_MELEE_RECOVERY,
   RECOVERY_UNITS_PER_SECOND,
   recoverySec,
   recoveryUnits,
   restoreSp,
 } from './character';
+import { applyBuff, HASTE_RECOVERY } from './buffs';
 import { afflict } from './conditions';
 import { createCharacter } from './creation';
 import { knightInput, sorcererInput } from './fixtures';
@@ -294,5 +298,37 @@ describe('damage and healing', () => {
     expect(isCharacter(sorcerer())).toBe(true);
     expect(isCharacter(TEST_PARTY[0])).toBe(false);
     expect(isCharacter(null)).toBe(false);
+  });
+});
+
+describe('buffs on the sheet (DESIGN 17.17)', () => {
+  it('adds Bless to attack, Heroism to damage, Stone Skin to armour and Haste to recovery', () => {
+    const r = createCharacter(knightInput());
+    if (!r.ok) throw new Error('fixture');
+    const k = r.character;
+    equipItem(k.equipment, createItem('long-sword'), k.skills);
+    const attack = attackBonus(k);
+    const shoot = attackBonus(k, true);
+    const damage = damageDice(k)!;
+    const armor = armorClass(k);
+    const recovery = recoveryUnits(k);
+    applyBuff(k.buffs, 'bless', 0, { minutes: 65, power: 6, skill: 1 });
+    applyBuff(k.buffs, 'heroism', 0, { minutes: 65, power: 7, skill: 2 });
+    applyBuff(k.buffs, 'stone-skin', 0, { minutes: 65, power: 8, skill: 3 });
+    applyBuff(k.buffs, 'haste', 0, { minutes: 61, power: 1, skill: 1 });
+    expect(attackBonus(k)).toBe(attack + 6);
+    expect(attackBonus(k, true)).toBe(shoot + 6);
+    expect(damageDice(k)!.bonus).toBe((damage.bonus ?? 0) + 7);
+    expect(armorClass(k)).toBe(armor + 8);
+    expect(recoveryUnits(k)).toBe(Math.max(MIN_MELEE_RECOVERY, recovery - HASTE_RECOVERY));
+    // Meditation's temporary Intellect counts in the statistics, before the conditions' share.
+    applyBuff(k.buffs, 'temp-intellect', 0, { minutes: 60, power: 12, skill: 1 });
+    expect(currentStats(k).intellect).toBe(k.stats.intellect + 12);
+    // When Haste runs out the member is left Weak; the rest end quietly.
+    expect(expireCharacterBuffs(k, 61).sort()).toEqual(['haste', 'temp-intellect']);
+    expect(k.conditions.weak).toEqual({ since: 61 });
+    expect(recoveryUnits(k)).toBe(recovery);
+    expect(expireCharacterBuffs(k, 65).sort()).toEqual(['bless', 'heroism', 'stone-skin']);
+    expect(attackBonus(k)).toBe(attack);
   });
 });

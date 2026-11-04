@@ -97,6 +97,19 @@ describe('save round trip', () => {
     const bad = JSON.parse(JSON.stringify(kept)) as typeof kept;
     (bad.state.maps['old-halls'] as unknown as { doors: unknown }).doors = 'all';
     expect(deserialize(bad)).toEqual({ ok: false, error: 'maps: old-halls doors' });
+    // A version-3 save had no buffs: every member and the party get an empty store.
+    const v3 = JSON.parse(JSON.stringify(kept)) as typeof kept;
+    v3.version = 3;
+    delete (v3.state as Partial<typeof v3.state>).partyBuffs;
+    for (const c of v3.state.party) delete (c as Partial<typeof c>).buffs;
+    const fromV3 = deserialize(v3);
+    expect(fromV3.ok && fromV3.state.partyBuffs).toEqual({});
+    expect(fromV3.ok && fromV3.state.party.every((c) => Object.keys(c.buffs).length === 0)).toBe(
+      true,
+    );
+    const badBuff = JSON.parse(JSON.stringify(kept)) as typeof kept;
+    (badBuff.state.party[0]!.buffs as Record<string, unknown>)['flight'] = { until: 1 };
+    expect(deserialize(badBuff)).toEqual({ ok: false, error: 'party[0]: buff flight' });
   });
 
   it('rejects malformed input as values', () => {

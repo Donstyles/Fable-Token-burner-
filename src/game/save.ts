@@ -5,6 +5,7 @@
  * is the hook for older versions. Storage (IndexedDB, slots, autosave) is the runtime's job.
  */
 import type { AutomapLevel } from './automap';
+import { isMemberBuffId, isPartyBuffId } from './buffs';
 import type { Character } from './character';
 import { isClassId } from './classes';
 import { type ConditionSet, isConditionId } from './conditions';
@@ -16,7 +17,7 @@ import { isSpellId } from './spells';
 import { STATS } from './stats';
 import type { GameState } from './state';
 
-export const SAVE_VERSION = 3;
+export const SAVE_VERSION = 4;
 
 export interface SaveFile {
   version: number;
@@ -54,7 +55,7 @@ export function toJson(state: GameState, savedAt = 0): string {
 
 /**
  * Bring an older save up to the current version: version 1 had no map state, version 2's
- * maps had no chests.
+ * maps had no chests, version 3 had no buffs.
  */
 export function migrate(file: SaveFile): SaveFile {
   if (file.version >= SAVE_VERSION) return file;
@@ -63,6 +64,14 @@ export function migrate(file: SaveFile): SaveFile {
   if (file.version < 3 && isRecord(state) && isRecord(state.maps)) {
     for (const map of Object.values(state.maps)) {
       if (isRecord(map) && !isRecord(map['chests'])) map['chests'] = {};
+    }
+  }
+  if (file.version < 4 && isRecord(state)) {
+    if (!isRecord(state.partyBuffs)) state.partyBuffs = {};
+    if (Array.isArray(state.party)) {
+      for (const c of state.party as unknown[]) {
+        if (isRecord(c) && !isRecord(c['buffs'])) c['buffs'] = {};
+      }
     }
   }
   return { ...file, version: SAVE_VERSION, state };
@@ -170,6 +179,22 @@ function validateConditions(c: unknown, where: string): string | null {
   return null;
 }
 
+function validateBuffs(b: unknown, where: string, known: (id: unknown) => boolean): string | null {
+  if (!isRecord(b)) return `${where}: buffs missing`;
+  for (const [id, buff] of Object.entries(b)) {
+    if (!known(id)) return `${where}: buff ${id}`;
+    if (
+      !isRecord(buff) ||
+      !isFiniteNumber(buff['until']) ||
+      !isFiniteNumber(buff['power']) ||
+      !isFiniteNumber(buff['skill'])
+    ) {
+      return `${where}: buff ${id}`;
+    }
+  }
+  return null;
+}
+
 function validateCharacter(v: unknown, index: number): string | null {
   const where = `party[${index}]`;
   if (!isRecord(v)) return `${where}: not an object`;
@@ -191,6 +216,7 @@ function validateCharacter(v: unknown, index: number): string | null {
     check(isFiniteNumber(c.skillPoints) && c.skillPoints >= 0, `${where}: skill points`),
     check(isFiniteNumber(c.hp) && isFiniteNumber(c.sp), `${where}: hp/sp`),
     validateConditions(c.conditions, where),
+    validateBuffs(c.buffs, where, isMemberBuffId),
     check(Array.isArray(c.spells) && c.spells.every(isSpellId), `${where}: spells`),
     validateGrid(c.grid, where),
     validateEquipment(c.equipment, where),
@@ -257,6 +283,7 @@ export function validateState(v: unknown): string | null {
     check(Array.isArray(s.memberships) && s.memberships.every(isString), 'memberships'),
     check(isRecord(s.flags) && Object.values(s.flags).every(isFiniteNumber), 'flags'),
     validateMaps(s.maps),
+    validateBuffs(s.partyBuffs, 'partyBuffs', isPartyBuffId),
   );
 }
 

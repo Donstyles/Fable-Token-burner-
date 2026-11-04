@@ -84,17 +84,36 @@ describe('spell table', () => {
     const sparks = applySpell(spellDef('sparks'), ctx(1, 'master'))[0]!;
     expect(sparks.kind === 'projectile' && sparks.count).toBe(7);
     expect(applySpell(spellDef('torch-light'), ctx(2, 'expert'))).toEqual([
-      { kind: 'light', power: 2, minutes: 120 },
+      { kind: 'party-buff', buff: 'torch-light', power: 2, minutes: 120, skill: 2 },
     ]);
-    expect(applySpell(spellDef('bless'), ctx(1, 'expert'))).toHaveLength(1);
-    expect(applySpell(spellDef('bless'), ctx(1, 'master'))).toHaveLength(4);
-    expect(applySpell(spellDef('bless'), ctx(1, 'master'))[0]).toEqual({
+    // Bless (SPL): one member at Normal, the party from Expert; 1 h + 5 min × s, 15 at Master.
+    expect(applySpell(spellDef('bless'), ctx(1, 'normal'))).toEqual([
+      { kind: 'buff', buff: 'bless', power: 6, minutes: 65, member: 1, skill: 1 },
+    ]);
+    expect(applySpell(spellDef('bless'), ctx(1, 'expert'))).toHaveLength(4);
+    expect(applySpell(spellDef('bless'), ctx(2, 'master'))[0]).toEqual({
       kind: 'buff',
-      stat: 'attack',
-      amount: 6,
-      minutes: 65,
+      buff: 'bless',
+      power: 7,
+      minutes: 90,
       member: 0,
+      skill: 2,
     });
+    expect(applySpell(spellDef('heroism'), ctx(3, 'normal'))).toEqual([
+      { kind: 'buff', buff: 'heroism', power: 8, minutes: 75, member: 1, skill: 3 },
+    ]);
+    expect(applySpell(spellDef('stone-skin'), ctx(3, 'master'))).toHaveLength(4);
+    // Haste: 1 h + 1 min × s, 3 at Master.
+    expect(applySpell(spellDef('haste'), ctx(4, 'normal'))).toEqual([
+      { kind: 'buff', buff: 'haste', power: 9, minutes: 64, member: 1, skill: 4 },
+    ]);
+    expect(applySpell(spellDef('haste'), ctx(4, 'master'))[0]).toMatchObject({ minutes: 72 });
+    // Meditation: +10 + 2s at Normal, 3s from Expert, for an hour a point.
+    expect(applySpell(spellDef('meditation'), ctx(2, 'normal'))).toEqual([
+      { kind: 'buff', buff: 'temp-intellect', power: 14, minutes: 120, member: 1, skill: 2 },
+      { kind: 'buff', buff: 'temp-personality', power: 14, minutes: 120, member: 1, skill: 2 },
+    ]);
+    expect(applySpell(spellDef('meditation'), ctx(2, 'expert'))[0]).toMatchObject({ power: 16 });
     expect(applySpell(spellDef('awaken'), ctx(1, 'normal'))).toEqual([
       { kind: 'cure', condition: 'asleep', member: 1 },
     ]);
@@ -108,9 +127,16 @@ describe('spell table', () => {
     ]);
     expect(applySpell(spellDef('jump'), ctx(1, 'normal'))[0]?.kind).toBe('jump');
     expect(applySpell(spellDef('water-walk'), ctx(3, 'normal'))).toEqual([
-      { kind: 'party-buff', buff: 'water-walk', power: 1, minutes: 30 },
+      { kind: 'party-buff', buff: 'water-walk', power: 1, minutes: 30, skill: 3 },
     ]);
-    expect(applySpell(spellDef('protection-from-fire'), ctx(2, 'expert'))).toHaveLength(4);
+    // A Protection: the party's resistance by s, 2s or 3s for an hour a point.
+    expect(applySpell(spellDef('protection-from-fire'), ctx(2, 'expert'))).toEqual([
+      { kind: 'party-buff', buff: 'protection-fire', power: 4, minutes: 120, skill: 2 },
+    ]);
+    expect(applySpell(spellDef('protection-from-cold'), ctx(2, 'master'))[0]).toMatchObject({
+      buff: 'protection-cold',
+      power: 6,
+    });
   });
 });
 
@@ -153,7 +179,7 @@ describe('spellbook', () => {
       ok: true,
       cost: 1,
       failed: false,
-      effects: [{ kind: 'light', power: 1, minutes: 60 }],
+      effects: [{ kind: 'party-buff', buff: 'torch-light', power: 1, minutes: 60, skill: 1 }],
     });
     expect(c.sp).toBe(sp - 1);
     afflict(c.conditions, 'cursed', 0);

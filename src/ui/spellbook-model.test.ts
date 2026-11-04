@@ -58,7 +58,7 @@ describe('casting', () => {
       failed: false,
       source: 'spellbook',
     });
-    expect(r.event.effects[0]).toMatchObject({ kind: 'light' });
+    expect(r.event.effects[0]).toMatchObject({ kind: 'party-buff', buff: 'torch-light' });
     expect(castMessage(state, r.event)).toBe('Sera casts Torch Light.');
   });
 

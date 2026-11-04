@@ -141,6 +141,7 @@ export function createCharacter(input: CreationInput): CreationResult {
     hp: 0,
     sp: 0,
     conditions: {},
+    buffs: {},
     spells: startingSpells(skills),
     grid: createGrid(),
     equipment: createEquipment(),
