@@ -360,6 +360,24 @@ export const FAMILIES: FamilySpec[] = [
         special: { kind: 'dead', multiplier: 1 },
       },
     ],
+    uniques: [
+      {
+        // The Thieves' Den's captain (DESIGN.md 17.21): a cutthroat's numbers and a unique's
+        // hit points, the den's chest behind him.
+        id: 'bandit-captain',
+        name: 'Black Orrin',
+        tier: 'C',
+        level: 9,
+        hp: 80,
+        armorClass: 14,
+        damage: d(2, 6, 3),
+        ai: 'aggressive',
+        recovery: 80,
+        gold: d(20, 6),
+        drop: { chance: 0.8, level: 3, kind: 'weapon' },
+        special: { kind: 'poison', multiplier: 1, level: 1 },
+      },
+    ],
   },
   {
     // Ours, by 3.2's rules: the raiders of the dunes beyond the pass.
@@ -490,5 +508,41 @@ export const NPCS: Record<string, NpcDef> = {
     character: 'villager-man',
     tint: [0.84, 1.06, 0.78],
     lines: ['Hold there.'],
+  },
+  // Harrowmere's people (DESIGN.md 17.21).
+  alderman: {
+    id: 'alderman',
+    name: 'Alderman Pell',
+    character: 'villager-man',
+    tint: [1.08, 0.92, 0.74],
+    lines: ['Harrow is a market town, and the market is mine. Welcome, if you have gold.'],
+  },
+  herbwife: {
+    id: 'herbwife',
+    name: 'Mother Hesk',
+    character: 'villager-woman',
+    tint: [0.8, 0.9, 0.78],
+    lines: ['My daughter beats the steel; I only sell it.'],
+  },
+  drover: {
+    id: 'drover',
+    name: 'Tam the Drover',
+    character: 'villager-man',
+    tint: [0.9, 0.82, 0.7],
+    lines: ['Three days to Gullhaven with a herd, two without. Mind the road.'],
+  },
+  novice: {
+    id: 'novice',
+    name: 'Sister Wyn',
+    character: 'villager-woman',
+    tint: [0.86, 0.86, 1.0],
+    lines: ['The temple is up the lane. The barrows are not a place to be at night.'],
+  },
+  granger: {
+    id: 'granger',
+    name: 'Goodman Oswy',
+    character: 'villager-man',
+    tint: [0.78, 0.96, 0.82],
+    lines: ['The Grange has stood since the shire was a wood. It will stand a while yet.'],
   },
 };

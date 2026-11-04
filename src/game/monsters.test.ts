@@ -58,7 +58,7 @@ describe('monster records as data (DESIGN 17.16, monsters.md 3.2)', () => {
       character: 'skeleton-warrior',
     });
     expect(warden.tint).toEqual(MONSTERS['skeleton-lord']!.tint);
-    expect(Object.keys(MONSTERS)).toHaveLength(13);
+    expect(Object.keys(MONSTERS)).toHaveLength(14);
   });
 
   it('flees by its AI type: a wimp at 30 %, normal at 20 %, aggressive at 10 %, suicidal never', () => {
