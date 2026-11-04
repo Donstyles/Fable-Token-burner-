@@ -69,6 +69,14 @@ Dungeons are numbered in the order the thread reaches them; the Warren (4) is th
 Each tier wears its own tint; each family fights its own way (missiles, specials, flight). New
 bodies from Meshy would replace the shared ones family by family, the owner's call.
 
+## Experience along the thread
+
+Our maps hold a tenth of MM6's monsters, so a monster is worth ten times MM6's experience and a
+quest eight times the first town's (DESIGN 17.27). Summed four ways over the thread, with the
+monsters on the way, the party stands at level 3 after step 1, 4 after the Old Halls, 5 after
+the warren, 7 to 8 through Harrowmere, 9 after the barrow, 11 to 13 through the Mire, 14 before
+the Sea King.
+
 ## What the campaign needs from the systems
 
 - A monster may **carry** a named thing (`MonsterDef.carries`): a seal, a chart; found on the body.

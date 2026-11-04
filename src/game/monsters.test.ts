@@ -13,11 +13,11 @@ describe('monster records as data (DESIGN 17.16, monsters.md 3.2)', () => {
   it('derives hit points and experience from the level for every tiered type', () => {
     // MM6's Goblin (level 4), Skeleton Knight (10) and Skeleton Lord (14).
     expect(hpForLevel(4)).toBe(13);
-    expect(xpForLevel(4)).toBe(56);
+    expect(xpForLevel(4)).toBe(560);
     expect(hpForLevel(10)).toBe(40);
-    expect(xpForLevel(10)).toBe(200);
+    expect(xpForLevel(10)).toBe(2000);
     expect(hpForLevel(14)).toBe(61);
-    expect(xpForLevel(14)).toBe(336);
+    expect(xpForLevel(14)).toBe(3360);
     for (const f of FAMILIES) {
       for (const def of familyRecords(f).filter((m) => !f.uniques?.some((u) => u.id === m.id))) {
         expect(def.hp).toBe(hpForLevel(def.level));

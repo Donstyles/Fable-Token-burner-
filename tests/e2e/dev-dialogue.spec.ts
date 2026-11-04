@@ -131,39 +131,36 @@ test.describe('talk', () => {
     await page.evaluate(() => (window as unknown as W).ftb!.dev!.screens.close());
   });
 
-  test('the old halls paid: Tobin pays, and the score comes up after the talk', async ({
+  test('the First Door paid: Anselm pays, and the score comes up after the talk', async ({
     page,
   }) => {
-    // DESIGN 17.13: the slice's last quest paid puts up the score once the talk is over.
+    // docs/CAMPAIGN.md step 11, DESIGN 17.26: the thread's last quest paid puts up the score once
+    // the talk is over. The state stands as the thread leaves it: the Sea King laid.
     test.setTimeout(420_000);
     await page.goto('dev/?dev&lite&level=gullhaven&seed=5&hour=10');
     await page.waitForFunction(() => (window as unknown as W).ftb?.dev?.ready === true, null, {
       timeout: 120_000,
     });
-    await page.waitForFunction(() => (window as unknown as W).ftb!.dev!.npcs.length >= 2, null, {
+    await page.waitForFunction(() => (window as unknown as W).ftb!.dev!.npcs.length >= 7, null, {
       timeout: 300_000,
     });
-    // The dead put down and their warden with them: the quest at its last step, as the
-    // kills leave it.
     await page.evaluate(() => {
-      (window as unknown as W).ftb!.dev!.state.quests.entries.push({
-        id: 'the-old-halls',
-        state: 'active',
-        step: 2,
-        progress: 0,
-      });
+      const entries = (window as unknown as W).ftb!.dev!.state.quests.entries;
+      entries.push({ id: 'the-third-seal', state: 'done', step: 1, progress: 0 });
+      entries.push({ id: 'the-first-door', state: 'active', step: 1, progress: 0 });
     });
     const gold = await page.evaluate(() => (window as unknown as W).ftb!.dev!.state.gold);
-    expect(
-      await page.evaluate(() => (window as unknown as W).ftb!.dev!.talkTo('villager-man')),
-    ).toBe(true);
+    expect(await page.evaluate(() => (window as unknown as W).ftb!.dev!.talkTo('anselm'))).toBe(
+      true,
+    );
     await expect(page.locator('.dlg')).toBeVisible();
-    await page.locator('.dlg-topic', { hasText: 'The old halls' }).click();
+    await expect(page.locator('.dlg-name')).toHaveText('Brother Anselm');
+    await page.locator('.dlg-topic', { hasText: 'The First Door' }).click();
     expect(await page.evaluate(() => (window as unknown as W).ftb!.dev!.dialogue.text())).toMatch(
-      /Three hundred gold/,
+      /Two thousand gold/,
     );
     expect(await page.evaluate(() => (window as unknown as W).ftb!.dev!.state.gold)).toBe(
-      gold + 300,
+      gold + 2000,
     );
     await page.locator('[title="Farewell"]').click();
     // The score comes up on the frame after the talk closes; CI's software GL takes its time.

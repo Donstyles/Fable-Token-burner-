@@ -109,9 +109,16 @@ export function hpForLevel(level: number): number {
   return Math.floor((level * (level + 30)) / 10);
 }
 
-/** Experience from the level, for every tiered type (monsters.md 3.2). */
+/**
+ * Our maps hold a tenth of MM6's monsters (a region twenty-odd where New Sorpigal had two
+ * hundred), so each is worth ten times MM6's experience, and the thread's eleven steps land the
+ * party in the levels docs/CAMPAIGN.md pitches them at (DESIGN.md 17.27).
+ */
+export const XP_SCALE = 10;
+
+/** Experience from the level, for every tiered type (monsters.md 3.2), scaled for our maps. */
 export function xpForLevel(level: number): number {
-  return level * (level + 10);
+  return level * (level + 10) * XP_SCALE;
 }
 
 /** MM6's recovery points a second, in real time (DESIGN.md 14.2's rate for the party too). */

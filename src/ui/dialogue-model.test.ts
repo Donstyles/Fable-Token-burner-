@@ -74,8 +74,8 @@ describe('quest topics', () => {
     expect(ready.text).toMatch(/the road is mine again/);
     expect(ready.reward?.gold).toBe(150);
     expect(state.gold).toBe(gold + 150);
-    expect(ready.reward?.xp.reduce((a, b) => a + b, 0)).toBe(300);
-    expect(ready.notices).toEqual(["Quest complete: Tobin's Sheep (150 gold, 300 experience)"]);
+    expect(ready.reward?.xp.reduce((a, b) => a + b, 0)).toBe(2400);
+    expect(ready.notices).toEqual(["Quest complete: Tobin's Sheep (150 gold, 2400 experience)"]);
     expect(questEntry(state.quests, 'tobins-sheep')?.state).toBe('done');
 
     const done = chooseTopic(state, tobin, QUESTS, 'sheep')!;

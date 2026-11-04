@@ -3850,8 +3850,35 @@ Sea King).
 **Not yet**: a last word on the score page per step of the thread, an ending beyond the score,
 Act Two.
 
+### 17.27 Experience for a smaller world (the agentic loop, 2026-11-04)
+
+PLAN item 25's first finding. Summing the experience the thread pays (every quest's reward and
+every monster on the way, four ways shared) against MM6's training curve (1000 × L × (L − 1) / 2
+to hold level L) put the party at level 5 before the Sea King, whom docs/CAMPAIGN.md pitches at
+13 to 16. MM6's numbers assume MM6's volume: New Sorpigal held some two hundred monsters and the
+Old Halls' kind of dungeon forty; ours hold twenty-odd a region and ten a dungeon, by design
+(every monster placed by hand, no respawn but the month's). So:
+
+- **A monster is worth ten times MM6's experience** (`XP_SCALE`, src/game/monsters.ts:
+  L(L+10) × 10), the tiers' and uniques' alike.
+- **A quest pays eight times MM6's first town's** (the rewards in `QUESTS`): Tobin's Sheep 2400,
+  the Old Halls 5600, the First Door 48000.
+- With both, the party stands at level 3 after Gullhaven's errands, 4 after the Old Halls, 5 at
+  the warren, 7 to 8 through Harrowmere, 9 at the barrow, 11 to 13 through the Mire and 14 before
+  the Sea King: the sheet's bands. Gold is untouched; the trainers' prices (25 × the new level ×
+  the hall's multiplier) take about a third of what the thread pays.
+
+**Checked**: the monster test (experience 560 at level 4), the dialogue tests (2400 for the
+sheep); the estimate itself is a script over the level files and `QUESTS`, run by hand.
+
+**Not yet**: a check of the estimate in the suite (the dungeon spawns would need to be data the
+tests can read), and play-testing the bands on the phone.
+
 ## 13. Decision log
 
+- 2026-11-04 – Experience for a smaller world (17.27): monsters worth ten times MM6's
+  experience and quests eight times the first town's, because our maps hold a tenth of MM6's
+  monsters; the thread lands the party in the campaign's level bands.
 - 2026-11-04 – The finale (17.26): the Headland Undercroft, three doors keyed to the three seals,
   the Sea King; Anselm's The First Door gives the seals back; a campaign test walks the thread's
   eleven steps in order. A fifth of MM6 in every count.

@@ -24,7 +24,7 @@ export const QUESTS: Record<string, QuestDef> = {
       },
       { kind: 'talk', npc: 'villager-man', text: 'Tell Old Tobin at his farm gate' },
     ],
-    reward: { gold: 150, xp: 300 },
+    reward: { gold: 150, xp: 2400 },
   },
   'goblins-in-the-hills': {
     id: 'goblins-in-the-hills',
@@ -41,7 +41,7 @@ export const QUESTS: Record<string, QuestDef> = {
       },
       { kind: 'talk', npc: 'villager-woman', text: 'Tell Maren by the well' },
     ],
-    reward: { gold: 80, xp: 150 },
+    reward: { gold: 80, xp: 1200 },
   },
   'the-old-halls': {
     id: 'the-old-halls',
@@ -65,7 +65,7 @@ export const QUESTS: Record<string, QuestDef> = {
       },
       { kind: 'talk', npc: 'villager-man', text: 'Tell Old Tobin at his farm gate' },
     ],
-    reward: { gold: 300, xp: 700 },
+    reward: { gold: 300, xp: 5600 },
   },
   // The three of the town's errands (DESIGN.md 17.20): one carried, one walked, one fought.
   'a-letter-for-garrick': {
@@ -89,7 +89,7 @@ export const QUESTS: Record<string, QuestDef> = {
       },
       { kind: 'talk', npc: 'ida', text: 'Tell Ida at the stalls that Garrick has it' },
     ],
-    reward: { gold: 60, xp: 120 },
+    reward: { gold: 60, xp: 960 },
     gives: ['letter'],
   },
   'the-fire-at-the-stones': {
@@ -106,7 +106,7 @@ export const QUESTS: Record<string, QuestDef> = {
       },
       { kind: 'talk', npc: 'fisher', text: 'Tell Wen on the quay' },
     ],
-    reward: { gold: 40, xp: 100 },
+    reward: { gold: 40, xp: 800 },
   },
   'the-brigands-camp': {
     id: 'the-brigands-camp',
@@ -124,7 +124,7 @@ export const QUESTS: Record<string, QuestDef> = {
       },
       { kind: 'talk', npc: 'reeve', text: 'Tell Reeve Halloran on the square' },
     ],
-    reward: { gold: 250, xp: 600 },
+    reward: { gold: 250, xp: 4800 },
   },
   // Harrowmere's five (DESIGN.md 17.22): the shire's troubles, dearer than Gullhaven's.
   'the-nomads-camp': {
@@ -143,7 +143,7 @@ export const QUESTS: Record<string, QuestDef> = {
       },
       { kind: 'talk', npc: 'alderman', text: 'Tell Alderman Pell on Harrow’s square' },
     ],
-    reward: { gold: 300, xp: 800 },
+    reward: { gold: 300, xp: 6400 },
   },
   'hesks-parcel': {
     id: 'hesks-parcel',
@@ -165,7 +165,7 @@ export const QUESTS: Record<string, QuestDef> = {
       },
       { kind: 'talk', npc: 'herbwife', text: 'Tell Mother Hesk by the armourer’s' },
     ],
-    reward: { gold: 80, xp: 150 },
+    reward: { gold: 80, xp: 1200 },
     gives: ['parcel'],
   },
   'tams-cart': {
@@ -183,7 +183,7 @@ export const QUESTS: Record<string, QuestDef> = {
       },
       { kind: 'talk', npc: 'drover', text: 'Tell Tam at the stables' },
     ],
-    reward: { gold: 120, xp: 300 },
+    reward: { gold: 120, xp: 2400 },
   },
   'the-barrow-knights': {
     id: 'the-barrow-knights',
@@ -201,7 +201,7 @@ export const QUESTS: Record<string, QuestDef> = {
       },
       { kind: 'talk', npc: 'novice', text: 'Tell Sister Wyn on the temple lane' },
     ],
-    reward: { gold: 400, xp: 1000 },
+    reward: { gold: 400, xp: 8000 },
   },
   'black-orrin': {
     id: 'black-orrin',
@@ -218,7 +218,7 @@ export const QUESTS: Record<string, QuestDef> = {
       },
       { kind: 'talk', npc: 'granger', text: 'Tell Goodman Oswy at the Grange' },
     ],
-    reward: { gold: 500, xp: 1200 },
+    reward: { gold: 500, xp: 9600 },
   },
   // The campaign's thread through Gullhaven (docs/CAMPAIGN.md steps 3 and 4).
   'the-seal-and-the-stone': {
@@ -243,7 +243,7 @@ export const QUESTS: Record<string, QuestDef> = {
           'and the first thing I have ever been sure of.',
       },
     ],
-    reward: { gold: 200, xp: 500 },
+    reward: { gold: 200, xp: 4000 },
   },
   'the-goblin-king': {
     id: 'the-goblin-king',
@@ -261,7 +261,7 @@ export const QUESTS: Record<string, QuestDef> = {
       },
       { kind: 'talk', npc: 'villager-woman', text: 'Tell Maren by the well' },
     ],
-    reward: { gold: 350, xp: 900 },
+    reward: { gold: 350, xp: 7200 },
   },
   // Harrowmere's stretch of the thread (docs/CAMPAIGN.md steps 5 to 7).
   'the-chart': {
@@ -286,7 +286,7 @@ export const QUESTS: Record<string, QuestDef> = {
           'Two hundred and fifty gold, and the priest can say what he likes.',
       },
     ],
-    reward: { gold: 250, xp: 600 },
+    reward: { gold: 250, xp: 4800 },
   },
   'the-second-seal': {
     id: 'the-second-seal',
@@ -311,7 +311,7 @@ export const QUESTS: Record<string, QuestDef> = {
           'of it for twenty years. Three hundred gold, and come back whole.',
       },
     ],
-    reward: { gold: 300, xp: 800 },
+    reward: { gold: 300, xp: 6400 },
   },
   // The Mire's stretch of the thread and its errands (docs/CAMPAIGN.md steps 8 to 10).
   'the-reed-holt': {
@@ -330,7 +330,7 @@ export const QUESTS: Record<string, QuestDef> = {
       },
       { kind: 'talk', npc: 'fen-reeve', text: 'Tell Reeve Aldith before the Reed and Lantern' },
     ],
-    reward: { gold: 600, xp: 1500 },
+    reward: { gold: 600, xp: 12000 },
   },
   'the-lantern-road': {
     id: 'the-lantern-road',
@@ -347,7 +347,7 @@ export const QUESTS: Record<string, QuestDef> = {
       },
       { kind: 'talk', npc: 'ferryman', text: 'Tell Hob on the quay' },
     ],
-    reward: { gold: 150, xp: 400 },
+    reward: { gold: 150, xp: 3200 },
   },
   'a-cure-for-the-ague': {
     id: 'a-cure-for-the-ague',
@@ -369,7 +369,7 @@ export const QUESTS: Record<string, QuestDef> = {
       },
       { kind: 'talk', npc: 'wisewoman', text: 'Tell Mother Gefa by the well' },
     ],
-    reward: { gold: 120, xp: 300 },
+    reward: { gold: 120, xp: 2400 },
     gives: ['remedy'],
   },
   'the-causeway-thugs': {
@@ -388,7 +388,7 @@ export const QUESTS: Record<string, QuestDef> = {
       },
       { kind: 'talk', npc: 'chandler', text: 'Tell Pim before his chandlery' },
     ],
-    reward: { gold: 250, xp: 600 },
+    reward: { gold: 250, xp: 4800 },
   },
   'the-drowned-abbey': {
     id: 'the-drowned-abbey',
@@ -406,7 +406,7 @@ export const QUESTS: Record<string, QuestDef> = {
       },
       { kind: 'talk', npc: 'brother', text: 'Tell Brother Oddo at the abbey’s gate' },
     ],
-    reward: { gold: 700, xp: 1800 },
+    reward: { gold: 700, xp: 14400 },
   },
   'the-confession': {
     id: 'the-confession',
@@ -430,7 +430,7 @@ export const QUESTS: Record<string, QuestDef> = {
           'it to you.',
       },
     ],
-    reward: { gold: 200, xp: 600 },
+    reward: { gold: 200, xp: 4800 },
   },
   'the-sunken-hall': {
     id: 'the-sunken-hall',
@@ -448,7 +448,7 @@ export const QUESTS: Record<string, QuestDef> = {
       },
       { kind: 'talk', npc: 'brother', text: 'Tell Brother Oddo at the abbey’s gate' },
     ],
-    reward: { gold: 900, xp: 2200 },
+    reward: { gold: 900, xp: 17600 },
   },
   'the-third-seal': {
     id: 'the-third-seal',
@@ -472,7 +472,7 @@ export const QUESTS: Record<string, QuestDef> = {
           'open it. Four hundred gold, and whatever prayers a gatekeeper of nothing can say.',
       },
     ],
-    reward: { gold: 400, xp: 1000 },
+    reward: { gold: 400, xp: 8000 },
   },
   // The thread's end (docs/CAMPAIGN.md step 11).
   'the-first-door': {
@@ -492,7 +492,7 @@ export const QUESTS: Record<string, QuestDef> = {
       },
       { kind: 'talk', npc: 'anselm', text: 'Tell Brother Anselm on the temple lane' },
     ],
-    reward: { gold: 2000, xp: 6000 },
+    reward: { gold: 2000, xp: 48000 },
     gives: ['seal-of-the-halls', 'seal-of-the-barrow', 'seal-of-the-deep'],
   },
   'the-barrow-king': {
@@ -511,7 +511,7 @@ export const QUESTS: Record<string, QuestDef> = {
       },
       { kind: 'talk', npc: 'novice', text: 'Tell Sister Wyn on the temple lane' },
     ],
-    reward: { gold: 800, xp: 2000 },
+    reward: { gold: 800, xp: 16000 },
   },
 };
 
