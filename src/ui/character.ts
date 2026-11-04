@@ -87,6 +87,7 @@ function statsBody(v: SheetView): HTMLElement {
     box([
       line('Condition', v.condition, v.condition === 'Good' ? 'good' : 'bad'),
       line('Recovery', v.recovery),
+      line('Spells', v.buffs.length ? v.buffs.join(', ') : 'None', v.buffs.length ? 'good' : ''),
     ]),
   );
   right.append(
@@ -198,7 +199,7 @@ export function renderSheet(ctx: ScreenContext): void {
   const { state, frame } = ctx;
   const c = state.party[state.selected];
   if (!c) return;
-  const v = sheetView(c);
+  const v = sheetView(c, state.clock.minutes);
   frame.setTitle(`${v.name} the ${v.className}`);
   frame.aside.textContent = `Skill Points: ${v.skillPoints}`;
   frame.body.replaceChildren(statsBody(v));

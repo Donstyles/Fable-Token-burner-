@@ -3,13 +3,16 @@
  * minimap through a cusped arch with the heading on a plate at its apex and a − and a + cut
  * into its shoulders, two stained-glass windows, the clock in a stone bar, the four books on
  * their shelf (quests, notes, map, calendar), the food beside its apple and the gold beside its
- * coins, and the four gold ovals: cast, rest, quick reference and options. Screens that MM6
+ * coins, and the four gold ovals: cast, rest, quick reference and options; the party's spells
+ * sit in a strip along the windows' sill (DESIGN.md 17.17). Screens that MM6
  * drew over the panel (a member's figure on the character screens, a house's wooden board)
  * draw into `cover`, which hides everything above the food and gold.
  */
 import type { AutomapLevel } from '../game/automap';
 import { isVisited } from '../game/automap';
+import type { ActiveBuff, PartyBuffId } from '../game/buffs';
 import { formatDate, formatTime } from '../game/time';
+import { buffMarksKey, renderBuffMarks } from './buff-marks';
 import { el } from './dom';
 import { archMarks, archShapes } from './paint-panel';
 import { paintNumerals } from './paint';
@@ -79,6 +82,8 @@ export interface Panel {
   setSource(source: MiniMapSource | null): void;
   /** The party's place in the scene's coordinates and its heading, degrees from north. */
   setParty(x: number, z: number, yawDeg: number): void;
+  /** The party's spells, as MM6's strip under the hireling windows (DESIGN.md 17.17). */
+  setPartyBuffs(buffs: readonly ActiveBuff<PartyBuffId>[]): void;
   /** Where screens draw over the panel (hidden while empty). */
   cover: HTMLElement;
   dispose(): void;
@@ -92,6 +97,9 @@ export function createPanel(parent: HTMLElement, hooks: PanelHooks): Panel {
     pane.dataset['paint'] = `glass-${k}`;
     glassRow.appendChild(pane);
   }
+  // The party's spells in a strip along the windows' sill (DESIGN.md 17.17).
+  const spells = el('div', 'panel-spells');
+  let spellsKey = '';
   // The minimap under its arch: the canvas drawn in the opening, the arch over it.
   const map = el('div', 'panel-map');
   const canvas = el('canvas', 'panel-minimap');
@@ -160,7 +168,7 @@ export function createPanel(parent: HTMLElement, hooks: PanelHooks): Panel {
     ovals.appendChild(b);
   }
   const cover = el('div', 'panel-cover');
-  root.append(map, glassRow, clock, shelf, purse, ovals, cover);
+  root.append(map, glassRow, spells, clock, shelf, purse, ovals, cover);
   parent.appendChild(root);
   // The cover shows only while a screen has put something in it.
   const covered = new MutationObserver(() => {
@@ -293,6 +301,12 @@ export function createPanel(parent: HTMLElement, hooks: PanelHooks): Panel {
       if (pic && !pic.complete)
         pic.addEventListener('load', () => ((drawn = ''), draw()), { once: true });
       draw();
+    },
+    setPartyBuffs(buffs) {
+      const key = buffMarksKey(buffs);
+      if (key === spellsKey) return;
+      spellsKey = key;
+      renderBuffMarks(spells, buffs);
     },
     setParty(x, z, yawDeg) {
       party = { x, z, yaw: yawDeg };

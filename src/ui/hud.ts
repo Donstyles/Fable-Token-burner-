@@ -11,9 +11,11 @@
  * selects that member; a second tap opens their sheet.
  */
 import type { Party } from '../game/party';
+import { activeBuffs } from '../game/buffs';
 import { maxSp } from '../game/character';
 import { worstCondition } from '../game/conditions';
 import type { AlertLevel } from '../world/alert';
+import { buffMarksKey, renderBuffMarks } from './buff-marks';
 import { el } from './dom';
 import { installPaint, installPaintedButtons } from './paint';
 import { createPanel, type Panel, type PanelHooks } from './panel';
@@ -33,8 +35,11 @@ export function portraitOf(appearance: string, expression = 'neutral'): string |
 }
 
 export interface Hud {
-  /** Redraw what changed; `alert` is the enemy detector's colour for the gems. */
-  update(now: number, alert?: AlertLevel): void;
+  /**
+   * Redraw what changed; `alert` is the enemy detector's colour for the gems, `minutes` the
+   * game clock for the buff marks' time left.
+   */
+  update(now: number, alert?: AlertLevel, minutes?: number): void;
   /** The right-hand panel (panel.ts). */
   panel: Panel;
   /** Show the game clock (minutes since the start of the calendar). */
@@ -131,7 +136,9 @@ export function createHud(parent: HTMLElement, party: Party, hooks: HudHooks): H
       cameo.classList.add('portrait');
       cameo.style.setProperty('--face', `url("${face}")`);
     } else cameo.dataset['paint'] = `sigil-${m.character?.classId ?? 'knight'}`;
-    frame.appendChild(cameo);
+    // The member's spells as MM6's small icons on the band (DESIGN.md 17.17), at the oval's foot.
+    const marks = el('div', 'hud-marks');
+    frame.append(cameo, marks);
     const bars = el('div', 'hud-bars');
     const gem = el('div', 'hud-gem good');
     gem.dataset['paint'] = 'gem-good';
@@ -171,13 +178,22 @@ export function createHud(parent: HTMLElement, party: Party, hooks: HudHooks): H
       }
     });
     band.appendChild(cell);
-    return { cell, frame, hpFill, spFill, gem };
+    return { cell, frame, hpFill, spFill, gem, marks, marksKey: '' };
   });
   root.appendChild(band);
   parent.appendChild(root);
   let last = '';
   return {
-    update(now, alert = 'green') {
+    update(now, alert = 'green', minutes = 0) {
+      // The marks redraw on their own key: a buff's minutes tick without the rest changing.
+      party.members.forEach((m, i) => {
+        const x = cells[i]!;
+        const buffs = m.character ? activeBuffs(m.character.buffs, minutes) : [];
+        const marksKey = buffMarksKey(buffs);
+        if (marksKey === x.marksKey) return;
+        x.marksKey = marksKey;
+        renderBuffMarks(x.marks, buffs);
+      });
       const key = party.members
         .map((m, i) => {
           const c = m.character;

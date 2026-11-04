@@ -14,6 +14,7 @@ import {
   recoverySec,
 } from '../game/character';
 import { classDef } from '../game/classes';
+import { activeBuffs, BUFF_NAMES, buffLabel } from '../game/buffs';
 import { afflictions, CONDITION_DEFS, worstCondition } from '../game/conditions';
 import { canLevelUp, xpForLevel } from '../game/experience';
 import { type Dice, diceText } from '../game/rng';
@@ -94,6 +95,8 @@ export interface SheetView {
   age: number;
   condition: string;
   afflictions: string[];
+  /** The member's spells with their time left, longest first (DESIGN.md 17.17). */
+  buffs: string[];
   hp: number;
   maxHp: number;
   sp: number;
@@ -172,11 +175,16 @@ export function skillGroups(rows: readonly SkillRow[]): SkillGroupRows[] {
     .filter((g) => g.rows.length > 0);
 }
 
-export function sheetView(c: Character): SheetView {
+/** The sheet's figures; `minutes` is the game clock, for the buffs' time left. */
+export function sheetView(c: Character, minutes?: number): SheetView {
   const cls = classDef(c.classId);
   const xpNext = xpForLevel(c.level + 1);
   const ranged = damageDice(c, true);
+  const buffs = activeBuffs(c.buffs, minutes ?? 0).map((b) =>
+    minutes === undefined ? BUFF_NAMES[b.id] : buffLabel(b.id, b.minutesLeft),
+  );
   return {
+    buffs,
     name: c.name,
     className: cls.name,
     sex: c.sex === 'male' ? 'Male' : 'Female',

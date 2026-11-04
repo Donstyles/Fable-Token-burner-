@@ -44,7 +44,8 @@ import {
   type Character as CharacterSheet,
 } from '../game/character';
 import { testCharacters } from '../game/fixtures';
-import { mapState, newGame, type GameState } from '../game/state';
+import { expireAllBuffs, mapState, newGame, type GameState } from '../game/state';
+import { activeBuffs, applyBuff, BUFF_NAMES, buffPower } from '../game/buffs';
 import { addItem, gridHas } from '../game/inventory';
 import type { ItemId } from '../game/items';
 import { automapLevel, revealAt } from '../game/automap';
@@ -1201,10 +1202,31 @@ export async function startGame(app: App): Promise<DevHandle> {
           }
           break;
         }
-        case 'light':
-          torch.brighten(e.power, e.minutes / MINUTES_PER_REAL_SECOND);
-          lines.push('The torch burns white and far');
+        case 'buff': {
+          // Into the member's store (DESIGN.md 17.17); a weaker or shorter cast changes nothing.
+          const m = state.party[e.member];
+          if (!m) break;
+          const cast = { minutes: e.minutes, power: e.power, skill: e.skill };
+          const r = applyBuff(m.buffs, e.buff, state.clock.minutes, cast);
+          lines.push(
+            r === 'kept'
+              ? `${m.name}'s ${BUFF_NAMES[e.buff]} holds`
+              : `${BUFF_NAMES[e.buff]} on ${m.name}`,
+          );
           break;
+        }
+        case 'party-buff': {
+          const cast = { minutes: e.minutes, power: e.power, skill: e.skill };
+          const r = applyBuff(state.partyBuffs, e.buff, state.clock.minutes, cast);
+          lines.push(
+            r === 'kept'
+              ? `${BUFF_NAMES[e.buff]} already holds`
+              : e.buff === 'torch-light'
+                ? 'The torch burns white and far'
+                : `${BUFF_NAMES[e.buff]} on the party`,
+          );
+          break;
+        }
         case 'projectile': {
           // The bolt goes for the living monster nearest the middle of the view.
           const candidates = handle.monsters.map((m) => ({
@@ -1270,10 +1292,8 @@ export async function startGame(app: App): Promise<DevHandle> {
           break;
         }
         case 'jump':
-        case 'buff':
-        case 'party-buff':
-          // Lasting buffs and the leap wait on their systems (PLAN 5b step 14); the
-          // points are spent, and the line says so plainly.
+          // The leap waits on its system (PLAN 5b step 14); the points are spent, and the
+          // line says so plainly.
           lines.push(`${def.name} takes no hold yet`);
           break;
       }
@@ -1325,7 +1345,23 @@ export async function startGame(app: App): Promise<DevHandle> {
     }
     navigation?.update(dt);
     // The clock runs while the party is in the world; the sky follows it (DESIGN.md 16.3).
-    if (dt > 0) advanceClock(state.clock, dt * MINUTES_PER_REAL_SECOND);
+    if (dt > 0) {
+      advanceClock(state.clock, dt * MINUTES_PER_REAL_SECOND);
+      // Spells run out on the clock (DESIGN.md 17.17); Haste leaves its member weak.
+      const ended = expireAllBuffs(state, state.clock.minutes);
+      for (const id of ended.party) status.say(`${BUFF_NAMES[id]} wears off`, 4000);
+      for (const m of ended.members) {
+        const who = state.party[m.index]?.name ?? 'Someone';
+        for (const id of m.ended) {
+          status.say(
+            id === 'haste'
+              ? `${who}'s Haste wears off; ${who} is weak`
+              : `${who}'s ${BUFF_NAMES[id]} wears off`,
+            4000,
+          );
+        }
+      }
+    }
     if (dayEnvironment) {
       const minute = Math.floor(minuteOfDay(state.clock.minutes) * 4) / 4;
       if (minute !== lastDaylightMinute) {
@@ -1401,13 +1437,15 @@ export async function startGame(app: App): Promise<DevHandle> {
       window.setTimeout(wake, 3500);
     }
     if (!fly && !paused) feedback.applyCamera(camera);
-    strip.update(simTime, alertNow());
+    strip.update(simTime, alertNow(), state.clock.minutes);
+    strip.panel.setPartyBuffs(activeBuffs(state.partyBuffs, state.clock.minutes));
     showPurse();
     const eye = camera.globalPosition;
     const yaw = fly ? flyYaw : party.yaw;
     underwater.set(isUnderwater(level.water, eye));
     water.update(eye, dt);
     waterfalls.update(dt, eye);
+    torch.setBoost(buffPower(state.partyBuffs, 'torch-light'));
     torch.update(dt, eye, yaw);
     spellfx.update(dt);
     fog.update(dt, eye);

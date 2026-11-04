@@ -133,6 +133,54 @@
   gap: 0;
   margin-top: 12px;
 }
+/* The member's spells (buff-marks.ts): small tiles along the oval's foot, inside its ring. */
+.hud-marks {
+  position: absolute;
+  left: 6px;
+  right: 6px;
+  bottom: 7px;
+  z-index: 2;
+  display: flex;
+  justify-content: center;
+  gap: 1px;
+  pointer-events: none;
+}
+.buff-mark {
+  box-sizing: border-box;
+  width: 11px;
+  height: 11px;
+  border: 1px solid rgba(214, 180, 96, 0.85);
+  background: rgba(16, 12, 10, 0.88);
+  display: block;
+  overflow: hidden;
+}
+.buff-mark.school-fire {
+  background: rgba(130, 40, 16, 0.9);
+}
+.buff-mark.school-air {
+  background: rgba(70, 90, 140, 0.9);
+}
+.buff-mark.school-water {
+  background: rgba(24, 70, 130, 0.9);
+}
+.buff-mark.school-earth {
+  background: rgba(90, 70, 30, 0.9);
+}
+.buff-mark.school-spirit {
+  background: rgba(60, 120, 150, 0.9);
+}
+.buff-mark.school-mind {
+  background: rgba(110, 50, 140, 0.9);
+}
+.buff-mark.school-body {
+  background: rgba(140, 110, 40, 0.9);
+}
+.buff-mark-icon {
+  display: block;
+  width: 9px;
+  height: 9px;
+  image-rendering: pixelated;
+}
 .hud-gem {
   /* MM6's upright lit stone beside the oval's top, eight by eleven (paint.ts `gem`). */
   position: absolute;
@@ -340,6 +388,7 @@
 .panel.covered::before,
 .panel.covered > .panel-map,
 .panel.covered > .panel-glass,
+.panel.covered > .panel-spells,
 .panel.covered > .panel-clock,
 .panel.covered > .panel-books {
   visibility: hidden;
@@ -407,6 +456,17 @@
   height: 64px;
   background: var(--paint) center / 100% 100% no-repeat;
   image-rendering: pixelated;
+}
+/* The party's spells along the windows' sill (buff-marks.ts). */
+.panel-spells {
+  left: 4px;
+  top: 176px;
+  width: 120px;
+  height: 12px;
+  display: flex;
+  justify-content: center;
+  gap: 1px;
+  pointer-events: none;
 }
 /* The clock in a darkened well of the marble: the hour in MM6's yellow numerals, the day in
    the white italic beside it. */

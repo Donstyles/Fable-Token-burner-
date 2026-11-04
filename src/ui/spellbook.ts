@@ -23,20 +23,7 @@ import {
   spellRows,
 } from './spellbook-model';
 
-/**
- * The spell icons accepted into assets/icons/spells (DESIGN.md 16.22), by spell id. A spell
- * without one shows the bare oval with its name beneath, as an MM6 page does before the art
- * is in.
- */
-const ICONS = import.meta.glob('../../assets/icons/spells/*.png', {
-  eager: true,
-  query: '?url',
-  import: 'default',
-}) as Record<string, string>;
-
-function iconOf(id: string): string | null {
-  return ICONS[`../../assets/icons/spells/${id}.png`] ?? null;
-}
+import { spellIcon as iconOf } from './spell-icons';
 
 /** MM6's book keeps a place for each of a school's eleven spells, by level, three to a row. */
 const PLACES = 11;

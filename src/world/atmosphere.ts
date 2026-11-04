@@ -17,9 +17,8 @@ export class Torch {
   private time = 0;
   base = 0.9;
   private on = true;
-  /** Torch Light (DESIGN.md 16.9): extra brightness and reach, and the seconds left of it. */
+  /** Torch Light (DESIGN.md 16.9, 17.17): extra brightness and reach, 0 to 3, from the buff store. */
   private boost = 0;
-  private boostLeft = 0;
   private readonly baseRange: number;
 
   constructor(private readonly materials: RetroMaterials) {
@@ -33,14 +32,13 @@ export class Torch {
     this.baseRange = this.light.range;
   }
 
-  /** Brighten the torch by `power` steps (1 to 3) for `seconds`; a new cast takes the longer. */
-  brighten(power: number, seconds: number): void {
-    this.boost = Math.max(this.boost, Math.min(3, Math.max(1, power)));
-    this.boostLeft = Math.max(this.boostLeft, seconds);
+  /** Torch Light's steps, 0 to 3: the party buff's power while it is on (DESIGN.md 17.17). */
+  setBoost(power: number): void {
+    this.boost = Math.min(3, Math.max(0, Math.round(power)));
   }
 
   get brightened(): boolean {
-    return this.boostLeft > 0;
+    return this.boost > 0;
   }
 
   get enabled(): boolean {
@@ -57,10 +55,6 @@ export class Torch {
     // Held slightly forward and below the eyes, so walls to the side still catch it.
     this.light.position.set(eye.x + Math.sin(yaw) * 0.4, eye.y - 0.3, eye.z + Math.cos(yaw) * 0.4);
     if (!this.on) return;
-    if (this.boostLeft > 0) {
-      this.boostLeft -= dt;
-      if (this.boostLeft <= 0) this.boost = 0;
-    }
     const t = this.time;
     const flicker =
       0.82 + 0.1 * Math.sin(t * 11.3) + 0.05 * Math.sin(t * 27.1) + 0.03 * Math.sin(t * 5.7);
