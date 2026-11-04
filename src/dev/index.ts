@@ -88,7 +88,7 @@ import { handleQuestEvent, pendingReaches, REACH_RADIUS } from '../game/quests';
 import { SITE_REACH, SITE_TAP, SITES, useSite } from '../game/sites';
 import { shareExperience } from '../game/experience';
 import { Soundscape } from '../world/soundscape';
-import { DOOR_REACH, VILLAGE_HOUSES } from '../game/content';
+import { DOOR_REACH, HOUSES } from '../game/content';
 import { isOpen } from '../game/services';
 import { clearSave, loadGame, saveGame } from '../app/autosave';
 import { daylightAt, environmentAt, MINUTES_PER_REAL_SECOND } from '../world/daylight';
@@ -195,6 +195,8 @@ const LEVEL = QUERY.get('level') ?? 'gullhaven';
 const PLACE_NAMES: Record<string, string> = {
   gullhaven: 'Gullhaven',
   'old-halls': 'The Old Halls',
+  harrowmere: 'Harrowmere',
+  'thieves-den': "The Thieves' Den",
 };
 /** Arriving through a portal: the portal of this level to appear at (DESIGN.md 15.3). */
 const ENTRY = QUERY.get('entry');
@@ -845,12 +847,21 @@ export async function startGame(app: App): Promise<DevHandle> {
   const portals = new PortalWatcher(level.portals, (p: Portal) => {
     diag(`portal ${p.name} → ${p.target.level}`);
     state.level = { id: p.target.level, x: 0, y: 0, z: 0, yawDeg: 0 };
+    // A walked edge takes its days on the clock (DESIGN.md 17.21), as MM6's did.
+    if (p.days) advanceClock(state.clock, p.days * 24 * 60);
     saveGame(state);
+    const where = PLACE_NAMES[p.target.level] ?? p.target.level;
     travel(
       uiLayer,
-      // Out of a region a portal goes underground; out of anywhere else, up into the day.
-      level.sidecar.outdoor ? 'Into the dark…' : 'Out into the light…',
+      // Over an edge, days on the road; out of a region a portal goes underground; out of
+      // anywhere else, up into the day.
+      p.days
+        ? `${p.days === 1 ? 'A day' : `${p.days} days`} on the road to ${where}…`
+        : level.sidecar.outdoor
+          ? 'Into the dark…'
+          : 'Out into the light…',
       portalUrl(location.href, p),
+      p.days ? 1400 : 600,
     );
   });
 
@@ -1125,7 +1136,7 @@ export async function startGame(app: App): Promise<DevHandle> {
       const copy = pick?.thinInstanceIndex ?? -1;
       // Which house this copy is: its plot's name (src/world/level.ts keeps them by copy).
       const names = (mesh.metadata as { names?: string[] } | null)?.names;
-      const house = VILLAGE_HOUSES[names?.[copy] ?? model.replace('building-', '')];
+      const house = HOUSES[names?.[copy] ?? model.replace('building-', '')];
       const point = pick?.pickedPoint;
       const matrices = copy >= 0 ? mesh.thinInstanceGetWorldMatrices() : [];
       const door =
@@ -1148,7 +1159,7 @@ export async function startGame(app: App): Promise<DevHandle> {
           return;
         }
         screens.openService(house.kind, house.house);
-        enterRoom(house.house.id);
+        enterRoom(house.room ?? house.house.id);
         return;
       }
       const label = propLabel(model, house?.house.name);

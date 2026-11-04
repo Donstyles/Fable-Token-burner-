@@ -14,14 +14,10 @@
  * Drawn as a map: x east, z north, metres from the map's centre, the map ±320 m; headings a
  * compass's (kernel/terrain/region.ts `fromMap`).
  */
-import catalogue from '../../assets/props/catalogue.json';
-import type { PropCatalogue } from '../../kernel/terrain/props';
 import type { Plot } from '../../kernel/terrain/plots';
 import type { RegionScript } from '../../kernel/terrain/region';
 import type { P2 } from '../../kernel/terrain/spline';
-import type { TreeKind } from '../../kernel/terrain/trees';
-
-const CATALOGUE = catalogue as unknown as PropCatalogue;
+import { along, orchard, prop, ring, row as rowAlong, type RowItem } from '../lib/plots';
 
 /** The square's middle; the high street runs east and west through it. */
 const SQUARE: P2 = [0, -118];
@@ -31,81 +27,9 @@ const CAVE: P2 = [76, 70];
 const STONES: P2 = [-112, 24];
 const RUIN: P2 = [166, 14];
 
-/** A house, or a gap of so many metres between houses. */
-type Item = string | number | { model: string; name: string };
-
-/**
- * A row of houses along the high street, house to house: from `x` going `dir` (1 east, -1
- * west), the fronts on the line `front`, facing the street (north of it when `front` is above
- * it). Each house takes its own width from the catalogue.
- */
-function row(front: number, x: number, dir: 1 | -1, items: Item[]): Plot[] {
-  const plots: Plot[] = [];
-  const north = front > STREET;
-  let at = x;
-  for (const item of items) {
-    if (typeof item === 'number') {
-      at += dir * item;
-      continue;
-    }
-    const model = typeof item === 'string' ? item : item.model;
-    const [w, , d] = CATALOGUE[model]!.size;
-    const cx = at + (dir * w) / 2;
-    const cz = north ? front + d / 2 : front - d / 2;
-    plots.push({
-      model,
-      at: [round(cx), round(cz)],
-      face: [round(cx), STREET],
-      ...(typeof item === 'object' ? { name: item.name } : {}),
-    });
-    at += dir * w;
-  }
-  return plots;
-}
-
-/** Small things along a line, every `step` metres, each facing `face`; bushes alternate. */
-function along(model: string, from: P2, to: P2, step: number, face: P2): Plot[] {
-  const len = Math.hypot(to[0] - from[0], to[1] - from[1]);
-  const n = Math.max(1, Math.round(len / step));
-  const plots: Plot[] = [];
-  for (let i = 0; i <= n; i++) {
-    const t = i / n;
-    const at: P2 = [round(from[0] + (to[0] - from[0]) * t), round(from[1] + (to[1] - from[1]) * t)];
-    plots.push({ model: i % 2 ? model.replace('-01', '-02') : model, at, face, light: true });
-  }
-  return plots;
-}
-
-/** Trees in rows, an orchard's: `cols` by `rows` from `corner`, `gap` metres apart. */
-function orchard(corner: P2, cols: number, rows: number, gap: number, kinds: TreeKind[]) {
-  const out: { kind: TreeKind; at: P2; scale: number }[] = [];
-  for (let j = 0; j < rows; j++) {
-    for (let i = 0; i < cols; i++) {
-      out.push({
-        kind: kinds[(i + j) % kinds.length]!,
-        at: [corner[0] + i * gap, corner[1] + j * gap],
-        scale: 0.7 + ((i * 7 + j * 3) % 5) * 0.04,
-      });
-    }
-  }
-  return out;
-}
-
-/** A ring of stones about a middle. */
-function ring(at: P2, radius: number, count: number): Plot[] {
-  return Array.from({ length: count }, (_, k) => {
-    const a = (k / count) * Math.PI * 2;
-    const p: P2 = [round(at[0] + Math.sin(a) * radius), round(at[1] + Math.cos(a) * radius)];
-    return { model: k % 3 ? 'rock-boulder-01' : 'rock-boulder-02', at: p, face: at, light: true };
-  });
-}
-
-function round(v: number): number {
-  return Math.round(v * 100) / 100;
-}
-
-/** Shorthand for small things. */
-const prop = (model: string, at: P2, face: P2): Plot => ({ model, at, face, light: true });
+/** A row of houses along the high street (levels/lib/plots.ts). */
+const row = (front: number, x: number, dir: 1 | -1, items: RowItem[]): Plot[] =>
+  rowAlong(STREET, front, x, dir, items);
 
 const town: Plot[] = [
   // The square: the inn on its north side, the training hall at its shoulder and the guild at
@@ -623,7 +547,6 @@ const region: RegionScript = {
     { name: 'goblin-hills', at: [62, 58] },
     { name: 'stones', at: [STONES[0], STONES[1] - 12] },
     { name: 'headland', at: [RUIN[0] + 10, RUIN[1] - 2] },
-    { name: 'road-west', at: [-295, -170] },
     // The sites the game reads at these points (src/game/sites.ts): the square's well and the
     // crossroads' shrine; the obelisk's point comes with its stone.
     { name: 'well', at: [0, -117] },
@@ -632,6 +555,16 @@ const region: RegionScript = {
   // The lettered pillar at the stones' glade's east edge, north of the west track's end, off the
   // way into the ring (DESIGN.md 17.20).
   obelisks: [{ name: 'obelisk', at: [-100, 26] }],
+  // The coast road west: three days to Harrowmere (DESIGN.md 17.21).
+  exits: [
+    {
+      name: 'west-road',
+      at: [-306, -170],
+      facing: 270,
+      target: { level: 'harrowmere', entry: 'east-road' },
+      days: 3,
+    },
+  ],
   // The party wakes at the foot of the square looking up the lane at Maren by the well, the
   // trader at the left and the inn ahead.
   start: { at: [6, -136], face: [3, -116] },

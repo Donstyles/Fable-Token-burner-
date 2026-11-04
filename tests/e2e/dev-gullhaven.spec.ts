@@ -133,7 +133,7 @@ test.describe('Gullhaven', () => {
     // The cave in the goblin hills is dug, and its tunnel's end is the door into the Old
     // Halls, the region's first dungeon (PLAN, the agentic loop's item 1).
     expect(info.cave).not.toBeNull();
-    expect(info.portals).toEqual(['cave>old-halls:cave-mouth']);
+    expect(info.portals).toEqual(['cave>old-halls:cave-mouth', 'west-road>harrowmere:east-road']);
     // The party wakes at the foot of the square, between the waterfront and the well.
     expect(Math.hypot(info.square!.x - info.spawn.x, info.square!.z - info.spawn.z)).toBeLessThan(
       20,

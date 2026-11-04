@@ -219,8 +219,14 @@ describe('Gullhaven', () => {
     // The cave's tunnel ends in the door into the Old Halls (DESIGN 17.10).
     expect(level.portals.map((p) => `${p.name}>${p.target.level}:${p.target.entry}`)).toEqual([
       'cave>old-halls:cave-mouth',
+      'west-road>harrowmere:east-road',
     ]);
     expect(level.points.find((p) => p.name === 'cave')?.kind).toBe('door');
+    // The walked edge (DESIGN 17.21): three days, the party arriving inside the rim facing east.
+    const west = level.portals.find((p) => p.name === 'west-road')!;
+    expect(west.days).toBe(3);
+    expect(west.arrive.yawDeg).toBe(90);
+    expect(Math.abs(west.arrive.position[0])).toBeLessThan(Math.abs(west.position[0]));
     expect(level.water.map((w) => w.name)).toEqual(['sea']);
     expect(level.trees.length).toBeGreaterThan(500);
   });

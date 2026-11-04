@@ -8,7 +8,14 @@
  */
 import type { ServiceDefs, ServiceKind } from '../ui/context';
 
-export type HouseRef = { [K in ServiceKind]: { kind: K; house: ServiceDefs[K] } }[ServiceKind];
+export type HouseRef = {
+  [K in ServiceKind]: {
+    kind: K;
+    house: ServiceDefs[K];
+    /** The room picture it shows (assets/rooms/<room>.png) when not its own id's (DESIGN.md 17.21). */
+    room?: string;
+  };
+}[ServiceKind];
 
 export const VILLAGE_HOUSES: Record<string, HouseRef> = {
   inn: {
@@ -79,6 +86,109 @@ export const VILLAGE_HOUSES: Record<string, HouseRef> = {
     },
   },
 };
+
+/**
+ * Harrowmere's houses (DESIGN.md 17.21), the shire's market town three days west: a second
+ * tier of goods, a trainer to 25, the Guild of Fire, an armourer beside the smith, and a
+ * dearer temple. Each shows the room of its Gullhaven kind until it has a picture of its own.
+ */
+export const HARROW_HOUSES: Record<string, HouseRef> = {
+  'harrow-inn': {
+    kind: 'tavern',
+    house: {
+      id: 'harrow-inn',
+      name: 'The Drovers’ Rest',
+      roomPrice: 15,
+      foodPrice: 3,
+      foodCapacity: 20,
+    },
+    room: 'inn',
+  },
+  'harrow-temple': {
+    kind: 'temple',
+    house: { id: 'harrow-temple', name: 'The Temple of Harrow', donation: 20 },
+    room: 'temple',
+  },
+  'harrow-store': {
+    kind: 'shop',
+    house: {
+      id: 'harrow-store',
+      name: 'Pell’s Emporium',
+      kind: 'general',
+      val: 2.5,
+      regular: {
+        level: 2,
+        families: ['potion', 'scroll', 'ring', 'amulet', 'boots', 'belt', 'hat', 'cloak'],
+        slots: 10,
+      },
+      restockDays: 1,
+      hours: [6, 21],
+    },
+    room: 'store',
+  },
+  'harrow-training': {
+    kind: 'trainer',
+    house: { id: 'harrow-training', name: 'The Hall of Arms', maxLevel: 25, priceMultiplier: 1.5 },
+    room: 'training',
+  },
+  'harrow-guild': {
+    kind: 'guild',
+    house: {
+      id: 'harrow-guild',
+      name: 'Initiate Guild of Fire',
+      school: 'fire',
+      maxSpellLevel: 4,
+      membershipFee: 100,
+      priceMultiplier: 1.5,
+    },
+    room: 'guild-fire',
+  },
+  'harrow-smithy': {
+    kind: 'shop',
+    house: {
+      id: 'harrow-smithy',
+      name: 'The Harrow Forge',
+      kind: 'weapon',
+      val: 2,
+      regular: { level: 2, families: ['weapon'], slots: 8 },
+      special: { level: 3, families: ['weapon'], slots: 3 },
+      restockDays: 2,
+      hours: [6, 19],
+      trades: ['weapon'],
+    },
+    room: 'smithy',
+  },
+  'harrow-armourer': {
+    kind: 'shop',
+    house: {
+      id: 'harrow-armourer',
+      name: 'Hesk & Daughter, Armourers',
+      kind: 'armor',
+      val: 2,
+      regular: {
+        level: 2,
+        families: [
+          'leather',
+          'chain',
+          'small-shield',
+          'large-shield',
+          'helm',
+          'gauntlets',
+          'boots',
+        ],
+        slots: 8,
+      },
+      special: { level: 3, families: ['chain', 'plate', 'large-shield', 'helm'], slots: 3 },
+      restockDays: 2,
+      hours: [7, 19],
+      trades: ['armor', 'shield', 'helmet', 'gauntlets', 'boots'],
+    },
+    room: 'smithy',
+  },
+};
+
+/** Every house of every region by the plot name its region script gives it. */
+export const HOUSES: Record<string, HouseRef> = { ...VILLAGE_HOUSES, ...HARROW_HOUSES };
 
 /** How close to a door the party must stand to enter, metres. */
 export const DOOR_REACH = 9;

@@ -69,6 +69,8 @@ export interface SidecarPortal {
   radius: number;
   target: { level: string; entry: string };
   arrive: { position: V3; yawDeg: number };
+  /** A walked edge between regions: the days the crossing takes (DESIGN.md 17.21). */
+  days?: number;
 }
 
 /** A door's leaf, built and moved by the runtime (DESIGN.md 17.11). */
@@ -858,6 +860,7 @@ export async function loadLevel(
       radius: p.radius,
       target: p.target,
       arrive: { position: toBabylon(p.arrive.position), yawDeg: p.arrive.yawDeg },
+      ...(p.days ? { days: p.days } : {}),
     })),
     doors: (sidecar.doors ?? []).map((d) => ({
       name: d.name,

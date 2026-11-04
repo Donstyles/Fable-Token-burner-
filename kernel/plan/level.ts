@@ -165,6 +165,8 @@ export interface PortalRecord {
   radius: number;
   target: { level: string; entry: string };
   arrive: { position: Vec3; yawDeg: number };
+  /** A walked edge between regions: the days the crossing takes (DESIGN.md 17.21). */
+  days?: number;
 }
 
 /**
