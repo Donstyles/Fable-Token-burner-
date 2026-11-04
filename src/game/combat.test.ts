@@ -1,5 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { hitChance, monsterHitChance, resolveAttack, resolveMonsterAttack } from './combat';
+import {
+  hitChance,
+  monsterHitChance,
+  resolveAttack,
+  resolveMonsterAttack,
+  specialLandChance,
+  specialTryChance,
+  triesSpecial,
+} from './combat';
 import { MONSTERS } from './monsters';
 import { Party, TEST_PARTY } from './party';
 import { diceText, mulberry32, rollDice } from './rng';
@@ -59,24 +67,43 @@ describe('monster to-hit (MM6-GAPS.md 8, GF-M)', () => {
   it('follows (5 + 2 × level) / (10 + 2 × level + ac)', () => {
     expect(monsterHitChance(0, 0)).toBeCloseTo(0.5);
     expect(monsterHitChance(1, 0)).toBeCloseTo(7 / 12);
-    // A level-2 bandit against armour class 10: 9 in 24, not the party formula's 21 in 46.
-    expect(monsterHitChance(MONSTERS.bandit!.level, 10)).toBeCloseTo(9 / 24);
-    expect(hitChance(MONSTERS.bandit!.attackBonus, 10)).toBeCloseTo(21 / 46);
+    // A level-2 monster against armour class 10: 9 in 24, not the party formula's 21 in 46
+    // for an attack bonus of 3.
+    expect(monsterHitChance(2, 10)).toBeCloseTo(9 / 24);
+    expect(hitChance(3, 10)).toBeCloseTo(21 / 46);
     expect(monsterHitChance(10, 30)).toBeCloseTo(25 / 60);
   });
 
   it('rolls the monster’s dice on a hit and nothing on a miss', () => {
+    // The bandit of the records: level 3, 2d2+3.
     const bandit = MONSTERS.bandit!;
+    expect(bandit.level).toBe(3);
     const hit = resolveMonsterAttack(bandit, 10, () => 0.1);
     expect(hit.hit).toBe(true);
-    expect(hit.chance).toBeCloseTo(9 / 24);
-    expect(hit.damage).toBeGreaterThanOrEqual(2);
+    expect(hit.chance).toBeCloseTo(11 / 26);
+    expect(hit.damage).toBeGreaterThanOrEqual(5);
     expect(hit.damage).toBeLessThanOrEqual(7);
     expect(resolveMonsterAttack(bandit, 10, () => 0.5)).toEqual({
       hit: false,
       damage: 0,
-      chance: 9 / 24,
+      chance: 11 / 26,
     });
+  });
+
+  it('tries a special at level × multiplier percent and lands it at 30 / (30 + Luck + X)', () => {
+    // A Skeleton Lord's curse: level 14, ×2, 28 %.
+    expect(specialTryChance(14, 2)).toBeCloseTo(0.28);
+    expect(specialTryChance(95, 1)).toBeCloseTo(0.95);
+    expect(specialTryChance(200, 1)).toBe(1);
+    expect(triesSpecial({ level: 14, special: { multiplier: 2 } }, () => 0.27)).toBe(true);
+    expect(triesSpecial({ level: 14, special: { multiplier: 2 } }, () => 0.28)).toBe(false);
+    expect(triesSpecial({ level: 14 }, () => 0)).toBe(false);
+    // No Luck and no save: it always takes; a +5 Endurance effect saves one in seven.
+    expect(specialLandChance(0, 0)).toBe(1);
+    expect(specialLandChance(0, 5)).toBeCloseTo(30 / 35);
+    expect(specialLandChance(3, 5)).toBeCloseTo(30 / 38);
+    // Effects below zero make it no surer than certain.
+    expect(specialLandChance(-5, -10)).toBe(1);
   });
 });
 

@@ -165,3 +165,61 @@ describe('a target out of reach', () => {
     ).toBeNull();
   });
 });
+
+describe('danger (DESIGN 17.16)', () => {
+  it('halves a weak member’s damage', () => {
+    const chars = outfittedParty();
+    const party = new Party(chars);
+    const dummy = { armorClass: 0, taken: 0, takeDamage: (n: number) => void (dummy.taken += n) };
+    party.selected = 0;
+    const whole = party.attack(dummy, 0, () => 0)!;
+    expect(whole.result.hit).toBe(true);
+    afflict(chars[0]!.conditions, 'weak', 0);
+    party.selected = 0;
+    const weak = party.attack(dummy, 100, () => 0)!;
+    expect(weak.result.damage).toBe(Math.max(1, Math.floor(whole.result.damage / 2)));
+    expect(dummy.taken).toBe(whole.result.damage + weak.result.damage);
+  });
+
+  it('suffers a special attack: the save, the condition, and MM6’s two rules about sleep', () => {
+    const chars = outfittedParty();
+    const party = new Party(chars);
+    // The roll under the chance lands; Alric's Luck 7 (−1) and Personality 9 (−1) give the
+    // curse 30 / 28, so it always takes.
+    expect(party.suffer(0, { kind: 'curse', multiplier: 2 }, 5, () => 0.99)).toEqual({
+      condition: 'cursed',
+      landed: true,
+    });
+    expect(chars[0]!.conditions.cursed).toEqual({ since: 5 });
+    // Mira's Endurance 21 (+4) and Luck 7 (−1): afraid takes 30 in 33 times.
+    expect(party.suffer(1, { kind: 'afraid', multiplier: 1 }, 5, () => 0.95)).toEqual({
+      condition: 'afraid',
+      landed: false,
+    });
+    expect(chars[1]!.conditions.afraid).toBeUndefined();
+    // Poison at its level.
+    expect(party.suffer(2, { kind: 'poison', multiplier: 5, level: 2 }, 7, () => 0)?.landed).toBe(
+      true,
+    );
+    expect(chars[2]!.conditions.poisoned).toEqual({ since: 7, severity: 2 });
+    // Three asleep: the last member able to act cannot be put to sleep.
+    for (const i of [0, 1, 2]) party.suffer(i, { kind: 'asleep', multiplier: 1 }, 8, () => 0);
+    expect(party.anyCanAct).toBe(true);
+    expect(party.suffer(3, { kind: 'asleep', multiplier: 1 }, 8, () => 0)).toBeNull();
+    expect(chars[3]!.conditions.asleep).toBeUndefined();
+    // When the last one falls, the sleepers wake.
+    party.takeDamage(3, 1000, 9);
+    expect(chars[3]!.hp).toBeLessThanOrEqual(0);
+    expect(chars.slice(0, 3).every((c) => c.conditions.asleep === undefined)).toBe(true);
+    expect(party.anyCanAct).toBe(true);
+    // Laid dead by a special, the member goes down with the body's hit points at most 0.
+    expect(party.suffer(0, { kind: 'dead', multiplier: 1 }, 10, () => 0)?.landed).toBe(true);
+    expect(chars[0]!.hp).toBeLessThanOrEqual(0);
+    expect(party.members[0]!.alive).toBe(false);
+    // Nobody left who can act: the party is beaten (characters.md 12.2).
+    party.suffer(1, { kind: 'paralyze', multiplier: 1 }, 11, () => 0);
+    party.suffer(2, { kind: 'paralyze', multiplier: 1 }, 11, () => 0);
+    expect(party.alive).toBe(true);
+    expect(party.anyCanAct).toBe(false);
+  });
+});

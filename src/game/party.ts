@@ -6,7 +6,11 @@
  * effect, GF-M) and, if selected, hands the selection on (GF-P) when the runtime passes the
  * time. A member is backed either by a full `Character` sheet (creation, levels, equipment and
  * conditions drive its numbers and its hit points live on the sheet) or, for test data, by a
- * plain `MemberDef`; `TEST_PARTY` uses the latter.
+ * plain `MemberDef`; `TEST_PARTY` uses the latter. A Weak member's damage is halved (MW6; OE).
+ * A monster's special attack goes through `suffer`, which keeps MM6's two rules about sleep: the
+ * last member able to act cannot be put to sleep, and a sleeper wakes when all the others are
+ * down (docs/gaps/characters.md 10.2, MW6; OE). The party is beaten when no member can act
+ * (12.2), not only when every member is down.
  */
 import {
   armorClass as characterArmor,
@@ -15,6 +19,7 @@ import {
   type Character,
   damageCharacter,
   damageDice,
+  damageScale,
   hitRecovery,
   hitRecoveryUnits,
   isCharacter,
@@ -23,10 +28,13 @@ import {
   MIN_MELEE_RECOVERY,
   RECOVERY_UNITS_PER_SECOND,
   recoverySec as characterRecovery,
+  type SpecialOutcome,
+  sufferSpecial,
 } from './character';
 import { resolveAttack, type AttackResult } from './combat';
-import { failChance } from './conditions';
+import { cure, failChance, hasCondition } from './conditions';
 import { rangedWeapon } from './inventory';
+import type { MonsterSpecial } from './monsters';
 import type { Dice, Rng } from './rng';
 import { statBonus, stats, type Stats } from './stats';
 
@@ -181,9 +189,19 @@ export class PartyMember {
     return this.character ? failChance(this.character.conditions) : 0;
   }
 
+  /** The damage dealt as a fraction of the roll: a half when Weak. */
+  get damageScale(): number {
+    return this.character ? damageScale(this.character) : 1;
+  }
+
+  /** Up and not held by a condition: able to act once recovered. */
+  get canAct(): boolean {
+    return this.character ? canActNow(this.character) : this.alive;
+  }
+
   isReady(now: number): boolean {
     if (!this.alive || now < this.readyAt) return false;
-    return this.character ? canActNow(this.character) : true;
+    return this.canAct;
   }
 
   /**
@@ -214,6 +232,11 @@ export class Party {
 
   get alive(): boolean {
     return this.members.some((m) => m.alive);
+  }
+
+  /** Someone can still fight: not every member is down, asleep or paralysed (MM6's wipe, 12.2). */
+  get anyCanAct(): boolean {
+    return this.members.some((m) => m.canAct);
   }
 
   /**
@@ -252,6 +275,9 @@ export class Party {
       chance > 0 && rng() < chance
         ? { hit: false, damage: 0, chance: 0 }
         : resolveAttack(n.attackBonus, n.damage, target.armorClass, rng);
+    if (result.hit && member.damageScale < 1) {
+      result.damage = Math.max(1, Math.floor(result.damage * member.damageScale));
+    }
     if (result.hit) target.takeDamage(result.damage);
     member.readyAt = now + n.recoverySec;
     this.advance(now, index);
@@ -286,9 +312,46 @@ export class Party {
     const m = this.members[index];
     if (!m) return;
     m.takeDamage(amount, gameMinute, now);
+    this.wakeIfAlone();
     if (this.selected !== index) return;
     if (!m.alive) this.advance(now ?? 0, index);
     else if (now !== undefined && !m.isReady(now)) this.advance(now, index);
+  }
+
+  /**
+   * A monster's special attack on one member at game minute `gameMinute`: the saving roll and
+   * the condition (`sufferSpecial`). Sleep spares the last member able to act, and a sleeper
+   * wakes when all the others are down (MW6; OE). Null when the member is beyond it or spared.
+   */
+  suffer(
+    index: number,
+    special: MonsterSpecial,
+    gameMinute: number,
+    rng: Rng,
+  ): SpecialOutcome | null {
+    const m = this.members[index];
+    if (!m?.character) return null;
+    if (special.kind === 'asleep' && this.lastAbleToAct(index)) return null;
+    const outcome = sufferSpecial(m.character, special, gameMinute, rng);
+    if (outcome?.landed) {
+      this.wakeIfAlone();
+      if (this.selected === index && !m.isReady(0)) this.advance(0, index);
+    }
+    return outcome;
+  }
+
+  /** Is this member the only one who can act? */
+  private lastAbleToAct(index: number): boolean {
+    return this.members.every((m, i) => i === index || !m.canAct);
+  }
+
+  /** When nobody can act, every sleeper wakes (MW6; OE). */
+  private wakeIfAlone(): void {
+    if (this.anyCanAct) return;
+    for (const m of this.members) {
+      const c = m.character;
+      if (c && isConscious(c) && hasCondition(c.conditions, 'asleep')) cure(c.conditions, 'asleep');
+    }
   }
 
   /** A living member chosen by the attacker, uniformly. */

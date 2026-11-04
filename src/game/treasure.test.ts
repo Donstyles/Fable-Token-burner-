@@ -62,13 +62,14 @@ describe('treasure (DESIGN 17.12)', () => {
     expect(empty.grid.items).toEqual([]);
   });
 
-  it('gives a body its gold and sometimes its item', () => {
+  it('gives a body its gold dice and sometimes its item', () => {
     const rng = mulberry32(5);
     let items = 0;
     for (let i = 0; i < 300; i++) {
-      const { gold, item } = monsterDrop(MONSTERS['skeleton-warrior']!, rng);
-      expect(gold).toBeGreaterThanOrEqual(10);
-      expect(gold).toBeLessThanOrEqual(40);
+      // A brigand: 5d6 gold and a weapon on one in five.
+      const { gold, item } = monsterDrop(MONSTERS['brigand']!, rng);
+      expect(gold).toBeGreaterThanOrEqual(5);
+      expect(gold).toBeLessThanOrEqual(30);
       if (item) items++;
     }
     // A fifth of them, give or take.

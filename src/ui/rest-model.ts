@@ -90,7 +90,6 @@ function memberSummary(c: Character, m: MemberRest): string | null {
   if (m.healed > 0) parts.push(`heals ${m.healed} hit points`);
   if (m.spRestored > 0) parts.push(`regains ${m.spRestored} spell points`);
   if (m.cleared.length) parts.push(`${names(m.cleared)} passed`);
-  if (m.worsened.length) parts.push(`${names(m.worsened)} worsened`);
   if (m.starved) parts.push('went hungry and is weak');
   return parts.length ? `${c.name} ${parts.join(', ')}.` : null;
 }

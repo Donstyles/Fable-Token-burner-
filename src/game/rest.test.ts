@@ -14,7 +14,8 @@ describe('rest', () => {
     knight!.hp = 10;
     archer!.hp = 5;
     afflict(archer!.conditions, 'poisoned', 0);
-    afflict(cleric!.conditions, 'asleep', 0, { minutes: 10 });
+    afflict(cleric!.conditions, 'asleep', 0);
+    afflict(cleric!.conditions, 'weak', 0);
     sorcerer!.sp = 0;
     const r = rest(party, supplies, clock);
     expect(clock.minutes).toBe(540 + REST_MINUTES);
@@ -22,11 +23,12 @@ describe('rest', () => {
     expect(supplies.food).toBe(1);
     expect(r.members[0]!.healed).toBe(maxHp(knight!) - 10);
     expect(knight!.hp).toBe(maxHp(knight!));
-    // The poisoned archer worsens and does not heal.
-    expect(r.members[1]).toMatchObject({ healed: 0, worsened: ['poisoned'] });
-    expect(archer!.hp).toBe(5);
-    expect(archer!.conditions.poisoned?.severity).toBe(2);
-    expect(r.members[2]!.cleared).toEqual(['asleep']);
+    // The poisoned archer heals to a half and stays poisoned at her level (characters.md 10.2).
+    const half = Math.floor(maxHp(archer!) / 2);
+    expect(r.members[1]).toMatchObject({ healed: half - 5 });
+    expect(archer!.hp).toBe(half);
+    expect(archer!.conditions.poisoned?.severity).toBe(1);
+    expect(r.members[2]!.cleared.sort()).toEqual(['asleep', 'weak']);
     expect(r.members[3]!.spRestored).toBe(maxSp(sorcerer!));
   });
 

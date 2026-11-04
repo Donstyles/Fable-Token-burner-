@@ -7,7 +7,7 @@
 import { ITEM_IDS, ITEMS, type ItemId, type ItemInstance, type ItemKind } from './items';
 import { addItem, createGrid, type InventoryGrid } from './inventory';
 import type { MonsterDef } from './monsters';
-import type { Rng } from './rng';
+import { rollDice, type Rng } from './rng';
 
 /** Gold in a pile by treasure level (items.md 4.5, MM7's rule). */
 const GOLD: [number, number][] = [
@@ -107,8 +107,7 @@ export function monsterDrop(
   def: MonsterDef,
   rng: Rng,
 ): { gold: number; item: ItemInstance | null } {
-  const [lo, hi] = def.gold ?? [0, 0];
-  const gold = lo + Math.floor(rng() * (hi - lo + 1));
+  const gold = def.gold ? rollDice(def.gold, rng) : 0;
   const drop = def.drop;
   const item = drop && rng() < drop.chance ? randomItem(drop.level, rng, drop.kind) : null;
   return { gold, item };

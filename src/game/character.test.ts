@@ -104,7 +104,7 @@ describe('derived numbers', () => {
 
   it('lets conditions pull the derived numbers down', () => {
     const c = sorcerer();
-    afflict(c.conditions, 'weak', 0);
+    afflict(c.conditions, 'diseased', 0);
     expect(maxHp(c)).toBeLessThan(27);
     expect(attackBonus(c)).toBeLessThan(5);
   });

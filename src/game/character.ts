@@ -14,19 +14,26 @@
  * Bow, the skill; at least 30 for melee, 0 for bows; a struck member recovers 20 − Endurance
  * effect (MM6-GAPS.md 8, GF-M). `recoverySec` converts at 60 units a second (ours, DESIGN 14.2).
  * Death as MM6 (MM6-GAPS.md 11, MMW): unconscious below 0 hit points, dead below minus the
- * Endurance score.
+ * Endurance score. A monster's special attack is saved against here (docs/gaps/monsters.md 2.6,
+ * GF-M): it lands with chance 30 / (30 + Luck effect + X), X the effect of the statistic MM6
+ * names for the kind; poison and magic resistance stand at 0 until the sheet carries them
+ * (characters.md 11).
  */
 import { baseHp, baseSp, classDef, type ClassId } from './classes';
+import { specialLandChance } from './combat';
 import {
   afflict,
+  type Affliction,
   canAct,
   type ConditionSet,
   cure,
   damageConditions,
+  damageFactor,
   effectiveStats,
   hasCondition,
   isAlive,
 } from './conditions';
+import type { MonsterSpecial, SpecialKind } from './monsters';
 import {
   type Equipment,
   equipmentArmor,
@@ -35,7 +42,7 @@ import {
   meleeWeapon,
   rangedWeapon,
 } from './inventory';
-import type { Dice } from './rng';
+import type { Dice, Rng } from './rng';
 import {
   rankAtLeast,
   skillBonus,
@@ -46,7 +53,7 @@ import {
   type SkillSet,
 } from './skills';
 import type { SpellId } from './spells';
-import { statBonus, type Stats } from './stats';
+import { type Stat, statBonus, type Stats } from './stats';
 
 export type Sex = 'male' | 'female';
 
@@ -132,6 +139,11 @@ function meleeSkillFrom(c: Character, table: Partial<Record<SkillId, SkillRank>>
 
 export function attackBonus(c: Character, ranged = false): number {
   return statBonus(currentStats(c).accuracy) + weaponSkillToHit(c, ranged);
+}
+
+/** The member's damage as a fraction of the roll: a half when Weak (MW6; OE). */
+export function damageScale(c: Character): number {
+  return damageFactor(c.conditions);
 }
 
 /** Damage dice in hand; melee adds the Might bonus and the weapon skill where its rank does. */
@@ -266,6 +278,67 @@ export function restoreSp(c: Character, amount = Infinity): number {
   const restored = target - c.sp;
   c.sp = target;
   return restored;
+}
+
+/** The condition each special attack lays, and the statistic it is saved by (monsters.md 2.6). */
+export const SPECIAL_EFFECTS: Record<
+  SpecialKind,
+  { condition: Affliction; save: Stat | 'resistPoison' | 'resistMagic' }
+> = {
+  curse: { condition: 'cursed', save: 'personality' },
+  weak: { condition: 'weak', save: 'endurance' },
+  asleep: { condition: 'asleep', save: 'endurance' },
+  drunk: { condition: 'drunk', save: 'endurance' },
+  insane: { condition: 'insane', save: 'intellect' },
+  poison: { condition: 'poisoned', save: 'resistPoison' },
+  disease: { condition: 'diseased', save: 'endurance' },
+  paralyze: { condition: 'paralyzed', save: 'resistMagic' },
+  unconscious: { condition: 'unconscious', save: 'endurance' },
+  dead: { condition: 'dead', save: 'resistMagic' },
+  stone: { condition: 'stoned', save: 'resistMagic' },
+  eradicate: { condition: 'eradicated', save: 'resistMagic' },
+  afraid: { condition: 'afraid', save: 'endurance' },
+};
+
+/** X in the saving roll: the effect of the named statistic, or the resistance (0 until built). */
+export function specialSaveEffect(c: Character, kind: SpecialKind): number {
+  const save = SPECIAL_EFFECTS[kind].save;
+  if (save === 'resistPoison' || save === 'resistMagic') return 0;
+  return statBonus(currentStats(c)[save]);
+}
+
+/** The chance a tried special of this kind takes hold of the member. */
+export function specialChance(c: Character, kind: SpecialKind): number {
+  return specialLandChance(statBonus(currentStats(c).luck), specialSaveEffect(c, kind));
+}
+
+export interface SpecialOutcome {
+  condition: Affliction;
+  /** The condition took hold; false when the member shrugged it off. */
+  landed: boolean;
+}
+
+/**
+ * A monster's special attack against the member at game minute `now`: the saving roll, then
+ * the condition at the special's level. A member already dead, stoned or eradicated is beyond
+ * it; one laid dead or unconscious takes the hit points that go with the state.
+ */
+export function sufferSpecial(
+  c: Character,
+  special: MonsterSpecial,
+  now: number,
+  rng: Rng,
+): SpecialOutcome | null {
+  if (!isLiving(c)) return null;
+  const { condition } = SPECIAL_EFFECTS[special.kind];
+  if (rng() >= specialChance(c, special.kind)) return { condition, landed: false };
+  const options = special.level !== undefined ? { severity: special.level } : {};
+  if (condition === 'dead' || condition === 'stoned' || condition === 'eradicated') {
+    cure(c.conditions, 'unconscious');
+    c.hp = Math.min(c.hp, 0);
+  } else if (condition === 'unconscious') c.hp = Math.min(c.hp, 0);
+  afflict(c.conditions, condition, now, options);
+  return { condition, landed: true };
 }
 
 /** Clamp hit and spell points to the current maxima after stats or level change. */

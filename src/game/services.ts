@@ -1,8 +1,10 @@
 /**
  * Town services (Phase 5 step 7), each a definition plus functions over the game state that
  * return results as values. Tavern: a room is a rest that costs gold and no food; food is bought
- * up to the house's capacity. Temple: heals and cures one member for a price by condition (the
- * price table is ours, scaled per temple; MM6 prices vary by town). Guild: membership for a fee,
+ * up to the house's capacity. Temple: heals and cures one member at MM6's prices (MW6, reported;
+ * docs/gaps/characters.md 10.6): every temple has a donation X; hit and spell points cost X, a
+ * condition X times the day of the week it began (Monday 1 to Sunday 7), five times that for
+ * Dead and Stoned, ten for Eradicated; several conditions cost the dearest. Guild: membership for a fee,
  * then spellbooks of its school up to its level, priced by spell level (ours, in MM6's range);
  * buying teaches the member at once (MM6 sells a book to read, a simplification). Trainer: one
  * level when the experience is there, 25 gold per level of the new level (ours), up to the
@@ -12,7 +14,7 @@
  */
 import type { Character } from './character';
 import { healCharacter, isLiving, maxHp, restoreSp } from './character';
-import { type Affliction, type ConditionId, cureAll, worstCondition } from './conditions';
+import { type Affliction, afflictions, cureAll, worstCondition } from './conditions';
 import { canLevelUp, levelUp, type LevelUpResult, trainingCost } from './experience';
 import { addItem, removeItem } from './inventory';
 import { createItem, type ItemDef, type ItemId, itemDef } from './items';
@@ -21,6 +23,7 @@ import { type MagicSchool, skillBonus } from './skills';
 import { canLearnSpell, type LearnResult, learnSpell } from './spellbook';
 import { type SpellDef, type SpellId, spellsOfSchool } from './spells';
 import { type GameState, spendGold } from './state';
+import { gameDate } from './time';
 
 type MemberError = { ok: false; reason: 'member' };
 
@@ -75,29 +78,25 @@ export function buyFood(state: GameState, tavern: TavernDef): BuyFoodResult {
 export interface TempleDef {
   id: string;
   name: string;
-  priceMultiplier: number;
+  /** The minimum donation, X: MM6's run from 10 (New Sorpigal) to 100 (Blackshire). */
+  donation: number;
 }
 
-/** Base price to be rid of a condition; Good is the price of healing wounds alone. */
-export const TEMPLE_PRICES: Record<ConditionId, number> = {
-  good: 10,
-  cursed: 50,
-  weak: 50,
-  asleep: 10,
-  afraid: 25,
-  drunk: 25,
-  insane: 200,
-  poisoned: 100,
-  diseased: 150,
-  paralyzed: 200,
-  unconscious: 50,
-  dead: 500,
-  stoned: 750,
-  eradicated: 2000,
-};
+/** What a condition costs in donations: the weekday it began, times five or ten for the gravest. */
+export function templeMultiplier(condition: Affliction, since: number): number {
+  const weekday = gameDate(Math.max(0, since)).weekday + 1;
+  const gravity =
+    condition === 'eradicated' ? 10 : condition === 'dead' || condition === 'stoned' ? 5 : 1;
+  return weekday * gravity;
+}
 
+/** The donation asked of one member: X for wounds alone, the dearest condition's price else. */
 export function templePrice(temple: TempleDef, c: Character): number {
-  return Math.round(TEMPLE_PRICES[worstCondition(c.conditions)] * temple.priceMultiplier);
+  let multiplier = 1;
+  for (const id of afflictions(c.conditions)) {
+    multiplier = Math.max(multiplier, templeMultiplier(id, c.conditions[id]!.since));
+  }
+  return temple.donation * multiplier;
 }
 
 export type TempleResult =

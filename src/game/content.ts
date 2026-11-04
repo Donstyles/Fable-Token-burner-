@@ -17,7 +17,7 @@ export const VILLAGE_HOUSES: Record<string, HouseRef> = {
   },
   temple: {
     kind: 'temple',
-    house: { id: 'temple', name: 'The Temple', priceMultiplier: 1 },
+    house: { id: 'temple', name: 'The Temple', donation: 10 },
   },
   store: {
     kind: 'shop',

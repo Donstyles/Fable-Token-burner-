@@ -1,21 +1,23 @@
 /**
- * Resting and waiting (Phase 5 step 3). The MM6 rest: eight hours pass and one unit of the
- * party's food is eaten; every living member is healed to full hit and spell points, timed
- * conditions pass and the unconscious wake. Without food the party rests hungry: time passes,
- * nothing heals and the members become Weak (MM6). Poisoned and Diseased grow one step more
- * severe at each rest and block that member's healing, our reading of "conditions worsen". A
- * room at a tavern is a rest that costs no food. "Wait until dawn" and "wait" only pass time and
- * let timed conditions expire. Food is the party's, held by the state; this module takes the
+ * Resting and waiting (Phase 5 step 3; MM6's rules since DESIGN.md 17.16). The MM6 rest: eight
+ * hours pass and one unit of the party's food is eaten; every living member is healed to full
+ * hit and spell points, except that a poisoned or diseased member heals only to a half, a third
+ * or a quarter by the condition's level and an insane one wakes with no spell points; Asleep,
+ * Afraid, Drunk and Weak pass and the unconscious wake (docs/gaps/characters.md 10.2, 10.3,
+ * 14.1). No condition worsens with rest. Without food the party rests hungry: time passes,
+ * nothing heals and the members become Weak (MM7's rule; the MM6 manual is silent). A room at a
+ * tavern is a rest that costs no food. "Wait until dawn" and "wait" only pass time and let
+ * conditions with a span run out. Food is the party's, held by the state; this module takes the
  * supplies record and the clock so it stays free of the state root.
  */
-import { type Character, healCharacter, isLiving, maxHp, restoreSp } from './character';
+import { type Character, healCharacter, isLiving, maxHp, maxSp, restoreSp } from './character';
 import {
   afflict,
   type Affliction,
   expireConditions,
-  hasCondition,
   restConditions,
-  worsenConditions,
+  restHealFraction,
+  restSpFraction,
 } from './conditions';
 import { advanceClock, type GameClock, minutesUntilDawn } from './time';
 
@@ -32,7 +34,6 @@ export interface MemberRest {
   healed: number;
   spRestored: number;
   cleared: Affliction[];
-  worsened: Affliction[];
   /** Went hungry: no healing, Weak added. */
   starved: boolean;
 }
@@ -72,26 +73,26 @@ export function rest(
       healed: 0,
       spRestored: 0,
       cleared: [],
-      worsened: [],
       starved: false,
     };
     if (!isLiving(c)) return entry;
     entry.cleared = [...expireConditions(c.conditions, now), ...restConditions(c.conditions)];
-    entry.worsened = worsenConditions(c.conditions);
-    const sick = hasCondition(c.conditions, 'poisoned') || hasCondition(c.conditions, 'diseased');
     if (!fed) {
       entry.starved = true;
       afflict(c.conditions, 'weak', now);
-    } else if (!sick) {
-      entry.healed = healCharacter(c, maxHp(c) - c.hp);
-      entry.spRestored = restoreSp(c);
+      return entry;
     }
+    // To the maximum, or to the share poison or disease leaves (never down from where it is).
+    const target = Math.floor(maxHp(c) * restHealFraction(c.conditions));
+    entry.healed = healCharacter(c, Math.max(0, target - c.hp));
+    const spTarget = Math.floor(maxSp(c) * restSpFraction(c.conditions));
+    entry.spRestored = restoreSp(c, Math.max(0, spTarget - c.sp));
     return entry;
   });
   return { minutes: REST_MINUTES, foodUsed, hungry: !fed, members };
 }
 
-/** Let time pass without rest; timed conditions may expire. Returns the minutes passed. */
+/** Let time pass without rest; conditions with a span may run out. Returns the minutes passed. */
 export function passTime(party: readonly Character[], clock: GameClock, minutes: number): number {
   const m = Math.max(0, Math.floor(minutes));
   advanceClock(clock, m);

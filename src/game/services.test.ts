@@ -3,6 +3,7 @@ import { maxHp } from './character';
 import { afflict } from './conditions';
 import { freshState } from './fixtures';
 import { itemDef } from './items';
+import { MINUTES_PER_DAY } from './time';
 import {
   buyFood,
   buyItem,
@@ -20,6 +21,7 @@ import {
   type TavernDef,
   type TempleDef,
   templeHeal,
+  templeMultiplier,
   templePrice,
   train,
   type TrainerDef,
@@ -33,7 +35,7 @@ const TAVERN: TavernDef = {
   foodPrice: 5,
   foodCapacity: 14,
 };
-const TEMPLE: TempleDef = { id: 'temple', name: 'Temple', priceMultiplier: 1 };
+const TEMPLE: TempleDef = { id: 'temple', name: 'Temple', donation: 10 };
 const GUILD: GuildDef = {
   id: 'fire-guild',
   name: 'Initiate Guild of Fire',
@@ -75,32 +77,39 @@ describe('tavern', () => {
   });
 });
 
-describe('temple', () => {
-  it('prices by the worst condition and cures everything, death included', () => {
+describe('temple (characters.md 10.6)', () => {
+  it('asks the donation times the weekday a condition began, five for the dead, and cures everything', () => {
     const state = freshState();
     expect(templeHeal(state, TEMPLE, 0)).toEqual({ ok: false, reason: 'nothing' });
     expect(templeHeal(state, TEMPLE, 9)).toEqual({ ok: false, reason: 'member' });
     const archer = state.party[1]!;
-    afflict(archer.conditions, 'poisoned', 0);
+    // Poisoned on a Wednesday (the third day), weak on the Monday: the dearest counts.
+    afflict(archer.conditions, 'poisoned', 2 * MINUTES_PER_DAY + 60);
     afflict(archer.conditions, 'weak', 0);
-    expect(templePrice(TEMPLE, archer)).toBe(100);
-    state.gold = 50;
+    expect(templeMultiplier('weak', 0)).toBe(1);
+    expect(templeMultiplier('poisoned', 2 * MINUTES_PER_DAY + 60)).toBe(3);
+    expect(templePrice(TEMPLE, archer)).toBe(30);
+    state.gold = 20;
     expect(templeHeal(state, TEMPLE, 1)).toEqual({ ok: false, reason: 'gold' });
     state.gold = 500;
     const r = templeHeal(state, TEMPLE, 1);
-    expect(r.ok && r.price).toBe(100);
+    expect(r.ok && r.price).toBe(30);
     expect(r.ok && r.cured.sort()).toEqual(['poisoned', 'weak']);
-    expect(state.gold).toBe(400);
+    expect(state.gold).toBe(470);
     const cleric = state.party[2]!;
     cleric.hp = -30;
-    afflict(cleric.conditions, 'dead', 0);
-    expect(templePrice(TEMPLE, cleric)).toBe(500);
-    state.gold = 500;
+    // Dead on a Sunday: seven times five donations.
+    afflict(cleric.conditions, 'dead', 6 * MINUTES_PER_DAY);
+    expect(templePrice(TEMPLE, cleric)).toBe(350);
+    state.gold = 350;
     expect(templeHeal(state, TEMPLE, 2).ok).toBe(true);
+    expect(state.gold).toBe(0);
     expect(cleric.hp).toBe(maxHp(cleric));
     expect(cleric.conditions).toEqual({});
+    // Wounds alone cost the donation; eradication ten times the weekday.
     state.party[0]!.hp = 5;
     expect(templePrice(TEMPLE, state.party[0]!)).toBe(10);
+    expect(templeMultiplier('eradicated', MINUTES_PER_DAY)).toBe(20);
   });
 });
 

@@ -22,7 +22,7 @@ const TAVERN: TavernDef = {
   foodPrice: 5,
   foodCapacity: 10,
 };
-const TEMPLE: TempleDef = { id: 'temple', name: 'Temple', priceMultiplier: 1 };
+const TEMPLE: TempleDef = { id: 'temple', name: 'Temple', donation: 10 };
 const GUILD: GuildDef = {
   id: 'fire-guild',
   name: 'Guild of Fire',
@@ -94,15 +94,18 @@ describe('temple', () => {
     const knight = state.party[0]!;
     knight.hp -= 5;
     expect(templeRows(state, TEMPLE)[0]).toMatchObject({ price: 10, canHeal: true });
-    afflict(knight.conditions, 'poisoned', 0);
-    expect(templeRows(state, TEMPLE)[0]).toMatchObject({ condition: 'Poisoned', price: 100 });
+    // Poisoned on a Friday (the fifth day): five donations.
+    afflict(knight.conditions, 'poisoned', 4 * 24 * 60);
+    expect(templeRows(state, TEMPLE)[0]).toMatchObject({ condition: 'Poisoned', price: 50 });
     expect(heal(state, TEMPLE, 0)).toEqual({
       ok: true,
-      message: 'Alric is healed for 100 gold (Poisoned cured).',
+      message: 'Alric is healed for 50 gold (Poisoned cured).',
     });
-    expect(state.gold).toBe(100);
+    expect(state.gold).toBe(150);
     expect(heal(state, TEMPLE, 0)).toEqual({ ok: false, message: 'Nothing to heal.' });
-    afflict(knight.conditions, 'dead', 0);
+    // Dead on a Sunday: thirty-five donations, more than the purse holds.
+    afflict(knight.conditions, 'dead', 6 * 24 * 60);
+    expect(templeRows(state, TEMPLE)[0]).toMatchObject({ price: 350 });
     expect(heal(state, TEMPLE, 0)).toEqual({ ok: false, message: 'Not enough gold.' });
   });
 });

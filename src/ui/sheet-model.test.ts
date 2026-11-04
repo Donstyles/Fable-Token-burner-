@@ -40,13 +40,14 @@ describe('sheet view', () => {
   it('shows the condition and the stats it lowers', () => {
     const state = freshState();
     const knight = state.party[0]!;
-    afflict(knight.conditions, 'weak', 0);
+    // Poisoned at level 1: three quarters of Might (characters.md 10.2).
+    afflict(knight.conditions, 'poisoned', 0);
     const rows = statRows(knight);
     expect(rows[0]!.current).toBe(24);
     expect(rows[0]!.base).toBe(32);
     const v = sheetView(knight);
-    expect(v.condition).toBe('Weak');
-    expect(v.afflictions).toEqual(['Weak']);
+    expect(v.condition).toBe('Poisoned');
+    expect(v.afflictions).toEqual(['Poisoned']);
   });
 
   it('lists spell points and the bow for those who have them', () => {
