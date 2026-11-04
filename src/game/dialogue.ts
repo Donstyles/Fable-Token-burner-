@@ -263,6 +263,56 @@ export const QUESTS: Record<string, QuestDef> = {
     ],
     reward: { gold: 350, xp: 900 },
   },
+  // Harrowmere's stretch of the thread (docs/CAMPAIGN.md steps 5 to 7).
+  'the-chart': {
+    id: 'the-chart',
+    title: 'The Sea Kings’ Chart',
+    text:
+      'The Grange kept a chart on sealskin from the old days, the coast and seven marks on it, ' +
+      'until the smugglers took it with the grain. Sister Wyn would read it against the stones; ' +
+      'she pays what the temple can spare, two hundred and fifty gold.',
+    objectives: [
+      {
+        kind: 'deliver',
+        item: 'sea-kings-chart',
+        npc: 'novice',
+        text: 'Bring the Sea Kings’ chart, from the smugglers’ den under the cove, to Sister Wyn',
+        label: 'The Sea Kings’ chart',
+        reply:
+          'Sealskin, and the coast on it, our coast, with seven marks along it from the sea. ' +
+          'Count them: the first on your headland at Gullhaven, under the ruin; the second here, ' +
+          'under the oldest barrow; the third north, under the mere in the Mire, where the ' +
+          'abbey stood. Doors, all of them, and the stone said the first is under the last star. ' +
+          'Two hundred and fifty gold, and the priest can say what he likes.',
+      },
+    ],
+    reward: { gold: 250, xp: 600 },
+  },
+  'the-second-seal': {
+    id: 'the-second-seal',
+    title: 'The Second Seal',
+    text:
+      'The Barrow King wore an iron seal with two doors cut in it, the second warden’s. Sister ' +
+      'Wyn will keep it with the chart and send word of it to Brother Anselm; she pays three ' +
+      'hundred gold, and knows where the party must go next.',
+    objectives: [
+      {
+        kind: 'deliver',
+        item: 'seal-of-the-barrow',
+        npc: 'novice',
+        text: 'Bring the Barrow King’s seal to Sister Wyn on the temple lane',
+        label: 'The Barrow King’s seal',
+        reply:
+          'Iron, and two doors cut in it. Two of three, then, and the third under the mere. I ' +
+          'will send this to Anselm by the first carter I trust; he has the altar and the first. ' +
+          'Now go north: the down road ends at the barrows, but a pass climbs the ridge behind ' +
+          'them to the Mire, two days through the reeds. Fenwick is the village; ask for Brother ' +
+          'Oddo at the ruined abbey’s gate. He has the last of the lore, and he has been afraid ' +
+          'of it for twenty years. Three hundred gold, and come back whole.',
+      },
+    ],
+    reward: { gold: 300, xp: 800 },
+  },
   'the-barrow-king': {
     id: 'the-barrow-king',
     title: 'The Barrow King',
@@ -1024,6 +1074,58 @@ export const DIALOGUES: Record<string, DialogueDef> = {
         done: 'The mounds are only mounds now. Sheep graze on the oldest.',
         greetReady:
           'The downs were silent all night for the first time in my life. The king? Tell me.',
+      },
+      {
+        kind: 'quest',
+        id: 'chart',
+        quest: 'the-chart',
+        label: 'The old chart',
+        when: { quest: 'the-seal-and-the-stone', is: 'done' },
+        offer:
+          'Anselm’s seal, with a door cut in it; so he has one, at last. Then hear what I have: ' +
+          'the Grange kept a chart on sealskin from the kings’ days, our coast with seven marks ' +
+          'along it, and the smugglers took it off Oswy with his grain. It will be in their den ' +
+          'under the cove, with the rest of what they stole. Bring it to me and I will count ' +
+          'the doors from the sea, as the stone says. The temple can spare two hundred and fifty.',
+        active:
+          'The den is through the smugglers’ cave at the cove, south-east of the town; Black ' +
+          'Orrin keeps the last room, and what he values with him. The chart will be there.',
+        ready: 'You have it? Give it here, give it here.',
+        done: 'The chart is under the altar with the priest’s silver. He has not noticed.',
+        greetReady: 'You have been in the den; I can smell the sea cave on you. The chart?',
+      },
+      {
+        kind: 'quest',
+        id: 'seal',
+        quest: 'the-second-seal',
+        label: 'The second seal',
+        when: { quest: 'the-chart', is: 'done' },
+        offer:
+          'The chart says the second door is under the oldest barrow, and the Barrow King is ' +
+          'its warden as the one in the halls was. He will wear a seal like Anselm’s. Lay him ' +
+          'and bring it to me; I will keep it with the chart and send word west. Three hundred ' +
+          'gold, which is more than the temple has, so I shall have to find it.',
+        active:
+          'The Barrow King sits in his chamber under the oldest mound, behind the locked stair. ' +
+          'Bring me what he wears.',
+        ready: 'You have it. Let me see it.',
+        done: 'The seal went west with a carter I trust. Anselm will have both under his altar.',
+        greetReady: 'You came down off the downs with the king’s iron on you. Let me see.',
+      },
+      {
+        kind: 'say',
+        id: 'north',
+        label: 'The pass north',
+        when: { quest: 'the-second-seal', is: 'done' },
+        text:
+          'Behind the barrows a pass climbs the ridge; the drovers used it before the Mire went ' +
+          'bad. Two days through the reeds to Fenwick. Brother Oddo keeps the ruined abbey’s ' +
+          'gate there; what the cult did in that abbey woke the doors, I think, and he knows it. ' +
+          'Find the third seal under the mere and bring it to Gullhaven; Anselm will know the rest.',
+        note:
+          'Sister Wyn: a pass behind Harrowmere’s barrows climbs the ridge to the Mire, two days; ' +
+          'Brother Oddo at the ruined abbey’s gate in Fenwick keeps the last of the lore; the third ' +
+          'seal lies under the mere.',
       },
       {
         kind: 'say',
