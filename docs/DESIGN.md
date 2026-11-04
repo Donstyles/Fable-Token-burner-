@@ -3448,7 +3448,62 @@ earlier tests follow MM6's names and values.
 half); gems, wands, herbs and spellbooks as items; the special enchantments; artifacts; the
 inspect pop-up; a picture per tier.
 
+### 17.19 Shops of four kinds, their shelves and MM7's prices (the agentic loop, 2026-11-04)
+
+The second half of the plan's item 9 (MM6-GAPS 15; items.md 6). Until now a shop was a fixed
+list that bought anything at an invented markup.
+
+**Four kinds** (src/game/services.ts): smiths of arms, smiths of armour, magic shops and
+general stores. A shop buys, names and mends only its own kind of thing (weapons; body
+armour, shields, helms and gauntlets; everything else), and says "Not my trade" of the rest;
+a general store buys anything at half its value and neither names nor mends (items.md 6.1).
+The village's one smith deals in arms and armour both (`trades`), as it has no armourer
+beside it; its counter is MM6's Knife Shoppe (any weapon of the first level, six slots), its
+special shelf the Common Defense's (leather, chain, shields, helms, gauntlets, four slots),
+renewed every two days, open from six to six. The Trader's Store is a general store on MM6's
+Traveler's Supply: first-tier potions, scrolls, rings, boots, belts, hats and cloaks on eight
+slots, renewed daily, open from five to ten.
+
+**Shelves** (`visitShop`): a shop's two lists are made afresh when the party visits past the
+restock time, never while unvisited (items.md 6.2, MM7's rule), each slot one thing drawn by
+the treasure generator (17.18) at the list's level from the list's families (a catalogue
+family, an item kind, or a magic shop's "misc") and always identified; what the party buys
+leaves the shelf and what it sells stays off it. The shelves and the next restock live in the
+save (`GameState.shops`, version 5; older saves get none and fill on the first visit).
+
+**Prices** (MM7's formulas, items.md 6.3, which reproduce MM6's tavern and fare prices): from
+the house's factor Val and the member's Merchant percentage M (rank multiplier × skill + 7
+with the skill, none without; reputation waits): buying value × Val × (100 − M) ÷ 100 and
+never below the value; selling value ÷ (Val + 2) + value × M ÷ 100, at least 1 and at most
+the value, a broken thing 1; identifying 50 × Val × (100 − M) ÷ 100 and never below a third of
+50 × Val; repairing value ÷ (6 − Val) likewise. The document's Longsword at the Knife Shoppe
+comes out at 75, 14, 75 and 11 with no Merchant, 50, 32, 47 and 6 at Master 10. The invented
+markup, flat identify fee and repair share are gone; an enchanted copy is priced by its worth.
+
+**Hours**: a shop keeps its kind's hours (smiths 6 to 18, magic shops 8 to 16, general stores
+5 to 22); shut, its door tells the party when it opens, and the screen does not open.
+
+**The screen**: Buy shows the counter, Special the shelf where the shop has one, Sell,
+Identify and Repair open the member's bag as before (16.33); a general store has no Identify
+and no Repair. The rows name an enchanted thing in full.
+
+**Checked**: unit tests for the formulas against the document's examples, the floors and
+the broken price, the shelves (slots, levels, families, identified, the same shelves the next
+day and new ones after the period, no special shelf at a general store), the hours, the
+trades of each kind, buying off a shelf, selling, naming and mending with the trade rule, the
+view-model's rows and messages, and the save's migration; the screens' fit spec visits both
+shops as before.
+
+**Not yet**: reputation in M, the bank, the shopkeeper's face and the shelves drawn as
+MM6 drew them (the owner's shop pictures, DESIGN 17.8), spellbooks as items at the guild,
+the special shelf of general stores (MM6 makes one and cannot sell it).
+
 ## 13. Decision log
+
+- 2026-11-04 – Shops (17.19): four kinds dealing in their own kind, shelves generated on a
+  visit from the shop's families at its level and renewed on its period, hours at the door,
+  MM7's price formulas from the house's factor and the Merchant percentage; the village's
+  smith sells arms with armour on its special shelf, the store is a general store.
 
 - 2026-11-04 – Bushes collide (17.7): a cylinder a little inside the drawn leaves, where
   there was no collider at all (owner: "bushes have collision issues").
