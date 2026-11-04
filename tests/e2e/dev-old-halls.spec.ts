@@ -278,7 +278,7 @@ test('the shaman casts across the lair, a scout runs when hurt, and the gems war
   await page.waitForFunction(() => (window as unknown as W).ftb!.dev!.monsters.length >= 11, null, {
     timeout: 120_000,
   });
-  type D = Dev & {
+  type D = Omit<Dev, 'monsters'> & {
     shots: number;
     monsters: {
       name: string;
