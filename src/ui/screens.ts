@@ -23,7 +23,7 @@ import { renderChest, type ChestWindow } from './chest';
 import { renderScore } from './score';
 import { renderSaves, type SavesMode } from './saves';
 import { createFrame, watchScrolls } from './dom';
-import { renderCalendar, renderNotes, renderQuests } from './books';
+import { renderCalendar, renderNotes, renderQuests, renderReading } from './books';
 import { renderAwards, renderSheet, renderSkills } from './character';
 import { renderInventory } from './inventory';
 import { renderMap } from './journal';
@@ -92,7 +92,15 @@ const RENDERERS: Record<ScreenName, (ctx: ScreenContext) => void> = {
 };
 
 /** The screens MM6 drew as open books (paint.ts `book`). */
-const BOOKS: readonly string[] = ['spells', 'quests', 'notes', 'map', 'calendar', 'score'];
+const BOOKS: readonly string[] = [
+  'spells',
+  'quests',
+  'notes',
+  'map',
+  'calendar',
+  'score',
+  'reading',
+];
 
 export interface Screens {
   open(name: ScreenName): void;
@@ -104,6 +112,8 @@ export interface Screens {
   openScore(title: string): void;
   /** The save slots, to save into or to go on from (DESIGN.md 17.14). */
   openSaves(mode: SavesMode): void;
+  /** A stone's words on a page of their own (DESIGN.md 17.20). */
+  openReading(title: string, text: string): void;
   close(): void;
   /** The open screen, or null. */
   current(): BoardName | null;
@@ -196,6 +206,9 @@ export function installScreens(
       mount(mode, mode === 'save' ? 'Save Game' : 'Load Game', (ctx) =>
         renderSaves(ctx, mode, saves),
       );
+    },
+    openReading(title, text) {
+      mount('reading', title, (ctx) => renderReading(ctx, title, text));
     },
     close,
     current() {

@@ -84,7 +84,8 @@ import { createDialogue, type Dialogue } from '../ui/dialogue';
 import { DIALOGUES, QUESTS } from '../game/dialogue';
 import { questNotice, questStage } from '../ui/dialogue-model';
 import { createTitleScreen } from '../ui/title';
-import { handleQuestEvent } from '../game/quests';
+import { handleQuestEvent, pendingReaches, REACH_RADIUS } from '../game/quests';
+import { SITE_REACH, SITE_TAP, SITES, useSite } from '../game/sites';
 import { shareExperience } from '../game/experience';
 import { Soundscape } from '../world/soundscape';
 import { DOOR_REACH, VILLAGE_HOUSES } from '../game/content';
@@ -170,6 +171,8 @@ export interface DevHandle {
   cast(spell: SpellId): string | null;
   /** Talk to a villager by id, as a tap would; false when there is no such villager. */
   talkTo(id: string): boolean;
+  /** Use the site at a named point as a tap on it would; the status line's words, or null. */
+  useSite(point: string): string | null;
   /** The room of the house the party is in, drawn in the view's box (DESIGN.md 17.8). */
   room: RoomView;
   /** The level's doors, the things on its floor and its chests (DESIGN.md 17.11, 17.12). */
@@ -562,6 +565,37 @@ export async function startGame(app: App): Promise<DevHandle> {
       }
     },
   });
+  // The sites of this level (DESIGN.md 17.20), each at one of its named points: the well, the
+  // shrine, the obelisk. A tap that lands within a stride of one uses it, from near enough.
+  const sites = SITES.filter((s) => s.level === LEVEL).flatMap((def) => {
+    const at = level.points.get(def.point);
+    return at ? [{ def, at }] : [];
+  });
+  type Site = (typeof sites)[number];
+  const siteUnder = (point: Vector3 | null | undefined): Site | null => {
+    if (!point) return null;
+    let best: Site | null = null;
+    let nearest = SITE_TAP;
+    for (const s of sites) {
+      const d = Math.hypot(point.x - s.at.x, point.z - s.at.z);
+      if (d < nearest) {
+        nearest = d;
+        best = s;
+      }
+    }
+    return best;
+  };
+  /** Use a site as a tap on it would: the status line's words, an obelisk's on a page. */
+  const useSiteHere = (s: Site): string => {
+    const d = Math.hypot(party.position.x - s.at.x, party.position.z - s.at.z);
+    if (d > SITE_REACH) return `${s.def.name} (come closer)`;
+    const out = useSite(state, s.def, state.selected);
+    if (s.def.effect.kind === 'obelisk') {
+      screens.openReading(s.def.name, out.text);
+      return out.notices.join('; ') || s.def.name;
+    }
+    return out.notices.length ? `${out.text} (${out.notices.join('; ')})` : out.text;
+  };
   const talkTo = (npc: Npc): void => {
     const def = DIALOGUES[npc.def.id];
     if (!def) {
@@ -673,7 +707,11 @@ export async function startGame(app: App): Promise<DevHandle> {
         // A tier's colouring over the family's skin (DESIGN.md 17.16).
         if (got.def.tint) got.c.setTint(Color3.FromArray(got.def.tint));
         handle.monsters.push(new Monster(got.def, got.c, nav, rng));
-      } else if (got.npcDef) npcs.push(new Npc(got.npcDef, got.c));
+      } else if (got.npcDef) {
+        // A villager's own colouring over the shared skin (DESIGN.md 17.20).
+        if (got.npcDef.tint) got.c.setTint(Color3.FromArray(got.npcDef.tint));
+        npcs.push(new Npc(got.npcDef, got.c));
+      }
     }
     diag(`${handle.monsters.length} monsters, ${nav ? 'on the navmesh' : 'no navmesh'}`);
     veilProgress(0.95);
@@ -950,6 +988,13 @@ export async function startGame(app: App): Promise<DevHandle> {
       talkTo(npc);
       return true;
     },
+    useSite: (point) => {
+      const s = sites.find((x) => x.def.point === point);
+      if (!s) return null;
+      const line = useSiteHere(s);
+      status.say(line, 7000);
+      return line;
+    },
     room,
   };
 
@@ -1052,6 +1097,12 @@ export async function startGame(app: App): Promise<DevHandle> {
     const lying = groundItems.itemOf(mesh.name);
     if (lying) {
       status.say(groundItems.take(lying, d).message);
+      return;
+    }
+    // A well, a shrine or an obelisk under the tap (DESIGN.md 17.20).
+    const site = siteUnder(pick?.pickedPoint);
+    if (site) {
+      status.say(useSiteHere(site), 7000);
       return;
     }
     // A chest's lid swings open and its window comes up (DESIGN.md 17.12).
@@ -1394,6 +1445,20 @@ export async function startGame(app: App): Promise<DevHandle> {
     }
     for (const n of npcs) n.update(talking_ ? frameDt : dt, party.position);
     if (talking_) bust.aim();
+    // A quest's walk is done when the party comes within reach of its point (DESIGN.md 17.20).
+    if (dt > 0) {
+      for (const name of pendingReaches(state.quests, QUESTS)) {
+        const at = level.points.get(name);
+        if (!at || Math.hypot(party.position.x - at.x, party.position.z - at.z) > REACH_RADIUS)
+          continue;
+        for (const change of handleQuestEvent(state.quests, QUESTS, {
+          kind: 'reach',
+          point: name,
+        })) {
+          status.say(questNotice(change, QUESTS), 6000);
+        }
+      }
+    }
     if (dt > 0 && !fly) {
       const p = party.position;
       const moved = Math.hypot(p.x - lastPartyPos.x, p.z - lastPartyPos.z);

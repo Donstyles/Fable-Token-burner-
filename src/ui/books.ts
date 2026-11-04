@@ -54,6 +54,20 @@ export function renderNotes(ctx: ScreenContext): void {
   frame.body.replaceChildren(page);
 }
 
+/**
+ * A reading (DESIGN.md 17.20): what is cut into an obelisk, shown on a page of its own as MM6
+ * put a stone's words in a box; the status line is a line long and would cut it short.
+ */
+export function renderReading(ctx: ScreenContext, title: string, text: string): void {
+  bookBanner(ctx, title);
+  const page = el('div', 'ui-col scroll book-page');
+  const entry = el('div', 'book-entry');
+  entry.appendChild(el('p', 'book-line', text));
+  entry.appendChild(el('div', 'book-rule'));
+  page.appendChild(entry);
+  ctx.frame.body.replaceChildren(page);
+}
+
 /** The moon's face for a quarter, drawn on a pixel grid: dark, lit at the right, full, left. */
 function moonGlyph(phase: MoonPhase): HTMLCanvasElement {
   const s = 11;

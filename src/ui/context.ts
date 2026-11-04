@@ -43,7 +43,7 @@ export type ServiceKind = (typeof SERVICE_KINDS)[number];
  * What may be up over the view: a book, a house's service, a chest's window, the score, or
  * the save and load lists.
  */
-export type BoardName = ScreenName | ServiceKind | 'chest' | 'score' | 'save' | 'load';
+export type BoardName = ScreenName | ServiceKind | 'chest' | 'score' | 'save' | 'load' | 'reading';
 
 /** The save slots (src/app/saves.ts) and what the runtime does with them (DESIGN.md 17.14). */
 export interface SaveHooks {
