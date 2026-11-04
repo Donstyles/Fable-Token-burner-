@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import gullhaven from '../../levels/gullhaven/region';
 import harrowmere from '../../levels/harrowmere/region';
+import mire from '../../levels/mire/region';
 import type { RegionScript } from '../../kernel/terrain/region';
 import { HOUSES } from './content';
 import { DIALOGUES, QUESTS } from './dialogue';
@@ -13,7 +14,7 @@ import { SITES } from './sites';
  * things and places that exist; every person who talks exists and stands somewhere; every
  * site stands at a named point of its region; every working house a region names has a record.
  */
-const REGIONS: Record<string, RegionScript> = { gullhaven, harrowmere };
+const REGIONS: Record<string, RegionScript> = { gullhaven, harrowmere, mire };
 
 const pointNames = (r: RegionScript): string[] => [
   ...r.points.map((p) => p.name),
@@ -75,14 +76,18 @@ describe('the world holds together', () => {
       for (const pack of r.packs) expect(MONSTERS[pack.kind], `${id}: ${pack.kind}`).toBeDefined();
       for (const c of r.caves ?? []) if (c.target) expect(c.target.level).not.toBe(id);
     }
-    // Harrow's seven working houses all have records; the plot names are the records' ids.
-    const harrow = harrowmere.plots
-      .filter((p) => p.name?.startsWith('harrow-'))
-      .map((p) => p.name!);
-    expect(harrow.sort()).toEqual(
-      Object.keys(HOUSES)
-        .filter((k) => k.startsWith('harrow-'))
-        .sort(),
-    );
+    // Harrow's seven and Fenwick's six working houses all have records; the plot names are
+    // the records' ids.
+    for (const [r, prefix] of [
+      [harrowmere, 'harrow-'],
+      [mire, 'fen-'],
+    ] as const) {
+      const named = r.plots.filter((p) => p.name?.startsWith(prefix)).map((p) => p.name!);
+      expect(named.sort()).toEqual(
+        Object.keys(HOUSES)
+          .filter((k) => k.startsWith(prefix))
+          .sort(),
+      );
+    }
   });
 });

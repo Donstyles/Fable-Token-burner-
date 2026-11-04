@@ -995,4 +995,40 @@ export const NPCS: Record<string, NpcDef> = {
     tint: [0.78, 0.96, 0.82],
     lines: ['The Grange has stood since the shire was a wood. It will stand a while yet.'],
   },
+  // The Mire's people (DESIGN.md 17.25).
+  'fen-reeve': {
+    id: 'fen-reeve',
+    name: 'Reeve Aldith',
+    character: 'villager-woman',
+    tint: [0.76, 0.84, 0.9],
+    lines: ['Fenwick keeps its feet dry and its mouth shut. Mostly.'],
+  },
+  ferryman: {
+    id: 'ferryman',
+    name: 'Hob the Ferryman',
+    character: 'villager-man',
+    tint: [0.74, 0.82, 0.8],
+    lines: ['The ferry does not run. Nothing on the mere runs now but the drowned.'],
+  },
+  wisewoman: {
+    id: 'wisewoman',
+    name: 'Mother Gefa',
+    character: 'villager-woman',
+    tint: [0.86, 0.92, 0.72],
+    lines: ['Everything in the fen is a cure for something, or a poison. Usually both.'],
+  },
+  brother: {
+    id: 'brother',
+    name: 'Brother Oddo',
+    character: 'villager-man',
+    tint: [0.68, 0.66, 0.7],
+    lines: ['I keep the gate of a house with no walls. It is a long story.'],
+  },
+  chandler: {
+    id: 'chandler',
+    name: 'Pim the Chandler',
+    character: 'villager-man',
+    tint: [1.06, 0.98, 0.78],
+    lines: ['Candles, rope, salt and sense. The last is free and nobody takes it.'],
+  },
 };

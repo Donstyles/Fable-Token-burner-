@@ -217,6 +217,7 @@ export const ITEM_IDS = [
   'seal-of-the-deep',
   'sea-kings-chart',
   'abbots-confession',
+  'remedy',
 ] as const;
 export type ItemId = (typeof ITEM_IDS)[number];
 
@@ -346,6 +347,11 @@ const OTHERS: ItemDef[] = [
         'abbots-confession',
         'The Abbot’s Confession',
         'Pages in a cramped hand: what waits behind the First Door',
+      ],
+      [
+        'remedy',
+        'Gefa’s Remedy',
+        'A stoppered horn of something green and bitter, for the fen ague',
       ],
     ] as const
   ).map(([id, name, generic]): ItemDef => ({

@@ -111,6 +111,40 @@ export const SITES: SiteDef[] = [
       'The obelisk on Harrowmere’s downs: "THE LAST STAR IS THE ONE THAT DOES NOT TURN. COUNT ' +
       'THE DOORS FROM THE SEA." A second fragment.',
   },
+  // The Mire's (DESIGN.md 17.25).
+  {
+    id: 'mire-well',
+    level: 'mire',
+    point: 'well',
+    name: 'The Fen Well',
+    effect: { kind: 'well', stat: 'endurance', amount: 2, cap: 15 },
+    note: 'The well in Fenwick’s square is peat-brown and iron-cold. Whoever drinks from it is the hardier, once.',
+  },
+  {
+    id: 'mire-shrine',
+    level: 'mire',
+    point: 'shrine',
+    name: 'The Abbey Shrine',
+    effect: { kind: 'altar', stat: 'personality', month: 2, first: 10, later: 3 },
+    note:
+      'The shrine at the ruined abbey’s gate in the Mire hears a prayer in March, and lends ' +
+      'those who pray a presence: the first year most of all.',
+  },
+  {
+    id: 'mire-obelisk',
+    level: 'mire',
+    point: 'obelisk',
+    name: 'An Obelisk',
+    effect: {
+      kind: 'obelisk',
+      text:
+        'Letters cut deep into the stone, half sunk in the peat, read: ' +
+        '"THE SEVENTH DOOR IS THE SEA ITSELF. SHUT THE FIRST, AND THE REST STAY SHUT."',
+    },
+    note:
+      'The obelisk on the Mire’s edge: "THE SEVENTH DOOR IS THE SEA ITSELF. SHUT THE FIRST, AND ' +
+      'THE REST STAY SHUT." The third fragment: the First Door is the one that matters.',
+  },
 ];
 
 /** The site at a level's named point, if one stands there. */

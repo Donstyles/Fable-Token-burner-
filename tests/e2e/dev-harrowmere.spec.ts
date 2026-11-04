@@ -26,7 +26,7 @@ type Dev = {
 };
 type W = Window & { ftb?: { dev?: Dev } };
 
-test('Harrowmere loads with its town, its people, its packs and its two ways out', async ({
+test('Harrowmere loads with its town, its people, its packs and its four ways out', async ({
   page,
 }) => {
   test.setTimeout(420_000);
@@ -75,11 +75,12 @@ test('Harrowmere loads with its town, its people, its packs and its two ways out
     expect(p).not.toBeNull();
   }
   // The cove's cave leads into the den, the barrow's into the Barrow of Kings; the coast road
-  // east is a three-day edge to Gullhaven.
+  // east is a three-day edge to Gullhaven, the pass north a two-day edge to the Mire.
   expect(info.portals.sort()).toEqual([
     'barrow>barrow-kings:barrow-mouth',
     'cove>thieves-den:cove-mouth',
     'east-road>gullhaven:west-road:3d',
+    'north-pass>mire:south-pass:2d',
   ]);
   // The people and the packs arrive with the models.
   await page.waitForFunction(() => (window as unknown as W).ftb!.dev!.npcs.length >= 5, null, {

@@ -313,6 +313,188 @@ export const QUESTS: Record<string, QuestDef> = {
     ],
     reward: { gold: 300, xp: 800 },
   },
+  // The Mire's stretch of the thread and its errands (docs/CAMPAIGN.md steps 8 to 10).
+  'the-reed-holt': {
+    id: 'the-reed-holt',
+    title: 'The Reavers’ Holt',
+    text:
+      'Reavers hold the fen’s one knoll north-east of the mere and take the eel-boats as they ' +
+      'please; a woman they call the Reed Queen leads them. Reeve Aldith pays six hundred gold ' +
+      'of Fenwick’s to see her dead in her holt.',
+    objectives: [
+      {
+        kind: 'kill',
+        monster: 'reed-queen',
+        count: 1,
+        text: 'Kill the Reed Queen in the reavers’ holt, up the shore track past the mere',
+      },
+      { kind: 'talk', npc: 'fen-reeve', text: 'Tell Reeve Aldith before the Reed and Lantern' },
+    ],
+    reward: { gold: 600, xp: 1500 },
+  },
+  'the-lantern-road': {
+    id: 'the-lantern-road',
+    title: 'The Lantern Road',
+    text:
+      'The ferry’s far light at the causeway’s end has burnt untended since the drowned came ' +
+      'up; Hob the ferryman wants to know whether his hut still stands. A hundred and fifty ' +
+      'gold for the walk.',
+    objectives: [
+      {
+        kind: 'reach',
+        point: 'far-light',
+        text: 'Walk the lantern road east along the shore to the far light at the causeway’s end',
+      },
+      { kind: 'talk', npc: 'ferryman', text: 'Tell Hob on the quay' },
+    ],
+    reward: { gold: 150, xp: 400 },
+  },
+  'a-cure-for-the-ague': {
+    id: 'a-cure-for-the-ague',
+    title: 'A Cure for the Ague',
+    text:
+      'Hob the ferryman shakes with the fen ague and will not come up from his quay for a ' +
+      'cure. Mother Gefa has brewed it; she pays a hundred and twenty gold to see it drunk.',
+    objectives: [
+      {
+        kind: 'deliver',
+        item: 'remedy',
+        npc: 'ferryman',
+        text: 'Carry Gefa’s remedy to Hob on the quay below the temple',
+        label: 'Gefa’s remedy',
+        reply:
+          'From Gefa? Then it will be foul, and it will work. Give it here. Hah. Hah, that is ' +
+          'bad. Tell her I drank it to the dregs and I am a new man and I hate her. And tell ' +
+          'her thank you, since she will not hear it from me.',
+      },
+      { kind: 'talk', npc: 'wisewoman', text: 'Tell Mother Gefa by the well' },
+    ],
+    reward: { gold: 120, xp: 300 },
+    gives: ['remedy'],
+  },
+  'the-causeway-thugs': {
+    id: 'the-causeway-thugs',
+    title: 'The Causeway Thugs',
+    text:
+      'Hired men off the Harrowmere road hold the causeway from the pass and tax what comes ' +
+      'down it; Pim the chandler has had two carts turned back. He pays two hundred and fifty ' +
+      'gold for three of them put in the fen.',
+    objectives: [
+      {
+        kind: 'kill',
+        monster: 'thug',
+        count: 3,
+        text: 'Put down three of the thugs on the causeway between the pass and the village',
+      },
+      { kind: 'talk', npc: 'chandler', text: 'Tell Pim before his chandlery' },
+    ],
+    reward: { gold: 250, xp: 600 },
+  },
+  'the-drowned-abbey': {
+    id: 'the-drowned-abbey',
+    title: 'The Drowned Abbey',
+    text:
+      'The brothers who stayed in the ruined abbey when the mere rose turned to the doors, and ' +
+      'their Abbot has been opening them from his crypt for twenty years. Brother Oddo, the one ' +
+      'who left, pays seven hundred gold to see him stopped.',
+    objectives: [
+      {
+        kind: 'kill',
+        monster: 'the-abbot',
+        count: 1,
+        text: 'Kill the Abbot in the crypt under the ruined abbey, through the cave at its gate',
+      },
+      { kind: 'talk', npc: 'brother', text: 'Tell Brother Oddo at the abbey’s gate' },
+    ],
+    reward: { gold: 700, xp: 1800 },
+  },
+  'the-confession': {
+    id: 'the-confession',
+    title: 'The Abbot’s Confession',
+    text:
+      'The Abbot wrote down what he learnt of the doors and what waits behind the first. ' +
+      'Brother Oddo would read it, though he dreads it; two hundred gold for the pages.',
+    objectives: [
+      {
+        kind: 'deliver',
+        item: 'abbots-confession',
+        npc: 'brother',
+        text: 'Bring the Abbot’s confession to Brother Oddo at the abbey’s gate',
+        label: 'The Abbot’s confession',
+        reply:
+          'His hand. I knew it at once; I copied under him for nine years. Give me a moment. ' +
+          'Yes. The Sea Kings did not raise the doors to keep something in. They raised them to ' +
+          'keep the sea out: the seventh door is the sea itself, and the first holds the rest. ' +
+          'Behind the First Door sits the king who made them, and he has been waiting to be let ' +
+          'out since before Gullhaven had a name. Here, two hundred gold, and I am sorry I read ' +
+          'it to you.',
+      },
+    ],
+    reward: { gold: 200, xp: 600 },
+  },
+  'the-sunken-hall': {
+    id: 'the-sunken-hall',
+    title: 'The Sunken Hall',
+    text:
+      'The third door is the Sunken Hall under the mere, and its warden has come awake since ' +
+      'the Abbot’s work. Brother Oddo pays nine hundred gold of the abbey’s buried silver to ' +
+      'see the Warden of the Deep laid.',
+    objectives: [
+      {
+        kind: 'kill',
+        monster: 'the-drowned-warden',
+        count: 1,
+        text: 'Lay the Warden of the Deep in the Sunken Hall, through the cave on the mere’s north shore',
+      },
+      { kind: 'talk', npc: 'brother', text: 'Tell Brother Oddo at the abbey’s gate' },
+    ],
+    reward: { gold: 900, xp: 2200 },
+  },
+  'the-third-seal': {
+    id: 'the-third-seal',
+    title: 'The Third Seal',
+    text:
+      'The Warden of the Deep wore a seal of green stone with three doors cut in it. Brother ' +
+      'Oddo will send it west with the party’s word to Brother Anselm in Gullhaven, where the ' +
+      'First Door waits; four hundred gold for the carrying so far.',
+    objectives: [
+      {
+        kind: 'deliver',
+        item: 'seal-of-the-deep',
+        npc: 'brother',
+        text: 'Bring the Warden of the Deep’s seal to Brother Oddo at the abbey’s gate',
+        label: 'The Warden of the Deep’s seal',
+        reply:
+          'Green stone, and three doors cut in it. Three of three. I will not keep this a night ' +
+          'in the Mire; it goes west with you, and I will write to Anselm by the carter so he ' +
+          'knows what you carry. Back down the pass, through Harrowmere, along the coast road ' +
+          'to Gullhaven: the First Door is under the ruin on your headland, and the three seals ' +
+          'open it. Four hundred gold, and whatever prayers a gatekeeper of nothing can say.',
+      },
+    ],
+    reward: { gold: 400, xp: 1000 },
+  },
+  // The thread's end (docs/CAMPAIGN.md step 11).
+  'the-first-door': {
+    id: 'the-first-door',
+    title: 'The First Door',
+    text:
+      'Three seals under the temple’s altar, and the First Door under the ruin on the headland, ' +
+      'where a watchtower was built over what the Sea Kings shut. Brother Anselm gives the ' +
+      'seals back and asks the party to go down and shut it for good: the Sea King waits behind ' +
+      'it. Two thousand gold, every coin the three temples could find, and the coast’s thanks.',
+    objectives: [
+      {
+        kind: 'kill',
+        monster: 'the-sea-king',
+        count: 1,
+        text: 'Lay the Sea King in his throne hall behind the three doors of the Headland Undercroft',
+      },
+      { kind: 'talk', npc: 'anselm', text: 'Tell Brother Anselm on the temple lane' },
+    ],
+    reward: { gold: 2000, xp: 6000 },
+    gives: ['seal-of-the-halls', 'seal-of-the-barrow', 'seal-of-the-deep'],
+  },
   'the-barrow-king': {
     id: 'the-barrow-king',
     title: 'The Barrow King',
@@ -751,6 +933,47 @@ export const DIALOGUES: Record<string, DialogueDef> = {
         note:
           'Brother Anselm: a lettered pillar stands by the standing stones west of the ' +
           'crossroads, one piece of a longer saying; others stand far away.',
+      },
+      {
+        kind: 'quest',
+        id: 'seal',
+        quest: 'the-seal-and-the-stone',
+        label: 'The Warden’s seal',
+        when: { quest: 'the-old-halls', is: 'done' },
+        offer:
+          'You put the warden of the halls back in the ground, Tobin says, and he wore ' +
+          'something: a disc of bronze, with a door cut in it. I have read the stone a hundred ' +
+          'times and never had a thing to read it against. Bring me the seal and I will pay two ' +
+          'hundred gold of my own, which is all a lay brother has.',
+        active: 'The Warden’s seal, bronze, a door cut in it. It will be on what is left of him.',
+        ready: 'You have it. Let me see it.',
+        done: 'The seal is under the altar. The stone makes sense at last, and I wish it did not.',
+        greetReady: 'There is bronze in your hand. Let me see it.',
+      },
+      {
+        kind: 'quest',
+        id: 'door',
+        quest: 'the-first-door',
+        label: 'The First Door',
+        when: { quest: 'the-third-seal', is: 'done' },
+        offer:
+          'Three seals: bronze from the halls, iron from the barrow, green stone from the deep, ' +
+          'and Oddo’s letter with the last of them. The First Door is under the ruin on our own ' +
+          'headland; the watchtower was built over it by men who did not know. The cave is in ' +
+          'the headland’s flank below the ruin. Take the seals; each opens its door, and behind ' +
+          'the last the Sea King waits to be let out onto a coast that has forgotten him. Shut ' +
+          'him in for good. The three temples have found two thousand gold between them, and ' +
+          'every soul from here to the Mire will owe you the rest.',
+        active:
+          'The cave below the ruin, east along the headland track from the crossroads. Gorrak’s ' +
+          'hobgoblins hold the gate cave; the bronze door first, the iron, then the stair and ' +
+          'the green. Go with your spells ready and your clerics rested. I will keep the candle lit.',
+        ready:
+          'The Sea King laid, and the door shut on him with his own seals. Then it is over, and ' +
+          'the coast is only a coast again. Two thousand gold from three temples, and this: the ' +
+          'stones have nothing more to say. Rest. You have earned the right to be ordinary.',
+        done: 'The headland is quiet. I go up some evenings and sit on the ruin, and nothing walks.',
+        greetReady: 'The sea went flat at noon from here to the headland. He is laid. Tell me.',
       },
       {
         kind: 'say',
@@ -1217,6 +1440,321 @@ export const DIALOGUES: Record<string, DialogueDef> = {
             'they are not wrong.',
           'The brigands on the coast road under the ridge pay Orrin a share. Cut the head off and ' +
             'the hands go slack.',
+        ],
+      },
+    ],
+  },
+  // ── The Mire (DESIGN.md 17.25) ──────────────────────────────────────────────────────────
+  'fen-reeve': {
+    npc: 'fen-reeve',
+    role: 'Reeve',
+    greeting:
+      'Aldith, reeve of Fenwick, and you are the first strangers down the pass since the ' +
+      'drovers stopped coming. Wipe your boots on the rise; the fen keeps the rest of you.',
+    topics: [
+      {
+        kind: 'quest',
+        id: 'holt',
+        quest: 'the-reed-holt',
+        label: 'The reavers',
+        offer:
+          'Reavers hold the knoll north-east of the mere, the one dry place out there, and ' +
+          'they take the eel-boats as they please and the eelers with them twice. A woman leads ' +
+          'them; they call her the Reed Queen and she shoots a bow better than any man in the ' +
+          'fen. Six hundred gold of Fenwick’s to see her dead in her holt, and that is the ' +
+          'village’s whole chest.',
+        active:
+          'The shore track from the street’s east end runs north past the mere to the knoll; ' +
+          'their holt is a cave in its top, with a lane up to it. Her archers see far over the ' +
+          'reeds; go in the mist if you can.',
+        ready:
+          'Dead in her holt and her reavers scattered into the reeds, the eelers say. Six ' +
+          'hundred gold, and the first eel-boat out tomorrow is named for you.',
+        done: 'The eel-boats go out at dawn again. Fenwick eats.',
+        greetReady: 'The eelers came in shouting. The Reed Queen? Tell me.',
+      },
+      {
+        kind: 'say',
+        id: 'village',
+        label: 'Fenwick',
+        text:
+          'Fenwick stands on the one rise at the mere’s west shore. The Reed and Lantern on the ' +
+          'square, the Hall of the Fen at its shoulder, the Guild of Spirit at the other, Pim’s ' +
+          'chandlery across; the smith at the street’s west end, the temple at its east end over ' +
+          'the quay. Everything beyond the rise is wet, and most of it is worse than wet.',
+        note:
+          'Fenwick: the Reed and Lantern, the Hall of the Fen and the Guild of Spirit on the ' +
+          'square, Pim’s chandlery across, the smith at the street’s west end, the temple over ' +
+          'the quay at the east.',
+      },
+      {
+        kind: 'rumours',
+        id: 'rumours',
+        label: 'Rumours',
+        lines: [
+          'Hob has not taken the ferry out since the drowned came up. He sits on his quay and ' +
+            'shakes, and says it is the ague.',
+          'Brother Oddo left the abbey twenty years ago and has not been inside since. He keeps ' +
+            'its gate like a dog that will not go into the house.',
+          'There is a stone on the fen’s edge west of the pass road, half sunk. Gefa says it talks.',
+        ],
+      },
+    ],
+  },
+  ferryman: {
+    npc: 'ferryman',
+    role: 'Ferryman',
+    greeting:
+      'Hob. The ferry is mine, and it does not run, so I am a ferryman the way Oddo is a monk. ' +
+      'Sit if you like; the quay is dry.',
+    topics: [
+      {
+        kind: 'quest',
+        id: 'light',
+        quest: 'the-lantern-road',
+        label: 'The far light',
+        offer:
+          'My light at the causeway’s end, where the ferry put in from the far shore, has burnt ' +
+          'untended since the drowned came up out of the mere. My hut is there, and my nets, and ' +
+          'I cannot go, because I shake. Walk the lantern road east along the shore and tell me ' +
+          'whether the hut stands. A hundred and fifty gold, which is what the nets are worth.',
+        active:
+          'East from the quay along the shore, the causeway with the lanterns; the far light is ' +
+          'at its end. Reavers walk it at dusk, drawn by the lamp.',
+        ready:
+          'Standing? And the light still burning? Then I have a hut and a reason. A hundred and ' +
+          'fifty gold, and when the ferry runs again you ride for nothing.',
+        done: 'I walked out to the hut myself yesterday. I shook the whole way, and I did it.',
+        greetReady: 'You have reed-mud to the knee and lantern-soot on your hands. The hut?',
+      },
+      {
+        kind: 'say',
+        id: 'mere',
+        label: 'The mere',
+        text:
+          'The mere is the sea come inland, salt at the mouth and brackish by the quay. Under ' +
+          'the knoll on its north shore there was a hall before the mere was, the old folk say, ' +
+          'and the drowned come up from it. They walk the shores at night and stand in the ' +
+          'shallows by day. I have seen them from this quay with the water to their chests, ' +
+          'waiting.',
+        note:
+          'Hob the ferryman: a hall lay under the Mire’s mere before the mere was, under the knoll ' +
+          'on its north shore; the drowned come up from it.',
+      },
+      {
+        kind: 'rumours',
+        id: 'rumours',
+        label: 'Rumours',
+        lines: [
+          'Gefa’s remedies cure you or kill you, and she says the fen decides which.',
+          'The reavers pay no one and fear nothing but the drowned, and the drowned are getting closer.',
+          'Pim will sell you a rope and a candle and a prayer, and only the prayer is cheap.',
+        ],
+      },
+    ],
+  },
+  wisewoman: {
+    npc: 'wisewoman',
+    role: 'Wise Woman',
+    greeting:
+      'Gefa. Mother Gefa, the village says, though I mothered nobody. You are hurt; everybody ' +
+      'who comes down the pass is hurt. Sit on the well’s edge, I shall see to it after.',
+    topics: [
+      {
+        kind: 'quest',
+        id: 'ague',
+        quest: 'a-cure-for-the-ague',
+        label: 'The ferryman’s ague',
+        offer:
+          'Hob on the quay shakes with the fen ague and calls it fear, and it is both, and I ' +
+          'have brewed the cure for both. He will not come up the street for it; he has not ' +
+          'left that quay in a month. Take him this horn and see him drink it, all of it, and ' +
+          'come and tell me his face. A hundred and twenty gold; I charge him double.',
+        active:
+          'Down the street east past the temple to the quay. Make him drink it to the dregs; ' +
+          'the dregs are the cure.',
+        ready:
+          'He said he hates me? Then it worked; he always does when it works. A hundred and ' +
+          'twenty gold, and sit down now and let me see that arm.',
+        done: 'Hob walked out to his far light yesterday. He shook the whole way. Good.',
+        greetReady: 'Well? Did he drink it? Did he make the face?',
+      },
+      {
+        kind: 'say',
+        id: 'stone',
+        label: 'The talking stone',
+        text:
+          'On the fen’s edge west of the pass road, half sunk in the peat, there is a pillar ' +
+          'with letters cut in it. I cannot read, but Oddo can, and he came back from it grey. ' +
+          'It says the sea is a door, he told me, and I said everyone in the fen knows that.',
+        note:
+          'Mother Gefa: a lettered pillar stands half sunk on the Mire’s edge west of the pass ' +
+          'road; Brother Oddo read it and came back grey.',
+      },
+      {
+        kind: 'say',
+        id: 'well',
+        label: 'The well',
+        text:
+          'The well on the square is peat-brown and iron-cold and the best water in the fen. ' +
+          'Whoever drinks from it the first time is the hardier for it, once; after that it is ' +
+          'only water, and good water.',
+      },
+      {
+        kind: 'rumours',
+        id: 'rumours',
+        label: 'Rumours',
+        lines: [
+          'The witches in the reeds north of the village were Fenwick girls once. The fen took them.',
+          'Aldith has six hundred gold in the village chest and would spend every coin on the ' +
+            'Reed Queen’s head.',
+          'The brothers who stayed in the abbey when the mere rose are not brothers now, Oddo says.',
+        ],
+      },
+    ],
+  },
+  brother: {
+    npc: 'brother',
+    role: 'Brother',
+    greeting:
+      'Oddo. I was a brother of this abbey, and I keep its gate, which is to say I stand before ' +
+      'a cave in a ruin and tell people not to go in. You have the look of people who will go in.',
+    topics: [
+      {
+        kind: 'quest',
+        id: 'abbey',
+        quest: 'the-drowned-abbey',
+        label: 'The abbey',
+        offer:
+          'When the mere rose and drowned the abbey’s cellars, most of us left. Some stayed, and ' +
+          'the Abbot stayed, and they found the door under the crypt and began to study it, and ' +
+          'then to open it. The dead walk out of the mere because of him. I have seven hundred ' +
+          'gold of the abbey’s silver that I dug up myself, and I will give every coin to see ' +
+          'him stopped. He was my teacher.',
+        active:
+          'In at the cave here at the gate, down to the crypt. The acolytes will come at you ' +
+          'with fire; the cultists curse; the Abbot keeps the lowest chamber, and he is the ' +
+          'cleverest man I ever knew.',
+        ready:
+          'Dead. Then it is finished, and I am the last of the abbey. Seven hundred gold, as I ' +
+          'said. Did he write anything? He always wrote.',
+        done: 'The abbey is empty for the first time in twenty years. I may go in one day.',
+        greetReady: 'You came up out of the cave. I did not think you would. The Abbot?',
+      },
+      {
+        kind: 'quest',
+        id: 'confession',
+        quest: 'the-confession',
+        label: 'The Abbot’s writings',
+        when: { quest: 'the-drowned-abbey', is: 'done' },
+        offer:
+          'If he wrote down what he learnt of the doors, and he will have, I must read it, ' +
+          'though I would rather not. Two hundred gold for the pages, if you have them, or if ' +
+          'you will go down again for them.',
+        active: 'The pages will be on him, or in his chamber. Bring them to me.',
+        ready: 'You have them. Give them to me.',
+        done: 'I have burnt the pages. I remember every word.',
+        greetReady: 'You have paper in your hands with his writing on it. Give it to me.',
+      },
+      {
+        kind: 'quest',
+        id: 'sunken',
+        quest: 'the-sunken-hall',
+        label: 'The Sunken Hall',
+        when: { quest: 'the-drowned-abbey', is: 'done' },
+        offer:
+          'The third door is the Sunken Hall under the mere, through the cave on the knoll on ' +
+          'the north shore, and its warden is awake since the Abbot’s work; the drowned you see ' +
+          'on the shores are his. Nine hundred gold more of the abbey’s silver to lay him. Then ' +
+          'the mere will be only water again.',
+        active:
+          'The shore track north from the street’s east end to the knoll on the mere’s north ' +
+          'shore; the cave is in its side. The hall is under the water; the stair is long.',
+        ready: 'The Warden of the Deep laid. The mere is quiet tonight. Nine hundred gold.',
+        done: 'The drowned have not come up since. Hob says the mere is only water.',
+        greetReady: 'The water went still at noon. I saw it from the gate. The warden?',
+      },
+      {
+        kind: 'quest',
+        id: 'seal',
+        quest: 'the-third-seal',
+        label: 'The third seal',
+        when: { quest: 'the-sunken-hall', is: 'done' },
+        offer:
+          'The warden will have worn a seal, green stone, three doors cut in it, as the first ' +
+          'wore bronze and the second iron. Bring it to me and I will tell you where it goes.',
+        active: 'The seal of green stone. It was on him.',
+        ready: 'You have it. Let me see.',
+        done: 'Three seals, and the First Door is in Gullhaven. Go west. Anselm knows.',
+        greetReady: 'There is green stone in your hand. Let me see it.',
+      },
+      {
+        kind: 'say',
+        id: 'doors',
+        label: 'The doors',
+        text:
+          'The Sea Kings raised seven doors along this coast and set a warden at each. The ' +
+          'stones say where the first is and that it holds the rest. The Abbot believed the ' +
+          'doors kept something in. I think I know better now, and I wish I did not.',
+        note:
+          'Brother Oddo: the Sea Kings raised seven doors along the coast with a warden at each; ' +
+          'the first holds the rest.',
+      },
+      {
+        kind: 'rumours',
+        id: 'rumours',
+        label: 'Rumours',
+        lines: [
+          'The Abbot was the kindest man in the abbey. That is what frightens me.',
+          'The Reed Queen was an eeler’s daughter. The fen takes everyone eventually.',
+          'Gefa says the talking stone says the sea is a door. Gefa cannot read, and she is right.',
+        ],
+      },
+    ],
+  },
+  chandler: {
+    npc: 'chandler',
+    role: 'Chandler',
+    greeting:
+      'Pim. Candles, rope, salt, lamp oil and anything else the fen eats. You will want all ' +
+      'of it before you are done here; everyone does.',
+    topics: [
+      {
+        kind: 'quest',
+        id: 'thugs',
+        quest: 'the-causeway-thugs',
+        label: 'The causeway',
+        offer:
+          'Hired men off the Harrowmere road sit on the causeway between the pass and the ' +
+          'village and tax what comes down it, and what comes down it is mostly mine. Two carts ' +
+          'turned back this month. Two hundred and fifty gold for three of them put in the fen, ' +
+          'and I will throw in the rope.',
+        active:
+          'South along the causeway toward the pass; they lie up where it narrows over the ' +
+          'reeds. Big men, slow, and they hit to stun.',
+        ready:
+          'Three in the fen and the rest gone up the pass. My carts came through this morning. ' +
+          'Two hundred and fifty gold, and the rope is on the counter.',
+        done: 'Trade comes down the pass again. I have put the prices up.',
+        greetReady: 'The causeway is clear; my carter said so. Was it you?',
+      },
+      {
+        kind: 'say',
+        id: 'trade',
+        label: 'Trade',
+        text:
+          'Fenwick sells eels and salt and buys everything else, so I am the richest man in the ' +
+          'village and the poorest chandler in the shire. My shelf is the best north of ' +
+          'Harrow; the fen eats candles.',
+      },
+      {
+        kind: 'rumours',
+        id: 'rumours',
+        label: 'Rumours',
+        lines: [
+          'The Guild of Spirit sells the only books in the fen, and dearer than Harrow’s fire.',
+          'Oddo keeps his abbey’s silver buried under his hut and gives it away by the hundred.',
+          'The Hall of the Fen will train you higher than any hall on the coast. Ask what it costs first.',
         ],
       },
     ],

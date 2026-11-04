@@ -298,6 +298,18 @@ const region: RegionScript = {
       path: [[110, -112], [122, -138], COVE],
       width: 4,
     },
+    // The drovers' pass behind the barrows, cut over the ridge to the Mire (CAMPAIGN step 7).
+    {
+      name: 'pass-road',
+      path: [
+        [-86, 126],
+        [-96, 164],
+        [-100, 210],
+        [-100, 260],
+        [-100, 306],
+      ],
+      width: 5,
+    },
   ],
   squares: [
     { at: SQUARE, halfA: 14, halfB: 10, heading: 0 },
@@ -429,6 +441,14 @@ const region: RegionScript = {
       facing: 90,
       target: { level: 'gullhaven', entry: 'west-road' },
       days: 3,
+    },
+    // The pass north: two days through the reeds to the Mire.
+    {
+      name: 'north-pass',
+      at: [-100, 306],
+      facing: 0,
+      target: { level: 'mire', entry: 'south-pass' },
+      days: 2,
     },
   ],
   fences: [

@@ -187,8 +187,88 @@ export const HARROW_HOUSES: Record<string, HouseRef> = {
   },
 };
 
+/**
+ * Fenwick's houses (DESIGN.md 17.25), the Mire's village: the third tier of goods, a hall to 40,
+ * the Guild of Spirit, a smith who deals in both arms and armour, and the dearest temple.
+ */
+export const FEN_HOUSES: Record<string, HouseRef> = {
+  'fen-inn': {
+    kind: 'tavern',
+    house: {
+      id: 'fen-inn',
+      name: 'The Reed and Lantern',
+      roomPrice: 25,
+      foodPrice: 4,
+      foodCapacity: 28,
+    },
+    room: 'inn',
+  },
+  'fen-temple': {
+    kind: 'temple',
+    house: { id: 'fen-temple', name: 'The Temple of the Fen', donation: 35 },
+    room: 'temple',
+  },
+  'fen-chandler': {
+    kind: 'shop',
+    house: {
+      id: 'fen-chandler',
+      name: 'Pim’s Chandlery',
+      kind: 'general',
+      val: 3,
+      regular: {
+        level: 3,
+        families: ['potion', 'scroll', 'ring', 'amulet', 'boots', 'belt', 'hat', 'cloak'],
+        slots: 10,
+      },
+      restockDays: 1,
+      hours: [6, 22],
+    },
+    room: 'store',
+  },
+  'fen-hall': {
+    kind: 'trainer',
+    house: { id: 'fen-hall', name: 'The Hall of the Fen', maxLevel: 40, priceMultiplier: 2 },
+    room: 'training',
+  },
+  'fen-guild': {
+    kind: 'guild',
+    house: {
+      id: 'fen-guild',
+      name: 'Initiate Guild of Spirit',
+      school: 'spirit',
+      maxSpellLevel: 4,
+      membershipFee: 150,
+      priceMultiplier: 2,
+    },
+    room: 'guild-spirit',
+  },
+  'fen-smith': {
+    kind: 'shop',
+    house: {
+      id: 'fen-smith',
+      name: 'The Fen Smith',
+      kind: 'weapon',
+      val: 2.5,
+      regular: { level: 3, families: ['weapon'], slots: 8 },
+      special: {
+        level: 3,
+        families: ['chain', 'plate', 'large-shield', 'helm', 'gauntlets'],
+        slots: 4,
+      },
+      restockDays: 2,
+      hours: [6, 19],
+      trades: ['weapon', 'armor', 'shield', 'helmet', 'gauntlets', 'boots'],
+    },
+    room: 'smithy',
+  },
+};
+
 /** Every house of every region by the plot name its region script gives it. */
-export const HOUSES: Record<string, HouseRef> = { ...VILLAGE_HOUSES, ...HARROW_HOUSES };
+export const HOUSES: Record<string, HouseRef> = {
+  ...VILLAGE_HOUSES,
+  ...HARROW_HOUSES,
+  ...FEN_HOUSES,
+};
 
 /** How close to a door the party must stand to enter, metres. */
 export const DOOR_REACH = 9;
