@@ -148,6 +148,11 @@ every step:
         2026-11-04 (DESIGN 17.26).
 25. [ ] **Superb**: a play-through pass on the built game (pacing, prices, the levels the thread
         wants against the experience it pays, the words), the faults found fixed, the docs true.
+        So far (2026-11-04): the experience the thread pays measured against its level bands and
+        scaled (DESIGN 17.27); the three regions shot from fourteen places and looked at (towns,
+        camps, aprons, the lantern road, the pass) with nothing broken; the saves test given its
+        time. Open: the owner's own play on the phone; Harrow's and Fenwick's room pictures; the
+        barrows' point stands inside its ring of stones (cosmetic).
 
 Waiting on the owner: cottage-01 and cottage-03 remade with Meshy's free retries; the shops'
 buy pictures (weapon table, two shelves, mannequins); the hero, keeper and villager
