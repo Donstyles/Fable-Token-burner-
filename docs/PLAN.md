@@ -118,7 +118,8 @@ The loop takes the world first, a region or a dungeon a turn, and keeps every pu
         dead's knights and their lord) and the goblins' warren in the hills (their king), each with
         its quest.
 16. [ ] **The Barrow of Kings** under Harrowmere's downs (dungeon 5), **the Salt Marsh**, the third
-        region, with two dungeons (6 and 7), and an eighth at the owner's choice.
+        region, with two dungeons (6 and 7), and an eighth at the owner's choice. The barrow is
+        built (2026-11-04, DESIGN 17.23, the third dungeon in all); the marsh waits.
 17. [ ] **Spells to twenty and monsters to forty**: the spell list filled to a fifth with the
         effects the systems carry; more monster records as tiers and uniques of the six bodies
         (new bodies need Meshy, the owner's call).

@@ -3669,8 +3669,36 @@ the captain and three cutthroats), the two Harrowmere end-to-end tests of 17.21.
 reward in kind (a piece of Hesk's armour), the Barrow of Kings behind the barrow cave, Harrow's
 own room pictures.
 
+### 17.23 The Barrow of Kings (the agentic loop, 2026-11-04)
+
+The third dungeon (PLAN item 16's first half), behind the barrow cave of 17.21, so Sister Wyn's
+knights have a master and the downs a reason to be feared.
+
+- **The tomb** (levels/barrow-kings/level.ts): a chalk-and-flint passage from the mound's
+  mouth to a round ante-cave; the kings' hall, a 10 by 20 m barrel vault on two colonnades with
+  braziers at its ends; a tomb to either hand through square doorways, the western king buried
+  with the iron key and a chest, the eastern with a richer one; the stair door north, locked; a
+  switchback down five metres; the deep passage; the Barrow King's chamber, 14 m square under
+  its vault, two braziers, his hoard behind his seat (levels 3, 3 and 2, two potions). Ten named
+  points, every one reachable from the mouth.
+- **The Barrow King** (`barrow-king`, the skeleton family's second unique, src/game/monsters.ts):
+  level 12, 120 hit points, armour 18, 3d6+4, a lord's colouring, a curse at twice the rate.
+  Eleven dead in all: warriors at the door and in the hall, three knights, a lord at the stair's
+  foot, two warriors before the king.
+- **The quest** (`the-barrow-king`): Sister Wyn offers it once the barrow knights are laid (a
+  `when` on the topic): 800 gold and 2000 experience, the temple's. The log holds twelve.
+- The barrow cave's tunnel now leads in (`target`); `PLACE_NAMES` names the barrow on the veil.
+
+**Checked**: the monster tests (fifteen records), the world test, an end-to-end boot from the
+mound checking the points, the door, the key, the three chests and the eleven dead.
+
+**Not yet**: a key of the barrow's own (every lock takes the iron key), the kings' effigies
+(no model), the hoard's artifacts.
+
 ## 13. Decision log
 
+- 2026-11-04 – The Barrow of Kings (17.23): the third dungeon behind Harrowmere's barrow cave,
+  its king a second skeleton unique, Sister Wyn's second quest; the log at twelve.
 - 2026-11-04 – Harrowmere peopled (17.22): five townsfolk with talk and news, five quests (the
   log at eleven), the Market Well, the Shrine of the Barrows and a second obelisk fragment; a
   world test that every quest, talker and site names things that exist; the level build skips
