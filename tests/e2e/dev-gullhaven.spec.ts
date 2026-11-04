@@ -293,6 +293,78 @@ test.describe('Gullhaven', () => {
     for (const gap of r!) expect(gap).toBeLessThan(1);
   });
 
+  test('a bush stops the party inside its leaves, not before them and not deep in them', async ({
+    page,
+  }) => {
+    // Owner, 2026-11-04: "bushes have collision issues": the party walked straight through
+    // them. A bush now has a cylinder a little inside its drawn leaves (DESIGN 17.7).
+    const r = await page.evaluate(async () => {
+      type Vec = { x: number; y: number; z: number; add(v: Vec): Vec; scale(s: number): Vec };
+      type VecClass = (new (x: number, y: number, z: number) => Vec) & {
+        Distance(a: Vec, b: Vec): number;
+      };
+      type Picked = { hit: boolean; distance: number } | null;
+      type Mesh = {
+        name: string;
+        isPickable: boolean;
+        thinInstanceEnablePicking: boolean;
+        thinInstanceGetWorldMatrices(): { m: number[] }[];
+      };
+      type Scene = {
+        meshes: Mesh[];
+        activeCamera: { position: Vec; getForwardRay(): object };
+        pickWithRay(ray: object, predicate: (m: Mesh) => boolean): Picked;
+        getPhysicsEngine(): { raycast(a: Vec, b: Vec): { hasHit: boolean; hitPointWorld: Vec } };
+      };
+      const ftb = (window as unknown as { ftb: { dev: Dev; scene: Scene } }).ftb;
+      const d = ftb.dev;
+      const scene = ftb.scene;
+      const V = scene.activeCamera.position.constructor as VecClass;
+      const Ray = scene.activeCamera.getForwardRay().constructor as new (
+        o: Vec,
+        d: Vec,
+        l: number,
+      ) => object;
+      const bushes = scene.meshes.filter(
+        (m) => m.name.startsWith('props:bush-01:') && !m.name.endsWith(':far'),
+      );
+      const bush = bushes.find((m) => m.thinInstanceGetWorldMatrices().length > 0);
+      if (!bush) return null;
+      const at = bush.thinInstanceGetWorldMatrices()[0]!.m;
+      const c = { x: at[12]!, y: at[13]!, z: at[14]! };
+      d.teleport(c.x + 15, c.y + 30, c.z + 15, 0);
+      await new Promise((done) => setTimeout(done, 500));
+      bush.isPickable = true;
+      bush.thinInstanceEnablePicking = true;
+      const engine = scene.getPhysicsEngine();
+      const gaps: number[] = [];
+      const R = 4;
+      for (let k = 0; k < 12; k++) {
+        const a = (k / 12) * Math.PI * 2;
+        const o = new V(c.x + Math.sin(a) * R, c.y + 0.7, c.z + Math.cos(a) * R);
+        const dir = new V(-Math.sin(a), 0, -Math.cos(a));
+        const seen = scene.pickWithRay(new Ray(o, dir, R), (m) => m === bush);
+        const felt = engine.raycast(o, o.add(dir.scale(R)));
+        if (!seen?.hit) continue;
+        // Bushes stand four metres apart along the garden walls: a ray stopped by a
+        // neighbour's collider or a wall says nothing about this bush.
+        if (felt.hasHit) {
+          const h = felt.hitPointWorld;
+          if (Math.hypot(h.x - c.x, h.z - c.z) > 1.6) continue;
+        }
+        gaps.push((felt.hasHit ? V.Distance(o, felt.hitPointWorld) : R) - seen.distance);
+      }
+      return gaps;
+    });
+    expect(r).not.toBeNull();
+    expect(r!.length).toBeGreaterThanOrEqual(5);
+    // Past the leaves' edge by less than a stride, never stopped before it, never through it.
+    for (const gap of r!) {
+      expect(gap).toBeGreaterThan(-0.3);
+      expect(gap).toBeLessThan(1.2);
+    }
+  });
+
   test('paints shade on the ground under its trees and houses, where they stand', async ({
     page,
   }) => {

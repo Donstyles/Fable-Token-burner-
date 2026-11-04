@@ -438,11 +438,13 @@ export async function loadLevel(
   // switched off. Trunks collide as static bodies of cylinders, one per 200 m cell, built
   // the first time the eye comes within 60 m of the cell: thirteen thousand trees then cost
   // the load nothing, and the party never walks through a trunk it can reach.
-  // Static colliders for trunks, buildings, props and rocks: one body per 200 m cell, built the
+  // Static colliders for trunks, bushes, buildings, props and rocks: one body per 200 m cell, built the
   // first time the eye comes within 60 m of the cell, so ten thousand trees cost the load
   // nothing and the party never walks through a trunk or a wall it can reach.
   const physicsBodies: PhysicsBody[] = [];
   const CELL = 200;
+  /** A bush's collider: this share of its drawn width, the rest soft leaves. */
+  const BUSH_SOLID = 0.38;
   type Cylinder = { kind: 'cylinder'; x: number; y: number; z: number; r: number; h: number };
   type Box = { kind: 'box'; centre: Vector3; yaw: number; extents: Vector3 };
   // A building or a prop collides as its own model's triangles (owner, 2026-10-18: "bad
@@ -607,6 +609,26 @@ export async function loadLevel(
           position: new Vector3(-kx, ky, kz),
           yaw,
           scale,
+        });
+      } else if (spec.kind === 'bush') {
+        // A bush stops the party too (owner, 2026-11-04: "bushes have collision issues", the
+        // party walked straight through them): a cylinder at its footprint's middle, as high
+        // as it is drawn and a little inside its leaves, so the party brushes into the
+        // foliage before it stops. The loader mirrors x, hence the sign.
+        const [w, h, d] = measure.size;
+        const lx = -(measure.min[0] + w / 2) * scale;
+        const lz = (measure.min[2] + d / 2) * scale;
+        const c = Math.cos(yaw);
+        const sn = Math.sin(yaw);
+        const x = -kx + lx * c + lz * sn;
+        const z = kz - lx * sn + lz * c;
+        addCollider(x, z, {
+          kind: 'cylinder',
+          x,
+          y: ky,
+          z,
+          r: ((w + d) / 2) * BUSH_SOLID * scale,
+          h: h * scale,
         });
       } else if (spec.kind === 'rock') {
         // A box round the model's footprint; the loader mirrors x, hence the sign.

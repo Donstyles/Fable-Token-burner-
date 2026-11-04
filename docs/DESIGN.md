@@ -2825,6 +2825,11 @@ radius, centred a metre out, so the party walked deep into it before a thin post
 - **Checked** by an end-to-end test that casts rays at a big oak from ten metres round, at
   chest and at shin height: the party's collider and the drawn trunk and roots meet within a
   metre on every side the ray hits (without the roots' discs a shin-high ray went 1.6 m in).
+- **Bushes** (owner, 2026-11-04: "bushes have collision issues"): they had no collider at all,
+  so the party walked straight through them. Each is now a cylinder at its footprint's middle,
+  as high as it is drawn and 38 per cent of its drawn width in radius (ours: the party sinks
+  a quarter metre into the leaves before it stops, as a hedge gives), in the same cells. A
+  test casts rays at a bush from four metres round and finds the stop inside its leaves.
 
 ### 17.8 A room behind every door (owner, 2026-10-24 and 25)
 
@@ -3444,6 +3449,9 @@ half); gems, wands, herbs and spellbooks as items; the special enchantments; art
 inspect pop-up; a picture per tier.
 
 ## 13. Decision log
+
+- 2026-11-04 – Bushes collide (17.7): a cylinder a little inside the drawn leaves, where
+  there was no collider at all (owner: "bushes have collision issues").
 
 - 2026-11-04 – MM6's catalogue and its standard enchantments (17.18): 132 arms, armour and
   jewellery as data by family with MM6's numbers and one Met photograph a family; the
