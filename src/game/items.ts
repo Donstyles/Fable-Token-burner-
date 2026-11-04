@@ -211,6 +211,7 @@ export const ITEM_IDS = [
   'scroll-fire-bolt',
   'iron-key',
   'letter',
+  'parcel',
 ] as const;
 export type ItemId = (typeof ITEM_IDS)[number];
 
@@ -301,6 +302,17 @@ const OTHERS: ItemDef[] = [
     difficulty: 0,
     picture: 'letter',
     generic: 'Letter',
+  },
+  {
+    id: 'parcel',
+    name: 'A Wrapped Parcel',
+    kind: 'misc',
+    w: 2,
+    h: 1,
+    value: 0,
+    difficulty: 0,
+    picture: 'parcel',
+    generic: 'Parcel',
   },
 ];
 

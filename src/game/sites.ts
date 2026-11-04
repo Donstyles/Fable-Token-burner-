@@ -77,6 +77,40 @@ export const SITES: SiteDef[] = [
       'The obelisk by the standing stones: "WHEN THE SEVEN STAND IN LINE, THE FIRST DOOR IS ' +
       'UNDER THE LAST STAR." One fragment of something longer.',
   },
+  // Harrowmere's (DESIGN.md 17.21, 17.22).
+  {
+    id: 'harrowmere-well',
+    level: 'harrowmere',
+    point: 'well',
+    name: 'The Market Well',
+    effect: { kind: 'well', stat: 'might', amount: 2, cap: 15 },
+    note: 'The well in Harrow’s square is hard water off the chalk. Whoever drinks from it feels stronger, once.',
+  },
+  {
+    id: 'harrowmere-shrine',
+    level: 'harrowmere',
+    point: 'shrine',
+    name: 'The Shrine of the Barrows',
+    effect: { kind: 'altar', stat: 'speed', month: 5, first: 10, later: 3 },
+    note:
+      'The shrine before the barrows on Harrowmere’s downs hears a prayer in June, and quickens ' +
+      'those who pray: the first year most of all.',
+  },
+  {
+    id: 'harrowmere-obelisk',
+    level: 'harrowmere',
+    point: 'obelisk',
+    name: 'An Obelisk',
+    effect: {
+      kind: 'obelisk',
+      text:
+        'Letters cut deep into the stone, worn by the down winds, read: ' +
+        '"THE LAST STAR IS THE ONE THAT DOES NOT TURN. COUNT THE DOORS FROM THE SEA."',
+    },
+    note:
+      'The obelisk on Harrowmere’s downs: "THE LAST STAR IS THE ONE THAT DOES NOT TURN. COUNT ' +
+      'THE DOORS FROM THE SEA." A second fragment.',
+  },
 ];
 
 /** The site at a level's named point, if one stands there. */

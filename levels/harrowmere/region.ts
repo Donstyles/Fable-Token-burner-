@@ -391,6 +391,7 @@ const region: RegionScript = {
     { at: GRANGE, radius: 34 },
     { at: [-26, 18], radius: 14 },
     { at: [-96, 100], radius: 14 },
+    { at: [-60, 56], radius: 10 },
   ],
   trees: [
     // The square's lime; the Grange's orchard; the beeches at the bandits' halt.
@@ -413,6 +414,8 @@ const region: RegionScript = {
     },
     { name: 'barrow', at: [-96, 100], facing: 165 },
   ],
+  // The lettered pillar on the open down west of the down road, the second fragment (17.22).
+  obelisks: [{ name: 'obelisk', at: [-60, 56] }],
   exits: [
     // The coast road east: three days to Gullhaven.
     {
@@ -465,6 +468,7 @@ const region: RegionScript = {
     { name: 'nomad-camp', at: [150, 30] },
     { name: 'barrows', at: [-90, 126] },
     { name: 'cove-strand', at: [130, -168] },
+    { name: 'halt', at: [-26, 10] },
     { name: 'well', at: [0, -96] },
     { name: 'shrine', at: [-82, 122] },
   ],

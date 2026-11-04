@@ -126,6 +126,100 @@ export const QUESTS: Record<string, QuestDef> = {
     ],
     reward: { gold: 250, xp: 600 },
   },
+  // Harrowmere's five (DESIGN.md 17.22): the shire's troubles, dearer than Gullhaven's.
+  'the-nomads-camp': {
+    id: 'the-nomads-camp',
+    title: "The Nomads' Camp",
+    text:
+      'Horse people off the eastern downs have camped on Harrow’s common and take what they ' +
+      'like from the drovers. Alderman Pell pays three hundred gold of the town’s to see their ' +
+      'chieftain dead and the camp broken.',
+    objectives: [
+      {
+        kind: 'kill',
+        monster: 'nomad-chieftain',
+        count: 1,
+        text: 'Kill the nomads’ chieftain at their camp on the down, east along the track',
+      },
+      { kind: 'talk', npc: 'alderman', text: 'Tell Alderman Pell on Harrow’s square' },
+    ],
+    reward: { gold: 300, xp: 800 },
+  },
+  'hesks-parcel': {
+    id: 'hesks-parcel',
+    title: 'Hesk’s Parcel',
+    text:
+      'Mother Hesk has a wrapped parcel for Goodman Oswy at the Grange, at the coast road’s ' +
+      'end under the western ridge, and no one spare to carry it. Eighty gold when he has it.',
+    objectives: [
+      {
+        kind: 'deliver',
+        item: 'parcel',
+        npc: 'granger',
+        text: 'Carry Hesk’s parcel to Goodman Oswy at the Grange, west along the coast road',
+        label: 'A parcel from Hesk',
+        reply:
+          'From Hesk? Then it is the new blade for the reaper, and a month before it is due. ' +
+          'Tell her the Grange pays its debts at harvest, as it always has, and that she has ' +
+          'my thanks before then. You will have hers, I think; she is fairer than she looks.',
+      },
+      { kind: 'talk', npc: 'herbwife', text: 'Tell Mother Hesk by the armourer’s' },
+    ],
+    reward: { gold: 80, xp: 150 },
+    gives: ['parcel'],
+  },
+  'tams-cart': {
+    id: 'tams-cart',
+    title: 'Tam’s Cart',
+    text:
+      'Bandits at a halt on the down road took Tam the Drover’s cart and his season’s wool. He ' +
+      'pays a hundred and twenty gold for three of them put down.',
+    objectives: [
+      {
+        kind: 'kill',
+        monster: 'bandit',
+        count: 3,
+        text: 'Put down three bandits at their halt on the down road, under the beeches',
+      },
+      { kind: 'talk', npc: 'drover', text: 'Tell Tam at the stables' },
+    ],
+    reward: { gold: 120, xp: 300 },
+  },
+  'the-barrow-knights': {
+    id: 'the-barrow-knights',
+    title: 'The Barrow Knights',
+    text:
+      'Two of the old kings’ knights have come up out of the barrows on the downs in their ' +
+      'iron, and the dead walk after them. The Temple of Harrow pays four hundred gold to see ' +
+      'the knights laid again.',
+    objectives: [
+      {
+        kind: 'kill',
+        monster: 'skeleton-knight',
+        count: 2,
+        text: 'Lay the two barrow knights at the mounds, at the down road’s end',
+      },
+      { kind: 'talk', npc: 'novice', text: 'Tell Sister Wyn on the temple lane' },
+    ],
+    reward: { gold: 400, xp: 1000 },
+  },
+  'black-orrin': {
+    id: 'black-orrin',
+    title: 'Black Orrin',
+    text:
+      'The smugglers in the cove have turned thieves under one Black Orrin and emptied the ' +
+      'Grange’s granary. Goodman Oswy pays five hundred gold for Orrin dead in his den.',
+    objectives: [
+      {
+        kind: 'kill',
+        monster: 'bandit-captain',
+        count: 1,
+        text: 'Kill Black Orrin in the Thieves’ Den, through the smugglers’ cave at the cove',
+      },
+      { kind: 'talk', npc: 'granger', text: 'Tell Goodman Oswy at the Grange' },
+    ],
+    reward: { gold: 500, xp: 1200 },
+  },
 };
 
 /** Where a quest stands with the one who gives it. */
@@ -603,6 +697,306 @@ export const DIALOGUES: Record<string, DialogueDef> = {
             'in the afternoons.',
           'The dead on the headland do not come past the crossroads. The old oak, Anselm says. ' +
             'I say they do not like the road.',
+        ],
+      },
+    ],
+  },
+  // ── Harrowmere (DESIGN.md 17.22) ────────────────────────────────────────────────────────
+  alderman: {
+    npc: 'alderman',
+    role: 'Alderman',
+    greeting:
+      'Pell, alderman of Harrow, and the emporium is mine too; I do not pretend otherwise. You ' +
+      'have come up from Gullhaven by the look of you. Three days, and the road what it is. ' +
+      'Well?',
+    topics: [
+      {
+        kind: 'quest',
+        id: 'nomads',
+        quest: 'the-nomads-camp',
+        label: 'The horse people',
+        offer:
+          'Nomads off the eastern downs, forty of them with their horses, camped on the town’s ' +
+          'own common east along the track. They take a sheep when they want one and a cart when ' +
+          'they want that, and their chieftain laughs at the reeve. Three hundred gold from the ' +
+          'town’s chest for his head, and I will put it there with my own hands.',
+        active:
+          'East along the track from the forge, over the down. Their chieftain keeps to the ' +
+          'middle of the camp with the archers about him; the raiders will come at you first.',
+        ready:
+          'Dead, and the camp broken up by morning: the drovers watched them go. Three hundred ' +
+          'gold, counted, and Harrow’s market is yours at the townsman’s price from this day.',
+        done: 'The common is a common again. I have had the stones they fired on carted off.',
+        greetReady: 'The down is quiet and the drovers are grinning. Their chieftain? Tell me.',
+      },
+      {
+        kind: 'say',
+        id: 'town',
+        label: 'Harrow',
+        text:
+          'Harrow is the shire’s market: wool and grain come down off the downs, fish comes up ' +
+          'from the cove, and the city buys it all at the Grange’s price. The forge is at the ' +
+          'east end, Hesk’s armoury across from me, the Hall of Arms by the Drovers’ Rest, the ' +
+          'Guild of Fire beside it. The temple is up the lane on the Harrow.',
+        note:
+          'Harrow: the Drovers’ Rest, the Hall of Arms and the Guild of Fire on the square’s ' +
+          'north side, Pell’s Emporium and Hesk’s armoury across, the forge at the east end, the ' +
+          'temple up the lane on the hill.',
+      },
+      {
+        kind: 'say',
+        id: 'road',
+        label: 'The coast road',
+        when: { quest: 'the-brigands-camp', is: 'untaken' },
+        text:
+          'Brigands hold the coast road between here and Gullhaven, where it runs under the ' +
+          'ridge. The carters go in threes now. If Gullhaven’s reeve ever finds the gold to do ' +
+          'something about it, tell him Harrow will match it.',
+      },
+      {
+        kind: 'say',
+        id: 'road-open',
+        label: 'The coast road',
+        when: { quest: 'the-brigands-camp', is: 'done' },
+        text:
+          'The carters say the brigands are gone off the road under the ridge, and that it was ' +
+          'you. Harrow owes you for that as well as Gullhaven; drink at the Rest on my account.',
+      },
+      {
+        kind: 'rumours',
+        id: 'rumours',
+        label: 'Rumours',
+        lines: [
+          'The smugglers in the cove have stopped smuggling and started stealing. Oswy at the ' +
+            'Grange lost a granary to them.',
+          'Hesk’s daughter beats better steel than the forge does, and the smith knows it.',
+          'There is a stone with letters on it up on the down. Sister Wyn copies them out and ' +
+            'understands nothing, she says.',
+        ],
+      },
+    ],
+  },
+  herbwife: {
+    npc: 'herbwife',
+    role: 'Armourer',
+    greeting:
+      'Hesk. My daughter is at the forge and I keep the shop. If you want armour you will find ' +
+      'none better between here and the city, and I say that having seen the city’s.',
+    topics: [
+      {
+        kind: 'quest',
+        id: 'parcel',
+        quest: 'hesks-parcel',
+        label: 'A parcel',
+        offer:
+          'I have a parcel for Goodman Oswy at the Grange, at the coast road’s end under the ' +
+          'ridge, and nobody to carry it but my daughter, who is worth more at the anvil. It is ' +
+          'a blade for his reaping machine and it is heavy. Eighty gold when he has it in his ' +
+          'hands, and mind the road; the halt on the down is not the only place they lie up.',
+        active:
+          'West along the coast road past the last house, over the rise, and the Grange is at ' +
+          'the road’s end under the ridge. Has he got it? Then why are you here?',
+        ready:
+          'He has it, and he said harvest, did he? He always says harvest. Eighty gold, and ' +
+          'come to me first when you want steel on your backs; I will not rob you.',
+        done: 'Oswy sent a ham. I shall not have to eat my own cooking for a week.',
+        greetReady: 'You have been to the Grange; there is chalk to your knees. Did he take it?',
+      },
+      {
+        kind: 'say',
+        id: 'steel',
+        label: 'Armour',
+        text:
+          'Leather for the quick, chain for the sensible, plate for those who can carry it and ' +
+          'pay for it. Look at the shelf behind me: that is the common run. Ask for the special ' +
+          'and I will show you what my daughter made last month.',
+        note: 'Hesk the armourer in Harrow keeps better pieces on her special shelf; ask for it.',
+      },
+      {
+        kind: 'rumours',
+        id: 'rumours',
+        label: 'Rumours',
+        lines: [
+          'Pell calls the common the town’s and the market his. The nomads call both theirs.',
+          'The old kings in the barrows wore iron. Two of them walked out in it this spring.',
+          'Tam the drover has sworn off the down road since the bandits took his cart. He has ' +
+            'not sworn off the Rest.',
+        ],
+      },
+    ],
+  },
+  drover: {
+    npc: 'drover',
+    role: 'Drover',
+    greeting:
+      'Tam. I drive the shire’s sheep down to Gullhaven and the shire’s grain up to the city, ' +
+      'or I did while I had a cart. You are the ones off the Gullhaven boat; the whole road has ' +
+      'talked of nothing else.',
+    topics: [
+      {
+        kind: 'quest',
+        id: 'cart',
+        quest: 'tams-cart',
+        label: 'The cart',
+        offer:
+          'Bandits at the halt on the down road, under the beeches a mile up, took my cart and ' +
+          'the season’s wool in it, and left me my boots out of kindness. Three of them put ' +
+          'down and I will give you a hundred and twenty gold, which is what the wool was worth ' +
+          'and more than my pride is.',
+        active:
+          'Up the down road from the square, a mile, where the beeches close over it. Three of ' +
+          'them, and they sleep in the afternoon.',
+        ready:
+          'Three of them, and the cart still standing there with its wheels on? Then I shall ' +
+          'fetch it at dawn. A hundred and twenty gold, and the next flock I drive to Gullhaven ' +
+          'carries your packs for nothing.',
+        done: 'The cart is back in the stables’ yard and I have a new whip. Mind the road.',
+        greetReady: 'You smell of beech smoke. The halt? Tell me.',
+      },
+      {
+        kind: 'say',
+        id: 'roads',
+        label: 'The roads',
+        text:
+          'The coast road runs east to Gullhaven, three days with a herd; the down road climbs ' +
+          'north to the barrows and nowhere after; the track from the forge goes east over the ' +
+          'down to where the nomads sit; the lane by the last house drops to the cove. Past the ' +
+          'Grange the road ends under the ridge. There is no way west but the sea.',
+        note:
+          'Harrowmere’s ways: the coast road east to Gullhaven (three days), the down road north to ' +
+          'the barrows, the track east over the down to the nomads’ camp, the lane to the cove; ' +
+          'the road ends at the Grange under the western ridge.',
+      },
+      {
+        kind: 'rumours',
+        id: 'rumours',
+        label: 'Rumours',
+        lines: [
+          'The nomads’ chieftain rides a grey horse and keeps to the middle of the camp.',
+          'Black Orrin was a Gullhaven fisher before he was a thief, they say. The cove knows him.',
+          'The Guild of Fire sells its books dearer here than the air guild does in Gullhaven, ' +
+            'and the fire is worth it.',
+        ],
+      },
+    ],
+  },
+  novice: {
+    npc: 'novice',
+    role: 'Novice',
+    greeting:
+      'Peace. I am Wyn, of the temple; I keep the lane’s shrine and copy the old stones for the ' +
+      'priest, who does not read them. You have come a long way to be standing on our lane.',
+    topics: [
+      {
+        kind: 'quest',
+        id: 'knights',
+        quest: 'the-barrow-knights',
+        label: 'The barrow knights',
+        offer:
+          'Two knights of the old kings have come up out of the barrows on the downs in their ' +
+          'iron, and the dead walk after them, as they did under the kings. The priest prays and ' +
+          'the shire buries its dead twice. The temple has four hundred gold, given for the ' +
+          'poor, that it will give instead to whoever lays the two knights again. I think the ' +
+          'poor would agree.',
+        active:
+          'Up the down road to its end, at the mounds. The knights stand before the oldest ' +
+          'barrow with the warriors about them. Go by day; they are slower in the sun.',
+        ready:
+          'Laid, both of them, and the warriors with them. The dead stay in the barrows tonight ' +
+          'for the first night since spring. Four hundred gold; the poor will have the next.',
+        done: 'The downs are quiet at night. I sleep with the window open.',
+        greetReady: 'There is grave dust on you. The knights? Tell me.',
+      },
+      {
+        kind: 'say',
+        id: 'shrine',
+        label: 'The shrines',
+        text:
+          'The lane’s shrine is the temple’s and takes a prayer any day. The one before the ' +
+          'barrows is older, and I will tell you what I told nobody but the priest: it hears a ' +
+          'prayer in June, and whoever prays there is quicker on their feet after. The first ' +
+          'year most of all.',
+        note:
+          'Sister Wyn: the shrine before the barrows on Harrowmere’s downs hears prayers in June ' +
+          'and quickens those who pray, the first year most of all.',
+      },
+      {
+        kind: 'say',
+        id: 'stone',
+        label: 'The old stone',
+        text:
+          'There is a pillar on the open down west of the down road, with letters cut in it ' +
+          'older than the barrows. I have copied them a dozen times. They speak of a star that ' +
+          'does not turn and of doors counted from the sea, and I believe there are other stones ' +
+          'that say the rest. Gullhaven has one, a carter told me. Read ours if you go up.',
+        note:
+          'Sister Wyn: a lettered pillar stands on the open down west of Harrowmere’s down road; ' +
+          'it speaks of a star that does not turn and doors counted from the sea.',
+      },
+      {
+        kind: 'rumours',
+        id: 'rumours',
+        label: 'Rumours',
+        lines: [
+          'The barrow cave goes in under the oldest mound and stops. The priest says it was ' +
+            'sealed on purpose, and that we should be glad.',
+          'The well in the square is hard water off the chalk. Whoever drinks it is the ' +
+            'stronger for it, the old women say.',
+          'Pell gives to the temple every quarter day and asks every quarter day what it bought him.',
+        ],
+      },
+    ],
+  },
+  granger: {
+    npc: 'granger',
+    role: 'Granger',
+    greeting:
+      'Oswy, of the Grange. The road ends here; so does the shire, at that ridge. If you have ' +
+      'come for grain you are too late; the smugglers had it. If you have come for work, speak.',
+    topics: [
+      {
+        kind: 'quest',
+        id: 'orrin',
+        quest: 'black-orrin',
+        label: 'Black Orrin',
+        offer:
+          'The smugglers in the cove were honest thieves once: they landed the city’s wine by ' +
+          'night and nobody asked. Then Black Orrin came out of Gullhaven with a knife and a ' +
+          'grudge, and now they take. My granary, emptied in a night, forty carts of it. Five ' +
+          'hundred gold for Orrin dead in his own den, and the Grange does not promise lightly.',
+        active:
+          'The cove is south-east of the town, down the lane by the last house. The cave in the ' +
+          'bank is theirs; the lookouts sit in the mouth, the den is cut into the chalk behind, ' +
+          'and Orrin keeps the last room. He uses poison; carry something for it.',
+        ready:
+          'Dead in his den. Then the cove will go back to wine and the shire to sleep. Five ' +
+          'hundred gold, as the Grange promised, and the Grange’s table is yours at any harvest.',
+        done: 'The smugglers landed wine last night and nothing else. I did not call the reeve.',
+        greetReady: 'You came down the cove lane, and alone. Orrin? Tell me.',
+      },
+      {
+        kind: 'say',
+        id: 'grange',
+        label: 'The Grange',
+        text:
+          'The Grange has stood since the shire was a wood: the house, the barn, the orchard, ' +
+          'the long fields down to the road. It feeds Harrow and the city both, when it is let ' +
+          'to. Past the ridge there is nothing but the sea; the kings who lie in the barrows ' +
+          'came over it, and nobody since.',
+        note:
+          'The Grange: a manor farm at the coast road’s end under Harrowmere’s western ridge; the ' +
+          'barrows’ kings came over the sea beyond it.',
+      },
+      {
+        kind: 'rumours',
+        id: 'rumours',
+        label: 'Rumours',
+        lines: [
+          'Hesk’s daughter has been seen at the Grange gate more than armour accounts for.',
+          'The nomads will not come west of the down road. They say the barrows are cursed, and ' +
+            'they are not wrong.',
+          'The brigands on the coast road under the ridge pay Orrin a share. Cut the head off and ' +
+            'the hands go slack.',
         ],
       },
     ],
