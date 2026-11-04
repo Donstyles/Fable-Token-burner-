@@ -678,6 +678,11 @@ export class RetroMaterials {
     mat.setFloat('flash', amount);
   }
 
+  /** Multiply a material's colour: a monster tier's colouring (DESIGN.md 17.16). */
+  setTint(mat: ShaderMaterial, tint: Color3): void {
+    mat.setColor3('tint', tint);
+  }
+
   /** Change a material's own ambient fill (see VertexLitOptions.ambient). */
   setAmbient(mat: ShaderMaterial, ambient: Color3): void {
     this.ambientOverride.set(mat, ambient);

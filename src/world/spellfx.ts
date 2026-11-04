@@ -3,7 +3,9 @@
  * colour travelling with it and a trail of its element behind, flying straight from the
  * caster's hand to its mark; it bursts where it lands. Babylon's particle systems and point
  * lights through the retro materials, nothing bespoke: the bolt is posterised and dithered by
- * the same filter as the world, as MM6's sprites were.
+ * the same filter as the world, as MM6's sprites were. Monsters' missiles fly the same way
+ * (DESIGN.md 17.16): a shaman's fire bolt as the party's, an archer's arrow as a dull shaft
+ * with a faint trail and next to no light.
  */
 import { Color3, Color4 } from '@babylonjs/core/Maths/math.color';
 import { Vector3 } from '@babylonjs/core/Maths/math.vector';
@@ -23,11 +25,14 @@ export interface BoltMark {
   radius: number;
 }
 
+/** What flies: a school's bolt, or an arrow. */
+export type BoltElement = MagicSchool | 'arrow';
+
 export interface BoltOptions {
   from: Vector3;
   /** Unit direction when there is no mark; ignored otherwise. */
   dir: Vector3;
-  element: MagicSchool;
+  element: BoltElement;
   mark: BoltMark | null;
   /** Metres per second. */
   speed?: number;
@@ -44,7 +49,13 @@ interface Palette {
   trail2: Color4;
 }
 
-const PALETTES: Record<MagicSchool, Palette> = {
+const PALETTES: Record<BoltElement, Palette> = {
+  arrow: {
+    core: new Color3(0.42, 0.36, 0.28),
+    light: new Color3(0.5, 0.45, 0.35),
+    trail1: new Color4(0.55, 0.5, 0.42, 0.35),
+    trail2: new Color4(0.35, 0.3, 0.25, 0.2),
+  },
   fire: {
     core: new Color3(1, 0.85, 0.5),
     light: new Color3(1, 0.5, 0.15),
@@ -105,8 +116,8 @@ interface Bolt {
 
 export class SpellEffects {
   private readonly bolts: Bolt[] = [];
-  private readonly bursts = new Map<MagicSchool, ParticleSystem>();
-  private readonly coreMaterials = new Map<MagicSchool, StandardMaterial>();
+  private readonly bursts = new Map<BoltElement, ParticleSystem>();
+  private readonly coreMaterials = new Map<BoltElement, StandardMaterial>();
 
   constructor(
     private readonly scene: Scene,
@@ -118,7 +129,7 @@ export class SpellEffects {
     return this.bolts.length;
   }
 
-  private core(element: MagicSchool): StandardMaterial {
+  private core(element: BoltElement): StandardMaterial {
     let m = this.coreMaterials.get(element);
     if (!m) {
       m = new StandardMaterial(`bolt-${element}`, this.scene);
@@ -129,7 +140,7 @@ export class SpellEffects {
     return m;
   }
 
-  private trail(element: MagicSchool): ParticleSystem {
+  private trail(element: BoltElement): ParticleSystem {
     const p = PALETTES[element];
     const ps = new ParticleSystem('bolt-trail', 120, this.scene);
     ps.particleTexture = softSprite(this.scene);
@@ -153,7 +164,7 @@ export class SpellEffects {
     return ps;
   }
 
-  private burst(element: MagicSchool): ParticleSystem {
+  private burst(element: BoltElement): ParticleSystem {
     let ps = this.bursts.get(element);
     if (ps) return ps;
     const p = PALETTES[element];
@@ -194,8 +205,8 @@ export class SpellEffects {
     const light = this.materials.addLight({
       position: o.from.clone(),
       color: PALETTES[o.element].light,
-      range: 7,
-      intensity: 1.3,
+      range: o.element === 'arrow' ? 2 : 7,
+      intensity: o.element === 'arrow' ? 0.15 : 1.3,
     });
     const trail = this.trail(o.element);
     trail.emitter = mesh;
@@ -213,7 +224,7 @@ export class SpellEffects {
   }
 
   /** Burst at a point, for the end of a bolt or a touch spell. */
-  flash(element: MagicSchool, at: Vector3, count = 60): void {
+  flash(element: BoltElement, at: Vector3, count = 60): void {
     const ps = this.burst(element);
     (ps.emitter as Vector3).copyFrom(at);
     ps.manualEmitCount = count;
@@ -243,8 +254,8 @@ export class SpellEffects {
       const at = b.mesh.position.clone();
       this.retire(b);
       this.bolts.splice(i, 1);
-      const element = (b.mesh.material?.name.replace('bolt-', '') ?? 'fire') as MagicSchool;
-      this.flash(element, at, hit ? 80 : 25);
+      const element = (b.mesh.material?.name.replace('bolt-', '') ?? 'fire') as BoltElement;
+      this.flash(element, at, element === 'arrow' ? 12 : hit ? 80 : 25);
       b.onEnd(hit, at);
     }
   }

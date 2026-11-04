@@ -265,3 +265,73 @@ test("the gate hall's chest opens to its window, its things go into a pack, and 
   });
   expect(after).toEqual(left);
 });
+
+test('the shaman casts across the lair, a scout runs when hurt, and the gems warn of both', async ({
+  page,
+}) => {
+  // DESIGN 17.16: missiles, fleeing and the enemy detector.
+  test.setTimeout(300_000);
+  await page.goto('dev/?dev&lite&level=old-halls&entry=cave-mouth&seed=5');
+  await page.waitForFunction(() => (window as unknown as W).ftb?.dev?.ready === true, null, {
+    timeout: 150_000,
+  });
+  await page.waitForFunction(() => (window as unknown as W).ftb!.dev!.monsters.length >= 11, null, {
+    timeout: 120_000,
+  });
+  type D = Dev & {
+    shots: number;
+    monsters: {
+      name: string;
+      state: string;
+      hp: number;
+      takeDamage(n: number): void;
+      position: { x: number; z: number };
+    }[];
+  };
+  const kinds = await page.evaluate(() =>
+    (window as unknown as W).ftb!.dev!.level.sidecar.spawns.map(
+      (s) => (s as { kind: string }).kind,
+    ),
+  );
+  expect(kinds).toContain('goblin-shaman');
+  expect(kinds).toContain('skeleton-knight');
+  expect(kinds.filter((k) => k === 'skeleton-warrior')).toHaveLength(5);
+  // The goblins' lair is fifteen metres on: the gems are already yellow at the tunnel's end.
+  await expect(page.locator('.hud-gem.weak').first()).toBeVisible();
+  await expect(page.locator('.hud-gem.good')).toHaveCount(0);
+  // Nine metres west of the shaman, in his sight and out of his reach: he stops and casts.
+  await page.evaluate(() => {
+    const d = (window as unknown as W).ftb!.dev! as D;
+    const s = d.monsters.find((m) => m.name === 'goblin-shaman')!;
+    for (const m of d.monsters) if (m !== s && m.name.startsWith('goblin')) m.takeDamage(1e6);
+    d.teleport(s.position.x - 9, 0.2, s.position.z, 90);
+  });
+  await page.waitForFunction(() => ((window as unknown as W).ftb!.dev! as D).shots > 0, null, {
+    timeout: 120_000,
+    polling: 250,
+  });
+  const shaman = await page.evaluate(() => {
+    const d = (window as unknown as W).ftb!.dev! as D;
+    const s = d.monsters.find((m) => m.name === 'goblin-shaman')!;
+    const p = d.positionOf();
+    return { state: s.state, distance: Math.hypot(s.position.x - p.x, s.position.z - p.z) };
+  });
+  expect(shaman.state).toBe('attack');
+  expect(shaman.distance).toBeGreaterThan(3);
+  // With a monster this near the gems are red, or dark while a member recovers, never green.
+  await expect(page.locator('.hud-gem.good')).toHaveCount(0);
+  await expect(page.locator('.hud-gem.weak')).toHaveCount(0);
+  // Hurt to two hit points the wimp runs, and keeps running while the party is near.
+  await page.evaluate(() => {
+    const d = (window as unknown as W).ftb!.dev! as D;
+    const s = d.monsters.find((m) => m.name === 'goblin-shaman')!;
+    s.takeDamage(s.hp - 2);
+  });
+  await page.waitForFunction(
+    () =>
+      ((window as unknown as W).ftb!.dev! as D).monsters.find((m) => m.name === 'goblin-shaman')!
+        .state === 'flee',
+    null,
+    { timeout: 60_000, polling: 250 },
+  );
+});

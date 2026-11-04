@@ -594,8 +594,10 @@ const region: RegionScript = {
     { kind: 'villager-man', at: [2, -62], face: [8, -62] },
   ],
   packs: [
-    // Goblins about the cave and down the slope toward the road; two at the stones.
+    // Goblins about the cave and down the slope toward the road; two at the stones. A shaman
+    // stands back from the cave's pack and casts over it (DESIGN 17.16).
     { kind: 'goblin-scout', at: [66, 64], count: 3, spread: 5 },
+    { kind: 'goblin-shaman', at: [70, 70], count: 1, spread: 0 },
     { kind: 'goblin-scout', at: [36, 34], count: 2, spread: 4 },
     { kind: 'goblin-scout', at: [STONES[0], STONES[1] + 3], count: 2, spread: 4 },
     // Bandits at their camp on the coast road, and further west.

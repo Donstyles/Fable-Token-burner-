@@ -95,6 +95,13 @@ export class Character {
     }
   }
 
+  /** Colour the skin: a monster tier's tint over the painted one (DESIGN.md 17.16). */
+  setTint(tint: Color3): void {
+    for (const mesh of this.meshes) {
+      this.materials.setTint(mesh.material as ShaderMaterial, tint);
+    }
+  }
+
   get clip(): string | null {
     return this.current?.name ?? null;
   }

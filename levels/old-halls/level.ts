@@ -31,18 +31,22 @@ export const items: ItemRecord[] = [
   { name: 'ossuary-key', item: 'iron-key', position: [62.5, LOW, 9.2] },
 ];
 
-/** The goblins at the mouth, the dead below: six for Old Tobin's five, and their warden last. */
+/**
+ * The goblins at the mouth with their shaman at the back of the lair (he casts across it), the
+ * dead below, five for Old Tobin's five, a knight before the warden's hall, and the warden last
+ * (DESIGN 17.16: the tiers in play).
+ */
 export const spawns: SpawnRecord[] = [
   { kind: 'goblin-scout', position: [-3, 0, 13], yawDeg: 180 },
   { kind: 'goblin-scout', position: [3, 0, 17], yawDeg: 180 },
   { kind: 'goblin-scout', position: [-10, 0, 13], yawDeg: 90 },
-  { kind: 'goblin-scout', position: [13, 0, 15], yawDeg: 270 },
+  { kind: 'goblin-shaman', position: [13, 0, 15], yawDeg: 270 },
   { kind: 'skeleton-warrior', position: [26, 0, 13], yawDeg: 270 },
   { kind: 'skeleton-warrior', position: [45, LOW, 5], yawDeg: 270 },
   { kind: 'skeleton-warrior', position: [50, LOW, 10], yawDeg: 180 },
   { kind: 'skeleton-warrior', position: [52, LOW, 5], yawDeg: 270 },
   { kind: 'skeleton-warrior', position: [61, LOW, 8.5], yawDeg: 270 },
-  { kind: 'skeleton-warrior', position: [45, LOW, 24], yawDeg: 180 },
+  { kind: 'skeleton-knight', position: [45, LOW, 24], yawDeg: 180 },
   { kind: 'skeleton-warden', position: [47.6, LOW, 28.5], yawDeg: 180 },
 ];
 

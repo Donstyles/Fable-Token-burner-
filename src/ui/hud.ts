@@ -6,12 +6,14 @@
  * Four gold oval frames hold the party, each with the member's portrait (the owner's, cut by
  * tools/portrait.ts, DESIGN.md 12.2) or, until theirs comes, their class sigil painted in gold
  * pixels (paint.ts `sigil-<class>`), a green hit point tube and a blue spell point tube standing
- * beside the frame, and a condition gem above them. A tap on a frame selects that member; a
- * second tap opens their sheet.
+ * beside the frame, and above them MM6's gem, the enemy detector (green, yellow, red for
+ * monsters about) that goes dark while the member recovers (DESIGN.md 17.16). A tap on a frame
+ * selects that member; a second tap opens their sheet.
  */
 import type { Party } from '../game/party';
 import { maxSp } from '../game/character';
-import { worstCondition, type ConditionId } from '../game/conditions';
+import { worstCondition } from '../game/conditions';
+import type { AlertLevel } from '../world/alert';
 import { el } from './dom';
 import { installPaint, installPaintedButtons } from './paint';
 import { createPanel, type Panel, type PanelHooks } from './panel';
@@ -31,7 +33,8 @@ export function portraitOf(appearance: string, expression = 'neutral'): string |
 }
 
 export interface Hud {
-  update(now: number): void;
+  /** Redraw what changed; `alert` is the enemy detector's colour for the gems. */
+  update(now: number, alert?: AlertLevel): void;
   /** The right-hand panel (panel.ts). */
   panel: Panel;
   /** Show the game clock (minutes since the start of the calendar). */
@@ -60,13 +63,14 @@ export interface HudHooks extends PanelHooks {
   onSelect?(index: number): void;
 }
 
-/** The gem's colour for the member's worst condition. */
-function gemClass(id: ConditionId): string {
-  if (id === 'good') return 'good';
-  if (id === 'dead' || id === 'stoned' || id === 'eradicated') return 'dead';
-  if (id === 'unconscious' || id === 'paralyzed') return 'out';
-  if (id === 'diseased' || id === 'poisoned') return 'ill';
-  return 'weak';
+/**
+ * The gem's colour: the enemy detector's for a member who can act, dark while one recovers from
+ * a blow or a swing, and the stone's grey for one who is down (DESIGN.md 17.16; MM6's manual).
+ */
+function gemClass(alert: AlertLevel, ready: boolean, down: boolean): string {
+  if (down) return 'out';
+  if (!ready) return 'dead';
+  return alert === 'red' ? 'red' : alert === 'yellow' ? 'weak' : 'good';
 }
 
 /**
@@ -173,12 +177,12 @@ export function createHud(parent: HTMLElement, party: Party, hooks: HudHooks): H
   parent.appendChild(root);
   let last = '';
   return {
-    update(now) {
+    update(now, alert = 'green') {
       const key = party.members
         .map((m, i) => {
           const c = m.character;
           const cond = c ? worstCondition(c.conditions) : m.alive ? 'good' : 'dead';
-          return `${m.hp}/${c?.sp ?? 0}/${cond}/${m.isReady(now) ? 1 : 0}/${party.selected === i ? 1 : 0}`;
+          return `${m.hp}/${c?.sp ?? 0}/${cond}/${m.isReady(now) ? 1 : 0}/${party.selected === i ? 1 : 0}/${alert}`;
         })
         .join('|');
       if (key === last) return;
@@ -190,8 +194,9 @@ export function createHud(parent: HTMLElement, party: Party, hooks: HudHooks): H
         const spMax = c ? maxSp(c) : 0;
         x.spFill.style.height = fillHeight(x.spFill, spMax > 0 && c ? c.sp / spMax : 0);
         const cond = c ? worstCondition(c.conditions) : m.alive ? 'good' : 'dead';
-        x.gem.className = `hud-gem ${gemClass(cond)}`;
-        x.gem.dataset['paint'] = `gem-${gemClass(cond)}`;
+        const gem = gemClass(alert, m.isReady(now), !m.alive);
+        x.gem.className = `hud-gem ${gem}`;
+        x.gem.dataset['paint'] = `gem-${gem}`;
         x.cell.classList.toggle('selected', party.selected === i);
         x.frame.dataset['paint'] = party.selected === i ? 'ring-active' : 'ring';
         x.cell.classList.toggle('recovering', m.alive && !m.isReady(now));

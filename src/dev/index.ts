@@ -33,7 +33,8 @@ import { saveSummary } from '../game/save';
 import { monsterDrop } from '../game/treasure';
 import { itemDef } from '../game/items';
 import { Monster } from '../world/monster';
-import { MONSTERS, NPCS } from '../game/monsters';
+import { MONSTERS, type MonsterSpecial, NPCS } from '../game/monsters';
+import { alertLevel, nearestOf } from '../world/alert';
 import { Party } from '../game/party';
 import {
   damageDice,
@@ -150,6 +151,8 @@ export interface DevHandle {
   stepper: AnimationStepper;
   /** Monsters in the level, for tests: state, hit points and a programmatic tap. */
   monsters: Monster[];
+  /** Missiles the monsters have loosed, for tests. */
+  shots: number;
   roster: Party;
   /** Attack a monster by name with the ready member, as a tap would; the log line or null. */
   attack(name: string): string | null;
@@ -522,11 +525,8 @@ export async function startGame(app: App): Promise<DevHandle> {
         label: PLACE_NAMES[p.target.level] ?? p.target.level,
       })),
     ],
-    // MM6 will not let a party sleep with monsters about it.
-    restBlocked: () =>
-      handle.monsters.some((m) => m.alive && m.distanceTo(party.position) < 30)
-        ? 'There are hostile creatures nearby!'
-        : null,
+    // MM6 will not let a party sleep with monsters about it: the gems must be green.
+    restBlocked: () => (alertNow() === 'green' ? null : 'There are hostile creatures nearby!'),
   });
   // Spells you can see (DESIGN.md 16.9); the cast itself is performed below, once the
   // view, the torch and the monsters exist.
@@ -572,6 +572,11 @@ export async function startGame(app: App): Promise<DevHandle> {
     bust.show(npc.character);
     dialogue.open(npc.def, def);
   };
+  // The enemy detector (DESIGN.md 17.16): the nearest living monster's distance, this frame.
+  const alertNow = () =>
+    alertLevel(
+      nearestOf(handle.monsters.filter((m) => m.alive).map((m) => m.distanceTo(party.position))),
+    );
   const partyTarget = {
     get position() {
       return party.position;
@@ -589,7 +594,28 @@ export async function startGame(app: App): Promise<DevHandle> {
           roster.takeDamage(index, damage, state.clock.minutes, simTime);
           feedback.partyStruck();
         },
+        // The monster's special attack: the member's save, then the condition (17.16).
+        suffer: (special: MonsterSpecial) =>
+          roster.suffer(index, special, state.clock.minutes, rng),
       };
+    },
+    // A missile needs a clear line from the shooter's chest to the party's: the level, its
+    // props and doors stop it; the bodies of monsters and townsfolk do not.
+    canSee(from: Vector3): boolean {
+      const to = party.position.add(new Vector3(0, 1.2, 0));
+      const dir = to.subtract(from);
+      const length = dir.length();
+      if (length < 0.5) return true;
+      dir.scaleInPlace(1 / length);
+      const bodies = new Set([
+        ...handle.monsters.map((m) => m.name),
+        ...npcs.map((n) => n.character.node.name),
+      ]);
+      const hit = scene.pickWithRay(
+        new Ray(from, dir, length - 0.4),
+        (m) => m.isPickable && m.isEnabled() && !bodies.has(m.name.split(':')[0] ?? ''),
+      );
+      return !hit?.hit;
     },
   };
   let navigation: Navigation | null = null;
@@ -641,8 +667,11 @@ export async function startGame(app: App): Promise<DevHandle> {
     for (const got of loaded) {
       if (!got) continue;
       handle.character ??= got.c;
-      if (got.def) handle.monsters.push(new Monster(got.def, got.c, nav, rng));
-      else if (got.npcDef) npcs.push(new Npc(got.npcDef, got.c));
+      if (got.def) {
+        // A tier's colouring over the family's skin (DESIGN.md 17.16).
+        if (got.def.tint) got.c.setTint(Color3.FromArray(got.def.tint));
+        handle.monsters.push(new Monster(got.def, got.c, nav, rng));
+      } else if (got.npcDef) npcs.push(new Npc(got.npcDef, got.c));
     }
     diag(`${handle.monsters.length} monsters, ${nav ? 'on the navmesh' : 'no navmesh'}`);
     veilProgress(0.95);
@@ -819,6 +848,7 @@ export async function startGame(app: App): Promise<DevHandle> {
     character: null,
     stepper,
     monsters: [],
+    shots: 0,
     roster,
     attack(name) {
       const monster = handle.monsters.find((m) => m.name === name);
@@ -1342,20 +1372,36 @@ export async function startGame(app: App): Promise<DevHandle> {
           }
           continue;
         }
+        if (ev.kind === 'shoot' && ev.shot) {
+          // The missile flies as a spell's bolt does and comes down where the party stood; a
+          // party that has stepped aside is missed (DESIGN.md 17.16).
+          const shot = ev.shot;
+          handle.shots += 1;
+          spellfx.bolt({
+            from: shot.from,
+            dir: shot.at.subtract(shot.from).normalize(),
+            element: shot.kind,
+            mark: { position: shot.at, radius: 0.5 },
+            speed: shot.speed,
+            range: 60,
+            onEnd: (_hit, at) => shot.land(at, party.position),
+          });
+          continue;
+        }
         status.say(ev.text);
         if (ev.kind === 'miss') feedback.partyMissed();
       }
     }
-    // MM6's wipe (ROADMAP M1b): when the last member falls the party wakes a week later in
-    // Gullhaven's temple, whole again, its carried gold gone (the audit, 2026-10-23: a
-    // fallen party walked on and rested next to the bandits).
-    if (!wiped && !roster.alive) {
+    // MM6's wipe (ROADMAP M1b; characters.md 12.2): when no member can act any more the party
+    // wakes a week later in Gullhaven's temple, whole again, its carried gold gone (the audit,
+    // 2026-10-23: a fallen party walked on and rested next to the bandits).
+    if (!wiped && !(roster.alive && roster.anyCanAct)) {
       wiped = true;
       status.say('The party has fallen', 6000);
       window.setTimeout(wake, 3500);
     }
     if (!fly && !paused) feedback.applyCamera(camera);
-    strip.update(simTime);
+    strip.update(simTime, alertNow());
     showPurse();
     const eye = camera.globalPosition;
     const yaw = fly ? flyYaw : party.yaw;

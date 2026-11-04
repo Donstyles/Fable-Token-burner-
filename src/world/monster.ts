@@ -1,8 +1,12 @@
 /**
- * A monster in the world (DESIGN.md 14.3): a character from the Meshy pipeline, a crowd agent
- * on the navmesh and a small state machine. Idle until the party comes within aggro range,
- * then closes in (walking near, running from afar), swings when in reach, flinches when hit
- * between its own swings, falls when its hit points run out and stays down.
+ * A monster in the world (DESIGN.md 14.3, 17.16): a character from the Meshy pipeline, a crowd
+ * agent on the navmesh and a small state machine. Idle until the party comes within aggro
+ * range, then closes in (walking near, running from afar), swings when in reach, flinches when
+ * hit between its own swings, falls when its hit points run out and stays down. One with a
+ * missile stops where it can see the party and shoots or casts instead of closing in; one whose
+ * hit points fall under its AI type's share runs from the party, and turns to fight again only
+ * when it is cornered (monsters.md 2.4, 2.7). A hit may try the monster's special attack, which
+ * the struck member saves against (2.6).
  *
  * Every timer here runs on the `dt` the update receives, the world's step, and never on the
  * clips' clock. The animation stepper advances the clips on the real frame time
@@ -13,28 +17,55 @@
  * show.
  */
 import type { Vector3 } from '@babylonjs/core/Maths/math.vector';
-import { resolveMonsterAttack } from '../game/combat';
-import type { MonsterDef } from '../game/monsters';
+import type { SpecialOutcome } from '../game/character';
+import { resolveMonsterAttack, triesSpecial } from '../game/combat';
+import { CONDITION_DEFS } from '../game/conditions';
+import { fleesAt, type MissileKind, type MonsterDef, type MonsterSpecial } from '../game/monsters';
 import type { Rng } from '../game/rng';
 import type { Character } from './character';
 import type { NavAgent, Navigation } from './navigation';
 
-export type MonsterState = 'idle' | 'chase' | 'attack' | 'hit' | 'dead';
+export type MonsterState = 'idle' | 'chase' | 'attack' | 'hit' | 'flee' | 'dead';
+
+/** A member a blow or a missile goes for. */
+export interface MemberTarget {
+  name: string;
+  armorClass: number;
+  hit(damage: number, from: Vector3): void;
+  /** The monster's special attack on this member: the save and the condition, or null. */
+  suffer?(special: MonsterSpecial): SpecialOutcome | null;
+}
 
 /** What a monster needs from the party: where it stands and whom it can hit. */
 export interface PartyTarget {
   /** Feet position in scene space. */
   position: Vector3;
   /** The member this blow goes for, or null when nobody stands. */
-  pickTarget(
-    rng: Rng,
-  ): { name: string; armorClass: number; hit(damage: number, from: Vector3): void } | null;
+  pickTarget(rng: Rng): MemberTarget | null;
+  /** Could a missile from `from` reach the party unhindered? Absent: always. */
+  canSee?(from: Vector3): boolean;
+}
+
+/** A missile in the air: the runtime flies it and calls `land` where it comes down. */
+export interface Shot {
+  from: Vector3;
+  /** Where the party stood when the missile left, at chest height. */
+  at: Vector3;
+  kind: MissileKind;
+  /** Metres per second. */
+  speed: number;
+  /**
+   * The missile arrives at `arrived`; the party stands at `partyAt`. A party that has stepped
+   * aside is missed, else the shot's roll decides. Events for the log follow.
+   */
+  land(arrived: Vector3, partyAt: Vector3): void;
 }
 
 export interface MonsterEvent {
   monster: Monster;
-  kind: 'hit' | 'miss' | 'death';
+  kind: 'hit' | 'miss' | 'death' | 'shoot' | 'flee';
   text: string;
+  shot?: Shot;
 }
 
 const RUN_BEYOND = 5;
@@ -45,6 +76,19 @@ const HIT_SPEED = 1.5;
 const BLOW_AT = 0.4;
 /** Seconds a monster that has just come into reach gathers itself before it swings. */
 const WIND_UP = 0.3;
+/** A missile is used only from beyond this many arm's reaches. */
+const MISSILE_FROM = 1.5;
+/** A party this far from where it stood when the missile left has stepped out of its way. */
+export const DODGE = 1.2;
+/** Metres a second a missile flies: a bolt as the party's, an arrow faster. */
+const MISSILE_SPEED: Record<'bolt' | 'arrow', number> = { bolt: 16, arrow: 26 };
+/** A fleeing monster runs for a point this far off, away from the party. */
+const FLEE_STEP = 8;
+/** It flees only while the party is nearer than this many aggro ranges, then stands off. */
+const FLEE_WITHIN = 2.5;
+/** Fleeing but not getting away for this long, with the party close, it turns and fights. */
+const CORNERED_AFTER = 1.2;
+const CORNERED_MOVE = 0.35;
 
 export class Monster {
   hp: number;
@@ -57,6 +101,8 @@ export class Monster {
   private swingTime = -1;
   /** The swing's length in game seconds: its clip's at the swing's pace. */
   private swingLength = 0;
+  /** This swing looses a missile rather than a blow. */
+  private shooting = false;
   private blowLanded = false;
   /**
    * Seconds of game time before the monster may swing again: the pause after each swing,
@@ -69,6 +115,11 @@ export class Monster {
   private moving: 'walk' | 'run' | null = null;
   private push: { dir: Vector3; remaining: number } | null = null;
   private stunnedUntil = -1;
+  /** Cornered while fleeing: it fights to the end from now on. */
+  private cornered = false;
+  /** Seconds fleeing without getting anywhere, and where it was at the last check. */
+  private stuckFor = 0;
+  private fleeFrom: { x: number; z: number } | null = null;
 
   constructor(
     readonly def: MonsterDef,
@@ -102,6 +153,11 @@ export class Monster {
 
   get armorClass(): number {
     return this.def.armorClass;
+  }
+
+  /** Running from the party. */
+  get fleeing(): boolean {
+    return this.state === 'flee';
   }
 
   distanceTo(point: Vector3): number {
@@ -171,6 +227,17 @@ export class Monster {
     }
   }
 
+  /**
+   * Should it be running? Under its AI type's share of hit points (monsters.md 2.7), with the
+   * party near enough to run from, and not cornered. A monster never flees mid-swing.
+   */
+  private shouldFlee(d: number): boolean {
+    if (this.cornered || this.swingTime >= 0) return false;
+    const share = fleesAt(this.def);
+    if (share <= 0 || this.hp > this.def.hp * share) return false;
+    return d < this.def.aggroRange * FLEE_WITHIN;
+  }
+
   update(dt: number, party: PartyTarget, now: number): void {
     this.applyPush(dt);
     if (this.state === 'dead') return;
@@ -185,6 +252,17 @@ export class Monster {
       this.character.play('idle');
     }
     const d = this.distanceTo(party.position);
+    if (this.state !== 'hit') {
+      const flee = this.shouldFlee(d);
+      if (flee && this.state !== 'flee') this.startFlee();
+      else if (!flee && this.state === 'flee') {
+        // Far enough: it stands off, and comes again only if it dares.
+        this.state = 'idle';
+        this.moving = null;
+        this.agent?.stop();
+        this.character.play('idle');
+      }
+    }
     switch (this.state) {
       case 'idle':
         if (d <= this.def.aggroRange) this.state = 'chase';
@@ -198,7 +276,7 @@ export class Monster {
         this.character.play('idle');
         break;
       case 'chase':
-        if (d <= this.def.attackRange) {
+        if (d <= this.def.attackRange || this.canShoot(d, party)) {
           this.agent?.stop();
           this.moving = null;
           this.state = 'attack';
@@ -214,6 +292,9 @@ export class Monster {
         this.face(party.position);
         this.attack(dt, spare, party, d);
         break;
+      case 'flee':
+        this.flee(party.position, d, dt);
+        break;
     }
     if (this.agent && this.state !== 'attack' && !this.push) {
       this.character.node.position.copyFrom(this.agent.position);
@@ -222,24 +303,83 @@ export class Monster {
     }
   }
 
+  /** In missile range, beyond arm's reach and with a clear line: it shoots from here. */
+  private canShoot(d: number, party: PartyTarget): boolean {
+    const m = this.def.missile;
+    if (!m || d > m.range || d <= this.def.attackRange * MISSILE_FROM) return false;
+    return party.canSee?.(this.muzzle()) ?? true;
+  }
+
+  /** Where a missile leaves: the chest. */
+  private muzzle(): Vector3 {
+    const m = this.position.clone();
+    m.y += this.def.heightMetres * 0.65;
+    return m;
+  }
+
+  private gait(gait: 'walk' | 'run'): void {
+    if (this.moving === gait) return;
+    this.moving = gait;
+    this.character.play(gait);
+    this.agent?.setMaxSpeed(gait === 'run' ? this.def.runSpeed : this.def.walkSpeed);
+  }
+
+  /** Step straight towards `target` without a navmesh (tests, loading). */
+  private stepTo(target: { x: number; z: number }, speed: number): void {
+    const p = this.position;
+    const step = speed * (1 / 60);
+    const dx = target.x - p.x;
+    const dz = target.z - p.z;
+    const len = Math.hypot(dx, dz) || 1;
+    p.x += (dx / len) * Math.min(step, len);
+    p.z += (dz / len) * Math.min(step, len);
+    this.character.yaw = Math.atan2(dx, dz);
+  }
+
   private chase(target: Vector3, d: number): void {
     const gait: 'walk' | 'run' = d > RUN_BEYOND ? 'run' : 'walk';
-    if (this.moving !== gait) {
-      this.moving = gait;
-      this.character.play(gait);
-      this.agent?.setMaxSpeed(gait === 'run' ? this.def.runSpeed : this.def.walkSpeed);
-    }
+    this.gait(gait);
     if (this.agent) this.agent.moveTo(target);
-    else {
-      // No navmesh (tests, loading): walk straight at the target.
-      const p = this.position;
-      const step = (gait === 'run' ? this.def.runSpeed : this.def.walkSpeed) * (1 / 60);
-      const dx = target.x - p.x;
-      const dz = target.z - p.z;
-      const len = Math.hypot(dx, dz) || 1;
-      p.x += (dx / len) * Math.min(step, len);
-      p.z += (dz / len) * Math.min(step, len);
-      this.character.yaw = Math.atan2(dx, dz);
+    else this.stepTo(target, gait === 'run' ? this.def.runSpeed : this.def.walkSpeed);
+  }
+
+  private startFlee(): void {
+    this.state = 'flee';
+    this.moving = null;
+    this.stuckFor = 0;
+    this.fleeFrom = { x: this.position.x, z: this.position.z };
+    this.events.push({ monster: this, kind: 'flee', text: `${this.def.name} flees` });
+  }
+
+  /** Run for a point away from the party; cornered with the party close, turn and fight. */
+  private flee(party: Vector3, d: number, dt: number): void {
+    this.gait('run');
+    const p = this.position;
+    const len = Math.max(0.01, d);
+    const away = {
+      x: p.x + ((p.x - party.x) / len) * FLEE_STEP,
+      z: p.z + ((p.z - party.z) / len) * FLEE_STEP,
+    };
+    if (this.agent) {
+      const goal = p.clone();
+      goal.x = away.x;
+      goal.z = away.z;
+      // The nearest spot on the navmesh in that direction; none within reach means a wall.
+      const spot = this.nav?.nearest(goal, FLEE_STEP) ?? null;
+      this.agent.moveTo(spot ?? goal);
+    } else this.stepTo(away, this.def.runSpeed);
+    // Not getting anywhere with the party on it: cornered.
+    this.stuckFor += dt;
+    if (this.stuckFor >= CORNERED_AFTER) {
+      const from = this.fleeFrom ?? { x: p.x, z: p.z };
+      const moved = Math.hypot(p.x - from.x, p.z - from.z);
+      if (moved < CORNERED_MOVE && d < this.def.attackRange * 2.5) {
+        this.cornered = true;
+        this.state = 'chase';
+        this.moving = null;
+      }
+      this.stuckFor = 0;
+      this.fleeFrom = { x: p.x, z: p.z };
     }
   }
 
@@ -251,13 +391,21 @@ export class Monster {
   /** `spare`: the seconds of this step after the recovery ran out (see `update`). */
   private attack(dt: number, spare: number, party: PartyTarget, d: number): void {
     if (this.swingTime < 0) {
-      if (d > this.def.attackRange * 1.4) {
+      // Each swing decides afresh: a blow in reach, a missile beyond it, else close in.
+      const shoot = d > this.def.attackRange && this.canShoot(d, party);
+      if (!shoot && d > this.def.attackRange * 1.4) {
         this.state = 'chase';
         return;
       }
       if (this.recovery > 0) return;
-      this.swing = (this.swing % 2) + 1;
-      this.character.play(`attack_${this.swing}`, { loop: false, speed: SWING_SPEED });
+      this.shooting = shoot;
+      if (shoot) {
+        const clip = this.def.missile!.kind === 'arrow' ? 'attack_1' : 'cast';
+        this.character.play(clip, { loop: false, speed: SWING_SPEED });
+      } else {
+        this.swing = (this.swing % 2) + 1;
+        this.character.play(`attack_${this.swing}`, { loop: false, speed: SWING_SPEED });
+      }
       this.swingLength = this.character.clipDuration / SWING_SPEED;
       this.swingTime = spare;
       this.blowLanded = false;
@@ -266,7 +414,8 @@ export class Monster {
     }
     if (!this.blowLanded && this.swingTime >= this.swingLength * BLOW_AT) {
       this.blowLanded = true;
-      this.strike(party);
+      if (this.shooting) this.shoot(party);
+      else this.strike(party);
     }
     if (this.swingTime >= this.swingLength) {
       // The pause runs from the swing's end; what this step ran past it already counts.
@@ -274,6 +423,16 @@ export class Monster {
       this.swingTime = -1;
       this.character.play('idle');
     }
+  }
+
+  /** The special attack after a hit, if any: the try, then the member's save. */
+  private special(target: MemberTarget): string {
+    const special = this.def.special;
+    if (!special || !target.suffer || !triesSpecial(this.def, this.rng)) return '';
+    const outcome = target.suffer(special);
+    if (!outcome) return '';
+    const name = CONDITION_DEFS[outcome.condition].name.toLowerCase();
+    return outcome.landed ? `; ${target.name} is ${name}` : `; ${target.name} resists`;
   }
 
   private strike(party: PartyTarget): void {
@@ -286,7 +445,7 @@ export class Monster {
       this.events.push({
         monster: this,
         kind: 'hit',
-        text: `${this.def.name} hits ${target.name} for ${r.damage}`,
+        text: `${this.def.name} hits ${target.name} for ${r.damage}${this.special(target)}`,
       });
     } else {
       this.events.push({
@@ -295,6 +454,63 @@ export class Monster {
         text: `${this.def.name} misses ${target.name}`,
       });
     }
+  }
+
+  /**
+   * Loose a missile at the party where it stands: the roll is made now, as a blow's is, and
+   * lands when the runtime brings the shot down. Attack 1's missiles carry the special
+   * (monsters.md 2.6, the MM7 engine).
+   */
+  private shoot(party: PartyTarget): void {
+    const missile = this.def.missile;
+    const target = party.pickTarget(this.rng);
+    if (!missile || !target) return;
+    const r = resolveMonsterAttack(
+      { level: this.def.level, damage: missile.damage },
+      target.armorClass,
+      this.rng,
+    );
+    const from = this.muzzle();
+    const at = party.position.clone();
+    at.y += 1.2;
+    const verb = missile.kind === 'arrow' ? 'shoots' : 'casts';
+    const shot: Shot = {
+      from,
+      at,
+      kind: missile.kind,
+      speed: MISSILE_SPEED[missile.kind === 'arrow' ? 'arrow' : 'bolt'],
+      land: (arrived, partyAt) => {
+        const off = Math.hypot(arrived.x - partyAt.x, arrived.z - partyAt.z);
+        if (off > DODGE) {
+          this.events.push({
+            monster: this,
+            kind: 'miss',
+            text: `${this.def.name}'s ${missile.kind === 'arrow' ? 'arrow' : 'bolt'} flies past`,
+          });
+          return;
+        }
+        if (r.hit) {
+          target.hit(r.damage, from);
+          this.events.push({
+            monster: this,
+            kind: 'hit',
+            text: `${this.def.name} hits ${target.name} for ${r.damage}${this.special(target)}`,
+          });
+        } else {
+          this.events.push({
+            monster: this,
+            kind: 'miss',
+            text: `${this.def.name} misses ${target.name}`,
+          });
+        }
+      },
+    };
+    this.events.push({
+      monster: this,
+      kind: 'shoot',
+      text: `${this.def.name} ${verb} at ${target.name}`,
+      shot,
+    });
   }
 
   /** Drain the event log. */

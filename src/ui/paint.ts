@@ -1249,8 +1249,9 @@ export function paintTubeCaps(w: number, h: number): HTMLCanvasElement {
 }
 
 /**
- * A condition gem, as MM6's (HUD critic, round 15): an upright stone eight by eleven, MM6's
- * size beside its oval, lit at its upper left, no ring; its heart colour by the member's state.
+ * The gem beside the portrait, as MM6's (HUD critic, round 15): an upright stone eight by
+ * eleven, MM6's size beside its oval, lit at its upper left, no ring; its heart colour is the
+ * enemy detector's (green, yellow, red) and goes dark while the member recovers (DESIGN.md 17.16).
  */
 export function paintGem(w: number, h: number, kind: string): HTMLCanvasElement {
   const [c, g] = canvas(w, h);
@@ -1258,6 +1259,7 @@ export function paintGem(w: number, h: number, kind: string): HTMLCanvasElement 
     good: [0, 215, 0],
     weak: [215, 190, 40],
     ill: [215, 92, 40],
+    red: [215, 36, 36],
     out: [160, 160, 160],
     dead: [58, 58, 58],
   };
