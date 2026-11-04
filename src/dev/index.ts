@@ -200,6 +200,7 @@ const PLACE_NAMES: Record<string, string> = {
   harrowmere: 'Harrowmere',
   'thieves-den': "The Thieves' Den",
   'barrow-kings': 'The Barrow of Kings',
+  'goblin-warren': 'The Goblin Warren',
 };
 /** Arriving through a portal: the portal of this level to appear at (DESIGN.md 15.3). */
 const ENTRY = QUERY.get('entry');

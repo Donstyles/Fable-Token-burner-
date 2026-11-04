@@ -338,6 +338,17 @@ const region: RegionScript = {
       width: 5,
     },
     { name: 'west-track', path: [CROSSROADS, [-30, -8], [-70, 0], [-100, 16]], width: 5 },
+    // From the goblins' camp up over the hill to their warren.
+    {
+      name: 'warren-track',
+      path: [
+        [64, 60],
+        [96, 78],
+        [128, 98],
+        [146, 106],
+      ],
+      width: 4,
+    },
   ],
   squares: [
     { at: SQUARE, halfA: 13, halfB: 9, heading: 0 },
@@ -465,6 +476,8 @@ const region: RegionScript = {
     { at: STONES, radius: 15 },
     { at: [-155, -140], radius: 14 },
     { at: [-46, -84], radius: 12 },
+    { at: [150, 110], radius: 14 },
+    { at: [150, 2], radius: 12 },
   ],
   trees: [
     // The old oak over the crossroads, and its younger neighbours.
@@ -485,6 +498,18 @@ const region: RegionScript = {
   // The mouth faces down the slope to the north road's end. Its tunnel leads into the Old
   // Halls (levels/old-halls), the region's first dungeon, through the portal at its end.
   cave: { at: CAVE, facing: 225, target: { level: 'old-halls', entry: 'cave-mouth' } },
+  caves: [
+    // The goblins' warren in the second hill, up the track from their camp (CAMPAIGN step 4).
+    {
+      name: 'warren',
+      at: [150, 110],
+      facing: 194,
+      target: { level: 'goblin-warren', entry: 'warren-mouth' },
+    },
+    // Under the headland's ruin, the First Door (CAMPAIGN step 11); its tunnel ends in rock
+    // until the Undercroft is built.
+    { name: 'undercroft', at: [150, 2], facing: 234 },
+  ],
   // Split rails the kernel builds (owner, 2026-10-23): Tobin's paddock and fields, the
   // stables' paddock at the west gate, the temple's garden.
   fences: [
@@ -532,6 +557,8 @@ const region: RegionScript = {
     { kind: 'goblin-shaman', at: [70, 70], count: 1, spread: 0 },
     { kind: 'goblin-scout', at: [36, 34], count: 2, spread: 4 },
     { kind: 'goblin-scout', at: [STONES[0], STONES[1] + 3], count: 2, spread: 4 },
+    // Two at the warren's mouth, up the track.
+    { kind: 'goblin-scout', at: [142, 102], count: 2, spread: 4 },
     // Bandits at their camp on the coast road, and further west.
     { kind: 'bandit', at: [-155, -142], count: 3, spread: 5 },
     { kind: 'bandit', at: [-250, -166], count: 2, spread: 5 },

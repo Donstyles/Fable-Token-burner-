@@ -219,6 +219,7 @@ describe('Gullhaven', () => {
     // The cave's tunnel ends in the door into the Old Halls (DESIGN 17.10).
     expect(level.portals.map((p) => `${p.name}>${p.target.level}:${p.target.entry}`)).toEqual([
       'cave>old-halls:cave-mouth',
+      'warren>goblin-warren:warren-mouth',
       'west-road>harrowmere:east-road',
     ]);
     expect(level.points.find((p) => p.name === 'cave')?.kind).toBe('door');

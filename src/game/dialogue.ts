@@ -220,6 +220,49 @@ export const QUESTS: Record<string, QuestDef> = {
     ],
     reward: { gold: 500, xp: 1200 },
   },
+  // The campaign's thread through Gullhaven (docs/CAMPAIGN.md steps 3 and 4).
+  'the-seal-and-the-stone': {
+    id: 'the-seal-and-the-stone',
+    title: 'The Seal and the Stone',
+    text:
+      'The Warden of the Halls wore a bronze seal with a door cut in it. Brother Anselm would ' +
+      'read it against the lettered stone; he pays two hundred gold of his own for the chance.',
+    objectives: [
+      {
+        kind: 'deliver',
+        item: 'seal-of-the-halls',
+        npc: 'anselm',
+        text: 'Bring the Warden’s seal to Brother Anselm on the temple lane',
+        label: 'The Warden’s seal',
+        reply:
+          'Bronze, and a door cut in it, one door. So the stone was not raving: the halls are ' +
+          'the first of the seven, and this was their warden’s. I will keep it under the altar, ' +
+          'where the dead cannot come for it. Now hear me: Sister Wyn in Harrowmere copies the ' +
+          'stones, and the second stone is hers. Three days west along the coast road. Tell her ' +
+          'what you carried, and what you killed to carry it. Two hundred gold for the telling, ' +
+          'and the first thing I have ever been sure of.',
+      },
+    ],
+    reward: { gold: 200, xp: 500 },
+  },
+  'the-goblin-king': {
+    id: 'the-goblin-king',
+    title: 'The Goblin King',
+    text:
+      'The scouts came from somewhere: a warren in the second hill, up a track from the goblins’ ' +
+      'camp, where one Grik calls himself lord of it. Maren and the mothers of Gullhaven have put ' +
+      'together three hundred and fifty gold to see him dead.',
+    objectives: [
+      {
+        kind: 'kill',
+        monster: 'goblin-grik',
+        count: 1,
+        text: 'Kill Grik the Warren-Lord in the goblins’ warren, up the track from their camp',
+      },
+      { kind: 'talk', npc: 'villager-woman', text: 'Tell Maren by the well' },
+    ],
+    reward: { gold: 350, xp: 900 },
+  },
   'the-barrow-king': {
     id: 'the-barrow-king',
     title: 'The Barrow King',
@@ -389,6 +432,26 @@ export const DIALOGUES: Record<string, DialogueDef> = {
           'it earned. You will have every mother in Gullhaven praying for you.',
         done: 'The children play on the north road again. I shall not forget it.',
         greetReady: 'You came back! And the hills quiet since dawn. Tell me it was you.',
+      },
+      {
+        kind: 'quest',
+        id: 'king',
+        quest: 'the-goblin-king',
+        label: 'The goblin king',
+        when: { quest: 'goblins-in-the-hills', is: 'done' },
+        offer:
+          'The scouts are gone, and more will come, because they come from somewhere: a warren ' +
+          'in the second hill, up a track from the camp at the cave, and one of them calls ' +
+          'himself Grik, lord of it. The mothers of this town have put together three hundred ' +
+          'and fifty gold, which is every spare coin in Gullhaven, to have him dead. Will you?',
+        active:
+          'Up the north road to the cave, then the track over the hill behind it; the warren’s ' +
+          'mouth is on the second hill. Grik keeps the deepest hole, they say, behind old stone.',
+        ready:
+          'Dead in his own hole! Then the scouts have no one to send them. Three hundred and ' +
+          'fifty gold, from every mother in Gullhaven, and not one of us begrudges a coin.',
+        done: 'No goblin has been seen below the hills since. The children go up the north road alone.',
+        greetReady: 'There is goblin blood on your boots, and a great deal of it. Grik? Tell me.',
       },
       {
         kind: 'say',
@@ -638,6 +701,20 @@ export const DIALOGUES: Record<string, DialogueDef> = {
         note:
           'Brother Anselm: a lettered pillar stands by the standing stones west of the ' +
           'crossroads, one piece of a longer saying; others stand far away.',
+      },
+      {
+        kind: 'say',
+        id: 'west',
+        label: 'The road west',
+        when: { quest: 'the-seal-and-the-stone', is: 'done' },
+        text:
+          'Harrowmere is three days west along the coast road, past the brigands if they still ' +
+          'hold it. Sister Wyn keeps the temple lane there as I keep this one; she has copied ' +
+          'their stone a dozen times. Tell her of the seal. She will know the next door from it, ' +
+          'or know who does.',
+        note:
+          'Brother Anselm keeps the Warden’s seal under the temple’s altar; Sister Wyn in ' +
+          'Harrowmere, three days west, is to hear of it and read her stone against it.',
       },
       {
         kind: 'say',
