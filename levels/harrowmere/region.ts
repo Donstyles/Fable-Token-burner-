@@ -405,14 +405,19 @@ const region: RegionScript = {
   plots: [...town, ...grange, ...wilds],
   caves: [
     // The smugglers' cave in the knoll over the cove, its tunnel into the Thieves' Den; the
-    // barrow cave under the oldest mound, its tunnel ending in rock until its dungeon is built.
+    // barrow cave under the oldest mound, its tunnel into the Barrow of Kings.
     {
       name: 'cove',
       at: [150, -176],
       facing: 220,
       target: { level: 'thieves-den', entry: 'cove-mouth' },
     },
-    { name: 'barrow', at: [-96, 100], facing: 165 },
+    {
+      name: 'barrow',
+      at: [-96, 100],
+      facing: 165,
+      target: { level: 'barrow-kings', entry: 'barrow-mouth' },
+    },
   ],
   // The lettered pillar on the open down west of the down road, the second fragment (17.22).
   obelisks: [{ name: 'obelisk', at: [-60, 56] }],

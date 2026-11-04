@@ -74,9 +74,10 @@ test('Harrowmere loads with its town, its people, its packs and its two ways out
   ]) {
     expect(p).not.toBeNull();
   }
-  // The cove's cave leads into the den; the barrow's ends in rock for now; the coast road east
-  // is a three-day edge to Gullhaven.
+  // The cove's cave leads into the den, the barrow's into the Barrow of Kings; the coast road
+  // east is a three-day edge to Gullhaven.
   expect(info.portals.sort()).toEqual([
+    'barrow>barrow-kings:barrow-mouth',
     'cove>thieves-den:cove-mouth',
     'east-road>gullhaven:west-road:3d',
   ]);

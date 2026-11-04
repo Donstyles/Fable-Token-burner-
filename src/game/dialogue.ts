@@ -220,6 +220,24 @@ export const QUESTS: Record<string, QuestDef> = {
     ],
     reward: { gold: 500, xp: 1200 },
   },
+  'the-barrow-king': {
+    id: 'the-barrow-king',
+    title: 'The Barrow King',
+    text:
+      'The knights were his. Under the oldest mound the Barrow King sits in his iron and sends ' +
+      'the dead up; Sister Wyn says the temple will pay eight hundred gold, and the shire its ' +
+      'thanks, to have him laid for good.',
+    objectives: [
+      {
+        kind: 'kill',
+        monster: 'barrow-king',
+        count: 1,
+        text: 'Lay the Barrow King in his chamber under the oldest mound, through the barrow cave',
+      },
+      { kind: 'talk', npc: 'novice', text: 'Tell Sister Wyn on the temple lane' },
+    ],
+    reward: { gold: 800, xp: 2000 },
+  },
 };
 
 /** Where a quest stands with the one who gives it. */
@@ -906,6 +924,29 @@ export const DIALOGUES: Record<string, DialogueDef> = {
           'for the first night since spring. Four hundred gold; the poor will have the next.',
         done: 'The downs are quiet at night. I sleep with the window open.',
         greetReady: 'There is grave dust on you. The knights? Tell me.',
+      },
+      {
+        kind: 'quest',
+        id: 'king',
+        quest: 'the-barrow-king',
+        label: 'The Barrow King',
+        when: { quest: 'the-barrow-knights', is: 'done' },
+        offer:
+          'The knights were his. Under the oldest mound, through the cave in its flank, the ' +
+          'Barrow King sits in his iron on the seat his people cut for him, and sends his dead ' +
+          'up the stair every spring. The priest says leave him be. I say the temple has eight ' +
+          'hundred gold it would rather spend than bury the shire twice a year. Lay him, and it ' +
+          'is yours.',
+        active:
+          'In at the cave in the mound’s south flank, through the ante-cave, into the kings’ ' +
+          'hall. The stair down is locked; the western king was buried with the key. He curses, ' +
+          'they say; keep a clear head and a cleric’s hands.',
+        ready:
+          'Laid. Then the shire is done burying its dead twice, and I can copy my stones in ' +
+          'peace. Eight hundred gold; it is the temple’s and it has never been better spent.',
+        done: 'The mounds are only mounds now. Sheep graze on the oldest.',
+        greetReady:
+          'The downs were silent all night for the first time in my life. The king? Tell me.',
       },
       {
         kind: 'say',

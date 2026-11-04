@@ -309,6 +309,22 @@ export const FAMILIES: FamilySpec[] = [
         drop: { chance: 0.6, level: 2, kind: 'weapon' },
         special: { kind: 'afraid', multiplier: 1 },
       },
+      {
+        // The Barrow of Kings' master (DESIGN.md 17.23): a lord's numbers with a unique's hit
+        // points, his curse on whoever stands before him.
+        id: 'barrow-king',
+        name: 'The Barrow King',
+        tier: 'C',
+        level: 12,
+        hp: 120,
+        armorClass: 18,
+        damage: d(3, 6, 4),
+        ai: 'aggressive',
+        recovery: 90,
+        gold: d(30, 6),
+        drop: { chance: 0.9, level: 3, kind: 'weapon' },
+        special: { kind: 'curse', multiplier: 2 },
+      },
     ],
   },
   {
