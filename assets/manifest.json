@@ -511,6 +511,15 @@
       "notes": "Long Bow; 64.8 cm at 1.25 cm a pixel; the object covered 4.5% of its photo"
     },
     {
+      "id": "item-broadsword",
+      "kind": "image",
+      "source": "The Metropolitan Museum of Art, object 27924: Broadsword (dated 1612, German, Solingen), https://www.metmuseum.org/art/collection/search/27924; its backdrop keyed out and the object digitised to 1 by 4 cells (tools/met.ts)",
+      "licence": "CC0 1.0, The Met Open Access (public domain; credit line: Gift of William H. Riggs, 1913)",
+      "files": ["assets/items/broadsword.png"],
+      "date": "2026-11-04",
+      "notes": "Broadsword; 93 cm at 1.25 cm a pixel; the object covered 5.7% of its photo"
+    },
+    {
       "id": "item-chain-mail",
       "kind": "image",
       "source": "The Metropolitan Museum of Art, object 22415: Mail Shirt (probably early 16th century, Syrian or Turkish), https://www.metmuseum.org/art/collection/search/22415; its backdrop keyed out and the object digitised to 2 by 4 cells (tools/met.ts)",
@@ -518,6 +527,24 @@
       "files": ["assets/items/chain-mail.png"],
       "date": "2026-11-01",
       "notes": "Chain Mail; 84 cm at 1.25 cm a pixel; the object covered 33.3% of its photo"
+    },
+    {
+      "id": "item-cloth-hat",
+      "kind": "image",
+      "source": "The Metropolitan Museum of Art, object 81551: Cap (16th century, British), https://www.metmuseum.org/art/collection/search/81551; its backdrop keyed out and the object digitised to 2 by 2 cells (tools/met.ts)",
+      "licence": "CC0 1.0, The Met Open Access (public domain; credit line: Bashford Dean Memorial Collection, Funds from various Donors, 1929)",
+      "files": ["assets/items/cloth-hat.png"],
+      "date": "2026-11-04",
+      "notes": "Cloth Hat; filling its cells; the object covered 53.0% of its photo"
+    },
+    {
+      "id": "item-club",
+      "kind": "image",
+      "source": "The Metropolitan Museum of Art, object 26832: Mace or Club (<i>Mazzacorto</i>) (ca. 1807, Italian, Pisa), https://www.metmuseum.org/art/collection/search/26832; its backdrop keyed out and the object digitised to 1 by 3 cells (tools/met.ts)",
+      "licence": "CC0 1.0, The Met Open Access (public domain; credit line: Gift of Carl Otto von Kienbusch, 1929)",
+      "files": ["assets/items/club.png"],
+      "date": "2026-11-04",
+      "notes": "Club; 71.8 cm at 1.25 cm a pixel; the object covered 2.6% of its photo"
     },
     {
       "id": "item-copper-ring",
@@ -529,6 +556,24 @@
       "notes": "Copper Ring; filling its cells; the object covered 6.8% of its photo"
     },
     {
+      "id": "item-crossbow",
+      "kind": "image",
+      "source": "The Metropolitan Museum of Art, object 23336: Crossbow (ca. 1425–75, Central European, possibly Austria), https://www.metmuseum.org/art/collection/search/23336; its backdrop keyed out and the object digitised to 2 by 3 cells (tools/met.ts)",
+      "licence": "CC0 1.0, The Met Open Access (public domain; credit line: Bashford Dean Memorial Collection, Funds from various donors, 1929)",
+      "files": ["assets/items/crossbow.png"],
+      "date": "2026-11-04",
+      "notes": "Crossbow; 95.6 cm at 1.25 cm a pixel; the object covered 8.2% of its photo"
+    },
+    {
+      "id": "item-crown",
+      "kind": "image",
+      "source": "The Metropolitan Museum of Art, object 463760: Crown (19th century (?), French), https://www.metmuseum.org/art/collection/search/463760; its backdrop keyed out and the object digitised to 2 by 2 cells (tools/met.ts)",
+      "licence": "CC0 1.0, The Met Open Access (public domain; credit line: Gift of J. Pierpont Morgan, 1916)",
+      "files": ["assets/items/crown.png"],
+      "date": "2026-11-04",
+      "notes": "Crown; filling its cells; the object covered 31.8% of its photo"
+    },
+    {
       "id": "item-dagger",
       "kind": "image",
       "source": "The Metropolitan Museum of Art, object 32786: Dagger (1380–1400, British), https://www.metmuseum.org/art/collection/search/32786; its backdrop keyed out and the object digitised to 1 by 2 cells (tools/met.ts)",
@@ -536,6 +581,33 @@
       "files": ["assets/items/dagger.png"],
       "date": "2026-11-01",
       "notes": "Dagger; 41.3 cm at 1.25 cm a pixel; the object covered 8.2% of its photo"
+    },
+    {
+      "id": "item-gauntlets",
+      "kind": "image",
+      "source": "The Metropolitan Museum of Art, object 23273: Left Gauntlet (ca. 1485–95, probably Austrian, Innsbruck), https://www.metmuseum.org/art/collection/search/23273; its backdrop keyed out and the object digitised to 2 by 2 cells (tools/met.ts)",
+      "licence": "CC0 1.0, The Met Open Access (public domain; credit line: Bashford Dean Memorial Collection, Funds from various donors, 1929)",
+      "files": ["assets/items/gauntlets.png"],
+      "date": "2026-11-04",
+      "notes": "Gauntlets; 36.83 cm at 1.25 cm a pixel; the object covered 23.0% of its photo"
+    },
+    {
+      "id": "item-halberd",
+      "kind": "image",
+      "source": "The Metropolitan Museum of Art, object 21946: Halberd (ca. 1590–1600, Italian), https://www.metmuseum.org/art/collection/search/21946; its backdrop keyed out and the object digitised to 2 by 5 cells (tools/met.ts)",
+      "licence": "CC0 1.0, The Met Open Access (public domain; credit line: Rogers Fund, 1904)",
+      "files": ["assets/items/halberd.png"],
+      "date": "2026-11-04",
+      "notes": "Halberd; 274.96 cm at 1.25 cm a pixel, shrunk to 59% to fit; the object covered 11.0% of its photo"
+    },
+    {
+      "id": "item-hammer",
+      "kind": "image",
+      "source": "The Metropolitan Museum of Art, object 25073: War Hammer (ca. 1450, French), https://www.metmuseum.org/art/collection/search/25073; its backdrop keyed out and the object digitised to 2 by 3 cells (tools/met.ts)",
+      "licence": "CC0 1.0, The Met Open Access (public domain; credit line: Rogers Fund, 1904)",
+      "files": ["assets/items/hammer.png"],
+      "date": "2026-11-04",
+      "notes": "Hammer; 65.5 cm at 1.25 cm a pixel; the object covered 7.1% of its photo"
     },
     {
       "id": "item-helmet",
@@ -556,6 +628,15 @@
       "notes": "Iron Key; filling its cells; the object covered 26.7% of its photo"
     },
     {
+      "id": "item-kite-shield",
+      "kind": "image",
+      "source": "The Metropolitan Museum of Art, object 25415: Shield (ca. 1560, German, Landshut or Augsburg), https://www.metmuseum.org/art/collection/search/25415; its backdrop keyed out and the object digitised to 2 by 3 cells (tools/met.ts)",
+      "licence": "CC0 1.0, The Met Open Access (public domain; credit line: Rogers Fund, 1904)",
+      "files": ["assets/items/kite-shield.png"],
+      "date": "2026-11-04",
+      "notes": "Kite Shield; 56.5 cm at 1.25 cm a pixel; the object covered 61.4% of its photo"
+    },
+    {
       "id": "item-leather-armor",
       "kind": "image",
       "source": "The Metropolitan Museum of Art, object 23347: Buff Coat (17th century, European), https://www.metmuseum.org/art/collection/search/23347; its backdrop keyed out and the object digitised to 2 by 3 cells (tools/met.ts)",
@@ -563,6 +644,33 @@
       "files": ["assets/items/leather-armor.png"],
       "date": "2026-11-01",
       "notes": "Leather Armor; 88.9 cm at 1.25 cm a pixel; the object covered 43.7% of its photo"
+    },
+    {
+      "id": "item-leather-belt",
+      "kind": "image",
+      "source": "The Metropolitan Museum of Art, object 25603: Sword Belt (18th century, French), https://www.metmuseum.org/art/collection/search/25603; its backdrop keyed out and the object digitised to 2 by 1 cells (tools/met.ts)",
+      "licence": "CC0 1.0, The Met Open Access (public domain; credit line: Rogers Fund, 1907)",
+      "files": ["assets/items/leather-belt.png"],
+      "date": "2026-11-04",
+      "notes": "Leather Belt; 160 cm at 1.25 cm a pixel, shrunk to 39% to fit; the object covered 24.4% of its photo"
+    },
+    {
+      "id": "item-leather-cloak",
+      "kind": "image",
+      "source": "The Metropolitan Museum of Art, object 108003: Cloak (1840–45, American), https://www.metmuseum.org/art/collection/search/108003; its backdrop keyed out and the object digitised to 2 by 3 cells (tools/met.ts)",
+      "licence": "CC0 1.0, The Met Open Access (public domain; credit line: Gift of Mrs. E. V. Anderson, 1943)",
+      "files": ["assets/items/leather-cloak.png"],
+      "date": "2026-11-04",
+      "notes": "Leather Cloak; filling its cells; the object covered 44.9% of its photo"
+    },
+    {
+      "id": "item-long-dagger",
+      "kind": "image",
+      "source": "The Metropolitan Museum of Art, object 32648: Ballock Knife (ca. 1450–1500, Western European, possibly Britain), https://www.metmuseum.org/art/collection/search/32648; its backdrop keyed out and the object digitised to 1 by 3 cells (tools/met.ts)",
+      "licence": "CC0 1.0, The Met Open Access (public domain; credit line: Gift of Jean Jacques Reubell, in memory of his mother, Julia C. Coster, and of his wife, Adeline E. Post, both of New York City, 1926)",
+      "files": ["assets/items/long-dagger.png"],
+      "date": "2026-11-04",
+      "notes": "Long Dagger; 35.7 cm at 1.25 cm a pixel; the object covered 10.1% of its photo"
     },
     {
       "id": "item-long-sword",
@@ -581,6 +689,24 @@
       "files": ["assets/items/mace.png"],
       "date": "2026-11-01",
       "notes": "Mace; 58.6 cm at 1.25 cm a pixel; the object covered 9.7% of its photo"
+    },
+    {
+      "id": "item-plate-armor",
+      "kind": "image",
+      "source": "The Metropolitan Museum of Art, object 681022: Cuirass (ca. 1825, French, Klingenthal, Alsace), https://www.metmuseum.org/art/collection/search/681022; its backdrop keyed out and the object digitised to 2 by 4 cells (tools/met.ts)",
+      "licence": "CC0 1.0, The Met Open Access (public domain; credit line: Purchase, Arthur Ochs Sulzberger Bequest, 2015)",
+      "files": ["assets/items/plate-armor.png"],
+      "date": "2026-11-04",
+      "notes": "Plate Armor; 44.5 cm at 1.25 cm a pixel; the object covered 40.2% of its photo"
+    },
+    {
+      "id": "item-poleax",
+      "kind": "image",
+      "source": "The Metropolitan Museum of Art, object 26713: Pollaxe (ca. 1470, French, Burgundy), https://www.metmuseum.org/art/collection/search/26713; its backdrop keyed out and the object digitised to 2 by 5 cells (tools/met.ts)",
+      "licence": "CC0 1.0, The Met Open Access (public domain; credit line: Gift of William H. Riggs, 1913)",
+      "files": ["assets/items/poleax.png"],
+      "date": "2026-11-04",
+      "notes": "Poleax; 213.4 cm at 1.25 cm a pixel, shrunk to 44% to fit; the object covered 8.1% of its photo"
     },
     {
       "id": "item-potion-healing",
@@ -617,6 +743,42 @@
       "files": ["assets/items/spear.png"],
       "date": "2026-11-01",
       "notes": "Spear; 160.7 cm at 1.25 cm a pixel; the object covered 5.7% of its photo"
+    },
+    {
+      "id": "item-staff",
+      "kind": "image",
+      "source": "The Metropolitan Museum of Art, object 26208: Staff Weapon (ca. 1520, Italian), https://www.metmuseum.org/art/collection/search/26208; its backdrop keyed out and the object digitised to 1 by 4 cells (tools/met.ts)",
+      "licence": "CC0 1.0, The Met Open Access (public domain; credit line: Gift of William H. Riggs, 1913)",
+      "files": ["assets/items/staff.png"],
+      "date": "2026-11-04",
+      "notes": "Staff; 259.1 cm at 1.25 cm a pixel, shrunk to 50% to fit; the object covered 0.7% of its photo"
+    },
+    {
+      "id": "item-trident",
+      "kind": "image",
+      "source": "The Metropolitan Museum of Art, object 26088: Military Fork (ca. 1550, Italian), https://www.metmuseum.org/art/collection/search/26088; its backdrop keyed out and the object digitised to 1 by 5 cells (tools/met.ts)",
+      "licence": "CC0 1.0, The Met Open Access (public domain; credit line: Gift of William H. Riggs, 1913)",
+      "files": ["assets/items/trident.png"],
+      "date": "2026-11-04",
+      "notes": "Trident; 233.1 cm at 1.25 cm a pixel, shrunk to 25% to fit; the object covered 1.5% of its photo"
+    },
+    {
+      "id": "item-turquoise-amulet",
+      "kind": "image",
+      "source": "The Metropolitan Museum of Art, object 466158: Pendant (early 600s, Anglo-Saxon), https://www.metmuseum.org/art/collection/search/466158; its backdrop keyed out and the object digitised to 1 by 1 cells (tools/met.ts)",
+      "licence": "CC0 1.0, The Met Open Access (public domain; credit line: Purchase, Joseph Pulitzer Bequest, 1987)",
+      "files": ["assets/items/turquoise-amulet.png"],
+      "date": "2026-11-04",
+      "notes": "Turquoise Amulet; filling its cells; the object covered 33.2% of its photo"
+    },
+    {
+      "id": "item-two-handed-sword",
+      "kind": "image",
+      "source": "The Metropolitan Museum of Art, object 27515: Claymore (16th–17th century, hilt, Scottish; blade, German, Solingen), https://www.metmuseum.org/art/collection/search/27515; its backdrop keyed out and the object digitised to 2 by 5 cells (tools/met.ts)",
+      "licence": "CC0 1.0, The Met Open Access (public domain; credit line: Bequest of Alan Rutherfurd Stuyvesant, 1954)",
+      "files": ["assets/items/two-handed-sword.png"],
+      "date": "2026-11-04",
+      "notes": "Two-Handed Sword; 136 cm at 1.25 cm a pixel; the object covered 11.5% of its photo"
     },
     {
       "id": "nomad-raider",
