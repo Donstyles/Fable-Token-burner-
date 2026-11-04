@@ -3378,7 +3378,76 @@ spells' end-to-end test still finds the torch brightened by Torch Light.
 Feather Fall in the controller, Guardian Angel at the wipe, the hold pop-up with a buff's
 time, the icons for the seven new spells (the owner's call, DESIGN 16.22's recipe).
 
+### 17.18 MM6's catalogue, its enchantments and the pack's skills (the agentic loop, 2026-11-04)
+
+The first half of the plan's item 9 (MM6-GAPS 12; items.md 2 to 5). The shops' kinds,
+stock, restocks, hours and MM7's price formulas are the second half (next).
+
+**The catalogue as data** (src/game/catalogue.ts): MM6's 63 weapons (the two blasters left
+out: no random weight, no shop sells them), 54 pieces of armour and clothing and 15 rings and
+amulets, each with MM6's dice or armour class, value, difficulty and lowest treasure level
+(items.md 2.1 to 2.3; the first figure where the sources disagree), in families that share a
+skill, hands, footprint, generic name and picture. The eighteen ids the levels and tests
+already named are kept and carry MM6's numbers now (a Dagger is worth 8, a Longbow throws
+5d2, Leather Armor is 150, the Short Sword is MM6's Cutlass); the rest are new. A club needs
+no skill (MM7's rule); a spear, halberd or trident is held in one hand, or in two with the off
+hand empty for one more die of its size (items.md 2.1). Hats, crowns, belts, rings and amulets
+have no level in any source: rings and amulets take their difficulty band, hats, crowns and
+belts their price (ours, items.md 4.2). The potion is MM6's Cure Wounds at 10 gold and the
+scrolls 10 and 40. The paper doll, stat requirements, gems, wands, herbs and spellbooks as
+items wait.
+
+**One picture a family**: the bag draws each tier with its family's photograph from The Met
+(assets/items/<picture>.png, DESIGN 16.8), eighteen new ones taken for the new families (a
+claymore for the two-handed swords, a Solingen broadsword, a ballock knife for the long
+daggers, a Burgundian pollaxe, a Milanese halberd, an Italian military fork for the tridents,
+a Tyrolean crossbow, a French war hammer, a Pisan mazzacorto for the clubs, a staff weapon's
+pole, a French cuirass for plate, a Landshut shield for the large shields, a Tudor cap, a
+French crown, a sword belt, a brown cloak, an Innsbruck gauntlet, an Anglo-Saxon pendant for
+the amulets), the fifteen already in use for theirs. A tier of its own, as MM6's icons had,
+is the owner's call later. An item without a picture keeps its kind's glyph as before.
+
+**Standard enchantments** (src/game/enchant.ts; items.md 3.1, 4.3, 4.4): the fourteen, "of
+Might" to "of Poison Resistance", each adding its strength to one value and never on a
+weapon; the slot's odds from MM6's own table (a shield never raises a statistic, boots favour
+Speed); the chance by treasure level (none at 1, 40 % at 2 to 5, 75 % at 6) and the strength's
+range (1–5 at level 2 up to 15–25 at 6); 100 gold a point on the value. A copy carries its
+bonus in the save (no version change: the field is optional). Worn, the bonus goes into the
+sheet (src/game/character.ts): the statistics before the conditions' share, hit points,
+spell points, armour class; the resistances are stored for when the sheet carries them. The
+special enchantments ("of Flame", "Vampiric", 59 of them) wait on the systems they touch.
+
+**Made items** (src/game/treasure.ts; items.md 4.2): a thing made at a treasure level starts
+unidentified unless its difficulty is 0 (a club, a potion, a scroll, a key), and armour or
+jewellery may come enchanted as above. Before, only arms of level 2 and up were unknown.
+Unidentified, an item goes by its family's generic name ("Longsword", "Ring", "Small
+Shield"), named in full once identified ("Fine Ring of Might").
+
+**Identify and Repair by skill** (src/ui/inventory-model.ts; items.md 5.2, 5.3): the pack's
+selection offers Identify for an unknown item and Repair for a broken one, each possible when
+the member's Identify Item or Repair Item skill times its rank's multiplier (Normal 1, Expert
+2, Master 3) reaches the item's difficulty (MM7's rule, RPGC's multipliers); the button's
+title names the difficulty when it does not. The shops still identify and repair for a fee
+(their prices move to MM7's formulas with the shops). A sold copy fetches its worth with its
+enchantment.
+
+**Checked**: unit tests for the counts (63, 54, 15, every id with a record and a picture
+that exists), sample numbers per family, the shared family fields, the fourteen bonuses and
+their slot odds, the strengths and chances by level, naming and pricing a copy, the made
+items (unknown unless difficulty 0, enchanted two in five at level 3 with strengths 3 to 8),
+the worn bonus on the sheet, the spear's second die, Identify and Repair by skill; the
+earlier tests follow MM6's names and values.
+
+**Not yet**: the shops of four kinds with stock, restock, hours and MM7's prices (the second
+half); gems, wands, herbs and spellbooks as items; the special enchantments; artifacts; the
+inspect pop-up; a picture per tier.
+
 ## 13. Decision log
+
+- 2026-11-04 – MM6's catalogue and its standard enchantments (17.18): 132 arms, armour and
+  jewellery as data by family with MM6's numbers and one Met photograph a family; the
+  fourteen standard bonuses by MM6's odds, chances and strengths, worn into the sheet; made
+  items unknown unless difficulty 0; Identify and Repair in the pack by skill.
 
 - 2026-11-04 – Buffs (17.17): a buff store on the sheet and the state, saved (version 4),
   replaced by the patch's rule, run out on the clock; Bless, Heroism, Stone Skin, Haste and

@@ -85,7 +85,10 @@ Working list, in order:
        (DESIGN 17.17); Shield, Wizard Eye, Water Walk and Guardian Angel wait on their systems.
 9. [ ] **Items and shops** (MM6-GAPS 12 and 15): the catalogue grown toward a hundred base
        items with the Met's photographs, enchantments, treasure levels, shop stock with
-       restocks and hours, identify and repair by skill.
+       restocks and hours, identify and repair by skill. First half done 2026-11-04 (DESIGN
+       17.18): MM6's 132 arms, armour and jewellery with a photograph a family, the standard
+       enchantments, treasure by difficulty, Identify and Repair by skill; the shops' kinds,
+       stock, restocks, hours and MM7's prices are the second half.
 10. [ ] **People and quests**: more townsfolk with news, three more quests of every kind
         (deliver, reach, kill), a well and an obelisk, the Notes book kept.
 11. [ ] **Polish passes** between items: the frame rate on the phone's budget, the faults the
