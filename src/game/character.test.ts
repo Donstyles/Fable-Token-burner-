@@ -30,7 +30,7 @@ import { applyBuff, HASTE_RECOVERY } from './buffs';
 import { afflict } from './conditions';
 import { createCharacter } from './creation';
 import { knightInput, sorcererInput } from './fixtures';
-import { equipItem } from './inventory';
+import { equipItem, unequip } from './inventory';
 import { createItem } from './items';
 import { TEST_PARTY } from './party';
 import { statBonus } from './stats';
@@ -366,7 +366,7 @@ describe('worn enchantments and the spear held in both hands (DESIGN 17.18)', ()
     const k = r.character;
     k.skills.spear = { level: 1, rank: 'normal' };
     expect(equipItem(k.equipment, createItem('spear'), k.skills).ok).toBe(true);
-    delete k.equipment.offHand;
+    unequip(k.equipment, 'offHand');
     expect(damageDice(k)!.count).toBe(2);
     equipItem(k.equipment, createItem('shield'), k.skills);
     expect(k.equipment.offHand?.id).toBe('shield');
