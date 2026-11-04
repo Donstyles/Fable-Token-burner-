@@ -80,8 +80,9 @@ Working list, in order:
        the temple, rest refused near monsters, the wipe rule (a week later at the temple, the
        carried gold lost). Done 2026-11-03 (DESIGN 17.16); resistances, monster spells beyond
        a bolt, preferred targets and groups are listed there as not yet.
-8. [ ] **Buffs** (MM6-GAPS 7): the buff store on the game clock (Bless, Heroism, Stone Skin,
-       Haste, the Protections, Torch Light), shown in the panel's window.
+8. [x] **Buffs** (MM6-GAPS 7): the buff store on the game clock (Bless, Heroism, Stone Skin,
+       Haste, the Protections, Torch Light), shown in the panel's window. Done 2026-11-04
+       (DESIGN 17.17); Shield, Wizard Eye, Water Walk and Guardian Angel wait on their systems.
 9. [ ] **Items and shops** (MM6-GAPS 12 and 15): the catalogue grown toward a hundred base
        items with the Met's photographs, enchantments, treasure levels, shop stock with
        restocks and hours, identify and repair by skill.

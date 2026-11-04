@@ -3329,7 +3329,61 @@ peasants turning hostile (2.8), breaking, theft, aging and draining (2.6), the f
 return, a death picture for the wipe (none without the owner's picture), the condition faces
 (none without the owner's portraits).
 
+### 17.17 Buffs: the spells that last (the agentic loop, 2026-11-04)
+
+MM6-GAPS 7 and magic.md 5.5: MM6 keeps its lasting spells on the game clock, the party's
+(Torch Light, the five Protections, Wizard Eye, Water Walk, Feather Fall, Fly, Guardian Angel)
+and each member's (Bless, Heroism, Haste, Shield, Stone Skin, the temporary statistics), each
+with its end, its power and the caster's skill (MMX `SpellBuff`). Until now the book's buffs
+printed "takes no hold yet" and Torch Light ran on real seconds outside any store.
+
+**The store** (src/game/buffs.ts): `Character.buffs` and `GameState.partyBuffs`, plain data
+saved with the rest (save version 4; older saves get empty stores). Casting a buff already on
+follows the patch (GF-P): the stronger replaces the old, at the same power the one that ends
+later, else nothing changes and the line says "holds". The runtime runs the stores out as the
+clock goes (every frame, so a rest's eight hours end them too) and the log says what wore
+off; Haste leaves its member Weak when it ends (magic.md F5).
+
+**What they do** (src/game/character.ts): Bless adds its power to Attack and Shoot, Heroism to
+every hit's damage, Stone Skin to armour class, Haste takes 25 of MM6's recovery units off
+every attack (GF-M), and Meditation's temporary Intellect and Personality go into the
+statistics before the conditions' share (the MM7 engine's order; MM6 unverified). Torch
+Light's power sets the torch's steps (1, 2, 3 by rank) while it is on. The Protections are
+stored with their resistance for when the sheet carries resistances (characters.md 11);
+Wizard Eye and Water Walk are stored and wait for the map's monsters and the water (not yet).
+
+**The spells** (src/game/spells.ts), from MM6's table (SPL): Bless, Heroism and Stone Skin
++5 + s on one member for an hour and five minutes a skill point, the party from Expert, an
+hour and fifteen minutes a point at Master; Haste one member for an hour and a minute a
+point, the party from Expert, three minutes a point at Master; the five Protections s, 2s or
+3s by rank for an hour a point; Torch Light an hour a point; Meditation +10 + 2s (3s from
+Expert) for an hour a point, the party at Master. Heroism, Haste, Stone Skin and the
+Protections from Electricity, Cold, Poison and Magic are new in the book (31 spells now);
+Haste and Stone Skin stand at level 5 and Heroism at 7, above what Gullhaven's guild sells, so
+they wait on scrolls and a greater guild.
+
+**Where they show**: MM6 put small icons on the band for a member's spells and a strip under
+the hireling windows for the party's (interface.md 8.4). Ours: each member's marks along the
+oval's foot inside its ring, the party's in a strip along the windows' sill, each the spell's
+icon from the book in a dark tile, or the tile alone in its school's colour where the icon
+is not in yet (no placeholder art), named with the time left in the tile's title; and the
+sheet's "Spells" line names them with their time left.
+
+**Checked**: unit tests for the store (the patch's rule, running out, the listing, the
+labels), the sheet (Bless, Heroism, Stone Skin, Haste, the temporary statistic, Haste's Weak),
+the spells' numbers by rank, the save's migration and its refusal of an unknown buff; the
+spells' end-to-end test still finds the torch brightened by Torch Light.
+
+**Not yet**: Shield against the monsters' missiles, Wizard Eye on the map, Water Walk and
+Feather Fall in the controller, Guardian Angel at the wipe, the hold pop-up with a buff's
+time, the icons for the seven new spells (the owner's call, DESIGN 16.22's recipe).
+
 ## 13. Decision log
+
+- 2026-11-04 – Buffs (17.17): a buff store on the sheet and the state, saved (version 4),
+  replaced by the patch's rule, run out on the clock; Bless, Heroism, Stone Skin, Haste and
+  the temporary statistics in the sheet's numbers, Torch Light's steps from the store; MM6's
+  spans by rank; marks on the band and the panel's sill, the spell's icon or its school's tile.
 
 - 2026-11-03 – Danger (17.16): monsters are tiered families with MM6's level formulas and one
   tinted skin per tier; monsters flee by AI type, shoot or cast from range, and try special
