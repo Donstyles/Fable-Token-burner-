@@ -41,11 +41,11 @@ describe('character-backed members', () => {
     const party = new Party(chars);
     const archer = party.members[1]!;
     expect(archer.canShoot).toBe(true);
-    // Accuracy 30 plus Bow 1; the long bow's 3d3; a bow's 100 and leather's 10 less Speed 28.
+    // Accuracy 30 plus Bow 1; the longbow's 5d2; a bow's 100 and leather's 10 less Speed 28.
     const shot = archer.attackNumbers(true);
     expect(shot.attackBonus).toBe(statBonus(30) + 1);
     expect(shot.attackBonus).toBe(attackBonus(mira, true));
-    expect(shot.damage).toEqual({ count: 3, sides: 3 });
+    expect(shot.damage).toEqual({ count: 5, sides: 2 });
     expect(shot.recoverySec).toBeCloseTo((100 + 10 - statBonus(28)) / 60);
     expect(shot.recoverySec).toBeCloseTo(recoverySec(mira, true));
     // Her bare hands in melee: no weapon skill, 1d3 plus Might.
@@ -58,7 +58,7 @@ describe('character-backed members', () => {
     expect(a?.member).toBe(archer);
     expect(a?.ranged).toBe(true);
     expect(a?.result.chance).toBeCloseTo(hitChance(shot.attackBonus, 0));
-    expect(dummy.taken).toBe(3);
+    expect(dummy.taken).toBe(5);
     expect(archer.readyAt).toBeCloseTo(shot.recoverySec);
     party.selected = 1;
     const b = party.attack(dummy, 10, () => 0, false);

@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { maxHp } from './character';
 import { afflict } from './conditions';
 import { freshState } from './fixtures';
-import { itemDef } from './items';
+import { createItem, itemDef } from './items';
 import { MINUTES_PER_DAY } from './time';
 import {
   buyFood,
@@ -169,24 +169,29 @@ describe('shop', () => {
   it('prices with the house markup and the Merchant skill', () => {
     const state = freshState();
     const knight = state.party[0]!;
-    const dagger = itemDef('dagger');
-    expect(buyPrice(SHOP, dagger, knight)).toBe(23);
-    expect(sellPrice(SHOP, dagger, knight)).toBe(8);
-    expect(sellPrice(SHOP, dagger, knight, true)).toBe(4);
+    // A mace is worth 50 (MM6's value).
+    const mace = itemDef('mace');
+    const copy = createItem('mace');
+    expect(buyPrice(SHOP, mace, knight)).toBe(75);
+    expect(sellPrice(SHOP, copy, knight)).toBe(25);
+    expect(sellPrice(SHOP, { ...copy, broken: true }, knight)).toBe(13);
+    // An enchanted copy is worth 100 gold a point more (DESIGN 17.18).
+    expect(sellPrice(SHOP, { ...copy, bonus: { kind: 'ac', power: 3 } }, knight)).toBe(175);
     knight.skills.merchant = { level: 5, rank: 'expert' };
-    expect(buyPrice(SHOP, dagger, knight)).toBe(18);
-    expect(sellPrice(SHOP, dagger, knight)).toBe(9);
+    expect(buyPrice(SHOP, mace, knight)).toBe(60);
+    expect(sellPrice(SHOP, copy, knight)).toBe(30);
     knight.skills.merchant = { level: 20, rank: 'master' };
-    expect(buyPrice(SHOP, dagger, knight)).toBe(11);
-    expect(sellPrice(SHOP, dagger, knight)).toBe(11);
+    expect(buyPrice(SHOP, mace, knight)).toBe(38);
+    expect(sellPrice(SHOP, copy, knight)).toBe(38);
   });
 
   it('buys into the grid, sells from it, identifies and repairs', () => {
     const state = freshState();
     expect(buyItem(state, SHOP, 'bow', 0)).toEqual({ ok: false, reason: 'not-sold' });
+    // A dagger is worth 8 (MM6): 12 at the house's markup.
     const bought = buyItem(state, SHOP, 'dagger', 0);
-    expect(bought.ok && bought.price).toBe(23);
-    expect(state.gold).toBe(177);
+    expect(bought.ok && bought.price).toBe(12);
+    expect(state.gold).toBe(188);
     const knight = state.party[0]!;
     const index = knight.grid.items.findIndex((p) => p.item.id === 'dagger');
     expect(index).toBeGreaterThanOrEqual(0);
@@ -196,11 +201,11 @@ describe('shop', () => {
     expect(knight.grid.items[index]!.item.identified).toBe(true);
     expect(repairItem(state, SHOP, 0, index)).toEqual({ ok: false, reason: 'needless' });
     knight.grid.items[index]!.item.broken = true;
-    expect(repairItem(state, SHOP, 0, index)).toEqual({ ok: true, price: 5 });
+    expect(repairItem(state, SHOP, 0, index)).toEqual({ ok: true, price: 2 });
     expect(knight.grid.items[index]!.item.broken).toBe(false);
-    expect(state.gold).toBe(152);
-    expect(sellItem(state, SHOP, 0, index)).toEqual({ ok: true, price: 8, item: 'dagger' });
-    expect(state.gold).toBe(160);
+    expect(state.gold).toBe(166);
+    expect(sellItem(state, SHOP, 0, index)).toEqual({ ok: true, price: 4, item: 'dagger' });
+    expect(state.gold).toBe(170);
     expect(knight.grid.items.some((p) => p.item.id === 'dagger')).toBe(false);
     expect(sellItem(state, SHOP, 0, 99)).toEqual({ ok: false, reason: 'item' });
     state.gold = 1;

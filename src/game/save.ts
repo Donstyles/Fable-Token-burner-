@@ -10,6 +10,7 @@ import type { Character } from './character';
 import { isClassId } from './classes';
 import { type ConditionSet, isConditionId } from './conditions';
 import { EQUIP_SLOTS, type Equipment, type InventoryGrid } from './inventory';
+import { isStandardBonus } from './enchant';
 import { isItemId } from './items';
 import type { QuestEntry } from './quests';
 import { isSkillId, RANKS, type SkillSet } from './skills';
@@ -144,6 +145,12 @@ function validateItem(i: unknown, where: string): string | null {
   if (!isRecord(i) || !isItemId(i['id'])) return `${where}: unknown item`;
   if (typeof i['identified'] !== 'boolean' || typeof i['broken'] !== 'boolean') {
     return `${where}: item flags`;
+  }
+  const bonus = i['bonus'];
+  if (bonus !== undefined) {
+    if (!isRecord(bonus) || !isStandardBonus(bonus['kind']) || !isFiniteNumber(bonus['power'])) {
+      return `${where}: item bonus`;
+    }
   }
   return null;
 }

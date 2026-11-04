@@ -31,6 +31,7 @@ import {
   TEMP_STAT,
 } from './buffs';
 import { specialLandChance } from './combat';
+import { BONUS_STAT, type StandardBonus } from './enchant';
 import {
   afflict,
   type Affliction,
@@ -48,6 +49,7 @@ import {
   type Equipment,
   equipmentArmor,
   equipmentRecoveryPenalty,
+  equippedItems,
   type InventoryGrid,
   meleeWeapon,
   rangedWeapon,
@@ -104,7 +106,20 @@ export function currentStats(c: Character): Stats {
   for (const [id, stat] of Object.entries(TEMP_STAT) as [MemberBuffId, Stat][]) {
     raised[stat] += buffPower(c.buffs, id);
   }
+  // Worn enchantments, "of Might" and its kin (DESIGN.md 17.18).
+  for (const [bonus, stat] of Object.entries(BONUS_STAT) as [StandardBonus, Stat][]) {
+    raised[stat] += wornBonus(c, bonus);
+  }
   return effectiveStats(raised, c.conditions);
+}
+
+/** The sum of a standard bonus over the member's worn items (items.md 3.1). */
+export function wornBonus(c: Character, kind: StandardBonus): number {
+  let total = 0;
+  for (const item of equippedItems(c.equipment)) {
+    if (item.bonus?.kind === kind) total += item.bonus.power;
+  }
+  return total;
 }
 
 /** Drop the member's buffs whose end has come; Haste leaves Weak behind (magic.md F5). */
@@ -127,7 +142,7 @@ export function meditationSp(c: Character): number {
 export function maxHp(c: Character): number {
   const cls = classDef(c.classId);
   const endurance = statBonus(currentStats(c).endurance);
-  return Math.max(1, baseHp(cls, c.level, endurance) + bodyBuildingHp(c));
+  return Math.max(1, baseHp(cls, c.level, endurance) + bodyBuildingHp(c) + wornBonus(c, 'hp'));
 }
 
 export function maxSp(c: Character): number {
@@ -135,7 +150,7 @@ export function maxSp(c: Character): number {
   if (cls.spFactor === 0) return 0;
   const stats = currentStats(c);
   const bonuses = cls.spStats.reduce((sum, s) => sum + statBonus(stats[s]), 0);
-  return Math.max(0, baseSp(cls, c.level, bonuses) + meditationSp(c));
+  return Math.max(0, baseSp(cls, c.level, bonuses) + meditationSp(c) + wornBonus(c, 'sp'));
 }
 
 /** Weapon skill contribution to hit: the level, at every rank (MM6-GAPS.md 4, RPGC). */
@@ -190,13 +205,16 @@ export function damageDice(c: Character, ranged = false): Dice | null {
     statBonus(currentStats(c).might) +
     meleeSkillFrom(c, SKILL_TO_DAMAGE) +
     heroism;
-  return { count: weapon.damage.count, sides: weapon.damage.sides, bonus };
+  // A spear's kind held in both hands, the off hand empty, adds a die of its own size.
+  const both = weapon.def?.extraDieTwoHanded && !c.equipment.offHand ? 1 : 0;
+  return { count: weapon.damage.count + both, sides: weapon.damage.sides, bonus };
 }
 
 export function armorClass(c: Character): number {
   const equipment = equipmentArmor(c.equipment, c.skills) + meleeSkillFrom(c, SKILL_TO_ARMOR);
   const stoneSkin = buffPower(c.buffs, 'stone-skin');
-  return Math.max(0, statBonus(currentStats(c).speed) + equipment + stoneSkin);
+  const worn = wornBonus(c, 'ac');
+  return Math.max(0, statBonus(currentStats(c).speed) + equipment + stoneSkin + worn);
 }
 
 /**

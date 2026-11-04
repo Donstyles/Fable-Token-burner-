@@ -1,9 +1,12 @@
 /**
- * Treasure (DESIGN.md 17.12; items.md 4): what a chest holds and what a body carries, made
- * at a treasure level from 1 to 6. The rules are MM7's as OpenEnroth reads them, with our
- * own weights where MM6's are not public: an item whose lowest level is L weighs 10 at L, 7
- * at L + 1 and 3 at L + 2; potions and scrolls weigh less than arms and armour.
+ * Treasure (DESIGN.md 17.12, 17.18; items.md 4): what a chest holds and what a body carries,
+ * made at a treasure level from 1 to 6. The rules are MM7's as OpenEnroth reads them, with
+ * our own weights where MM6's are not public: an item whose lowest level is L weighs 10 at L,
+ * 7 at L + 1 and 3 at L + 2; potions and scrolls weigh less than arms and armour. A made item
+ * starts unidentified unless its difficulty is 0, and armour or jewellery may carry one of
+ * MM6's standard enchantments (enchant.ts).
  */
+import { itemValue, rollStandardBonus } from './enchant';
 import { ITEM_IDS, ITEMS, type ItemId, type ItemInstance, type ItemKind } from './items';
 import { addItem, createGrid, type InventoryGrid } from './inventory';
 import type { MonsterDef } from './monsters';
@@ -38,7 +41,9 @@ export function weightAt(id: ItemId, level: number): number {
 
 /**
  * One random item of a treasure level, narrowed to a kind when asked; null when no item of
- * that kind comes at the level. Arms and armour of level 2 and up start unidentified.
+ * that kind comes at the level (items.md 4.2, MM7's rule with MM6's tables). A kind with a
+ * difficulty above 0 starts unidentified; armour and jewellery may carry a standard
+ * enchantment by the level's chance (enchant.ts).
  */
 export function randomItem(level: number, rng: Rng, kind?: ItemKind): ItemInstance | null {
   const lvl = Math.max(1, Math.min(6, Math.round(level)));
@@ -53,8 +58,10 @@ export function randomItem(level: number, rng: Rng, kind?: ItemKind): ItemInstan
     pick -= c.weight;
     if (pick < 0) {
       const def = ITEMS[c.id];
-      const plain = CONSUMABLE.includes(def.kind) || def.kind === 'misc' || lvl < 2;
-      return { id: c.id, identified: plain, broken: false };
+      const item: ItemInstance = { id: c.id, identified: def.difficulty === 0, broken: false };
+      const bonus = rollStandardBonus(def.kind, lvl, rng);
+      if (bonus) item.bonus = bonus;
+      return item;
     }
   }
   return null;
@@ -96,7 +103,7 @@ export function chestContents(
   // out by trinkets.
   const items = [
     ...fixed.map((id): ItemInstance => ({ id, identified: true, broken: false })),
-    ...rolled.sort((a, b) => ITEMS[b.id].value - ITEMS[a.id].value),
+    ...rolled.sort((a, b) => itemValue(b, ITEMS[b.id]) - itemValue(a, ITEMS[a.id])),
   ];
   for (const item of items) addItem(grid, item);
   return { gold, grid };

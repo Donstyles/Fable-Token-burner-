@@ -10,28 +10,45 @@ describe('treasure (DESIGN 17.12)', () => {
     expect(weightAt('dagger', 2)).toBe(7);
     expect(weightAt('dagger', 3)).toBe(3);
     expect(weightAt('dagger', 4)).toBe(0);
-    expect(weightAt('long-sword', 1)).toBe(0);
-    expect(weightAt('long-sword', 2)).toBe(10);
+    expect(weightAt('long-sword', 1)).toBe(10);
+    expect(weightAt('warrior-sword', 1)).toBe(0);
+    expect(weightAt('warrior-sword', 2)).toBe(10);
     expect(weightAt('potion-healing', 1)).toBe(4);
     expect(weightAt('iron-key', 1)).toBe(0);
   });
 
-  it('draws an item of the level, narrowed to a kind, unidentified arms past level 1', () => {
+  it('draws an item of the level, narrowed to a kind, unidentified unless its difficulty is 0', () => {
     const rng = mulberry32(7);
     const seen = new Set<ItemId>();
     for (let i = 0; i < 200; i++) {
       const item = randomItem(1, rng)!;
       expect(weightAt(item.id, 1)).toBeGreaterThan(0);
-      expect(item.identified).toBe(true);
+      expect(item.identified).toBe(ITEMS[item.id].difficulty === 0);
+      // Level 1 gives no enchantment (items.md 4.3).
+      expect(item.bonus).toBeUndefined();
       seen.add(item.id);
     }
     expect(seen.size).toBeGreaterThan(5);
     for (let i = 0; i < 50; i++) {
       const weapon = randomItem(2, rng, 'weapon')!;
       expect(ITEMS[weapon.id].kind).toBe('weapon');
-      expect(weapon.identified).toBe(false);
+      expect(weapon.identified).toBe(ITEMS[weapon.id].difficulty === 0);
+      expect(weapon.bonus).toBeUndefined();
     }
-    expect(randomItem(1, rng, 'amulet')).toBeNull();
+    // Rings come at level 1; amulets of level 1 exist too now (items.md 2.3, our bands).
+    expect(randomItem(1, rng, 'amulet')).not.toBeNull();
+    // Armour and jewellery of level 3: two in five carry a standard bonus of strength 3 to 8.
+    let enchanted = 0;
+    for (let i = 0; i < 300; i++) {
+      const ring = randomItem(3, rng, 'ring')!;
+      if (ring.bonus) {
+        enchanted++;
+        expect(ring.bonus.power).toBeGreaterThanOrEqual(3);
+        expect(ring.bonus.power).toBeLessThanOrEqual(8);
+      }
+    }
+    expect(enchanted).toBeGreaterThan(80);
+    expect(enchanted).toBeLessThan(160);
   });
 
   it('piles gold by level', () => {

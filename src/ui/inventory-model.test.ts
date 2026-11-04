@@ -9,6 +9,8 @@ import {
   equipSelected,
   giveSelected,
   gridBlocks,
+  identifySelected,
+  repairSelected,
   slotRows,
   tapCell,
   tapSlot,
@@ -28,7 +30,7 @@ describe('inventory rows', () => {
         y: 0,
         w: 1,
         h: 1,
-        name: 'Potion of Healing',
+        name: 'Cure Wounds',
         glyph: 'Po',
         kind: 'potion',
         selected: false,
@@ -41,7 +43,7 @@ describe('inventory rows', () => {
     expect(rows[0]).toEqual({
       slot: 'mainHand',
       label: 'Main hand',
-      name: 'Long Sword',
+      name: 'Longsword',
       glyph: 'Wp',
       kind: 'weapon',
       item: 'long-sword',
@@ -89,7 +91,7 @@ describe('equipping', () => {
     const knight = freshState().party[0]!;
     placeItem(knight.grid, createItem('short-sword'), 2, 0);
     const r = equipSelected(knight, { kind: 'grid', index: 1 });
-    expect(r).toEqual({ selection: null, message: 'Short Sword equipped.' });
+    expect(r).toEqual({ selection: null, message: 'Cutlass equipped.' });
     expect(knight.equipment.mainHand?.id).toBe('short-sword');
     expect(knight.grid.items.map((p) => p.item.id)).toEqual(['potion-healing', 'long-sword']);
   });
@@ -113,7 +115,7 @@ describe('equipping', () => {
     placeItem(knight.grid, createItem('short-sword'), 0, 0);
     const sel = { kind: 'grid', index: 0 } as const;
     const r = equipSelected(knight, sel);
-    expect(r).toEqual({ selection: sel, message: 'No room in the pack for Long Sword.' });
+    expect(r).toEqual({ selection: sel, message: 'No room in the pack for Longsword.' });
     expect(knight.equipment.mainHand?.id).toBe('long-sword');
     expect(knight.grid.items).toHaveLength(1);
     expect(knight.grid.items[0]!.item.id).toBe('short-sword');
@@ -122,7 +124,9 @@ describe('equipping', () => {
   it('tapping a slot equips the selection or selects the worn item', () => {
     const knight = freshState().party[0]!;
     placeItem(knight.grid, createItem('shield'), 2, 0);
-    expect(tapSlot(knight, { kind: 'grid', index: 1 }, 'helmet').message).toBe('Shield equipped.');
+    expect(tapSlot(knight, { kind: 'grid', index: 1 }, 'helmet').message).toBe(
+      'Wooden Shield equipped.',
+    );
     expect(knight.equipment.offHand?.id).toBe('shield');
     expect(tapSlot(knight, { kind: 'grid', index: 0 }, 'offHand').selection).toEqual({
       kind: 'slot',
@@ -148,7 +152,7 @@ describe('taking off', () => {
     expect(knight.equipment.armor).toBeUndefined();
     expect(knight.grid.items[1]).toMatchObject({ x: 2, y: 2 });
     const r = unequipSelected(knight, { kind: 'slot', slot: 'mainHand' });
-    expect(r.message).toBe('Long Sword taken off.');
+    expect(r.message).toBe('Longsword taken off.');
     expect(knight.equipment.mainHand).toBeUndefined();
     expect(knight.grid.items).toHaveLength(3);
   });
@@ -211,7 +215,7 @@ describe('giving', () => {
     const sel = { kind: 'grid', index: 0 } as const;
     expect(giveSelected(knight, archer, sel)).toEqual({
       selection: null,
-      message: 'Potion of Healing given to Mira.',
+      message: 'Cure Wounds given to Mira.',
     });
     expect(knight.grid.items).toHaveLength(0);
     expect(archer.grid.items).toHaveLength(2);
@@ -223,5 +227,39 @@ describe('giving', () => {
       selection: sel,
       message: 'Mira has no room for it.',
     });
+  });
+});
+
+describe('identify and repair by skill (DESIGN 17.18, items.md 5.2, 5.3)', () => {
+  it('offers Identify for an unknown item and names it when the skill reaches its difficulty', () => {
+    const knight = freshState().party[0]!;
+    placeItem(knight.grid, createItem('warrior-sword', false), 2, 0);
+    const sel = { kind: 'grid', index: 1 } as const;
+    expect(actions(knight, sel).map((a) => [a.id, a.enabled])).toEqual([
+      ['identify', false],
+      ['equip', true],
+    ]);
+    expect(identifySelected(knight, sel).message).toBe('Alric cannot make it out.');
+    // Difficulty 3: Identify Item 2 at Expert reaches it.
+    knight.skills.identify = { level: 2, rank: 'expert' };
+    expect(actions(knight, sel)[0]).toMatchObject({ id: 'identify', enabled: true });
+    expect(identifySelected(knight, sel).message).toBe('It is a Warrior Sword.');
+    expect(knight.grid.items[1]!.item.identified).toBe(true);
+    expect(actions(knight, sel).map((a) => a.id)).toEqual(['equip']);
+  });
+
+  it('offers Repair for a broken item and mends it when Repair Item reaches it', () => {
+    const knight = freshState().party[0]!;
+    placeItem(knight.grid, { ...createItem('shield'), broken: true }, 2, 0);
+    const sel = { kind: 'grid', index: 1 } as const;
+    expect(actions(knight, sel)[0]).toMatchObject({
+      id: 'repair',
+      enabled: false,
+      note: 'Needs Repair Item 1.',
+    });
+    expect(repairSelected(knight, sel).message).toBe('Alric cannot mend it.');
+    knight.skills.repair = { level: 1, rank: 'normal' };
+    expect(repairSelected(knight, sel).message).toBe('Wooden Shield repaired.');
+    expect(knight.grid.items[1]!.item.broken).toBe(false);
   });
 });

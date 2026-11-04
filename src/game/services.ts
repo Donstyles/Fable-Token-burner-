@@ -17,7 +17,8 @@ import { healCharacter, isLiving, maxHp, restoreSp } from './character';
 import { type Affliction, afflictions, cureAll, worstCondition } from './conditions';
 import { canLevelUp, levelUp, type LevelUpResult, trainingCost } from './experience';
 import { addItem, removeItem } from './inventory';
-import { createItem, type ItemDef, type ItemId, itemDef } from './items';
+import { itemValue } from './enchant';
+import { createItem, type ItemDef, type ItemId, type ItemInstance, itemDef } from './items';
 import { rest, type RestResult } from './rest';
 import { type MagicSchool, skillBonus } from './skills';
 import { canLearnSpell, type LearnResult, learnSpell } from './spellbook';
@@ -230,9 +231,11 @@ export function buyPrice(shop: ShopDef, def: ItemDef, c: Character): number {
   return Math.max(1, Math.round(def.value * shop.priceMultiplier * (1 - merchantFactor(c))));
 }
 
-export function sellPrice(shop: ShopDef, def: ItemDef, c: Character, broken = false): number {
-  const base = def.value * 0.5 * (1 + merchantFactor(c));
-  return Math.max(1, Math.round(Math.min(def.value, base) * (broken ? 0.5 : 1)));
+/** What the shop pays for a copy: its worth with its enchantment, half of it when broken. */
+export function sellPrice(shop: ShopDef, item: ItemInstance, c: Character): number {
+  const value = itemValue(item, itemDef(item));
+  const base = value * 0.5 * (1 + merchantFactor(c));
+  return Math.max(1, Math.round(Math.min(value, base) * (item.broken ? 0.5 : 1)));
 }
 
 export type BuyResult =
@@ -264,7 +267,7 @@ export function sellItem(
   if (isError(c)) return c;
   const placed = c.grid.items[gridIndex];
   if (!placed) return { ok: false, reason: 'item' };
-  const price = sellPrice(shop, itemDef(placed.item), c, placed.item.broken);
+  const price = sellPrice(shop, placed.item, c);
   removeItem(c.grid, gridIndex);
   state.gold += price;
   return { ok: true, price, item: placed.item.id };

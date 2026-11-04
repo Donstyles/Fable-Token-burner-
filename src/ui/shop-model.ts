@@ -74,7 +74,7 @@ export function shopView(state: GameState, shop: ShopDef, index: number): ShopVi
     return {
       gridIndex,
       name: itemName(p.item),
-      price: sellPrice(shop, def, c, p.item.broken),
+      price: sellPrice(shop, p.item, c),
       broken: p.item.broken,
       identified: p.item.identified,
       repairPrice: repairPrice(shop, def),

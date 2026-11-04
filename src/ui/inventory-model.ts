@@ -16,6 +16,7 @@ import {
   restoreSp,
 } from '../game/character';
 import { cure, worstCondition } from '../game/conditions';
+import { itemDisplayName } from '../game/enchant';
 import {
   addItem,
   canEquip,
@@ -40,7 +41,7 @@ import {
   type ItemId,
 } from '../game/items';
 import { diceText } from '../game/rng';
-import { SKILL_NAMES } from '../game/skills';
+import { SKILL_NAMES, skillBonus } from '../game/skills';
 import { applySpell, type SpellEffect, type SpellId, spellDef } from '../game/spells';
 import { formatSeconds } from './sheet-model';
 
@@ -124,9 +125,9 @@ export interface UseOutcome extends TapOutcome {
   cast?: { spell: SpellId; effects: SpellEffect[] };
 }
 
+/** "Fine Ring of Might", or the generic name while unidentified (DESIGN.md 17.18). */
 export function itemName(item: ItemInstance): string {
-  const def = itemDef(item);
-  return item.identified ? def.name : `Unknown ${def.kind}`;
+  return itemDisplayName(item, itemDef(item));
 }
 
 export function gridBlocks(c: { grid: InventoryGrid }, sel: InvSelection): GridBlock[] {
@@ -332,10 +333,46 @@ export function giveSelected(from: Character, to: Character, sel: InvSelection):
 }
 
 export interface InvAction {
-  id: 'equip' | 'unequip' | 'use';
+  id: 'equip' | 'unequip' | 'use' | 'identify' | 'repair';
   label: string;
   enabled: boolean;
   note: string | null;
+}
+
+/**
+ * Can the member identify (or repair) the item: Identify Item (Repair Item) × its rank's
+ * multiplier reaches the difficulty (items.md 5.2, 5.3; MM7's rule, RPGC's multipliers).
+ */
+export function skillReaches(
+  c: Character,
+  skill: 'identify' | 'repair',
+  item: ItemInstance,
+): boolean {
+  return skillBonus(c.skills, skill) >= itemDef(item).difficulty;
+}
+
+/** The member inspects the item and names it, if their Identify Item skill reaches it. */
+export function identifySelected(c: Character, sel: InvSelection): TapOutcome {
+  const placed = selectedGridItem(c, sel);
+  if (!placed || sel?.kind !== 'grid') return { selection: sel, message: null };
+  if (placed.item.identified) return { selection: sel, message: 'It is already known.' };
+  if (!skillReaches(c, 'identify', placed.item)) {
+    return { selection: sel, message: `${c.name} cannot make it out.` };
+  }
+  placed.item.identified = true;
+  return { selection: sel, message: `It is a ${itemName(placed.item)}.` };
+}
+
+/** The member mends the item, if their Repair Item skill reaches it. */
+export function repairSelected(c: Character, sel: InvSelection): TapOutcome {
+  const placed = selectedGridItem(c, sel);
+  if (!placed || sel?.kind !== 'grid') return { selection: sel, message: null };
+  if (!placed.item.broken) return { selection: sel, message: 'It is not broken.' };
+  if (!skillReaches(c, 'repair', placed.item)) {
+    return { selection: sel, message: `${c.name} cannot mend it.` };
+  }
+  placed.item.broken = false;
+  return { selection: sel, message: `${itemName(placed.item)} repaired.` };
 }
 
 /** The buttons for the selection, with the reason when one cannot be used. */
@@ -347,6 +384,24 @@ export function actions(c: Character, sel: InvSelection): InvAction[] {
   if (!placed) return [];
   const def = itemDef(placed.item);
   const out: InvAction[] = [];
+  if (!placed.item.identified) {
+    const can = skillReaches(c, 'identify', placed.item);
+    out.push({
+      id: 'identify',
+      label: 'Identify',
+      enabled: can,
+      note: can ? null : `Needs Identify Item ${def.difficulty}.`,
+    });
+  }
+  if (placed.item.broken) {
+    const can = skillReaches(c, 'repair', placed.item);
+    out.push({
+      id: 'repair',
+      label: 'Repair',
+      enabled: can,
+      note: can ? null : `Needs Repair Item ${def.difficulty}.`,
+    });
+  }
   if (isEquippable(def)) {
     const reason = equipReason(c, placed.item);
     out.push({ id: 'equip', label: 'Equip', enabled: reason === null, note: reason });

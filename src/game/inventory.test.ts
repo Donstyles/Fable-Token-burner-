@@ -44,8 +44,9 @@ describe('item table', () => {
       else expect(def.value).toBeGreaterThan(0);
       if (def.kind === 'weapon') {
         expect(def.damage).toBeDefined();
-        expect(def.skill).toBeDefined();
-        expect(Object.keys(WEAPON_RECOVERY)).toContain(def.skill);
+        // A club needs no skill (items.md 2.1); every other weapon names its type's.
+        if (def.skill) expect(Object.keys(WEAPON_RECOVERY)).toContain(def.skill);
+        else expect(def.generic).toBe('Club');
       }
       if (def.kind === 'armor' || def.kind === 'shield') {
         expect(def.armor).toBeGreaterThan(0);

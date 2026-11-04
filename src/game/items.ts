@@ -1,14 +1,18 @@
 /**
- * Item definitions (Phase 5 step 1). Every item has a kind, a footprint on the MM6 inventory
- * grid, a value in gold and, by kind, weapon dice with the skill that wields them, an armour
- * value with the skill that wears it, or a use for potions and scrolls. The starter set covers
- * the slice: dice and values follow the MM6 item table as community lists give it (dagger 2d2,
- * long sword 3d3, staff 2d4, long bow 3d3, leather +4, chain +8). Recovery is MM6's by weapon and
- * armour type, in MM6's units (MM6-GAPS.md 8, GF-M), not per item. Simplifications: no
- * enchantments or stat requirements yet; the paper-doll art ids come with the Phase 4 doll
- * pipeline.
+ * Item definitions (Phase 5 step 1; MM6's catalogue since DESIGN.md 17.18). Every item has a
+ * kind, a footprint on the MM6 inventory grid, a value in gold, a difficulty to identify and
+ * repair it, the picture it is drawn with, what an unidentified one is called and, by kind,
+ * weapon dice with the skill that wields them, an armour value with the skill that wears it,
+ * or a use for potions and scrolls. The arms, armour and jewellery are MM6's own 132 (the two
+ * blasters left out), as catalogue.ts tables them by family (docs/gaps/items.md 2); the
+ * potions, scrolls and keys are the slice's. Recovery is MM6's by weapon and armour type, in
+ * MM6's units (MM6-GAPS.md 8, GF-M), not per item. A copy may carry one of MM6's standard
+ * enchantments (enchant.ts). Simplifications: no stat requirements; the special enchantments,
+ * gems, wands, herbs and the spellbooks as items wait (items.md 3.2, 2.4 to 2.7).
  */
+import { CATALOGUE, type Family } from './catalogue';
 import type { ConditionId } from './conditions';
+import type { StandardBonus } from './enchant';
 import type { Dice } from './rng';
 import type { ArmorSkill, SkillId, WeaponSkill } from './skills';
 import type { SpellId } from './spells';
@@ -48,6 +52,8 @@ export interface ItemDef {
   skill?: SkillId;
   damage?: Dice;
   twoHanded?: boolean;
+  /** A spear's kind: one hand, or two for one more die of its size (items.md 2.1). */
+  extraDieTwoHanded?: boolean;
   ranged?: boolean;
   armor?: number;
   use?: ItemUse;
@@ -57,23 +63,147 @@ export interface ItemDef {
    * next and 3 at the one after (DESIGN.md 17.12).
    */
   level?: number;
+  /** To identify and to repair it: Identify Item or Repair Item × rank must reach it (items.md 5). */
+  difficulty: number;
+  /** The asset id of its picture (assets/items/<picture>.png), shared across a family. */
+  picture: ItemId;
+  /** What an unidentified one is called. */
+  generic: string;
 }
 
 export const ITEM_IDS = [
-  'dagger',
-  'short-sword',
   'long-sword',
-  'mace',
+  'warrior-sword',
+  'crusader-sword',
+  'champion-sword',
+  'lionheart-sword',
+  'two-handed-sword',
+  'great-sword',
+  'heroic-sword',
+  'broadsword',
+  'steel-broadsword',
+  'mighty-broadsword',
+  'short-sword',
+  'pirate-cutlass',
+  'master-cutlass',
+  'dagger',
+  'blood-dagger',
+  'shadow-dagger',
+  'mage-dagger',
+  'jeweled-dagger',
+  'long-dagger',
+  'piercing-dagger',
+  'divine-dagger',
   'axe',
+  'battle-axe',
+  'war-axe',
+  'dwarven-axe',
+  'supreme-axe',
+  'poleax',
+  'heavy-poleax',
+  'grand-poleax',
   'spear',
-  'staff',
+  'stout-spear',
+  'serpent-spear',
+  'savage-spear',
+  'sacred-spear',
+  'halberd',
+  'massive-halberd',
+  'elite-halberd',
+  'trident',
+  'ornate-trident',
+  'titanic-trident',
   'bow',
+  'elven-bow',
+  'precision-bow',
+  'magic-bow',
+  'stellar-bow',
+  'crossbow',
+  'accurate-crossbow',
+  'true-crossbow',
+  'mace',
+  'wicked-mace',
+  'thunder-mace',
+  'wonder-mace',
+  'death-mace',
+  'hammer',
+  'dark-hammer',
+  'holy-hammer',
+  'club',
+  'spiked-club',
+  'killer-club',
+  'staff',
+  'emerald-staff',
+  'power-staff',
   'leather-armor',
+  'studded-leather',
+  'enchanted-leather',
+  'dragon-leather',
+  'imperial-leather',
   'chain-mail',
+  'steel-chain-mail',
+  'noble-chain-mail',
+  'royal-chain-mail',
+  'majestic-chain-mail',
+  'plate-armor',
+  'steel-plate-armor',
+  'golden-plate-armor',
+  'kite-shield',
+  'tower-shield',
+  'castle-shield',
+  'celestial-shield',
+  'olympian-shield',
   'shield',
+  'bronze-shield',
+  'steel-shield',
+  'spirit-shield',
+  'astral-shield',
   'helmet',
+  'steel-helm',
+  'guardian-helm',
+  'defender-helm',
+  'angelic-helm',
+  'cloth-hat',
+  'fancy-hat',
+  'wizard-cap',
+  'crown',
+  'regal-crown',
+  'almighty-crown',
+  'leather-belt',
+  'mercenary-belt',
+  'vanguard-belt',
+  'warlord-belt',
+  'sovereign-belt',
+  'leather-cloak',
+  'phantom-cloak',
+  'elven-cloak',
+  'cardinal-cloak',
+  'dooms-day-cloak',
+  'gauntlets',
+  'knight-gauntlets',
+  'paladin-gauntlets',
+  'cavalier-gauntlets',
+  'ultimate-gauntlets',
   'boots',
+  'steel-boots',
+  'armored-boots',
+  'sterling-boots',
+  'ultimate-boots',
   'copper-ring',
+  'sparkling-ring',
+  'lunar-ring',
+  'witch-ring',
+  'blessed-ring',
+  'valuable-ring',
+  'precious-ring',
+  'ethereal-ring',
+  'exquisite-ring',
+  'scarab-ring',
+  'turquoise-amulet',
+  'gothic-amulet',
+  'claw-amulet',
+  'ancient-amulet',
+  'ruby-star-amulet',
   'potion-healing',
   'scroll-torch-light',
   'scroll-fire-bolt',
@@ -81,206 +211,94 @@ export const ITEM_IDS = [
 ] as const;
 export type ItemId = (typeof ITEM_IDS)[number];
 
-export const ITEMS: Record<ItemId, ItemDef> = {
-  dagger: {
-    id: 'dagger',
-    name: 'Dagger',
-    kind: 'weapon',
-    w: 1,
-    h: 2,
-    value: 15,
-    skill: 'dagger',
-    damage: { count: 2, sides: 2 },
-    level: 1,
-  },
-  'short-sword': {
-    id: 'short-sword',
-    name: 'Short Sword',
-    kind: 'weapon',
-    w: 1,
-    h: 3,
-    value: 30,
-    skill: 'sword',
-    damage: { count: 2, sides: 3 },
-    level: 1,
-  },
-  'long-sword': {
-    id: 'long-sword',
-    name: 'Long Sword',
-    kind: 'weapon',
-    w: 1,
-    h: 4,
-    value: 50,
-    skill: 'sword',
-    damage: { count: 3, sides: 3 },
-    level: 2,
-  },
-  mace: {
-    id: 'mace',
-    name: 'Mace',
-    kind: 'weapon',
-    w: 1,
-    h: 3,
-    value: 50,
-    skill: 'mace',
-    damage: { count: 2, sides: 4 },
-    level: 1,
-  },
-  axe: {
-    id: 'axe',
-    name: 'Axe',
-    kind: 'weapon',
-    w: 2,
-    h: 3,
-    value: 50,
-    skill: 'axe',
-    damage: { count: 3, sides: 2 },
-    level: 2,
-  },
-  spear: {
-    id: 'spear',
-    name: 'Spear',
-    kind: 'weapon',
-    // Five cells for a spear's length at the bag's scale (DESIGN 16.8: a cell is 34 cm).
-    w: 1,
-    h: 5,
-    value: 50,
-    skill: 'spear',
-    damage: { count: 1, sides: 9 },
-    twoHanded: true,
-    level: 1,
-  },
-  staff: {
-    id: 'staff',
-    name: 'Staff',
-    kind: 'weapon',
-    w: 1,
-    h: 4,
-    value: 20,
-    skill: 'staff',
-    damage: { count: 2, sides: 4 },
-    twoHanded: true,
-    level: 1,
-  },
-  bow: {
-    id: 'bow',
-    name: 'Long Bow',
-    kind: 'weapon',
-    w: 2,
-    h: 4,
-    value: 100,
-    skill: 'bow',
-    damage: { count: 3, sides: 3 },
-    ranged: true,
-    level: 2,
-  },
-  'leather-armor': {
-    id: 'leather-armor',
-    name: 'Leather Armor',
-    kind: 'armor',
-    w: 2,
-    h: 3,
-    value: 30,
-    skill: 'leather',
-    armor: 4,
-    level: 1,
-  },
-  'chain-mail': {
-    id: 'chain-mail',
-    name: 'Chain Mail',
-    kind: 'armor',
-    w: 2,
-    h: 4,
-    value: 150,
-    skill: 'chain',
-    armor: 8,
-    level: 2,
-  },
-  shield: {
-    id: 'shield',
-    name: 'Shield',
-    kind: 'shield',
-    w: 2,
-    h: 2,
-    value: 40,
-    skill: 'shield',
-    armor: 4,
-    level: 1,
-  },
-  helmet: {
-    id: 'helmet',
-    name: 'Helmet',
-    kind: 'helmet',
-    w: 2,
-    h: 2,
-    value: 30,
-    armor: 2,
-    level: 1,
-  },
-  boots: {
-    id: 'boots',
-    name: 'Boots',
-    kind: 'boots',
-    w: 2,
-    h: 2,
-    value: 20,
-    armor: 2,
-    level: 1,
-  },
-  'copper-ring': {
-    id: 'copper-ring',
-    name: 'Copper Ring',
-    kind: 'ring',
-    w: 1,
-    h: 1,
-    value: 50,
-    level: 1,
-  },
-  'potion-healing': {
+function fromCatalogue(e: (typeof CATALOGUE)[number]): ItemDef {
+  const f: Family = e.family;
+  const def: ItemDef = {
+    id: e.id,
+    name: e.name,
+    kind: f.kind,
+    w: f.w,
+    h: f.h,
+    value: e.value,
+    level: e.level,
+    difficulty: e.difficulty,
+    picture: f.picture,
+    generic: f.generic,
+  };
+  if (f.skill) def.skill = f.skill;
+  if (f.twoHanded) def.twoHanded = true;
+  if (f.extraDieTwoHanded) def.extraDieTwoHanded = true;
+  if (f.ranged) def.ranged = true;
+  if (e.damage) def.damage = e.damage;
+  if (e.armor !== undefined) def.armor = e.armor;
+  return def;
+}
+
+/** The slice's potions, scrolls and keys (items.md 2.6, 2.7, 2.10; values MM6's). */
+const OTHERS: ItemDef[] = [
+  {
     id: 'potion-healing',
-    name: 'Potion of Healing',
+    name: 'Cure Wounds',
     kind: 'potion',
     w: 1,
     h: 1,
-    value: 50,
+    value: 10,
     use: { kind: 'heal', amount: 10 },
     level: 1,
+    difficulty: 0,
+    picture: 'potion-healing',
+    generic: 'Potion',
   },
-  'scroll-torch-light': {
+  {
     id: 'scroll-torch-light',
     name: 'Scroll of Torch Light',
     kind: 'scroll',
     w: 1,
     h: 1,
-    value: 50,
+    value: 10,
     use: { kind: 'spell', spell: 'torch-light', skill: 1 },
     level: 1,
+    difficulty: 0,
+    picture: 'scroll-torch-light',
+    generic: 'Scroll',
   },
-  'scroll-fire-bolt': {
+  {
     id: 'scroll-fire-bolt',
     name: 'Scroll of Fire Bolt',
     kind: 'scroll',
     w: 1,
     h: 1,
-    value: 200,
+    value: 40,
     use: { kind: 'spell', spell: 'fire-bolt', skill: 4 },
     level: 2,
+    difficulty: 0,
+    picture: 'scroll-fire-bolt',
+    generic: 'Scroll',
   },
-  'iron-key': {
+  {
     id: 'iron-key',
     name: 'Iron Key',
     kind: 'misc',
     w: 1,
     h: 2,
     value: 0,
+    difficulty: 0,
+    picture: 'iron-key',
+    generic: 'Key',
   },
-};
+];
+
+export const ITEMS: Record<ItemId, ItemDef> = Object.fromEntries(
+  [...CATALOGUE.map(fromCatalogue), ...OTHERS].map((d) => [d.id, d]),
+) as Record<ItemId, ItemDef>;
 
 /** One item in the world: its definition plus the state MM6 tracks per copy. */
 export interface ItemInstance {
   id: ItemId;
   identified: boolean;
   broken: boolean;
+  /** A standard enchantment, "of Might" and its kin (enchant.ts). */
+  bonus?: { kind: StandardBonus; power: number };
 }
 
 export function isItemId(value: unknown): value is ItemId {
@@ -310,7 +328,7 @@ export const WEAPON_RECOVERY: Readonly<Record<WeaponSkill, number>> = {
   mace: 80,
 };
 
-/** Bare hands recover as slowly as a staff: MM6 has no Unarmed skill (GF-M). */
+/** Bare hands recover as slowly as a staff: MM6 has no Unarmed skill (GF-M); a club the same. */
 export const UNARMED_RECOVERY = 100;
 
 /** Recovery added while armour or a shield is worn, before skill (MM6-GAPS.md 8, GF-M). */

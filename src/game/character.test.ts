@@ -24,6 +24,7 @@ import {
   recoverySec,
   recoveryUnits,
   restoreSp,
+  wornBonus,
 } from './character';
 import { applyBuff, HASTE_RECOVERY } from './buffs';
 import { afflict } from './conditions';
@@ -330,5 +331,45 @@ describe('buffs on the sheet (DESIGN 17.17)', () => {
     expect(recoveryUnits(k)).toBe(recovery);
     expect(expireCharacterBuffs(k, 65).sort()).toEqual(['bless', 'heroism', 'stone-skin']);
     expect(attackBonus(k)).toBe(attack);
+  });
+});
+
+describe('worn enchantments and the spear held in both hands (DESIGN 17.18)', () => {
+  it('adds a worn bonus to its statistic, hit points, spell points or armour class', () => {
+    const r = createCharacter(knightInput());
+    if (!r.ok) throw new Error('fixture');
+    const k = r.character;
+    const might = currentStats(k).might;
+    const hp = maxHp(k);
+    const ac = armorClass(k);
+    equipItem(
+      k.equipment,
+      { ...createItem('copper-ring'), bonus: { kind: 'might', power: 4 } },
+      k.skills,
+    );
+    equipItem(k.equipment, { ...createItem('helmet'), bonus: { kind: 'hp', power: 7 } }, k.skills);
+    equipItem(
+      k.equipment,
+      { ...createItem('leather-belt'), bonus: { kind: 'ac', power: 3 } },
+      k.skills,
+    );
+    expect(currentStats(k).might).toBe(might + 4);
+    expect(wornBonus(k, 'hp')).toBe(7);
+    // The helm's own 2 and the belt's 3 plus Might's effect on nothing: armour class rises by 5.
+    expect(armorClass(k)).toBe(ac + 2 + 3);
+    expect(maxHp(k)).toBeGreaterThanOrEqual(hp + 7);
+  });
+
+  it('gives a spear one more die with the off hand empty, none with a shield', () => {
+    const r = createCharacter(knightInput());
+    if (!r.ok) throw new Error('fixture');
+    const k = r.character;
+    k.skills.spear = { level: 1, rank: 'normal' };
+    expect(equipItem(k.equipment, createItem('spear'), k.skills).ok).toBe(true);
+    delete k.equipment.offHand;
+    expect(damageDice(k)!.count).toBe(2);
+    equipItem(k.equipment, createItem('shield'), k.skills);
+    expect(k.equipment.offHand?.id).toBe('shield');
+    expect(damageDice(k)!.count).toBe(1);
   });
 });

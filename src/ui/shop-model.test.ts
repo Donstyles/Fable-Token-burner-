@@ -20,19 +20,20 @@ describe('shop', () => {
     const state = freshState();
     const v = shopView(state, SHOP, 0);
     expect(v.merchant).toBe(0);
+    // MM6's values at the house's markup of two: a dagger 8, a wooden shield 100, the potion 10.
     expect(v.buy.map((b) => [b.name, b.price, b.canBuy])).toEqual([
-      ['Dagger', 30, true],
-      ['Shield', 80, true],
-      ['Potion of Healing', 100, true],
+      ['Dagger', 16, true],
+      ['Wooden Shield', 200, true],
+      ['Cure Wounds', 20, true],
     ]);
     expect(v.sell).toEqual([
       {
         gridIndex: 0,
-        name: 'Potion of Healing',
-        price: 25,
+        name: 'Cure Wounds',
+        price: 5,
         broken: false,
         identified: true,
-        repairPrice: 25,
+        repairPrice: 5,
         identifyPrice: 10,
       },
     ]);
@@ -42,15 +43,15 @@ describe('shop', () => {
     const state = freshState();
     expect(buy(state, SHOP, 'dagger', 0)).toEqual({
       ok: true,
-      message: 'Bought Dagger for 30 gold.',
+      message: 'Bought Dagger for 16 gold.',
     });
-    expect(state.gold).toBe(170);
+    expect(state.gold).toBe(184);
     expect(state.party[0]!.grid.items.map((p) => p.item.id)).toEqual(['potion-healing', 'dagger']);
     expect(sell(state, SHOP, 0, 0)).toEqual({
       ok: true,
-      message: 'Sold Potion of Healing for 25 gold.',
+      message: 'Sold Cure Wounds for 5 gold.',
     });
-    expect(state.gold).toBe(195);
+    expect(state.gold).toBe(189);
     expect(sell(state, SHOP, 0, 5)).toEqual({ ok: false, message: 'No such item.' });
     expect(buy(state, SHOP, 'long-sword', 0)).toEqual({ ok: false, message: 'Not sold here.' });
     state.gold = 10;
@@ -71,16 +72,17 @@ describe('shop', () => {
     const state = freshState();
     const knight = state.party[0]!;
     placeItem(knight.grid, { ...createItem('shield', false), broken: true }, 2, 0);
+    // Unidentified, it goes by its family's name (DESIGN 17.18); worth 100, 25 when broken.
     expect(shopView(state, SHOP, 0).sell[1]).toMatchObject({
-      name: 'Unknown shield',
+      name: 'Small Shield',
       broken: true,
       identified: false,
-      repairPrice: 20,
-      price: 10,
+      repairPrice: 50,
+      price: 25,
     });
     expect(identify(state, SHOP, 0, 1)).toEqual({
       ok: true,
-      message: 'Shield identified for 10 gold.',
+      message: 'Wooden Shield identified for 10 gold.',
     });
     expect(identify(state, SHOP, 0, 1)).toEqual({
       ok: false,
@@ -88,10 +90,10 @@ describe('shop', () => {
     });
     expect(repair(state, SHOP, 0, 1)).toEqual({
       ok: true,
-      message: 'Shield repaired for 20 gold.',
+      message: 'Wooden Shield repaired for 50 gold.',
     });
     expect(repair(state, SHOP, 0, 1)).toEqual({ ok: false, message: 'It is not broken.' });
-    expect(state.gold).toBe(170);
+    expect(state.gold).toBe(140);
     expect(repair(state, SHOP, 0, 9)).toEqual({ ok: false, message: 'No such item.' });
   });
 });

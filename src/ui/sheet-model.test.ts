@@ -55,7 +55,7 @@ describe('sheet view', () => {
     const archer = state.party[1]!;
     const v = sheetView(archer);
     expect(v.hasSp).toBe(true);
-    expect(v.rangedDamage).toBe('3d3');
+    expect(v.rangedDamage).toBe('5d2');
     expect(v.rangedAttack).not.toBeNull();
     expect(sheetView(state.party[0]!).rangedDamage).toBeNull();
   });

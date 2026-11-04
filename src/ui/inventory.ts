@@ -18,6 +18,8 @@ import {
   actions,
   derived,
   equipSelected,
+  identifySelected,
+  repairSelected,
   giveSelected,
   gridBlocks,
   type InvSelection,
@@ -109,6 +111,8 @@ export function renderInventory(ctx: ScreenContext): void {
         }
         if (a.id === 'equip') apply(equipSelected(c, sel));
         else if (a.id === 'unequip') apply(unequipSelected(c, sel));
+        else if (a.id === 'identify') apply(identifySelected(c, sel));
+        else if (a.id === 'repair') apply(repairSelected(c, sel));
         else {
           const r = useSelected(c, sel, { member: active, partySize: state.party.length });
           if (r.cast) {
