@@ -3748,8 +3748,116 @@ the warren; an end-to-end test boots the warren.
 **Not yet**: Harrowmere's and the Mire's stretches of the thread (PLAN 21 to 23), the
 Undercroft (24), a monster's body of its own per family.
 
+### 17.25 The Mire: the third region, its people, its dungeons and the thread through it (the agentic loop, 2026-11-04)
+
+PLAN items 21 to 23, CAMPAIGN steps 5 to 10: Harrowmere's stretch of the thread, the third
+region, and its three dungeons. With these the world holds three regions, seven dungeons and
+twenty-two quests, the fifth of MM6 the owner set in every count but the eighth dungeon (24).
+
+- **Harrowmere's stretch** (src/game/dialogue.ts): _The Sea Kings' Chart_, Sister Wyn's once
+  Anselm has his seal: the chart in Black Orrin's chest (the den's `items`), and she counts the
+  doors from the sea (250 gold, 600 experience). _The Second Seal_: the Barrow King's iron seal
+  to her; she sends it west by a carter and the party north through the pass (300 and 800). Her
+  topic _The pass north_ afterwards. The pass is a road cut over the northern ridge behind the
+  barrows (`pass-road`) to a walked edge, `north-pass`, two days to the Mire's `south-pass`.
+- **The Mire** (levels/mire/region.ts, id `mire`): the fen, an estuary opening east and reaching
+  into the land as the mere, low ground about it (base 3 m, a ripple of one) cut by causeways on
+  flats; ridges south (the pass's), west and north close it; pines on the southern downs, reeds
+  and willows (broadleaf and palm kinds) wherever the ground is wet, 2,152 trees. **Fenwick** on
+  the one rise at the mere's west shore: the square on the street with the Fen Well, the Reed
+  and Lantern (rooms 25, food 4) with the Hall of the Fen (to level 40, ×2) at one shoulder and
+  the Initiate Guild of Spirit (to spell level 4, 150 to join, ×2) at the other, Pim's Chandlery
+  (general, Val 3, level 3, ten slots) across, four short rows of houses, the Fen Smith (weapons
+  Val 2.5, level 3, a level-3 special of armour; deals in both) at the street's west end, the
+  Temple of the Fen (donation 35) at its east end over the quay. **The ruined abbey** on its rise
+  north-west: outcrops where the walls stood, a ring of fallen stones, the Abbey Shrine, the
+  cult's cave into the crypt. **The reavers' holt** on the fen's knoll north-east, their carts
+  and hay about its cave. **The Sunken Hall's knoll** on the mere's north shore, a cave in its
+  side. **The lantern road** east along the shore to the ferry's far light and hut. Thugs on the
+  pass causeway, reavers at the holt and on the lantern road, witches in the reeds, the drowned
+  on the shores, cultists at the abbey's gate; 24 monsters. Sites: the Fen Well (+2 Endurance
+  once each), the Abbey Shrine (March, +10 Personality the first year), the third obelisk ("THE
+  SEVENTH DOOR IS THE SEA ITSELF. SHUT THE FIRST, AND THE REST STAY SHUT."). The caves'
+  mouths face away from their hills' tops (a mouth dug into a descending slope left its point
+  unreachable; the hills were moved behind them).
+- **Fenwick's people**: Reeve Aldith before the inn, Hob the Ferryman on the quay, Mother Gefa
+  by the well, Brother Oddo at the abbey's gate, Pim the Chandler before his shop; five more
+  tints on the two villager skins. Their quests: _The Reavers' Holt_ (the Reed Queen; 600 and
+  1500), _The Lantern Road_ (a walk to the far light; 150 and 400), _A Cure for the Ague_
+  (Gefa's remedy carried to Hob, a `misc` thing; 120 and 300), _The Causeway Thugs_ (three
+  thugs; 250 and 600). Brother Oddo carries the thread: _The Drowned Abbey_ (the Abbot; 700 and
+  1800), _The Abbot's Confession_ (his pages to Oddo, who reads what waits behind the First
+  Door; 200 and 600), _The Sunken Hall_ (the Warden of the Deep; 900 and 2200), _The Third
+  Seal_ (the green seal to Oddo, who sends the party back to Gullhaven; 400 and 1000).
+- **The Reavers' Holt** (levels/reed-holt/level.ts, dungeon 5): peat and root from the mouth to
+  the holt, a wide low cave with the store hole (the key, a chest) west and the archers' ledge
+  east; a passage north into a Sea Kings' watch-post the reavers squat in, the Reed Queen on its
+  floor behind a locked door, the eel-boats' takings behind her. Ten reavers, their chief, a
+  hired bruiser, the queen.
+- **The Drowned Abbey** (levels/drowned-abbey/level.ts, dungeon 6): the undercroft the mere
+  spared with the acolytes' fires, the cloister passage to the chapter house (cultists, the key
+  on its hook, a chest, the night stair's locked door), the switchback down, the crypt on its
+  colonnades with the hierophant, and the Abbot's cell at the end with his chest. Eleven.
+- **The Sunken Hall** (levels/sunken-hall/level.ts, dungeon 7): a shore cave to the stair-head,
+  a stair down eight metres to below the mere, the drowned gallery flooded to the shin (a water
+  plane the party wades, `plan.waterPlane`), the lord's chamber off it with the key and a
+  chest, the locked door north and the warden's hall, dry under its vault, the Warden of the
+  Deep with the Seal of the Deep and the hall's chest. Ten.
+- Every dungeon's mouth returns to the Mire at its cave; `PLACE_NAMES` names them all.
+
+**Checked**: the world test across three regions (every quest's monster, person, thing and
+point; Fenwick's six houses), the dialogue tests, `level:build` for the Mire and the three
+dungeons, end-to-end boots of the Mire (its houses, points, four ways out, five people, 24
+monsters) and of each dungeon (points, door, key, chests, master).
+
+**Not yet**: the Undercroft and the finale (24), a monster's body of its own per family, pictures
+of Fenwick's rooms (they borrow Gullhaven's), the ferry.
+
+### 17.26 The finale: the Headland Undercroft and the campaign walked (the agentic loop, 2026-11-04)
+
+PLAN item 24, CAMPAIGN step 11: the eighth dungeon and the thread's end. With it the world
+holds three regions, eight dungeons, twenty-three quests and thirty-nine monster records: the
+fifth of MM6 the owner set, in every count.
+
+- **The Headland Undercroft** (levels/headland-undercroft/level.ts): the cave in the headland's
+  flank below Gullhaven's ruin opens into the gate cave, where Gorrak the Gatekeeper and five
+  hobgoblins hold the first door; **the door of the halls** takes the Seal of the Halls (a door's
+  `key` is any item, 17.11) into the first hall on its colonnades, the drowned the Sea King sent
+  up; **the door of the barrow** takes the iron seal into the second hall, a skeleton lord and a
+  drowned lord; the stair down six metres; **the door of the deep** takes the green seal into
+  the throne hall, 18 by 20 m under a ten-metre vault on two colonnades, four braziers, the Sea
+  King on his seat and the Sea Kings' treasury behind it (levels 3, 3, 3 and 3). Fifteen in all.
+  No key lies on any floor: the seals are the keys, and Brother Anselm hands them back.
+- **The First Door** (`the-first-door`, src/game/dialogue.ts): Anselm's, once the third seal has
+  reached Oddo (`when`); taking it gives the three seals back (`gives`), a kill objective (the
+  Sea King) and the return to Anselm pay 2000 gold and 6000 experience, and the score comes up
+  when the talk closes (17.24). Anselm also gained the topic that takes the Warden's seal (_The
+  Seal and the Stone_ had its quest and no one to offer it: the campaign test below found it).
+- **The campaign walked** (src/game/campaign.test.ts): a unit test takes the thread's eleven
+  steps in order on a fresh state through the dialogue view-model, killing by event and carrying
+  what the monsters carry: every gate opens on the step before and not earlier (the reeve's
+  brigands after Tobin's sheep, Wyn's chart after Anselm's seal, her second seal after the chart,
+  Oddo's hall after his abbey, Anselm's door after the third seal), every carried thing is
+  produced before it is asked for (a monster carries it, a quest gives it or a dungeon's chest
+  holds it), the seals come back with the last quest, and the Sea King's laying pays. Twenty-two
+  or more quests exist; the thread's ten are done at the end.
+
+**Checked**: the campaign test, the world test, the dialogue tests; `level:build` for Gullhaven
+(four portals) and the Undercroft (six points reachable); an end-to-end boot of the Undercroft
+(the three sealed doors, no key on the floor, the one chest, fifteen spawns with Gorrak and the
+Sea King).
+
+**Not yet**: a last word on the score page per step of the thread, an ending beyond the score,
+Act Two.
+
 ## 13. Decision log
 
+- 2026-11-04 – The finale (17.26): the Headland Undercroft, three doors keyed to the three seals,
+  the Sea King; Anselm's The First Door gives the seals back; a campaign test walks the thread's
+  eleven steps in order. A fifth of MM6 in every count.
+- 2026-11-04 – The Mire (17.25): the third region, Fenwick and its five people, eight quests
+  (the thread's four and four errands), three dungeons (the Reavers' Holt, the Drowned Abbey,
+  the Sunken Hall); Harrowmere's chart and second seal; the pass between.
 - 2026-11-04 – The campaign (17.24, docs/CAMPAIGN.md): The Doors of the Sea Kings, eleven steps
   through three regions and eight dungeons; monsters may carry things, the slain stay slain,
   the score at the thread's end; thirty-nine monster records on six bodies; Gullhaven's

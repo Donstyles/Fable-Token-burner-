@@ -79,3 +79,9 @@ bodies from Meshy would replace the shared ones family by family, the owner's ca
 - The **score** counts at the end of the thread (step 11), not after the Old Halls.
 - A **campaign test** walks the thread's quest ids in order and checks every gate, item,
   monster, person and place exists (src/game/campaign.test.ts).
+
+## Built (2026-11-04)
+
+Every step above stands in the game (DESIGN 17.21 to 17.26): three regions, eight dungeons,
+twenty-three quests, thirty-nine monster records, 139 items, thirty-one spells. The campaign
+test (src/game/campaign.test.ts) walks the thread in order on every run of the suite.

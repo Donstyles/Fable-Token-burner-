@@ -138,13 +138,14 @@ every step:
 20. [x] **Gullhaven's thread**: Anselm's _The Seal and the Stone_, Maren's _The Goblin King_ and
         the Goblin Warren (dungeon 4); the headland's cave for the finale. Done 2026-11-04
         (DESIGN 17.24), with items 18 and 19.
-21. [ ] **Harrowmere's thread**: the chart in Orrin's chest and Wyn's _The Chart_; the Barrow
+21. [x] **Harrowmere's thread**: the chart in Orrin's chest and Wyn's _The Chart_; the Barrow
         King's seal; the pass north to the Mire.
-22. [ ] **The Mire**, the third region: Fenwick on its causeways with six working houses, the
+22. [x] **The Mire**, the third region: Fenwick on its causeways with six working houses, the
         reeds, the mere, the pass south; five people, four quests, three sites.
-23. [ ] **The Mire's dungeons**: the Reed Fort (5), the Drowned Abbey (6), the Sunken Hall (7).
-24. [ ] **The finale**: the Headland Undercroft (8) under Gullhaven's ruin, three doors to three
-        seals, the Sea King, the score; the campaign walked end to end by a test.
+23. [x] **The Mire's dungeons**: the Reed Fort (5), the Drowned Abbey (6), the Sunken Hall (7).
+24. [x] **The finale**: the Headland Undercroft (8) under Gullhaven's ruin, three doors to three
+        seals, the Sea King, the score; the campaign walked end to end by a test. Done
+        2026-11-04 (DESIGN 17.26).
 25. [ ] **Superb**: a play-through pass on the built game (pacing, prices, the levels the thread
         wants against the experience it pays, the words), the faults found fixed, the docs true.
 
