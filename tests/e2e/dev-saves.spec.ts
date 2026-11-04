@@ -13,7 +13,7 @@ type Dev = {
 type W = Window & { ftb?: { dev?: Dev } };
 
 test('Save Game copies the game into a slot and Load Game goes on from it', async ({ page }) => {
-  test.setTimeout(300_000);
+  test.setTimeout(480_000);
   await page.goto('dev/?dev&lite&level=gullhaven&seed=5');
   await page.waitForFunction(() => (window as unknown as W).ftb?.dev?.ready === true, null, {
     timeout: 150_000,

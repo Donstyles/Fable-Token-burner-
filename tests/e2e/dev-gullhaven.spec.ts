@@ -136,6 +136,7 @@ test.describe('Gullhaven', () => {
     expect(info.portals).toEqual([
       'cave>old-halls:cave-mouth',
       'warren>goblin-warren:warren-mouth',
+      'undercroft>headland-undercroft:undercroft-mouth',
       'west-road>harrowmere:east-road',
     ]);
     // The party wakes at the foot of the square, between the waterfront and the well.

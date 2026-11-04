@@ -506,9 +506,13 @@ const region: RegionScript = {
       facing: 194,
       target: { level: 'goblin-warren', entry: 'warren-mouth' },
     },
-    // Under the headland's ruin, the First Door (CAMPAIGN step 11); its tunnel ends in rock
-    // until the Undercroft is built.
-    { name: 'undercroft', at: [150, 2], facing: 234 },
+    // Under the headland's ruin, the First Door (CAMPAIGN step 11).
+    {
+      name: 'undercroft',
+      at: [150, 2],
+      facing: 234,
+      target: { level: 'headland-undercroft', entry: 'undercroft-mouth' },
+    },
   ],
   // Split rails the kernel builds (owner, 2026-10-23): Tobin's paddock and fields, the
   // stables' paddock at the west gate, the temple's garden.

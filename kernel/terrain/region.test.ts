@@ -220,6 +220,7 @@ describe('Gullhaven', () => {
     expect(level.portals.map((p) => `${p.name}>${p.target.level}:${p.target.entry}`)).toEqual([
       'cave>old-halls:cave-mouth',
       'warren>goblin-warren:warren-mouth',
+      'undercroft>headland-undercroft:undercroft-mouth',
       'west-road>harrowmere:east-road',
     ]);
     expect(level.points.find((p) => p.name === 'cave')?.kind).toBe('door');
