@@ -88,6 +88,7 @@ import { handleQuestEvent } from '../game/quests';
 import { shareExperience } from '../game/experience';
 import { Soundscape } from '../world/soundscape';
 import { DOOR_REACH, VILLAGE_HOUSES } from '../game/content';
+import { isOpen } from '../game/services';
 import { clearSave, loadGame, saveGame } from '../app/autosave';
 import { daylightAt, environmentAt, MINUTES_PER_REAL_SECOND } from '../world/daylight';
 import { advanceClock, minuteOfDay } from '../game/time';
@@ -1089,6 +1090,12 @@ export async function startGame(app: App): Promise<DevHandle> {
           ),
         );
       if (house && door && d <= DOOR_REACH) {
+        // A shop keeps hours (DESIGN.md 17.19): shut, its door says when it opens.
+        if (house.kind === 'shop' && !isOpen(house.house, state.clock.minutes)) {
+          const [opens, shuts] = house.house.hours;
+          status.say(`${house.house.name} is closed; it opens from ${opens} to ${shuts}`, 5000);
+          return;
+        }
         screens.openService(house.kind, house.house);
         enterRoom(house.house.id);
         return;

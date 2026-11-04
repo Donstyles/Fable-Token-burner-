@@ -2,64 +2,76 @@ import { describe, expect, it } from 'vitest';
 import { afflict } from '../game/conditions';
 import { freshState } from '../game/fixtures';
 import { createGrid, placeItem } from '../game/inventory';
-import { createItem } from '../game/items';
-import type { ShopDef } from '../game/services';
-import { buy, identify, repair, sell, shopView } from './shop-model';
+import { createItem, itemDef } from '../game/items';
+import { type ShopDef, visitShop } from '../game/services';
+import { buy, identify, NOT_MY_TRADE, repair, sell, shopView } from './shop-model';
 
 const SHOP: ShopDef = {
   id: 'shop',
   name: 'Armoury',
-  stock: ['dagger', 'shield', 'potion-healing'],
-  priceMultiplier: 2,
-  identifyPrice: 10,
-  repairFraction: 0.5,
+  kind: 'armor',
+  val: 2,
+  regular: { level: 1, families: ['small-shield', 'helm'], slots: 4 },
+  special: { level: 2, families: ['leather'], slots: 2 },
+  restockDays: 5,
+  hours: [6, 18],
 };
 
 describe('shop', () => {
-  it('prices the stock and the pack for the active member', () => {
+  it('lays out the counter, the shelf and the pack with the active member’s prices', () => {
     const state = freshState();
     const v = shopView(state, SHOP, 0);
     expect(v.merchant).toBe(0);
-    // MM6's values at the house's markup of two: a dagger 8, a wooden shield 100, the potion 10.
-    expect(v.buy.map((b) => [b.name, b.price, b.canBuy])).toEqual([
-      ['Dagger', 16, true],
-      ['Wooden Shield', 200, true],
-      ['Cure Wounds', 20, true],
-    ]);
+    expect(v.open).toBe(true);
+    expect(v.buy).toHaveLength(4);
+    expect(v.special).toHaveLength(2);
+    for (const row of v.buy) {
+      const item = visitShop(state, SHOP).stock[row.slot]!;
+      // Value × Val with no Merchant.
+      expect(row.price).toBe(itemDef(item).value * 2);
+      expect(['small-shield', 'helm']).toContain(itemDef(item).family);
+      expect(row.name).toBe(itemDef(item).name);
+      expect(row.canBuy).toBe(row.price <= 200);
+    }
+    // The potion in the pack: not an armourer's trade; it would fetch value ÷ (Val + 2).
     expect(v.sell).toEqual([
       {
         gridIndex: 0,
         name: 'Cure Wounds',
-        price: 5,
+        price: 2,
         broken: false,
         identified: true,
-        repairPrice: 5,
-        identifyPrice: 10,
+        trade: false,
+        repairPrice: 2,
+        identifyPrice: 100,
       },
     ]);
   });
 
   it('buys and sells, and says why not', () => {
     const state = freshState();
-    expect(buy(state, SHOP, 'dagger', 0)).toEqual({
+    state.gold = 1000;
+    const first = visitShop(state, SHOP).stock[0]!;
+    const price = itemDef(first).value * 2;
+    expect(buy(state, SHOP, 'stock', 0, 0)).toEqual({
       ok: true,
-      message: 'Bought Dagger for 16 gold.',
+      message: `Bought ${itemDef(first).name} for ${price} gold.`,
     });
-    expect(state.gold).toBe(184);
-    expect(state.party[0]!.grid.items.map((p) => p.item.id)).toEqual(['potion-healing', 'dagger']);
-    expect(sell(state, SHOP, 0, 0)).toEqual({
+    expect(state.gold).toBe(1000 - price);
+    expect(state.party[0]!.grid.items.map((p) => p.item.id)).toEqual(['potion-healing', first.id]);
+    expect(sell(state, SHOP, 0, 0)).toEqual({ ok: false, message: NOT_MY_TRADE });
+    expect(sell(state, SHOP, 0, 1)).toEqual({
       ok: true,
-      message: 'Sold Cure Wounds for 5 gold.',
+      message: `Sold ${itemDef(first).name} for ${Math.max(1, Math.floor(itemDef(first).value / 4))} gold.`,
     });
-    expect(state.gold).toBe(189);
     expect(sell(state, SHOP, 0, 5)).toEqual({ ok: false, message: 'No such item.' });
-    expect(buy(state, SHOP, 'long-sword', 0)).toEqual({ ok: false, message: 'Not sold here.' });
-    state.gold = 10;
-    expect(buy(state, SHOP, 'dagger', 0)).toEqual({ ok: false, message: 'Not enough gold.' });
-    state.gold = 100;
+    expect(buy(state, SHOP, 'special', 9, 0)).toEqual({ ok: false, message: 'Not sold here.' });
+    state.gold = 1;
+    expect(buy(state, SHOP, 'stock', 0, 0)).toEqual({ ok: false, message: 'Not enough gold.' });
+    state.gold = 1000;
     state.party[0]!.grid = createGrid(1, 1);
     placeItem(state.party[0]!.grid, createItem('potion-healing'), 0, 0);
-    expect(buy(state, SHOP, 'dagger', 0)).toEqual({ ok: false, message: 'No room in the pack.' });
+    expect(buy(state, SHOP, 'stock', 0, 0)).toEqual({ ok: false, message: 'No room in the pack.' });
     afflict(state.party[0]!.conditions, 'dead', 0);
     expect(shopView(state, SHOP, 0).buy[0]).toMatchObject({
       canBuy: false,
@@ -68,21 +80,23 @@ describe('shop', () => {
     expect(shopView(state, SHOP, 0).sell).toEqual([]);
   });
 
-  it('identifies and repairs', () => {
+  it('identifies and repairs its own kind at MM7’s prices', () => {
     const state = freshState();
     const knight = state.party[0]!;
     placeItem(knight.grid, { ...createItem('shield', false), broken: true }, 2, 0);
-    // Unidentified, it goes by its family's name (DESIGN 17.18); worth 100, 25 when broken.
+    // Unknown, it goes by its family's name; identify is 50 × Val, repair value ÷ (6 − Val).
     expect(shopView(state, SHOP, 0).sell[1]).toMatchObject({
       name: 'Small Shield',
       broken: true,
       identified: false,
-      repairPrice: 50,
-      price: 25,
+      trade: true,
+      repairPrice: 25,
+      identifyPrice: 100,
+      price: 1,
     });
     expect(identify(state, SHOP, 0, 1)).toEqual({
       ok: true,
-      message: 'Wooden Shield identified for 10 gold.',
+      message: 'Wooden Shield identified for 100 gold.',
     });
     expect(identify(state, SHOP, 0, 1)).toEqual({
       ok: false,
@@ -90,10 +104,11 @@ describe('shop', () => {
     });
     expect(repair(state, SHOP, 0, 1)).toEqual({
       ok: true,
-      message: 'Wooden Shield repaired for 50 gold.',
+      message: 'Wooden Shield repaired for 25 gold.',
     });
     expect(repair(state, SHOP, 0, 1)).toEqual({ ok: false, message: 'It is not broken.' });
-    expect(state.gold).toBe(140);
+    expect(state.gold).toBe(75);
     expect(repair(state, SHOP, 0, 9)).toEqual({ ok: false, message: 'No such item.' });
+    expect(identify(state, SHOP, 0, 0)).toEqual({ ok: false, message: NOT_MY_TRADE });
   });
 });

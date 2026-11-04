@@ -24,7 +24,7 @@ type W = Window & { ftb?: { dev?: Dev } };
 /** The village's houses (src/game/content.ts) and a guild, for the service screens. */
 const HOUSES: Record<string, [string, unknown]> = {
   tavern: ['tavern', { id: 'inn', name: 'The Inn', roomPrice: 10, foodPrice: 2, foodCapacity: 14 }],
-  temple: ['temple', { id: 'temple', name: 'The Temple', priceMultiplier: 1 }],
+  temple: ['temple', { id: 'temple', name: 'The Temple', donation: 10 }],
   trainer: [
     'trainer',
     { id: 'training', name: 'The Training Hall', maxLevel: 15, priceMultiplier: 1 },
@@ -34,10 +34,11 @@ const HOUSES: Record<string, [string, unknown]> = {
     {
       id: 'store',
       name: "The Trader's Store",
-      stock: ['potion-healing', 'scroll-torch-light', 'scroll-fire-bolt', 'copper-ring', 'boots'],
-      priceMultiplier: 1.3,
-      identifyPrice: 20,
-      repairFraction: 0.2,
+      kind: 'general',
+      val: 2,
+      regular: { level: 1, families: ['potion', 'scroll', 'ring', 'boots'], slots: 8 },
+      restockDays: 1,
+      hours: [5, 22],
     },
   ],
   smithy: [
@@ -45,30 +46,13 @@ const HOUSES: Record<string, [string, unknown]> = {
     {
       id: 'smithy',
       name: 'The Smithy',
-      stock: [
-        'dagger',
-        'short-sword',
-        'long-sword',
-        'axe',
-        'spear',
-        'shield',
-        'helmet',
-        'chain-mail',
-      ],
-      priceMultiplier: 1.4,
-      identifyPrice: 30,
-      repairFraction: 0.15,
-    },
-  ],
-  guild: [
-    'guild',
-    {
-      id: 'guild-fire',
-      name: 'The Guild of Fire',
-      school: 'fire',
-      maxSpellLevel: 6,
-      membershipFee: 50,
-      priceMultiplier: 1,
+      kind: 'weapon',
+      val: 1.5,
+      regular: { level: 1, families: ['weapon'], slots: 6 },
+      special: { level: 1, families: ['leather', 'chain', 'small-shield', 'helm'], slots: 4 },
+      restockDays: 2,
+      hours: [6, 18],
+      trades: ['weapon', 'armor', 'shield', 'helmet', 'gauntlets'],
     },
   ],
 };
@@ -105,7 +89,8 @@ const CASES: {
   ...Object.keys(HOUSES).map((house) => ({ label: house, house, member: 0 })),
   // The member's bag on its leather in the view (owner, 2026-10-25).
   { label: 'smithy: sell', house: 'smithy', choice: 'Sell', member: 0 },
-  { label: 'store: identify', house: 'store', choice: 'Identify', member: 1 },
+  { label: 'smithy: identify', house: 'smithy', choice: 'Identify', member: 1 },
+  { label: 'smithy: special', house: 'smithy', choice: 'Special', member: 1 },
 ];
 
 interface Fit {
@@ -268,11 +253,13 @@ test("a shop's Sell opens the member's bag on its leather, and a second tap on a
     page.evaluate(
       () => (window as unknown as { ftb: { dev: Full } }).ftb.dev.state.party[0]!.grid.items.length,
     );
+  // The general store buys anything; the smithy would refuse the potion at the head of the pack
+  // ("Not my trade", DESIGN 17.19).
   await page.evaluate((house) => {
     const d = (window as unknown as W).ftb!.dev!;
     d.state.selected = 0;
     d.screens.openService(house[0], house[1]);
-  }, HOUSES['smithy']!);
+  }, HOUSES['store']!);
   await page.locator('.house-choice', { hasText: 'Sell' }).click();
   // The bag, not a list.
   await expect(page.locator('.house-pack .inv-grid')).toBeVisible();

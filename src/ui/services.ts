@@ -25,7 +25,7 @@ import {
   trainMember,
   trainerRows,
 } from './services-model';
-import { buy, identify, repair, sell, shopView } from './shop-model';
+import { buy, identify, NOT_MY_TRADE, repair, sell, shopView } from './shop-model';
 import type { Character } from '../game/character';
 import { gridBlocks } from './inventory-model';
 import { bagGrid } from './inventory';
@@ -355,6 +355,11 @@ function renderShop(ctx: ScreenContext, def: ServiceDefs['shop']): void {
     of: (index) => {
       const s = shopView(state, def, state.selected).sell.find((r) => r.gridIndex === index);
       if (!s) return { price: '', reason: 'No such item.' };
+      // A shop deals in its own kind of thing (DESIGN 17.19); a general store buys anything
+      // but names and mends nothing.
+      if (!s.trade || (pick !== 'sell' && def.kind === 'general')) {
+        return { price: '', reason: NOT_MY_TRADE };
+      }
       if (pick === 'identify' && s.identified) return { price: '', reason: 'Already identified.' };
       if (pick === 'repair' && !s.broken) return { price: '', reason: 'Not broken.' };
       return {
@@ -372,26 +377,40 @@ function renderShop(ctx: ScreenContext, def: ServiceDefs['shop']): void {
           : repair(state, def, state.selected, index),
   });
   const name = (): string => state.party[state.selected]?.name ?? '';
+  const shelf = (list: 'stock' | 'special'): Row[] =>
+    (list === 'stock'
+      ? shopView(state, def, state.selected).buy
+      : shopView(state, def, state.selected).special
+    ).map((b) => ({
+      name: b.name,
+      price: gold(b.price),
+      reason: b.canBuy ? null : (b.reason ?? 'Not now.'),
+      go: () => h.say(buy(state, def, b.list, b.slot, state.selected)),
+    }));
   const h: House = house(
     ctx,
     def.name,
     () => [
       { label: 'Buy', list: 'buy', go: () => h.show('buy') },
+      ...(def.special ? [{ label: 'Special', list: 'special', go: () => h.show('special') }] : []),
       { label: 'Sell', list: 'sell', go: () => h.show('sell') },
-      { label: 'Identify', list: 'identify', go: () => h.show('identify') },
-      { label: 'Repair', list: 'repair', go: () => h.show('repair') },
+      ...(def.kind === 'general'
+        ? []
+        : [
+            { label: 'Identify', list: 'identify', go: () => h.show('identify') },
+            { label: 'Repair', list: 'repair', go: () => h.show('repair') },
+          ]),
     ],
     {
       buy: {
         title: () => 'For sale',
-        empty: 'Nothing for sale.',
-        rows: () =>
-          shopView(state, def, state.selected).buy.map((b) => ({
-            name: b.name,
-            price: gold(b.price),
-            reason: b.canBuy ? null : (b.reason ?? 'Not now.'),
-            go: () => h.say(buy(state, def, b.id, state.selected)),
-          })),
+        empty: 'The counter is bare.',
+        rows: () => shelf('stock'),
+      },
+      special: {
+        title: () => 'The special shelf',
+        empty: 'The shelf is bare.',
+        rows: () => shelf('special'),
       },
       sell: {
         title: () => `${name()}'s pack: sell`,
