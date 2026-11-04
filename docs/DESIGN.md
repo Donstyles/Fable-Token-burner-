@@ -3366,8 +3366,9 @@ they wait on scrolls and a greater guild.
 the hireling windows for the party's (interface.md 8.4). Ours: each member's marks along the
 oval's foot inside its ring, the party's in a strip along the windows' sill, each the spell's
 icon from the book in a dark tile, or the tile alone in its school's colour where the icon
-is not in yet (no placeholder art), named with the time left in the tile's title; and the
-sheet's "Spells" line names them with their time left.
+is not in yet (no placeholder art), named with the time left in the tile's title. The sheet
+has no room for a line of them inside MM6's box (the fit test caught the overflow); the view
+model carries the labels for the hold pop-up to come.
 
 **Checked**: unit tests for the store (the patch's rule, running out, the listing, the
 labels), the sheet (Bless, Heroism, Stone Skin, Haste, the temporary statistic, Haste's Weak),

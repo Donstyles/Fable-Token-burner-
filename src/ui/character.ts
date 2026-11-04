@@ -87,7 +87,6 @@ function statsBody(v: SheetView): HTMLElement {
     box([
       line('Condition', v.condition, v.condition === 'Good' ? 'good' : 'bad'),
       line('Recovery', v.recovery),
-      line('Spells', v.buffs.length ? v.buffs.join(', ') : 'None', v.buffs.length ? 'good' : ''),
     ]),
   );
   right.append(
