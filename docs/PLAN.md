@@ -90,8 +90,11 @@ Working list, in order:
        enchantments, treasure by difficulty, Identify and Repair by skill; shops of four
        kinds with generated shelves, restocks, hours and MM7's prices. Special enchantments,
        gems, wands, herbs, the bank and reputation are listed there as not yet.
-10. [ ] **People and quests**: more townsfolk with news, three more quests of every kind
-        (deliver, reach, kill), a well and an obelisk, the Notes book kept.
+10. [x] **People and quests**: more townsfolk with news, three more quests of every kind
+        (deliver, reach, kill), a well and an obelisk, the Notes book kept. Done 2026-11-04
+        (DESIGN 17.20): seven townsfolk, talk that turns with the quests, a letter carried, a
+        walk, a fight; the well, the crossroads shrine and an obelisk; the notes keep the
+        stones' words too. Street crowds, professions and hirelings wait.
 11. [ ] **Polish passes** between items: the frame rate on the phone's budget, the faults the
         owner reports, the e2e suite kept green.
 

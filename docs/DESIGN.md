@@ -3498,8 +3498,78 @@ shops as before.
 MM6 drew them (the owner's shop pictures, DESIGN 17.8), spellbooks as items at the guild,
 the special shelf of general stores (MM6 makes one and cannot sell it).
 
+### 17.20 People and quests: townsfolk with news, errands of three kinds, the sites (the agentic loop, 2026-11-04)
+
+Plan item 10. MM6's towns were full of people with a name, a calling and something to say
+that changed with what the party had done; their quests came as topics; and the wells,
+altars and obelisks were used with a click (MM6-GAPS.md 23, 24, 26, 27).
+
+- **Seven townsfolk** in Gullhaven (`NPCS`, src/game/monsters.ts; `residents`,
+  levels/gullhaven/region.ts): Maren and Old Tobin as before, and five more on the two
+  villager skins, each under its own tint (`NpcDef.tint`, applied as a monster tier's is, so
+  six people are not two): Reeve Halloran before the inn, Ida behind her stalls on the
+  square's south side, Wen the fisher on the quay, Brother Anselm by the lane's shrine,
+  Garrick the woodcutter in his glade off the west track. Each has a greeting, plain talk
+  with notes, rumours in turn, and news.
+- **News** (`Topic.when`, src/game/dialogue.ts): a topic can be on offer only while a named
+  quest is untaken, under way or done, so the reeve sends a new party to Tobin, remarks on
+  the work while it is on, and has the brigands only once the road is clear; Anselm speaks
+  of the dead three ways. `topicOffered` and `offeredTopics` (src/ui/dialogue-model.ts)
+  filter; a topic not on offer cannot be chosen; the talk panel remakes its buttons when a
+  choice changes what is on offer.
+- **Three quests of the kinds the log had no content for** (`QUESTS`): _A Letter for
+  Garrick_ (deliver: Ida's letter; 60 gold, 120 experience), _The Fire at the Stones_ (reach:
+  the stones' point; 40 gold, 100 experience), _The Brigands' Camp_ (kill: three brigands at
+  the coast road's end under the western ridge; 250 gold, 600 experience; offered once
+  Tobin's Sheep is done).
+- **Deliveries** (`pendingDeliveries`, `QuestDef.gives`, a deliver objective's `label` and
+  `reply`, src/game/quests.ts): a quest hands its thing over on taking (`handOver`; with no
+  room in any pack the quest is not taken and the giver says so, `NO_ROOM_FOR_IT`). While
+  the party carries it the recipient's panel offers it as a topic at the head of the list
+  (`deliver:<quest>`); choosing it takes the thing from the pack, feeds the log the deliver
+  event and answers with the reply; a quest that ends there pays as a talk does. A thing worth
+  nothing (a key, a letter) is refused by every shop (`worthless`), so it cannot be sold by
+  mistake. The letter is a `misc` item drawn by its kind's glyph (16.8).
+- **Reaches** (`pendingReaches`, `REACH_RADIUS` 10 m): each frame the runtime checks the
+  points the active reach objectives want against the party's position and feeds the event.
+- **Sites** (src/game/sites.ts: `SITES`, `siteAt`, `useSite`): a site stands at a named
+  point of its level (the region script's `points`). The Village Well: +2 Luck to the
+  drinker (the selected member), once each, to a cap of 15 (MM6's Luck well, world.md 7),
+  "Refreshing!" after. The Shrine of the Road at the crossroads: an altar in January, the
+  game's first month, so a new party that listens to Anselm can find it: +10 Endurance to the
+  whole party the first year, +3 each year after, once a year (MM6's monthly altars, DOB 10).
+  An Obelisk at the stones' glade: its fragment of a longer saying on a page of its own
+  (`screens.openReading`, the `reading` board drawn as a book: the status line is a line long)
+  and a note. Flags `site:<id>/drank/<member>` and `site:<id>/year`. Runtime: a tap whose
+  picked point lies within `SITE_TAP` 3.5 m of a site's point uses it when the party stands
+  within `SITE_REACH` 6 m, else "(come closer)"; `dev.useSite(point)` for the tests.
+- **The obelisk's stone** (kernel/terrain/obelisk.ts; `RegionScript.obelisks`): kernel-built
+  as the fences are: a two-step plinth (half-widths 1.2 and 0.85 m, 0.35 and 0.3 m tall), a
+  shaft from 0.42 to 0.27 m half-width over 4.2 m, a 0.75 m point, ashlar, sunk 0.4 m into
+  the ground; one box collider; a `poi` point under its name. It stands at [-100, 26] at the
+  glade's east edge: at [-106, 13], on the way from the west track's end into the ring, its
+  collider cut the navmesh and the stones' point went unreachable.
+- **Notes** (src/game/notes.ts): `takeNote` and `noteOrder` moved out of the UI; a site's
+  note joins the book under the site's name, in the order made (`noteRows`).
+
+**Checked**: unit tests for the topic conditions, the delivery (the letter with the offer,
+Garrick's topic, the pack emptied, Ida's pay, no room), the pending reaches and deliveries,
+the three sites (the cap, once, the year, the month), the notes, the kernel's obelisk and
+Gullhaven's residents and points; an end-to-end test on the built level drinks at the well,
+takes Wen's walk and does it, reads the obelisk's page, carries the letter and hears the reeve
+hold his brigands back (two minutes on software GL).
+
+**Not yet**: people walking the streets, professions and hirelings, Beg, Threaten and Bribe,
+news that turns with the calendar, more sites (fountains, barrels, pedestals), the obelisk
+treasure (one fragment exists), the brigands' camp dressed (they stand on the bare road), a
+prayer drawn as a screen.
+
 ## 13. Decision log
 
+- 2026-11-04 – People and quests (17.20): five more townsfolk under their own tints, talk that
+  turns with the quests' state, three quests of the kinds the log lacked (a letter carried, a
+  walk, a fight), sites used with a tap (the well's Luck once, the crossroads shrine's January
+  Endurance, an obelisk read on a page), a kernel-built obelisk.
 - 2026-11-04 – Shops (17.19): four kinds dealing in their own kind, shelves generated on a
   visit from the shop's families at its level and renewed on its period, hours at the door,
   MM7's price formulas from the house's factor and the Merchant percentage; the village's
