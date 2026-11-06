@@ -22,8 +22,12 @@ import { Texture } from '@babylonjs/core/Materials/Textures/texture';
 import type { Scene } from '@babylonjs/core/scene';
 import { daylightAt } from './daylight';
 
-/** Texels across the map: 640 m at about 31 cm a texel, fine enough to seat a wall. */
-export const SHADE_TEXELS = 2048;
+/**
+ * Texels across the map: 640 m at about 63 cm a texel, fine enough to seat a wall's soft
+ * edge. Four bytes a texel with mipmaps, it is the largest texture in the game: at 2048 it
+ * was 21 MB on a phone that ran out of memory (DESIGN.md 17.28); at 1024 it is a quarter.
+ */
+export const SHADE_TEXELS = 1024;
 
 /** The hours whose suns the three sun channels are cast for: morning, noon, evening. */
 export const SUN_HOURS = [8.5, 13, 17.5] as const;

@@ -10,15 +10,15 @@ import '@babylonjs/loaders/glTF/2.0';
 import { LoadAssetContainerAsync } from '@babylonjs/core/Loading/sceneLoader';
 import { Mesh } from '@babylonjs/core/Meshes/mesh';
 import type { PBRMaterial } from '@babylonjs/core/Materials/PBR/pbrMaterial';
-import { Texture } from '@babylonjs/core/Materials/Textures/texture';
+import type { Texture } from '@babylonjs/core/Materials/Textures/texture';
 import type { ShaderMaterial } from '@babylonjs/core/Materials/shaderMaterial';
 import type { Scene } from '@babylonjs/core/scene';
 import { Color3 } from '@babylonjs/core/Maths/math.color';
 import catalogueJson from '../../assets/props/catalogue.json';
 import { PROPS, type PropCatalogue, type PropMeasure } from '../../kernel/terrain/props';
 export { pickModel } from '../../kernel/terrain/props';
-import { applyRetroSampling, type RetroMaterials } from '../render/materials';
-import { bitmapTexture } from '../render/bitmap';
+import type { RetroMaterials } from '../render/materials';
+import { bitmapTexture, maskTexture } from '../render/bitmap';
 
 const urls = import.meta.glob('../../assets/props/*/*.glb', {
   query: '?url',
@@ -128,12 +128,9 @@ export async function loadPropModels(
         palette: false,
       });
       // The window mask lies on the model's own skin, as glTF lays a picture: top row first.
+      // One channel at half the skin's pixels: the panes need no more (DESIGN.md 17.28).
       const windowUrl = windowUrls[`../../assets/props/${id}/${id}.windows.png`];
-      let windows: Texture | null = null;
-      if (windowUrl) {
-        windows = new Texture(windowUrl, scene, false, false);
-        applyRetroSampling(windows, true);
-      }
+      const windows = windowUrl ? await maskTexture(windowUrl, scene, 512) : null;
       // Meshy paints buildings and stones a little bright for MM6's daylight: a fifth off.
       const lift = sways ? 1 : 0.8;
       const material = materials.create({
@@ -150,7 +147,10 @@ export async function loadPropModels(
       full.mesh.material = material;
       let far: Mesh | null = null;
       if (measure.lodTriangles) {
-        far = (await loadMesh(scene, urlOf(id, true), `prop:${id}:far`, measure)).mesh;
+        const lod = await loadMesh(scene, urlOf(id, true), `prop:${id}:far`, measure);
+        // The far model shares the full one's material; its own skin is never drawn.
+        lod.texture?.dispose();
+        far = lod.mesh;
         far.material = material;
       }
       models.set(id, { id, measure, mesh: full.mesh, far, material });
