@@ -7,11 +7,23 @@ const KEY = 'ftb.settings.v1';
 export type UpscaleMode = 'linear' | 'nearest';
 export const UPSCALE_MODES: readonly UpscaleMode[] = ['linear', 'nearest'];
 
+/** Frames a second the render loop is held to; 0 draws on every tick of the display. */
+export const FRAME_CAPS: readonly number[] = [30, 60, 0];
+/**
+ * A phone draws thirty frames a second, as MM6 did (DESIGN.md 17.28): the owner's ran hot at
+ * the display's rate, and the look steps its animation anyway. A desktop draws every tick.
+ */
+export function defaultFrameCap(): number {
+  return typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches ? 30 : 0;
+}
+
 export interface Settings {
   renderPreset: RenderPreset;
   filter: FilterSettings;
   /** How the world render is stretched to the display: soft (look target) or pixelated. */
   upscale: UpscaleMode;
+  /** Frames a second, one of `FRAME_CAPS`; 0 for the display's rate. */
+  frameCap: number;
 }
 
 const defaults: Settings = {
@@ -19,6 +31,7 @@ const defaults: Settings = {
   filter: { ...DEFAULT_FILTER },
   // Nearest, so the palette's colours reach the screen unblended (critics, round 7).
   upscale: 'nearest',
+  frameCap: defaultFrameCap(),
 };
 
 function num(v: unknown, fallback: number, min: number, max: number): number {
@@ -51,6 +64,10 @@ export function loadSettings(): Settings {
         (UPSCALE_MODES as readonly string[]).includes(obj.upscale)
           ? (obj.upscale as UpscaleMode)
           : defaults.upscale,
+      frameCap:
+        typeof obj.frameCap === 'number' && FRAME_CAPS.includes(obj.frameCap)
+          ? obj.frameCap
+          : defaults.frameCap,
       filter: {
         mode:
           typeof mode === 'string' && (FILTER_MODES as readonly string[]).includes(mode)

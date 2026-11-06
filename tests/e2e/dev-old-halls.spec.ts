@@ -179,6 +179,7 @@ test("the warden's door is locked until the iron key is taken off the ossuary fl
     doors: ['warden-door'],
     taken: ['ossuary-key'],
     chests: {},
+    slain: {},
   });
   // Saved and continued: the door stands open and the key is gone from the floor.
   expect(await page.evaluate(() => (window as unknown as W).ftb!.dev!.save())).toBe(true);

@@ -99,7 +99,7 @@ import { ROLE } from '../../kernel/elements/roles';
 import { FILTER_MODES, type FilterMode } from '../render/filter';
 import { RENDER_PRESETS, type RenderPreset } from '../render/resolution';
 import { ENVIRONMENTS, ENVIRONMENT_PRESETS, type EnvironmentPreset } from '../render/environment';
-import { UPSCALE_MODES, type UpscaleMode } from '../app/settings';
+import { FRAME_CAPS, UPSCALE_MODES, type UpscaleMode } from '../app/settings';
 import { createDevPanel, type DevPanel, type Field } from './panel';
 import { installLensShift, type ViewBox } from '../app/view-box';
 import { sunBlend } from '../world/ground-shade';
@@ -211,6 +211,21 @@ const PLACE_NAMES: Record<string, string> = {
 const ENTRY = QUERY.get('entry');
 
 export async function startGame(app: App): Promise<DevHandle> {
+  // Before the page moves to another level, the renderer is disposed and its context lost
+  // on purpose, so the GPU's memory is given back before the next page asks for its own
+  // (DESIGN.md 17.28; the owner's phone, 2026-11-06: black skins and a blank minimap after
+  // the road to Harrowmere). The browser frees it on its own time otherwise.
+  const release = (): void => {
+    try {
+      app.dispose();
+    } catch (e) {
+      diag(`release failed: ${String(e).slice(0, 120)}`);
+    }
+  };
+  const leave = (url: string): void => {
+    release();
+    location.replace(url);
+  };
   const { scene, engine, camera, canvas, uiLayer } = app;
   // The title (owner, 2026-10-23: "Prepare the next demo for me to play"): a plain visit opens
   // on Continue and New Game. A portal and `?continue` go on from the autosave; the test hooks
@@ -236,7 +251,7 @@ export async function startGame(app: App): Promise<DevHandle> {
       const url = new URL(location.href);
       url.searchParams.set('level', saved.level.id);
       url.searchParams.set('continue', '');
-      location.replace(url.toString());
+      leave(url.toString());
       return new Promise<DevHandle>(() => {});
     }
   }
@@ -464,9 +479,9 @@ export async function startGame(app: App): Promise<DevHandle> {
       load: () => screens.openSaves('load'),
       newGame: () => {
         clearSave();
-        location.replace(location.pathname);
+        leave(location.pathname);
       },
-      quit: () => location.replace(location.pathname),
+      quit: () => leave(location.pathname),
     },
     saves: {
       store: slots,
@@ -493,7 +508,7 @@ export async function startGame(app: App): Promise<DevHandle> {
           url.searchParams.set('level', loaded.level.id);
           url.searchParams.set('continue', '');
           url.searchParams.delete('entry');
-          location.replace(url.toString());
+          leave(url.toString());
         });
       },
     },
@@ -878,6 +893,7 @@ export async function startGame(app: App): Promise<DevHandle> {
           : 'Out into the light…',
       portalUrl(location.href, p),
       p.days ? 1400 : 600,
+      release,
     );
   });
 
@@ -1838,6 +1854,14 @@ export async function startGame(app: App): Promise<DevHandle> {
           },
           {
             kind: 'select',
+            key: 'frameCap',
+            label: 'frames a second',
+            options: FRAME_CAPS.map((c) => (c ? String(c) : 'display')),
+            get: () => String(app.settings().frameCap || 'display'),
+            set: (v) => app.setFrameCap(v === 'display' ? 0 : Number(v)),
+          },
+          {
+            kind: 'select',
             key: 'environment',
             label: 'sky / light',
             options: ENVIRONMENT_PRESETS,
@@ -2096,6 +2120,7 @@ export async function startGame(app: App): Promise<DevHandle> {
       )
     : { toast: () => undefined, dispose: () => undefined };
   diag(`dev level ready: ${LEVEL}`);
+  diag(`memory: ${app.memory()}`);
   veilProgress(1);
   hideVeil(600);
   // `?room=<id>` puts up a room by itself, one made ahead of its house among them (dev only);

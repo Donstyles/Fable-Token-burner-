@@ -62,8 +62,20 @@ export function portalUrl(current: string, portal: Portal): string {
   return url.toString();
 }
 
-/** Fade the view to black with a line of text, then go. */
-export function travel(uiLayer: HTMLElement, text: string, href: string, fadeMs = 600): void {
+/**
+ * Fade the view to black with a line of text, then go; `beforeLeave` runs under the veil just
+ * before the page moves (the runtime gives the GPU back there, DESIGN.md 17.28).
+ */
+export function travel(
+  uiLayer: HTMLElement,
+  text: string,
+  href: string,
+  fadeMs = 600,
+  beforeLeave?: () => void,
+): void {
   // The loading veil comes down over the view, then the page moves to the next level.
-  void lowerVeil(uiLayer, text, fadeMs).then(() => location.assign(href));
+  void lowerVeil(uiLayer, text, fadeMs).then(() => {
+    beforeLeave?.();
+    location.assign(href);
+  });
 }

@@ -10,6 +10,7 @@
  */
 import type { AutomapLevel } from '../game/automap';
 import { isVisited } from '../game/automap';
+import { diag } from '../app/diag';
 import type { ActiveBuff, PartyBuffId } from '../game/buffs';
 import { formatDate, formatTime } from '../game/time';
 import { buffMarksKey, renderBuffMarks } from './buff-marks';
@@ -188,6 +189,15 @@ export function createPanel(parent: HTMLElement, hooks: PanelHooks): Panel {
       img.data[i * 4 + 3] = opening[i] ? 255 : 0;
     }
     sg.putImageData(img, 0, 0);
+    // iOS refuses a canvas once the page's canvases pass its budget and draws nothing in it;
+    // the minimap and its arch would stand blank. The first draw is read back, so a refusal
+    // is in the diagnostics the owner can copy (DESIGN.md 17.28).
+    const probe = opening.findIndex((v) => v !== 0);
+    if (
+      probe >= 0 &&
+      sg.getImageData(probe % PANEL_WIDTH, Math.floor(probe / PANEL_WIDTH), 1, 1).data[3] !== 255
+    )
+      diag('panel: the minimap canvas drew nothing (canvas memory refused)');
   }
   const g = canvas.getContext('2d')!;
   g.imageSmoothingEnabled = false;

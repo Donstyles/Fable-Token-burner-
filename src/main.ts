@@ -47,6 +47,10 @@ if (new URLSearchParams(location.search).has('lite')) {
   app.setGrade({ bloom: false, vignette: 0 });
   app.setRenderPreset('css');
 }
+// `?fps=<n>`: the frame cap for this page only (0 for the display's rate).
+const fps = Number(new URLSearchParams(location.search).get('fps'));
+if (Number.isFinite(fps) && new URLSearchParams(location.search).has('fps'))
+  app.setFrameCap(fps, false);
 
 declare global {
   interface Window {
