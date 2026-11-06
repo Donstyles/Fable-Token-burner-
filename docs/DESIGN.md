@@ -3874,7 +3874,65 @@ sheep); the estimate itself is a script over the level files and `QUESTS`, run b
 **Not yet**: a check of the estimate in the suite (the dungeon spawns would need to be data the
 tests can read), and play-testing the bands on the phone.
 
+### 17.28 The phone's memory and heat (the agentic loop, 2026-11-06)
+
+The owner walked the coast road into Harrowmere and found every character skin black, the
+minimap blank and the compass arch gone, and the phone hot through every session. All three
+breakages are what iOS does when a page's late allocations fail for memory: a texture that
+could not be uploaded samples black, a canvas refused past the page's budget draws nothing,
+a painted piece read from a dead canvas is an empty picture. A census of a loaded region
+(headless Chromium, the same bundle) found the page holding 242 MB of textures, 78 MB of
+canvases and a 390 MB JS heap, and a walked edge is a page move, so the old page's share can
+still be held while the new one loads. The GPU memory was the lever, and the frame rate the
+heat.
+
+- **Every model's skin is a raw texture and its source is let go** (src/render/bitmap.ts). A
+  dynamic texture keeps a canvas the size of its picture alive for as long as it lives, and
+  iOS counts every canvas against one budget; the glTF source (1024 pixels for a house) sat on
+  the GPU beside its bitmap copy, never drawn. The bitmap is uploaded from the read-back
+  bytes in GPU order with no flip, and the source is disposed once read, whether it was the
+  one read or another load of the same file (a monster loaded nine times); a far model's own
+  skin goes the same way. The painted pieces of the shell keep their canvases: a megabyte.
+- **A house's window mask is one channel at 512 pixels** (`maskTexture`): the file, a grey
+  picture the size of the skin, cost 5 MB a house as a plain texture with mipmaps; the shader
+  reads one channel and the panes need half the skin's pixels. Uploaded as bytes: the raw
+  red-texture factory assumes floats, which have no mipmaps and which iOS refuses outright
+  (found by the GL-error probe below).
+- **The ground shade is 1024 texels across** (`SHADE_TEXELS`, 63 cm a texel): 5 MB for 21,
+  and the paint on load a quarter of the work. A tree's shade is still ten texels wide.
+- Harrowmere now loads 110 MB of textures and 8 MB of canvases.
+- **A frame cap** (src/app/frame-cap.ts, `settings.frameCap`): thirty frames a second on a
+  coarse-pointer device, as MM6 drew, the display's rate elsewhere; the dev panel's "frames a
+  second" and `?fps=<n>` for a page. It is the engine's own frame requester: asked for each
+  frame, it answers on the display tick that completes a period, so a 60 Hz phone draws
+  every other tick and a 120 Hz one every fourth, and the ticks between are not frames: the
+  engine's clock, the physics step and the animations all run from the frames drawn (a skip
+  inside the loop would have halved their speed). The gate is a pure function with tests.
+- **The GPU is given back before a page moves** (`travel`'s `beforeLeave`, `leave` in
+  src/dev/index.ts): the app is disposed and the context lost on purpose
+  (`loseContextOnDispose`) under the veil, before a portal, a walked edge, quit, load or
+  continue. The browser frees it on its own time otherwise, and the next page loads into what
+  is left.
+- **Diagnostics**: once a level is ready the log notes what the GPU holds (textures, their
+  megabytes, meshes, the frame rate, any GL error flag), and the panel reads its first
+  minimap draw back so a refused canvas is on record where the owner can copy it.
+
+**Checked**: the gate's tests; the texture and canvas census before and after; a wrap of
+every WebGL call on a loaded region finds no error; the squares of Harrowmere and Gullhaven
+shot by day and night (skins upright, windows lit); the Harrowmere, people and old-halls
+specs.
+
+**Not yet**: the owner's phone, which is the only place the failure showed; the draw count
+(two hundred and more meshes a frame at a town square, 800k triangles) is the next lever for
+heat if thirty frames are not enough; instancing the characters' geometry.
+
 ## 13. Decision log
+
+- 2026-11-06 – The phone's memory and heat (17.28): model skins as raw textures with their
+  sources let go, one-channel window masks, a quarter-size ground shade (242 MB of textures to
+  110, 78 MB of canvases to 8); a frame cap of thirty on phones through the engine's frame
+  requester; the GPU given back before a page moves; memory and canvas diagnostics. The
+  owner's phone came into Harrowmere with black skins, a blank minimap and no compass arch.
 
 - 2026-11-04 – Experience for a smaller world (17.27): monsters worth ten times MM6's
   experience and quests eight times the first town's, because our maps hold a tenth of MM6's

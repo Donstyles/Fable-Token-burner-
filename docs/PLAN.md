@@ -153,6 +153,12 @@ every step:
         camps, aprons, the lantern road, the pass) with nothing broken; the saves test given its
         time. Open: the owner's own play on the phone; Harrow's and Fenwick's room pictures; the
         barrows' point stands inside its ring of stones (cosmetic).
+26. [ ] **The phone**: the owner's play on the phone (2026-11-06: black skins, a blank minimap
+        and no compass arch after the road to Harrowmere; the phone hot; "not fun"). Done so
+        far: the memory the page holds halved and the GPU given back before a page moves, a
+        frame cap of thirty, diagnostics for the next report (DESIGN 17.28). Open: the owner's
+        word that Harrowmere loads whole; the draw count at a town square if the heat stays;
+        what "not fun" is, step by step, and the fixes.
 
 Waiting on the owner: cottage-01 and cottage-03 remade with Meshy's free retries; the shops'
 buy pictures (weapon table, two shelves, mannequins); the hero, keeper and villager
